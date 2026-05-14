@@ -1,14 +1,17 @@
 import { Link, Route, Routes } from "react-router-dom";
 import {
+  ArrowRight,
   ChefHat,
   ClipboardList,
   DollarSign,
   FileText,
+  LogIn,
+  LogOut,
   Sprout,
-  Wheat,
-  ArrowRight
+  Wheat
 } from "lucide-react";
 import SpiceKitchen from "./modules/SpiceKitchen.jsx";
+import { useAuth } from "./AuthContext.jsx";
 
 const modules = [
   {
@@ -59,6 +62,8 @@ const modules = [
 ];
 
 function AppShell({ children }) {
+  const { user, loginWithGoogle, logout, authLoading } = useAuth();
+
   return (
     <div className="app">
       <aside className="sidebar">
@@ -73,25 +78,66 @@ function AppShell({ children }) {
         </Link>
 
         <nav className="nav">
-          <Link to="/" className="navLink">Dashboard</Link>
-          <Link to="/spice-kitchen" className="navLink">Spice Kitchen</Link>
+          <Link to="/" className="navLink">
+            Dashboard
+          </Link>
+          <Link to="/spice-kitchen" className="navLink">
+            Spice Kitchen
+          </Link>
           <span className="navLink disabled">Sourdough Planner</span>
           <span className="navLink disabled">Market Prep</span>
           <span className="navLink disabled">Pricing</span>
         </nav>
 
+        <div className="authCard">
+          {authLoading ? (
+            <p>Checking sign-in...</p>
+          ) : user ? (
+            <>
+              <p className="eyebrow">Account</p>
+
+              <div className="userRow">
+                {user.photoURL ? (
+                  <img src={user.photoURL} alt={user.displayName || "User"} />
+                ) : (
+                  <div className="userInitial">
+                    {(user.displayName || user.email || "U").charAt(0)}
+                  </div>
+                )}
+
+                <div>
+                  <strong>{user.displayName || "Signed in"}</strong>
+                  <p>{user.email}</p>
+                </div>
+              </div>
+
+              <button className="secondaryButton" onClick={logout}>
+                <LogOut size={16} />
+                Sign out
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="eyebrow">Account</p>
+              <h3>Save your work</h3>
+              <p>Sign in once to use Farmers Hub tools and save your data.</p>
+
+              <button className="primaryButton fullButton" onClick={loginWithGoogle}>
+                <LogIn size={16} />
+                Sign in with Google
+              </button>
+            </>
+          )}
+        </div>
+
         <div className="sidebarCard">
           <p className="eyebrow">Current build</p>
           <h3>Foundation</h3>
-          <p>
-            Modular dashboard structure ready for future sub-apps.
-          </p>
+          <p>Modular dashboard structure ready for future sub-apps.</p>
         </div>
       </aside>
 
-      <main className="main">
-        {children}
-      </main>
+      <main className="main">{children}</main>
     </div>
   );
 }
@@ -111,11 +157,14 @@ function Dashboard() {
         </div>
 
         <div className="heroPanel">
-          <p className="eyebrow">First module</p>
-          <h3>Spice Kitchen</h3>
-          <p>
-            Recipe scaling, ingredient pantry, batch planning, and production notes.
-          </p>
+          <div>
+            <p className="eyebrow">First module</p>
+            <h3>Spice Kitchen</h3>
+            <p>
+              Recipe scaling, ingredient pantry, batch planning, and production notes.
+            </p>
+          </div>
+
           <Link to="/spice-kitchen" className="primaryButton">
             Open Spice Kitchen
             <ArrowRight size={18} />
@@ -135,7 +184,7 @@ function Dashboard() {
           const Icon = module.icon;
           const isReady = module.status === "Ready";
 
-          const CardContent = (
+          const cardContent = (
             <div className={`moduleCard ${module.accent}`}>
               <div className="moduleTop">
                 <div className="moduleIcon">
@@ -158,11 +207,11 @@ function Dashboard() {
 
           return isReady ? (
             <Link key={module.title} to={module.path} className="cardLink">
-              {CardContent}
+              {cardContent}
             </Link>
           ) : (
             <div key={module.title} className="cardLink inactive">
-              {CardContent}
+              {cardContent}
             </div>
           );
         })}
@@ -177,7 +226,9 @@ function NotFound() {
       <div className="emptyState">
         <h2>Page not found</h2>
         <p>This module does not exist yet.</p>
-        <Link to="/" className="primaryButton">Back to Dashboard</Link>
+        <Link to="/" className="primaryButton">
+          Back to Dashboard
+        </Link>
       </div>
     </AppShell>
   );
