@@ -57,7 +57,7 @@ button {
   backdrop-filter: blur(18px);
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 24px;
   position: sticky;
   top: 0;
 }
@@ -114,12 +114,29 @@ button {
   cursor: not-allowed;
 }
 
+.authCard,
 .sidebarCard {
-  margin-top: auto;
   padding: 18px;
   border-radius: 22px;
-  background: var(--panel-strong);
+  background: rgba(255, 250, 240, 0.86);
   border: 1px solid var(--border);
+  box-shadow: 0 10px 26px rgba(45, 38, 29, 0.08);
+}
+
+.authCard h3,
+.sidebarCard h3 {
+  margin: 8px 0;
+}
+
+.authCard p,
+.sidebarCard p {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.sidebarCard {
+  margin-top: auto;
+  background: var(--panel-strong);
 }
 
 .sidebarCard h3 {
@@ -128,8 +145,44 @@ button {
 
 .sidebarCard p {
   margin: 0;
-  color: var(--muted);
-  line-height: 1.5;
+}
+
+.userRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0 14px;
+}
+
+.userRow img,
+.userInitial {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.userRow img {
+  object-fit: cover;
+}
+
+.userInitial {
+  display: grid;
+  place-items: center;
+  background: var(--green);
+  color: white;
+  font-weight: 900;
+}
+
+.userRow strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.userRow p {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  word-break: break-word;
 }
 
 .main {
@@ -211,6 +264,7 @@ button {
   display: inline-flex;
   width: fit-content;
   align-items: center;
+  justify-content: center;
   gap: 9px;
   padding: 12px 18px;
   font-weight: 800;
@@ -220,6 +274,30 @@ button {
 
 .primaryButton:hover {
   background: var(--green-dark);
+}
+
+.fullButton {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.secondaryButton {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.65);
+  color: var(--text);
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.secondaryButton:hover {
+  background: white;
 }
 
 .sectionHeader {
@@ -254,7 +332,9 @@ button {
   box-shadow: 0 12px 35px rgba(45, 38, 29, 0.08);
   display: flex;
   flex-direction: column;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .cardLink:not(.inactive):hover .moduleCard {
