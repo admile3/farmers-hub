@@ -4,15 +4,14 @@
   --panel-strong: #f7ead5;
   --text: #2d261d;
   --muted: #756b5e;
-  --border: rgba(72, 55, 35, 0.16);
+  --border: rgba(72, 55, 35, 0.14);
   --green: #526b45;
   --green-dark: #35482e;
   --spice: #a94f2d;
-  --amber: #c78332;
-  --cream: #fff7e8;
-  --danger: #9b2f24;
-  --shadow: 0 18px 50px rgba(45, 38, 29, 0.12);
-  --radius: 24px;
+  --danger: #c52318;
+  --danger-bg: #fff1ee;
+  --shadow: 0 14px 38px rgba(45, 38, 29, 0.09);
+  --radius: 20px;
 }
 
 * {
@@ -30,7 +29,7 @@ body {
     "Segoe UI",
     sans-serif;
   background:
-    radial-gradient(circle at top left, rgba(169, 79, 45, 0.16), transparent 34rem),
+    radial-gradient(circle at top left, rgba(169, 79, 45, 0.11), transparent 30rem),
     linear-gradient(135deg, #f4efe4 0%, #ebe1cf 100%);
   color: var(--text);
 }
@@ -56,48 +55,54 @@ select,
 textarea {
   width: 100%;
   border: 1px solid var(--border);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.66);
   color: var(--text);
-  padding: 11px 12px;
+  padding: 9px 11px;
   outline: none;
+  font-size: 0.9rem;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(45, 38, 29, 0.42);
 }
 
 textarea {
-  min-height: 86px;
+  min-height: 64px;
   resize: vertical;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: rgba(169, 79, 45, 0.55);
+  border-color: rgba(169, 79, 45, 0.52);
   box-shadow: 0 0 0 4px rgba(169, 79, 45, 0.08);
 }
 
 label {
   display: grid;
-  gap: 7px;
+  gap: 6px;
   color: var(--text);
-  font-size: 0.88rem;
-  font-weight: 800;
+  font-size: 0.78rem;
+  font-weight: 850;
 }
 
 .app {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 290px 1fr;
+  grid-template-columns: 270px 1fr;
 }
 
 .sidebar {
   min-height: 100vh;
-  padding: 24px;
-  background: rgba(255, 250, 240, 0.78);
+  padding: 18px 16px;
+  background: rgba(255, 250, 240, 0.76);
   border-right: 1px solid var(--border);
   backdrop-filter: blur(18px);
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 18px;
   position: sticky;
   top: 0;
 }
@@ -105,13 +110,13 @@ label {
 .brand {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
 .brandIcon {
-  width: 52px;
-  height: 52px;
-  border-radius: 18px;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
   background: var(--green);
   color: white;
   display: grid;
@@ -121,14 +126,14 @@ label {
 
 .brand h1 {
   margin: 0;
-  font-size: 1.35rem;
+  font-size: 1.18rem;
   line-height: 1.1;
 }
 
 .brand p {
   margin: 4px 0 0;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.82rem;
 }
 
 .nav {
@@ -137,41 +142,42 @@ label {
 }
 
 .navLink {
-  padding: 12px 14px;
-  border-radius: 16px;
+  padding: 11px 13px;
+  border-radius: 14px;
   color: var(--text);
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.32);
   border: 1px solid transparent;
+  font-size: 0.92rem;
 }
 
 .navLink:hover {
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.72);
   border-color: var(--border);
 }
 
 .navLink.disabled {
-  color: rgba(45, 38, 29, 0.42);
+  color: rgba(45, 38, 29, 0.36);
   cursor: not-allowed;
 }
 
 .authCard,
 .sidebarCard {
-  padding: 18px;
-  border-radius: 22px;
+  padding: 16px;
+  border-radius: 20px;
   background: rgba(255, 250, 240, 0.86);
   border: 1px solid var(--border);
-  box-shadow: 0 10px 26px rgba(45, 38, 29, 0.08);
+  box-shadow: 0 10px 24px rgba(45, 38, 29, 0.07);
 }
 
 .authCard h3,
 .sidebarCard h3 {
-  margin: 8px 0;
+  margin: 7px 0;
 }
 
 .authCard p,
 .sidebarCard p {
   color: var(--muted);
-  line-height: 1.45;
+  line-height: 1.4;
 }
 
 .sidebarCard {
@@ -190,14 +196,14 @@ label {
 .userRow {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 12px 0 14px;
+  gap: 11px;
+  margin: 11px 0 13px;
 }
 
 .userRow img,
 .userInitial {
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   border-radius: 999px;
   flex: 0 0 auto;
 }
@@ -216,26 +222,26 @@ label {
 
 .userRow strong {
   display: block;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
 }
 
 .userRow p {
   margin: 2px 0 0;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   word-break: break-word;
 }
 
 .main {
-  padding: 34px;
+  padding: 24px 28px;
 }
 
 .hero,
 .moduleHero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 18px;
   align-items: stretch;
-  margin-bottom: 32px;
+  margin-bottom: 22px;
 }
 
 .hero > div:first-child,
@@ -249,27 +255,27 @@ label {
 
 .hero > div:first-child,
 .moduleHero > div:first-child {
-  padding: 34px;
+  padding: 28px;
 }
 
 .hero h2,
 .moduleHero h2 {
-  margin: 8px 0 16px;
-  font-size: clamp(2rem, 5vw, 4.2rem);
+  margin: 7px 0 12px;
+  font-size: clamp(1.9rem, 4.3vw, 3.9rem);
   line-height: 0.98;
-  letter-spacing: -0.06em;
+  letter-spacing: -0.055em;
 }
 
 .heroText,
 .moduleHero p {
-  max-width: 760px;
+  max-width: 850px;
   color: var(--muted);
-  font-size: 1.04rem;
-  line-height: 1.65;
+  font-size: 0.98rem;
+  line-height: 1.55;
 }
 
 .heroPanel {
-  padding: 26px;
+  padding: 22px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -279,21 +285,21 @@ label {
 
 .heroPanel h3 {
   margin: 6px 0 10px;
-  font-size: 1.6rem;
+  font-size: 1.4rem;
 }
 
 .heroPanel p {
   color: var(--muted);
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
 .eyebrow {
   margin: 0;
   color: var(--spice);
-  font-weight: 800;
+  font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.13em;
-  font-size: 0.76rem;
+  font-size: 0.68rem;
 }
 
 .primaryButton {
@@ -304,11 +310,12 @@ label {
   width: fit-content;
   align-items: center;
   justify-content: center;
-  gap: 9px;
-  padding: 12px 18px;
-  font-weight: 800;
+  gap: 8px;
+  padding: 10px 16px;
+  font-weight: 850;
   cursor: pointer;
-  box-shadow: 0 12px 28px rgba(53, 72, 46, 0.24);
+  box-shadow: 0 10px 24px rgba(53, 72, 46, 0.2);
+  font-size: 0.9rem;
 }
 
 .primaryButton:hover {
@@ -324,15 +331,16 @@ label {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.62);
   color: var(--text);
   display: inline-flex;
   justify-content: center;
   align-items: center;
   gap: 8px;
-  padding: 11px 16px;
-  font-weight: 800;
+  padding: 10px 15px;
+  font-weight: 850;
   cursor: pointer;
+  font-size: 0.9rem;
 }
 
 .secondaryButton:hover {
@@ -341,14 +349,19 @@ label {
 
 .compactButton {
   width: fit-content;
-  padding: 10px 14px;
-  font-size: 0.88rem;
+  padding: 8px 13px;
+  font-size: 0.82rem;
+}
+
+.compactPrimary {
+  padding: 9px 15px;
+  font-size: 0.82rem;
 }
 
 .iconButton {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -362,18 +375,18 @@ label {
 }
 
 .sectionHeader {
-  margin: 10px 0 18px;
+  margin: 8px 0 14px;
 }
 
 .sectionHeader h2 {
   margin: 4px 0 0;
-  font-size: 1.8rem;
+  font-size: 1.55rem;
 }
 
 .moduleGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  gap: 14px;
 }
 
 .cardLink {
@@ -385,12 +398,12 @@ label {
 }
 
 .moduleCard {
-  min-height: 245px;
-  padding: 24px;
+  min-height: 215px;
+  padding: 20px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: rgba(255, 250, 240, 0.84);
-  box-shadow: 0 12px 35px rgba(45, 38, 29, 0.08);
+  box-shadow: 0 10px 28px rgba(45, 38, 29, 0.07);
   display: flex;
   flex-direction: column;
   transition:
@@ -399,7 +412,7 @@ label {
 }
 
 .cardLink:not(.inactive):hover .moduleCard {
-  transform: translateY(-4px);
+  transform: translateY(-3px);
   box-shadow: var(--shadow);
 }
 
@@ -411,20 +424,20 @@ label {
 }
 
 .moduleIcon {
-  width: 48px;
-  height: 48px;
-  border-radius: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
   background: var(--panel-strong);
   display: grid;
   place-items: center;
 }
 
 .status {
-  font-size: 0.78rem;
-  font-weight: 800;
+  font-size: 0.72rem;
+  font-weight: 850;
   color: var(--muted);
   background: rgba(117, 107, 94, 0.12);
-  padding: 7px 10px;
+  padding: 6px 9px;
   border-radius: 999px;
 }
 
@@ -434,20 +447,20 @@ label {
 }
 
 .moduleCard h3 {
-  margin: 22px 0 10px;
-  font-size: 1.45rem;
+  margin: 18px 0 9px;
+  font-size: 1.28rem;
 }
 
 .moduleCard p {
   margin: 0;
   color: var(--muted);
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
 .moduleFooter {
   margin-top: auto;
   color: var(--green-dark);
-  font-weight: 800;
+  font-weight: 850;
 }
 
 .spice .moduleIcon {
@@ -472,11 +485,15 @@ label {
 
 .modulePage {
   display: grid;
-  gap: 24px;
+  gap: 18px;
 }
 
 .spicePage {
   --module-accent: var(--spice);
+}
+
+.compactSpicePage {
+  gap: 14px;
 }
 
 .moduleHero {
@@ -488,18 +505,51 @@ label {
   align-self: center;
 }
 
+.compactHero {
+  margin-bottom: 2px;
+}
+
+.compactHero > div:first-child {
+  padding: 22px 26px;
+}
+
+.compactHero h2 {
+  font-size: clamp(1.8rem, 3.35vw, 3.2rem);
+  margin: 5px 0 8px;
+}
+
+.compactHero p {
+  max-width: none;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.noActionHero {
+  display: block;
+}
+
 .toolGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
+  gap: 14px;
+}
+
+.compactToolGrid {
+  margin-top: 0;
+  gap: 14px;
 }
 
 .toolCard {
-  padding: 22px;
-  border-radius: 22px;
+  padding: 20px;
+  border-radius: 20px;
   background: rgba(255, 250, 240, 0.84);
   border: 1px solid var(--border);
-  box-shadow: 0 12px 30px rgba(45, 38, 29, 0.08);
+  box-shadow: 0 10px 28px rgba(45, 38, 29, 0.07);
+}
+
+.compactToolCard {
+  min-height: 120px;
+  padding: 16px 18px;
 }
 
 .toolCard svg {
@@ -507,13 +557,15 @@ label {
 }
 
 .toolCard h3 {
-  margin: 16px 0 8px;
+  margin: 11px 0 7px;
+  font-size: 1rem;
 }
 
 .toolCard p {
   color: var(--muted);
-  line-height: 1.5;
+  line-height: 1.42;
   margin: 0;
+  font-size: 0.88rem;
 }
 
 .workspacePanel {
@@ -521,39 +573,51 @@ label {
   border: 1px solid var(--border);
   background: rgba(255, 250, 240, 0.84);
   box-shadow: var(--shadow);
-  padding: 26px;
+  padding: 22px;
+}
+
+.compactPanel {
+  padding: 16px 18px;
+  border-radius: 18px;
 }
 
 .workspaceHeader {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 18px;
+  gap: 14px;
+  margin-bottom: 14px;
 }
 
-.workspaceHeader h3 {
-  margin: 6px 0 0;
-  font-size: 1.5rem;
-}
-
-.splitHeader {
+.compactPanelHeader {
+  margin-bottom: 10px;
   align-items: center;
 }
 
+.workspaceHeader h3 {
+  margin: 5px 0 0;
+  font-size: 1.32rem;
+}
+
 .placeholderBox {
-  margin-top: 18px;
-  border: 1px dashed rgba(169, 79, 45, 0.35);
-  background: rgba(169, 79, 45, 0.07);
-  border-radius: 20px;
-  padding: 24px;
+  margin-top: 14px;
+  border: 1px dashed rgba(169, 79, 45, 0.34);
+  background: rgba(169, 79, 45, 0.06);
+  border-radius: 16px;
+  padding: 18px;
   color: var(--muted);
-  line-height: 1.6;
+  line-height: 1.5;
+}
+
+.compactPlaceholder {
+  margin-top: 10px;
+  padding: 13px;
+  font-size: 0.88rem;
 }
 
 .emptyState {
   max-width: 640px;
-  padding: 34px;
+  padding: 28px;
   border-radius: var(--radius);
   background: rgba(255, 250, 240, 0.84);
   border: 1px solid var(--border);
@@ -572,12 +636,12 @@ label {
   border: 1px solid rgba(82, 107, 69, 0.18);
   background: rgba(82, 107, 69, 0.1);
   color: var(--green-dark);
-  border-radius: 18px;
-  padding: 13px 16px;
+  border-radius: 16px;
+  padding: 12px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-weight: 800;
+  font-weight: 850;
 }
 
 .statusBanner button {
@@ -588,16 +652,68 @@ label {
   place-items: center;
 }
 
+.floatingStatus {
+  position: fixed;
+  top: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  width: min(560px, calc(100vw - 32px));
+  border-radius: 14px;
+  padding: 13px 16px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  font-weight: 850;
+  box-shadow: 0 18px 50px rgba(45, 38, 29, 0.18);
+}
+
+.floatingStatus.info,
+.floatingStatus.success {
+  border: 1px solid rgba(82, 107, 69, 0.22);
+  background: rgba(245, 252, 241, 0.98);
+  color: var(--green-dark);
+}
+
+.floatingStatus.error {
+  border: 1px solid rgba(197, 35, 24, 0.25);
+  background: rgba(255, 241, 238, 0.98);
+  color: var(--danger);
+}
+
+.floatingStatus button {
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
 .spiceWorkspace {
   display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr);
-  gap: 20px;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.1fr);
+  gap: 14px;
+}
+
+.compactWorkspace {
+  gap: 14px;
+}
+
+.lowerSpiceGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.72fr) minmax(0, 1fr);
+  gap: 14px;
 }
 
 .formGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 12px;
+}
+
+.compactFormGrid {
+  gap: 10px 12px;
 }
 
 .fullSpan {
@@ -606,26 +722,36 @@ label {
 
 .inlineFields {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 110px;
-  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) 92px;
+  gap: 9px;
 }
 
 .formActions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 16px;
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.compactActions {
+  margin-top: 10px;
 }
 
 .searchBox {
-  margin: 20px 0 12px;
+  margin: 16px 0 10px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 16px;
-  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.52);
+  border-radius: 14px;
+  padding: 0 11px;
+}
+
+.compactSearch {
+  width: min(260px, 100%);
+  margin: 0;
+  height: 38px;
 }
 
 .searchBox svg {
@@ -647,43 +773,60 @@ label {
 .savedList,
 .recipeLibrary {
   display: grid;
-  gap: 10px;
-  max-height: 520px;
+  gap: 8px;
+  max-height: 430px;
   overflow: auto;
-  padding-right: 4px;
+  padding-right: 3px;
+}
+
+.compactSavedList {
+  gap: 6px;
+  max-height: 360px;
+}
+
+.smallSectionTitle {
+  margin: 11px 0 3px;
+  font-size: 0.8rem;
 }
 
 .savedItem {
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.5);
-  border-radius: 18px;
-  padding: 14px;
+  border-radius: 15px;
+  padding: 12px;
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
+}
+
+.compactSavedItem {
+  padding: 8px 10px;
+  border-radius: 13px;
+  align-items: center;
 }
 
 .savedItem h4 {
-  margin: 0 0 5px;
+  margin: 0 0 4px;
+  font-size: 0.9rem;
 }
 
 .savedItem p {
   margin: 0;
   color: var(--muted);
-  font-size: 0.9rem;
-  line-height: 1.45;
+  font-size: 0.8rem;
+  line-height: 1.35;
 }
 
 .itemActions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: flex-start;
 }
 
 .itemActions button {
-  width: 34px;
-  height: 34px;
-  border-radius: 12px;
+  width: 31px;
+  height: 31px;
+  border-radius: 10px;
   display: grid;
   place-items: center;
   color: var(--text);
@@ -697,22 +840,28 @@ label {
 }
 
 .quickAddPanel {
-  border: 1px dashed rgba(169, 79, 45, 0.35);
-  background: rgba(169, 79, 45, 0.07);
-  border-radius: 20px;
-  padding: 18px;
-  margin-bottom: 18px;
+  border: 1px dashed rgba(169, 79, 45, 0.34);
+  background: rgba(169, 79, 45, 0.06);
+  border-radius: 17px;
+  padding: 15px;
+  margin-bottom: 14px;
+}
+
+.compactQuickAdd {
+  padding: 12px;
+  margin-bottom: 12px;
 }
 
 .quickAddHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 9px;
 }
 
 .quickAddHeader h4 {
   margin: 0;
+  font-size: 0.95rem;
 }
 
 .quickAddHeader button {
@@ -724,7 +873,11 @@ label {
 }
 
 .recipeLines {
-  margin-top: 18px;
+  margin-top: 15px;
+}
+
+.compactRecipeLines {
+  margin-top: 12px;
 }
 
 .recipeLineHeader {
@@ -736,14 +889,19 @@ label {
 
 .recipeLineHeader h4 {
   margin: 0;
+  font-size: 0.92rem;
 }
 
 .recipeLine {
-  margin-top: 10px;
+  margin-top: 9px;
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(120px, 0.5fr) 44px;
-  gap: 10px;
+  grid-template-columns: minmax(0, 1.45fr) minmax(120px, 0.6fr) 40px;
+  gap: 9px;
   align-items: end;
+}
+
+.compactRecipeLine {
+  margin-top: 8px;
 }
 
 .recipeItem {
@@ -753,40 +911,49 @@ label {
 .calculatorControls {
   display: grid;
   grid-template-columns: minmax(220px, 1.5fr) repeat(3, minmax(110px, 0.5fr));
-  gap: 14px;
+  gap: 12px;
+}
+
+.compactCalculatorControls {
+  gap: 10px;
 }
 
 .batchTotals {
-  margin: 20px 0;
+  margin: 16px 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  gap: 10px;
+}
+
+.compactBatchTotals {
+  margin: 12px 0;
 }
 
 .batchTotals > div {
   border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 18px;
+  border-radius: 16px;
+  padding: 14px;
   background: rgba(255, 255, 255, 0.5);
 }
 
 .batchTotals h4 {
-  margin: 8px 0 0;
-  font-size: 1.7rem;
+  margin: 7px 0 0;
+  font-size: 1.35rem;
 }
 
 .batchTable {
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: 16px;
   overflow: hidden;
 }
 
 .batchTableHeader,
 .batchTableRow {
   display: grid;
-  grid-template-columns: 1.5fr repeat(4, minmax(90px, 0.5fr));
-  gap: 10px;
-  padding: 12px 14px;
+  grid-template-columns: 1.5fr repeat(4, minmax(85px, 0.5fr));
+  gap: 8px;
+  padding: 10px 12px;
+  font-size: 0.85rem;
 }
 
 .batchTableHeader {
@@ -802,11 +969,12 @@ label {
 
 .batchTableRow span:first-child {
   color: var(--text);
-  font-weight: 800;
+  font-weight: 850;
 }
 
 @media (max-width: 1200px) {
-  .spiceWorkspace {
+  .spiceWorkspace,
+  .lowerSpiceGrid {
     grid-template-columns: 1fr;
   }
 
@@ -825,7 +993,7 @@ label {
 
   .batchTableHeader,
   .batchTableRow {
-    min-width: 720px;
+    min-width: 700px;
   }
 }
 
@@ -849,7 +1017,7 @@ label {
   }
 
   .main {
-    padding: 22px;
+    padding: 20px;
   }
 }
 
@@ -875,7 +1043,12 @@ label {
     align-items: stretch;
   }
 
-  .compactButton {
+  .compactButton,
+  .compactSearch {
     width: 100%;
+  }
+
+  .floatingStatus {
+    top: 16px;
   }
 }
