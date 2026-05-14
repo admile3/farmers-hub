@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  AlertCircle,
   Beaker,
   Calculator,
   Edit3,
@@ -90,13 +91,19 @@ export default function SpiceKitchen() {
   const [editingRecipeId, setEditingRecipeId] = useState(null);
   const [ingredientSearch, setIngredientSearch] = useState("");
   const [selectedRecipeId, setSelectedRecipeId] = useState("");
-  const [targetAmount, setTargetAmount] = useState("10");
+  const [targetAmount, setTargetAmount] = useState("");
   const [targetUnit, setTargetUnit] = useState("oz");
-  const [overagePercent, setOveragePercent] = useState("5");
+  const [overagePercent, setOveragePercent] = useState("");
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [quickIngredient, setQuickIngredient] = useState(emptyIngredient);
   const [statusMessage, setStatusMessage] = useState("");
+  const [statusType, setStatusType] = useState("info");
   const [loading, setLoading] = useState(false);
+
+  function showStatus(message, type = "info") {
+    setStatusMessage(message);
+    setStatusType(type);
+  }
 
   async function loadData() {
     if (!user) return;
@@ -112,7 +119,7 @@ export default function SpiceKitchen() {
       setRecipes(loadedRecipes);
     } catch (error) {
       console.error(error);
-      setStatusMessage("Could not load Spice Kitchen data.");
+      showStatus("Could not load Spice Kitchen data.", "error");
     } finally {
       setLoading(false);
     }
@@ -161,7 +168,7 @@ export default function SpiceKitchen() {
       0
     );
 
-    if (!totalParts) return [];
+    if (!targetGrams || !totalParts) return [];
 
     return selectedRecipe.ingredients.map((item) => {
       const ingredient = ingredients.find((saved) => saved.id === item.ingredientId);
@@ -169,13 +176,19 @@ export default function SpiceKitchen() {
       const ounces = gramsToOunces(grams);
 
       let estimatedCost = 0;
+
       if (ingredient?.cost) {
         const cost = toNumber(ingredient.cost);
+
         if (ingredient.costUnit === "oz") {
           estimatedCost = ounces * cost;
-        } else if (ingredient.costUnit === "g") {
+        }
+
+        if (ingredient.costUnit === "g") {
           estimatedCost = grams * cost;
-        } else if (ingredient.costUnit === "lb") {
+        }
+
+        if (ingredient.costUnit === "lb") {
           estimatedCost = (ounces / 16) * cost;
         }
       }
@@ -220,17 +233,17 @@ export default function SpiceKitchen() {
     };
 
     if (!cleanIngredient.name) {
-      setStatusMessage("Ingredient name is required.");
+      showStatus("Ingredient name is required.", "error");
       return;
     }
 
     try {
       if (editingIngredientId) {
         await updateSpiceIngredient(user.uid, editingIngredientId, cleanIngredient);
-        setStatusMessage("Ingredient updated.");
+        showStatus("Ingredient updated.", "success");
       } else {
         await createSpiceIngredient(user.uid, cleanIngredient);
-        setStatusMessage("Ingredient saved.");
+        showStatus("Ingredient saved.", "success");
       }
 
       setIngredientForm(emptyIngredient);
@@ -238,7 +251,7 @@ export default function SpiceKitchen() {
       await loadData();
     } catch (error) {
       console.error(error);
-      setStatusMessage("Could not save ingredient.");
+      showStatus("Could not save ingredient.", "error");
     }
   }
 
@@ -259,11 +272,11 @@ export default function SpiceKitchen() {
 
     try {
       await deleteSpiceIngredient(user.uid, ingredientId);
-      setStatusMessage("Ingredient deleted.");
+      showStatus("Ingredient deleted.", "success");
       await loadData();
     } catch (error) {
       console.error(error);
-      setStatusMessage("Could not delete ingredient.");
+      showStatus("Could not delete ingredient.", "error");
     }
   }
 
@@ -321,7 +334,7 @@ export default function SpiceKitchen() {
     };
 
     if (!cleanIngredient.name) {
-      setStatusMessage("Quick add ingredient name is required.");
+      showStatus("Quick add ingredient name is required.", "error");
       return;
     }
 
@@ -344,10 +357,10 @@ export default function SpiceKitchen() {
 
       setQuickIngredient(emptyIngredient);
       setQuickAddOpen(false);
-      setStatusMessage("Ingredient added to pantry and recipe.");
+      showStatus("Ingredient added to pantry and recipe.", "success");
     } catch (error) {
       console.error(error);
-      setStatusMessage("Could not quick add ingredient.");
+      showStatus("Could not quick add ingredient.", "error");
     }
   }
 
@@ -369,22 +382,22 @@ export default function SpiceKitchen() {
     };
 
     if (!cleanRecipe.name) {
-      setStatusMessage("Recipe name is required.");
+      showStatus("Recipe name is required.", "error");
       return;
     }
 
     if (!cleanRecipe.ingredients.length) {
-      setStatusMessage("Add at least one ingredient with parts greater than 0.");
+      showStatus("Add at least one ingredient with parts greater than 0.", "error");
       return;
     }
 
     try {
       if (editingRecipeId) {
         await updateSpiceRecipe(user.uid, editingRecipeId, cleanRecipe);
-        setStatusMessage("Recipe updated.");
+        showStatus("Recipe updated.", "success");
       } else {
         await createSpiceRecipe(user.uid, cleanRecipe);
-        setStatusMessage("Recipe saved.");
+        showStatus("Recipe saved.", "success");
       }
 
       setRecipeForm(emptyRecipe);
@@ -392,7 +405,7 @@ export default function SpiceKitchen() {
       await loadData();
     } catch (error) {
       console.error(error);
-      setStatusMessage("Could not save recipe.");
+      showStatus("Could not save recipe.", "error");
     }
   }
 
@@ -411,19 +424,19 @@ export default function SpiceKitchen() {
 
     try {
       await deleteSpiceRecipe(user.uid, recipeId);
-      setStatusMessage("Recipe deleted.");
+      showStatus("Recipe deleted.", "success");
       if (selectedRecipeId === recipeId) setSelectedRecipeId("");
       await loadData();
     } catch (error) {
       console.error(error);
-      setStatusMessage("Could not delete recipe.");
+      showStatus("Could not delete recipe.", "error");
     }
   }
 
   if (!user) {
     return (
-      <div className="modulePage spicePage">
-        <section className="moduleHero">
+      <div className="modulePage spicePage compactSpicePage">
+        <section className="moduleHero compactHero">
           <div>
             <p className="eyebrow">Spice Kitchen</p>
             <h2>Sign in to build and save spice blends.</h2>
@@ -442,8 +455,8 @@ export default function SpiceKitchen() {
   }
 
   return (
-    <div className="modulePage spicePage">
-      <section className="moduleHero">
+    <div className="modulePage spicePage compactSpicePage">
+      <section className="moduleHero compactHero noActionHero">
         <div>
           <p className="eyebrow">Spice Kitchen</p>
           <h2>Build, scale, and organize seasoning recipes.</h2>
@@ -452,22 +465,11 @@ export default function SpiceKitchen() {
             ingredients while building a recipe, and calculate exact batch weights.
           </p>
         </div>
-
-        <button
-          className="primaryButton"
-          onClick={() => {
-            setRecipeForm(emptyRecipe);
-            setEditingRecipeId(null);
-            setStatusMessage("Ready for a new recipe.");
-          }}
-        >
-          <Plus size={18} />
-          New Recipe
-        </button>
       </section>
 
       {statusMessage ? (
-        <div className="statusBanner">
+        <div className={`floatingStatus ${statusType}`}>
+          <AlertCircle size={18} />
           <span>{statusMessage}</span>
           <button onClick={() => setStatusMessage("")}>
             <X size={16} />
@@ -475,50 +477,59 @@ export default function SpiceKitchen() {
         </div>
       ) : null}
 
-      {loading ? <div className="statusBanner">Loading Spice Kitchen...</div> : null}
+      {loading ? <div className="floatingStatus info">Loading Spice Kitchen...</div> : null}
 
-      <section className="toolGrid">
-        <div className="toolCard">
-          <Library size={24} />
+      <section className="toolGrid compactToolGrid">
+        <div className="toolCard compactToolCard">
+          <Library size={22} />
           <h3>Ingredient Pantry</h3>
           <p>Save ingredients, costs, suppliers, notes, and categories.</p>
         </div>
 
-        <div className="toolCard">
-          <Beaker size={24} />
+        <div className="toolCard compactToolCard">
+          <Beaker size={22} />
           <h3>Recipe Builder</h3>
           <p>Create blends by parts using your saved pantry ingredients.</p>
         </div>
 
-        <div className="toolCard">
-          <Scale size={24} />
+        <div className="toolCard compactToolCard">
+          <Scale size={22} />
           <h3>Batch Scaling</h3>
           <p>Scale recipes to ounces, grams, package counts, or overage targets.</p>
         </div>
 
-        <div className="toolCard">
-          <Calculator size={24} />
+        <div className="toolCard compactToolCard">
+          <Calculator size={22} />
           <h3>Cost Estimates</h3>
           <p>Estimate batch costs from ingredient cost data.</p>
         </div>
       </section>
 
-      <section className="spiceWorkspace">
-        <div className="workspacePanel">
-          <div className="workspaceHeader">
+      <section className="spiceWorkspace compactWorkspace">
+        <div className="workspacePanel compactPanel">
+          <div className="workspaceHeader compactPanelHeader">
             <div>
               <p className="eyebrow">Pantry</p>
               <h3>Ingredient Pantry</h3>
             </div>
+
+            <div className="searchBox compactSearch">
+              <Search size={17} />
+              <input
+                value={ingredientSearch}
+                onChange={(event) => setIngredientSearch(event.target.value)}
+                placeholder="Search ingredients..."
+              />
+            </div>
           </div>
 
-          <form className="formGrid" onSubmit={saveIngredient}>
+          <form className="formGrid compactFormGrid" onSubmit={saveIngredient}>
             <label>
               Ingredient Name
               <input
                 value={ingredientForm.name}
                 onChange={(event) => updateIngredientField("name", event.target.value)}
-                placeholder="Dried thyme"
+                placeholder="e.g., Dried thyme"
               />
             </label>
 
@@ -541,7 +552,7 @@ export default function SpiceKitchen() {
                 onChange={(event) =>
                   updateIngredientField("supplier", event.target.value)
                 }
-                placeholder="Bulk supplier, farm, store"
+                placeholder="e.g., Bulk supplier, farm, store"
               />
             </label>
 
@@ -553,7 +564,7 @@ export default function SpiceKitchen() {
                   step="0.0001"
                   value={ingredientForm.cost}
                   onChange={(event) => updateIngredientField("cost", event.target.value)}
-                  placeholder="2.50"
+                  placeholder="e.g., 2.50"
                 />
               </label>
 
@@ -577,77 +588,66 @@ export default function SpiceKitchen() {
               <textarea
                 value={ingredientForm.notes}
                 onChange={(event) => updateIngredientField("notes", event.target.value)}
-                placeholder="Flavor notes, grind size, sourcing notes, prep notes"
+                placeholder="e.g., Flavor notes, grind size, sourcing notes"
               />
             </label>
 
-            <div className="formActions fullSpan">
-              <button className="primaryButton" type="submit">
-                <Save size={16} />
+            <div className="formActions fullSpan compactActions">
+              <button className="primaryButton compactPrimary" type="submit">
+                <Save size={15} />
                 {editingIngredientId ? "Update Ingredient" : "Save Ingredient"}
               </button>
 
-              {editingIngredientId ? (
-                <button
-                  className="secondaryButton compactButton"
-                  type="button"
-                  onClick={() => {
-                    setIngredientForm(emptyIngredient);
-                    setEditingIngredientId(null);
-                  }}
-                >
-                  Cancel Edit
-                </button>
-              ) : null}
+              <button
+                className="secondaryButton compactButton"
+                type="button"
+                onClick={() => {
+                  setIngredientForm(emptyIngredient);
+                  setEditingIngredientId(null);
+                }}
+              >
+                Clear
+              </button>
             </div>
           </form>
 
-          <div className="searchBox">
-            <Search size={18} />
-            <input
-              value={ingredientSearch}
-              onChange={(event) => setIngredientSearch(event.target.value)}
-              placeholder="Search ingredients, categories, or suppliers"
-            />
-          </div>
+          <div className="savedList compactSavedList">
+            <h4 className="smallSectionTitle">Saved Ingredients</h4>
 
-          <div className="savedList">
             {filteredIngredients.length ? (
               filteredIngredients.map((ingredient) => (
-                <div className="savedItem" key={ingredient.id}>
+                <div className="savedItem compactSavedItem" key={ingredient.id}>
                   <div>
                     <h4>{ingredient.name}</h4>
                     <p>
                       {ingredient.category}
                       {ingredient.supplier ? ` • ${ingredient.supplier}` : ""}
+                      {ingredient.cost
+                        ? ` • $${ingredient.cost} / ${ingredient.costUnit}`
+                        : ""}
                     </p>
-                    {ingredient.cost ? (
-                      <p>
-                        Cost: ${ingredient.cost} per {ingredient.costUnit}
-                      </p>
-                    ) : null}
                   </div>
 
                   <div className="itemActions">
                     <button onClick={() => editIngredient(ingredient)}>
-                      <Edit3 size={15} />
+                      <Edit3 size={14} />
                     </button>
                     <button onClick={() => removeIngredient(ingredient.id)}>
-                      <Trash2 size={15} />
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="placeholderBox">
-                No ingredients saved yet. Add your first pantry item above.
+              <div className="placeholderBox compactPlaceholder">
+                No ingredients saved yet.
               </div>
             )}
           </div>
         </div>
 
-        <div className="workspacePanel">
-          <div className="workspaceHeader splitHeader">
+        <div className="workspacePanel compactPanel">
+          <div className="workspaceHeader compactPanelHeader">
             <div>
               <p className="eyebrow">Builder</p>
               <h3>Recipe Builder</h3>
@@ -658,13 +658,13 @@ export default function SpiceKitchen() {
               onClick={() => setQuickAddOpen((current) => !current)}
               type="button"
             >
-              <Plus size={16} />
+              <Plus size={15} />
               Quick Add Ingredient
             </button>
           </div>
 
           {quickAddOpen ? (
-            <form className="quickAddPanel" onSubmit={quickAddIngredient}>
+            <form className="quickAddPanel compactQuickAdd" onSubmit={quickAddIngredient}>
               <div className="quickAddHeader">
                 <h4>Quick Add to Pantry</h4>
                 <button type="button" onClick={() => setQuickAddOpen(false)}>
@@ -672,7 +672,7 @@ export default function SpiceKitchen() {
                 </button>
               </div>
 
-              <div className="formGrid">
+              <div className="formGrid compactFormGrid">
                 <label>
                   Ingredient Name
                   <input
@@ -683,7 +683,7 @@ export default function SpiceKitchen() {
                         name: event.target.value
                       }))
                     }
-                    placeholder="Smoked paprika"
+                    placeholder="e.g., Smoked paprika"
                   />
                 </label>
 
@@ -716,7 +716,7 @@ export default function SpiceKitchen() {
                         cost: event.target.value
                       }))
                     }
-                    placeholder="2.50"
+                    placeholder="e.g., 2.50"
                   />
                 </label>
 
@@ -738,20 +738,20 @@ export default function SpiceKitchen() {
                 </label>
               </div>
 
-              <button className="primaryButton" type="submit">
+              <button className="primaryButton compactPrimary" type="submit">
                 Add to Pantry and Recipe
               </button>
             </form>
           ) : null}
 
           <form onSubmit={saveRecipe}>
-            <div className="formGrid">
+            <div className="formGrid compactFormGrid">
               <label>
                 Recipe Name
                 <input
                   value={recipeForm.name}
                   onChange={(event) => updateRecipeField("name", event.target.value)}
-                  placeholder="Garlic Miso Seasoning"
+                  placeholder="e.g., Garlic Miso Seasoning"
                 />
               </label>
 
@@ -772,12 +772,12 @@ export default function SpiceKitchen() {
                 <textarea
                   value={recipeForm.notes}
                   onChange={(event) => updateRecipeField("notes", event.target.value)}
-                  placeholder="Production notes, intended use, packaging notes"
+                  placeholder="e.g., Production notes, intended use, packaging notes"
                 />
               </label>
             </div>
 
-            <div className="recipeLines">
+            <div className="recipeLines compactRecipeLines">
               <div className="recipeLineHeader">
                 <h4>Ingredients by Parts</h4>
                 <button
@@ -785,14 +785,14 @@ export default function SpiceKitchen() {
                   type="button"
                   onClick={addRecipeLine}
                 >
-                  <Plus size={16} />
+                  <Plus size={15} />
                   Add Line
                 </button>
               </div>
 
               {recipeForm.ingredients.length ? (
                 recipeForm.ingredients.map((line, index) => (
-                  <div className="recipeLine" key={`${line.ingredientId}-${index}`}>
+                  <div className="recipeLine compactRecipeLine" key={`${line.ingredientId}-${index}`}>
                     <label>
                       Ingredient
                       <select
@@ -819,7 +819,7 @@ export default function SpiceKitchen() {
                         onChange={(event) =>
                           updateRecipeLine(index, "parts", event.target.value)
                         }
-                        placeholder="1"
+                        placeholder="e.g., 1"
                       />
                     </label>
 
@@ -828,176 +828,177 @@ export default function SpiceKitchen() {
                       type="button"
                       onClick={() => removeRecipeLine(index)}
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={15} />
                     </button>
                   </div>
                 ))
               ) : (
-                <div className="placeholderBox">
-                  Add ingredients from your pantry, or use Quick Add Ingredient while
-                  building the recipe.
+                <div className="placeholderBox compactPlaceholder">
+                  Add ingredients from your pantry, or use Quick Add Ingredient.
                 </div>
               )}
             </div>
 
-            <div className="formActions">
-              <button className="primaryButton" type="submit">
-                <Save size={16} />
+            <div className="formActions compactActions">
+              <button className="primaryButton compactPrimary" type="submit">
+                <Save size={15} />
                 {editingRecipeId ? "Update Recipe" : "Save Recipe"}
               </button>
 
-              {editingRecipeId ? (
-                <button
-                  className="secondaryButton compactButton"
-                  type="button"
-                  onClick={() => {
-                    setRecipeForm(emptyRecipe);
-                    setEditingRecipeId(null);
-                  }}
-                >
-                  Cancel Edit
-                </button>
-              ) : null}
+              <button
+                className="secondaryButton compactButton"
+                type="button"
+                onClick={() => {
+                  setRecipeForm(emptyRecipe);
+                  setEditingRecipeId(null);
+                }}
+              >
+                Clear
+              </button>
             </div>
           </form>
         </div>
       </section>
 
-      <section className="workspacePanel">
-        <div className="workspaceHeader">
-          <div>
-            <p className="eyebrow">Saved Recipes</p>
-            <h3>Recipe Library</h3>
+      <section className="lowerSpiceGrid">
+        <div className="workspacePanel compactPanel">
+          <div className="workspaceHeader compactPanelHeader">
+            <div>
+              <p className="eyebrow">Saved Recipes</p>
+              <h3>Recipe Library</h3>
+            </div>
+          </div>
+
+          <div className="recipeLibrary compactSavedList">
+            {recipes.length ? (
+              recipes.map((recipe) => (
+                <div className="savedItem recipeItem compactSavedItem" key={recipe.id}>
+                  <div>
+                    <h4>{recipe.name}</h4>
+                    <p>
+                      {recipe.category} • {recipe.ingredients?.length || 0} ingredients
+                    </p>
+                  </div>
+
+                  <div className="itemActions">
+                    <button onClick={() => editRecipe(recipe)}>
+                      <Edit3 size={14} />
+                    </button>
+                    <button onClick={() => removeRecipe(recipe.id)}>
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="placeholderBox compactPlaceholder">
+                No recipes saved yet.
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="recipeLibrary">
-          {recipes.length ? (
-            recipes.map((recipe) => (
-              <div className="savedItem recipeItem" key={recipe.id}>
-                <div>
-                  <h4>{recipe.name}</h4>
-                  <p>
-                    {recipe.category} • {recipe.ingredients?.length || 0} ingredients
-                  </p>
-                </div>
+        <div className="workspacePanel compactPanel">
+          <div className="workspaceHeader compactPanelHeader">
+            <div>
+              <p className="eyebrow">Batch Calculator</p>
+              <h3>Scale a Saved Recipe</h3>
+            </div>
+          </div>
 
-                <div className="itemActions">
-                  <button onClick={() => editRecipe(recipe)}>
-                    <Edit3 size={15} />
-                  </button>
-                  <button onClick={() => removeRecipe(recipe.id)}>
-                    <Trash2 size={15} />
-                  </button>
+          <div className="calculatorControls compactCalculatorControls">
+            <label>
+              Recipe
+              <select
+                value={selectedRecipeId}
+                onChange={(event) => setSelectedRecipeId(event.target.value)}
+              >
+                <option value="">Select recipe</option>
+                {recipes.map((recipe) => (
+                  <option key={recipe.id} value={recipe.id}>
+                    {recipe.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              Target Amount
+              <input
+                type="number"
+                step="0.01"
+                value={targetAmount}
+                onChange={(event) => setTargetAmount(event.target.value)}
+                placeholder="e.g., 10"
+              />
+            </label>
+
+            <label>
+              Unit
+              <select
+                value={targetUnit}
+                onChange={(event) => setTargetUnit(event.target.value)}
+              >
+                <option value="oz">oz</option>
+                <option value="g">g</option>
+              </select>
+            </label>
+
+            <label>
+              Overage %
+              <input
+                type="number"
+                step="0.1"
+                value={overagePercent}
+                onChange={(event) => setOveragePercent(event.target.value)}
+                placeholder="e.g., 5"
+              />
+            </label>
+          </div>
+
+          {batchRows.length ? (
+            <>
+              <div className="batchTotals compactBatchTotals">
+                <div>
+                  <p className="eyebrow">Total Grams</p>
+                  <h4>{round(batchTotals.grams)} g</h4>
+                </div>
+                <div>
+                  <p className="eyebrow">Total Ounces</p>
+                  <h4>{round(batchTotals.ounces)} oz</h4>
+                </div>
+                <div>
+                  <p className="eyebrow">Estimated Cost</p>
+                  <h4>${round(batchTotals.cost)}</h4>
                 </div>
               </div>
-            ))
+
+              <div className="batchTable compactBatchTable">
+                <div className="batchTableHeader">
+                  <span>Ingredient</span>
+                  <span>Parts</span>
+                  <span>Grams</span>
+                  <span>Ounces</span>
+                  <span>Cost</span>
+                </div>
+
+                {batchRows.map((row) => (
+                  <div className="batchTableRow" key={row.name}>
+                    <span>{row.name}</span>
+                    <span>{round(row.parts, 4)}</span>
+                    <span>{round(row.grams)}</span>
+                    <span>{round(row.ounces)}</span>
+                    <span>${round(row.estimatedCost)}</span>
+                  </div>
+                ))}
+              </div>
+            </>
           ) : (
-            <div className="placeholderBox">
-              No recipes saved yet. Build your first blend above.
+            <div className="placeholderBox compactPlaceholder">
+              Select a saved recipe and enter a target amount to generate batch weights.
             </div>
           )}
         </div>
-      </section>
-
-      <section className="workspacePanel">
-        <div className="workspaceHeader">
-          <div>
-            <p className="eyebrow">Batch Calculator</p>
-            <h3>Scale a Saved Recipe</h3>
-          </div>
-        </div>
-
-        <div className="calculatorControls">
-          <label>
-            Recipe
-            <select
-              value={selectedRecipeId}
-              onChange={(event) => setSelectedRecipeId(event.target.value)}
-            >
-              <option value="">Select recipe</option>
-              {recipes.map((recipe) => (
-                <option key={recipe.id} value={recipe.id}>
-                  {recipe.name}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Target Amount
-            <input
-              type="number"
-              step="0.01"
-              value={targetAmount}
-              onChange={(event) => setTargetAmount(event.target.value)}
-            />
-          </label>
-
-          <label>
-            Unit
-            <select
-              value={targetUnit}
-              onChange={(event) => setTargetUnit(event.target.value)}
-            >
-              <option value="oz">oz</option>
-              <option value="g">g</option>
-            </select>
-          </label>
-
-          <label>
-            Overage %
-            <input
-              type="number"
-              step="0.1"
-              value={overagePercent}
-              onChange={(event) => setOveragePercent(event.target.value)}
-            />
-          </label>
-        </div>
-
-        {batchRows.length ? (
-          <>
-            <div className="batchTotals">
-              <div>
-                <p className="eyebrow">Total Grams</p>
-                <h4>{round(batchTotals.grams)} g</h4>
-              </div>
-              <div>
-                <p className="eyebrow">Total Ounces</p>
-                <h4>{round(batchTotals.ounces)} oz</h4>
-              </div>
-              <div>
-                <p className="eyebrow">Estimated Cost</p>
-                <h4>${round(batchTotals.cost)}</h4>
-              </div>
-            </div>
-
-            <div className="batchTable">
-              <div className="batchTableHeader">
-                <span>Ingredient</span>
-                <span>Parts</span>
-                <span>Grams</span>
-                <span>Ounces</span>
-                <span>Cost</span>
-              </div>
-
-              {batchRows.map((row) => (
-                <div className="batchTableRow" key={row.name}>
-                  <span>{row.name}</span>
-                  <span>{round(row.parts, 4)}</span>
-                  <span>{round(row.grams)}</span>
-                  <span>{round(row.ounces)}</span>
-                  <span>${round(row.estimatedCost)}</span>
-                </div>
-              ))}
-            </div>
-          </>
-        ) : (
-          <div className="placeholderBox">
-            Select a saved recipe to generate batch weights.
-          </div>
-        )}
       </section>
     </div>
   );
