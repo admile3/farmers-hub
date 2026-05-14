@@ -10,6 +10,7 @@
   --spice: #a94f2d;
   --amber: #c78332;
   --cream: #fff7e8;
+  --danger: #9b2f24;
   --shadow: 0 18px 50px rgba(45, 38, 29, 0.12);
   --radius: 24px;
 }
@@ -39,8 +40,47 @@ a {
   text-decoration: none;
 }
 
-button {
+button,
+input,
+select,
+textarea {
   font: inherit;
+}
+
+button {
+  border: 0;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--text);
+  padding: 11px 12px;
+  outline: none;
+}
+
+textarea {
+  min-height: 86px;
+  resize: vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: rgba(169, 79, 45, 0.55);
+  box-shadow: 0 0 0 4px rgba(169, 79, 45, 0.08);
+}
+
+label {
+  display: grid;
+  gap: 7px;
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 800;
 }
 
 .app {
@@ -257,7 +297,6 @@ button {
 }
 
 .primaryButton {
-  border: 0;
   border-radius: 999px;
   background: var(--green);
   color: white;
@@ -298,6 +337,28 @@ button {
 
 .secondaryButton:hover {
   background: white;
+}
+
+.compactButton {
+  width: fit-content;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+}
+
+.iconButton {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.iconButton.danger {
+  color: var(--danger);
 }
 
 .sectionHeader {
@@ -463,9 +524,21 @@ button {
   padding: 26px;
 }
 
+.workspaceHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
 .workspaceHeader h3 {
   margin: 6px 0 0;
   font-size: 1.5rem;
+}
+
+.splitHeader {
+  align-items: center;
 }
 
 .placeholderBox {
@@ -495,6 +568,267 @@ button {
   color: var(--muted);
 }
 
+.statusBanner {
+  border: 1px solid rgba(82, 107, 69, 0.18);
+  background: rgba(82, 107, 69, 0.1);
+  color: var(--green-dark);
+  border-radius: 18px;
+  padding: 13px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 800;
+}
+
+.statusBanner button {
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.spiceWorkspace {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr);
+  gap: 20px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.fullSpan {
+  grid-column: 1 / -1;
+}
+
+.inlineFields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 110px;
+  gap: 10px;
+}
+
+.formActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.searchBox {
+  margin: 20px 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 16px;
+  padding: 0 12px;
+}
+
+.searchBox svg {
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+
+.searchBox input {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding-left: 0;
+}
+
+.searchBox input:focus {
+  box-shadow: none;
+}
+
+.savedList,
+.recipeLibrary {
+  display: grid;
+  gap: 10px;
+  max-height: 520px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.savedItem {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 18px;
+  padding: 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.savedItem h4 {
+  margin: 0 0 5px;
+}
+
+.savedItem p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.itemActions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.itemActions button {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: var(--text);
+  background: rgba(255, 250, 240, 0.8);
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.itemActions button:last-child {
+  color: var(--danger);
+}
+
+.quickAddPanel {
+  border: 1px dashed rgba(169, 79, 45, 0.35);
+  background: rgba(169, 79, 45, 0.07);
+  border-radius: 20px;
+  padding: 18px;
+  margin-bottom: 18px;
+}
+
+.quickAddHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.quickAddHeader h4 {
+  margin: 0;
+}
+
+.quickAddHeader button {
+  display: grid;
+  place-items: center;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.recipeLines {
+  margin-top: 18px;
+}
+
+.recipeLineHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.recipeLineHeader h4 {
+  margin: 0;
+}
+
+.recipeLine {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(120px, 0.5fr) 44px;
+  gap: 10px;
+  align-items: end;
+}
+
+.recipeItem {
+  align-items: center;
+}
+
+.calculatorControls {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.5fr) repeat(3, minmax(110px, 0.5fr));
+  gap: 14px;
+}
+
+.batchTotals {
+  margin: 20px 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.batchTotals > div {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.batchTotals h4 {
+  margin: 8px 0 0;
+  font-size: 1.7rem;
+}
+
+.batchTable {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.batchTableHeader,
+.batchTableRow {
+  display: grid;
+  grid-template-columns: 1.5fr repeat(4, minmax(90px, 0.5fr));
+  gap: 10px;
+  padding: 12px 14px;
+}
+
+.batchTableHeader {
+  background: var(--panel-strong);
+  font-weight: 900;
+}
+
+.batchTableRow {
+  background: rgba(255, 255, 255, 0.45);
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.batchTableRow span:first-child {
+  color: var(--text);
+  font-weight: 800;
+}
+
+@media (max-width: 1200px) {
+  .spiceWorkspace {
+    grid-template-columns: 1fr;
+  }
+
+  .toolGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .calculatorControls,
+  .batchTotals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .batchTable {
+    overflow-x: auto;
+  }
+
+  .batchTableHeader,
+  .batchTableRow {
+    min-width: 720px;
+  }
+}
+
 @media (max-width: 1050px) {
   .app {
     grid-template-columns: 1fr;
@@ -510,12 +844,38 @@ button {
     grid-template-columns: 1fr;
   }
 
-  .moduleGrid,
-  .toolGrid {
+  .moduleGrid {
     grid-template-columns: 1fr;
   }
 
   .main {
     padding: 22px;
+  }
+}
+
+@media (max-width: 700px) {
+  .formGrid,
+  .toolGrid,
+  .calculatorControls,
+  .batchTotals {
+    grid-template-columns: 1fr;
+  }
+
+  .recipeLine {
+    grid-template-columns: 1fr;
+  }
+
+  .iconButton {
+    width: 100%;
+  }
+
+  .workspaceHeader,
+  .recipeLineHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .compactButton {
+    width: 100%;
   }
 }
