@@ -16,42 +16,68 @@ import {
   saveMarketPrepPlan
 } from "../services/marketPrepService.js";
 
+const marketCategories = [
+  "Produce",
+  "Red Meat",
+  "Poultry",
+  "Protein",
+  "Plant Starts",
+  "Bread",
+  "Spices",
+  "Condiments",
+  "Eggs",
+  "Dairy",
+  "Baked Goods",
+  "Prepared Foods",
+  "Flowers",
+  "Crafts",
+  "Other"
+];
+
 const starterProducts = [
   {
-    id: "rambo-radish",
-    name: "Rambo Radish",
-    category: "Microgreens",
-    target1oz: 10,
-    target2oz: 4,
-    harvestBufferPct: 10,
-    notes: "High visual impact, good seller."
+    id: "sample-produce",
+    name: "Tomatoes",
+    category: "Produce",
+    unitLabel: "1 lb bag",
+    plannedUnits: 12,
+    unitAmount: 1,
+    amountUnit: "lb",
+    bufferPct: 10,
+    notes: "Example produce item."
   },
   {
-    id: "sunflower",
-    name: "Black Oil Sunflower",
-    category: "Microgreens",
-    target1oz: 12,
-    target2oz: 6,
-    harvestBufferPct: 10,
-    notes: "Core market staple."
+    id: "sample-bread",
+    name: "Sourdough Loaf",
+    category: "Bread",
+    unitLabel: "loaf",
+    plannedUnits: 18,
+    unitAmount: 1,
+    amountUnit: "loaf",
+    bufferPct: 0,
+    notes: "Example bread item."
   },
   {
-    id: "pea-shoots",
-    name: "Pea Shoots",
-    category: "Microgreens",
-    target1oz: 10,
-    target2oz: 5,
-    harvestBufferPct: 10,
-    notes: "Good for samples and broad customer appeal."
+    id: "sample-spice",
+    name: "Seasoning Pouch",
+    category: "Spices",
+    unitLabel: "0.2 oz pouch",
+    plannedUnits: 30,
+    unitAmount: 0.2,
+    amountUnit: "oz",
+    bufferPct: 5,
+    notes: "Example spice item."
   },
   {
-    id: "spicy-mix",
-    name: "Spicy Salad Mix",
-    category: "Microgreens",
-    target1oz: 8,
-    target2oz: 4,
-    harvestBufferPct: 10,
-    notes: "Good upsell for sandwiches, tacos, eggs."
+    id: "sample-eggs",
+    name: "Chicken Eggs",
+    category: "Eggs",
+    unitLabel: "dozen",
+    plannedUnits: 10,
+    unitAmount: 1,
+    amountUnit: "dozen",
+    bufferPct: 0,
+    notes: "Example egg item."
   }
 ];
 
@@ -59,7 +85,7 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function round(value, digits = 1) {
+function round(value, digits = 2) {
   const factor = Math.pow(10, digits);
   return Math.round((Number(value) || 0) * factor) / factor;
 }
@@ -71,11 +97,26 @@ function makeId() {
 function createBlankPlan() {
   return {
     id: "",
-    marketName: "Lexington Farmers Market",
+    marketName: "Farmers Market",
     marketDate: todayISO(),
-    location: "Southland Drive",
+    location: "",
     weatherNotes: "",
     products: starterProducts
+  };
+}
+
+function getProductTotals(product) {
+  const plannedUnits = Number(product.plannedUnits) || 0;
+  const unitAmount = Number(product.unitAmount) || 0;
+  const bufferPct = Number(product.bufferPct) || 0;
+
+  const plannedAmount = plannedUnits * unitAmount;
+  const finalAmount = plannedAmount * (1 + bufferPct / 100);
+
+  return {
+    plannedUnits,
+    plannedAmount,
+    finalAmount
   };
 }
 
@@ -83,9 +124,9 @@ export default function MarketPrepPlanner() {
   const { user, loginWithGoogle } = useAuth();
 
   const [planId, setPlanId] = useState("");
-  const [marketName, setMarketName] = useState("Lexington Farmers Market");
+  const [marketName, setMarketName] = useState("Farmers Market");
   const [marketDate, setMarketDate] = useState(todayISO());
-  const [location, setLocation] = useState("Southland Drive");
+  const [location, setLocation] = useState("");
   const [weatherNotes, setWeatherNotes] = useState("");
   const [products, setProducts] = useState(starterProducts);
   const [savedPlans, setSavedPlans] = useState([]);
@@ -95,36 +136,52 @@ export default function MarketPrepPlanner() {
 
   const [newProduct, setNewProduct] = useState({
     name: "",
-    category: "Microgreens",
-    target1oz: "",
-    target2oz: "",
-    harvestBufferPct: 10,
+    category: "Produce",
+    unitLabel: "",
+    plannedUnits: "",
+    unitAmount: "",
+    amountUnit: "",
+    bufferPct: 0,
     notes: ""
   });
 
   const totals = useMemo(() => {
     return products.reduce(
       (sum, product) => {
-        const oneOz = Number(product.target1oz) || 0;
-        const twoOz = Number(product.target2oz) || 0;
-        const packagedOz = oneOz + twoOz * 2;
-        const bufferMultiplier = 1 + (Number(product.harvestBufferPct) || 0) / 100;
-        const harvestOz = packagedOz * bufferMultiplier;
+        const productTotals = getProductTotals(product);
 
         return {
-          oneOzContainers: sum.oneOzContainers + oneOz,
-          twoOzContainers: sum.twoOzContainers + twoOz,
-          packagedOz: sum.packagedOz + packagedOz,
-          harvestOz: sum.harvestOz + harvestOz
+          productCount: sum.productCount + 1,
+          plannedUnits: sum.plannedUnits + productTotals.plannedUnits,
+          lineItemsWithBuffer:
+            sum.lineItemsWithBuffer + (Number(product.bufferPct) > 0 ? 1 : 0)
         };
       },
       {
-        oneOzContainers: 0,
-        twoOzContainers: 0,
-        packagedOz: 0,
-        harvestOz: 0
+        productCount: 0,
+        plannedUnits: 0,
+        lineItemsWithBuffer: 0
       }
     );
+  }, [products]);
+
+  const categorySummary = useMemo(() => {
+    return products.reduce((summary, product) => {
+      const category = product.category || "Other";
+      const productTotals = getProductTotals(product);
+
+      if (!summary[category]) {
+        summary[category] = {
+          units: 0,
+          items: 0
+        };
+      }
+
+      summary[category].units += productTotals.plannedUnits;
+      summary[category].items += 1;
+
+      return summary;
+    }, {});
   }, [products]);
 
   async function loadSavedPlans() {
@@ -153,7 +210,7 @@ export default function MarketPrepPlanner() {
 
   function hydratePlan(plan) {
     setPlanId(plan.id || "");
-    setMarketName(plan.marketName || "Lexington Farmers Market");
+    setMarketName(plan.marketName || "Farmers Market");
     setMarketDate(plan.marketDate || todayISO());
     setLocation(plan.location || "");
     setWeatherNotes(plan.weatherNotes || "");
@@ -241,25 +298,34 @@ export default function MarketPrepPlanner() {
       return;
     }
 
+    if (!newProduct.unitLabel.trim()) {
+      setStatusMessage("Unit label is required.");
+      return;
+    }
+
     setProducts((current) => [
       ...current,
       {
         id: makeId(),
         name: newProduct.name.trim(),
         category: newProduct.category,
-        target1oz: Number(newProduct.target1oz) || 0,
-        target2oz: Number(newProduct.target2oz) || 0,
-        harvestBufferPct: Number(newProduct.harvestBufferPct) || 0,
+        unitLabel: newProduct.unitLabel.trim(),
+        plannedUnits: Number(newProduct.plannedUnits) || 0,
+        unitAmount: Number(newProduct.unitAmount) || 0,
+        amountUnit: newProduct.amountUnit.trim(),
+        bufferPct: Number(newProduct.bufferPct) || 0,
         notes: newProduct.notes.trim()
       }
     ]);
 
     setNewProduct({
       name: "",
-      category: "Microgreens",
-      target1oz: "",
-      target2oz: "",
-      harvestBufferPct: 10,
+      category: "Produce",
+      unitLabel: "",
+      plannedUnits: "",
+      unitAmount: "",
+      amountUnit: "",
+      bufferPct: 0,
       notes: ""
     });
 
@@ -278,8 +344,8 @@ export default function MarketPrepPlanner() {
             <p className="eyebrow">Market Prep Planner</p>
             <h2>Sign in to save market prep plans.</h2>
             <p>
-              Build harvest forecasts and pack lists locally, then sign in to save
-              market plans to your Farmers Hub account.
+              Build generalized product forecasts and pack lists locally, then sign in
+              to save market plans to your Farmers Hub account.
             </p>
           </div>
 
@@ -296,10 +362,11 @@ export default function MarketPrepPlanner() {
       <section className="moduleHero compactHero noActionHero">
         <div>
           <p className="eyebrow">Market Prep Planner</p>
-          <h2>Plan harvest, packing, and product quantities before market day.</h2>
+          <h2>Plan packing, prep quantities, and inventory before market day.</h2>
           <p>
-            Build a market plan by location and date, estimate 1oz and 2oz container
-            counts, add harvest buffer, save plans, and print a working prep sheet.
+            Build a market plan by location and date, define your own unit labels,
+            estimate product quantities, add buffers, save plans, and print a working
+            prep sheet.
           </p>
         </div>
       </section>
@@ -322,14 +389,14 @@ export default function MarketPrepPlanner() {
 
         <div className="toolCard compactToolCard">
           <Sprout size={22} />
-          <h3>Harvest Forecast</h3>
-          <p>Estimate how many ounces to harvest with a built-in buffer.</p>
+          <h3>Product Forecast</h3>
+          <p>Plan any vendor product using custom units and categories.</p>
         </div>
 
         <div className="toolCard compactToolCard">
           <PackageCheck size={22} />
           <h3>Pack List</h3>
-          <p>Calculate 1oz and 2oz container counts by product.</p>
+          <p>Calculate planned units and prep targets by product.</p>
         </div>
 
         <div className="toolCard compactToolCard">
@@ -384,7 +451,7 @@ export default function MarketPrepPlanner() {
               <input
                 value={marketName}
                 onChange={(event) => setMarketName(event.target.value)}
-                placeholder="e.g., Lexington Farmers Market"
+                placeholder="e.g., Downtown Farmers Market"
               />
             </label>
 
@@ -402,7 +469,7 @@ export default function MarketPrepPlanner() {
               <input
                 value={location}
                 onChange={(event) => setLocation(event.target.value)}
-                placeholder="e.g., Southland Drive"
+                placeholder="e.g., Pavilion, Main Street, South Lot"
               />
             </label>
 
@@ -418,22 +485,28 @@ export default function MarketPrepPlanner() {
 
           <div className="batchTotals compactBatchTotals">
             <div>
-              <p className="eyebrow">1oz Containers</p>
-              <h4>{totals.oneOzContainers}</h4>
+              <p className="eyebrow">Products</p>
+              <h4>{totals.productCount}</h4>
             </div>
             <div>
-              <p className="eyebrow">2oz Containers</p>
-              <h4>{totals.twoOzContainers}</h4>
+              <p className="eyebrow">Planned Units</p>
+              <h4>{totals.plannedUnits}</h4>
             </div>
             <div>
-              <p className="eyebrow">Harvest Target</p>
-              <h4>{round(totals.harvestOz)} oz</h4>
+              <p className="eyebrow">Buffered Items</p>
+              <h4>{totals.lineItemsWithBuffer}</h4>
             </div>
           </div>
 
           <div className="placeholderBox compactPlaceholder">
-            <strong>{marketName}</strong> at <strong>{location}</strong> on{" "}
-            <strong>{marketDate}</strong>
+            <strong>{marketName}</strong>
+            {location ? (
+              <>
+                {" "}
+                at <strong>{location}</strong>
+              </>
+            ) : null}{" "}
+            on <strong>{marketDate}</strong>
             {weatherNotes ? ` • ${weatherNotes}` : ""}
           </div>
         </div>
@@ -491,13 +564,13 @@ export default function MarketPrepPlanner() {
 
           <form className="formGrid compactFormGrid" onSubmit={addProduct}>
             <label>
-              Product / Variety
+              Product / Item
               <input
                 value={newProduct.name}
                 onChange={(event) =>
                   setNewProduct((current) => ({ ...current, name: event.target.value }))
                 }
-                placeholder="e.g., Broccoli Microgreens"
+                placeholder="e.g., Tomatoes, Eggs, Loaf, Starter Tray"
               />
             </label>
 
@@ -512,53 +585,80 @@ export default function MarketPrepPlanner() {
                   }))
                 }
               >
-                <option>Microgreens</option>
-                <option>Spice Blend</option>
-                <option>Edible Flowers</option>
-                <option>Baked Goods</option>
-                <option>Other</option>
+                {marketCategories.map((category) => (
+                  <option key={category}>{category}</option>
+                ))}
               </select>
             </label>
 
             <label>
-              1oz Containers
+              Unit Label
               <input
-                type="number"
-                value={newProduct.target1oz}
+                value={newProduct.unitLabel}
                 onChange={(event) =>
                   setNewProduct((current) => ({
                     ...current,
-                    target1oz: event.target.value
+                    unitLabel: event.target.value
                   }))
                 }
-                placeholder="e.g., 10"
+                placeholder="e.g., 1 lb bag, dozen, loaf, 4-pack, 0.2 oz pouch"
               />
             </label>
 
             <label>
-              2oz Containers
+              Planned Units
               <input
                 type="number"
-                value={newProduct.target2oz}
+                value={newProduct.plannedUnits}
                 onChange={(event) =>
                   setNewProduct((current) => ({
                     ...current,
-                    target2oz: event.target.value
+                    plannedUnits: event.target.value
                   }))
                 }
-                placeholder="e.g., 4"
+                placeholder="e.g., 24"
               />
             </label>
 
             <label>
-              Harvest Buffer %
+              Amount Per Unit
               <input
                 type="number"
-                value={newProduct.harvestBufferPct}
+                step="0.0001"
+                value={newProduct.unitAmount}
                 onChange={(event) =>
                   setNewProduct((current) => ({
                     ...current,
-                    harvestBufferPct: event.target.value
+                    unitAmount: event.target.value
+                  }))
+                }
+                placeholder="e.g., 1, 0.2, 12"
+              />
+            </label>
+
+            <label>
+              Amount Unit
+              <input
+                value={newProduct.amountUnit}
+                onChange={(event) =>
+                  setNewProduct((current) => ({
+                    ...current,
+                    amountUnit: event.target.value
+                  }))
+                }
+                placeholder="e.g., lb, oz, dozen, each, tray"
+              />
+            </label>
+
+            <label>
+              Buffer %
+              <input
+                type="number"
+                value={newProduct.bufferPct}
+                onChange={(event) =>
+                  setNewProduct((current) => ({
+                    ...current,
+                    bufferPct: event.target.value
                   }))
                 }
                 placeholder="e.g., 10"
@@ -572,7 +672,7 @@ export default function MarketPrepPlanner() {
                 onChange={(event) =>
                   setNewProduct((current) => ({ ...current, notes: event.target.value }))
                 }
-                placeholder="e.g., Heavy sample variety"
+                placeholder="e.g., Best seller, sample item, keep cold"
               />
             </label>
 
@@ -589,27 +689,27 @@ export default function MarketPrepPlanner() {
           <div className="workspaceHeader compactPanelHeader">
             <div>
               <p className="eyebrow">Summary</p>
-              <h3>Prep Summary</h3>
+              <h3>Category Summary</h3>
             </div>
           </div>
 
-          <div className="batchTotals compactBatchTotals">
-            <div>
-              <p className="eyebrow">Packaged</p>
-              <h4>{round(totals.packagedOz)} oz</h4>
-            </div>
-            <div>
-              <p className="eyebrow">Harvest</p>
-              <h4>{round(totals.harvestOz)} oz</h4>
-            </div>
-            <div>
-              <p className="eyebrow">Products</p>
-              <h4>{products.length}</h4>
-            </div>
-          </div>
-
-          <div className="placeholderBox compactPlaceholder">
-            Harvest target includes each product’s buffer percentage.
+          <div className="savedList compactSavedList">
+            {Object.keys(categorySummary).length ? (
+              Object.entries(categorySummary).map(([category, summary]) => (
+                <div className="savedItem compactSavedItem" key={category}>
+                  <div>
+                    <h4>{category}</h4>
+                    <p>
+                      {summary.items} items • {summary.units} planned units
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="placeholderBox compactPlaceholder">
+                Add products to see category totals.
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -618,31 +718,31 @@ export default function MarketPrepPlanner() {
         <div className="workspaceHeader compactPanelHeader">
           <div>
             <p className="eyebrow">Pack List</p>
-            <h3>Market Pack + Harvest Plan</h3>
+            <h3>Market Pack + Prep Plan</h3>
           </div>
         </div>
 
         <div className="batchTable compactBatchTable">
-          <div className="batchTableHeader marketPrepTableHeader">
+          <div className="batchTableHeader marketPrepTableHeader generalizedMarketPrepTable">
             <span>Product</span>
             <span>Category</span>
-            <span>1oz</span>
-            <span>2oz</span>
-            <span>Packaged Oz</span>
-            <span>Harvest Oz</span>
+            <span>Unit Label</span>
+            <span>Planned Units</span>
+            <span>Amount / Unit</span>
+            <span>Total Amount</span>
+            <span>Final Target</span>
             <span>Notes</span>
             <span></span>
           </div>
 
           {products.map((product) => {
-            const oneOz = Number(product.target1oz) || 0;
-            const twoOz = Number(product.target2oz) || 0;
-            const packagedOz = oneOz + twoOz * 2;
-            const harvestOz =
-              packagedOz * (1 + (Number(product.harvestBufferPct) || 0) / 100);
+            const productTotals = getProductTotals(product);
 
             return (
-              <div className="batchTableRow marketPrepTableRow" key={product.id}>
+              <div
+                className="batchTableRow marketPrepTableRow generalizedMarketPrepTable"
+                key={product.id}
+              >
                 <span>
                   <input
                     value={product.name}
@@ -659,20 +759,17 @@ export default function MarketPrepPlanner() {
                       updateProduct(product.id, "category", event.target.value)
                     }
                   >
-                    <option>Microgreens</option>
-                    <option>Spice Blend</option>
-                    <option>Edible Flowers</option>
-                    <option>Baked Goods</option>
-                    <option>Other</option>
+                    {marketCategories.map((category) => (
+                      <option key={category}>{category}</option>
+                    ))}
                   </select>
                 </span>
 
                 <span>
                   <input
-                    type="number"
-                    value={product.target1oz}
+                    value={product.unitLabel}
                     onChange={(event) =>
-                      updateProduct(product.id, "target1oz", event.target.value)
+                      updateProduct(product.id, "unitLabel", event.target.value)
                     }
                   />
                 </span>
@@ -680,15 +777,40 @@ export default function MarketPrepPlanner() {
                 <span>
                   <input
                     type="number"
-                    value={product.target2oz}
+                    value={product.plannedUnits}
                     onChange={(event) =>
-                      updateProduct(product.id, "target2oz", event.target.value)
+                      updateProduct(product.id, "plannedUnits", event.target.value)
                     }
                   />
                 </span>
 
-                <span>{round(packagedOz)} oz</span>
-                <span>{round(harvestOz)} oz</span>
+                <span>
+                  <div className="inlineMiniFields">
+                    <input
+                      type="number"
+                      step="0.0001"
+                      value={product.unitAmount}
+                      onChange={(event) =>
+                        updateProduct(product.id, "unitAmount", event.target.value)
+                      }
+                    />
+                    <input
+                      value={product.amountUnit}
+                      onChange={(event) =>
+                        updateProduct(product.id, "amountUnit", event.target.value)
+                      }
+                    />
+                  </div>
+                </span>
+
+                <span>
+                  {round(productTotals.plannedAmount)} {product.amountUnit}
+                </span>
+
+                <span>
+                  {round(productTotals.finalAmount)} {product.amountUnit}
+                  {Number(product.bufferPct) > 0 ? ` (${product.bufferPct}% buffer)` : ""}
+                </span>
 
                 <span>
                   <input
