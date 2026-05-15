@@ -1171,3 +1171,167 @@ label {
   padding: 0 10px;
   white-space: nowrap;
 }
+.marketPrepPrintHeader {
+  display: none;
+}
+
+.marketPrepCheckCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.marketPrepCheckCell input {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+}
+
+.marketPrepCompactHeader,
+.marketPrepCompactRow {
+  grid-template-columns:
+    54px
+    minmax(170px, 1.3fr)
+    minmax(125px, 0.8fr)
+    minmax(120px, 0.75fr)
+    72px
+    126px
+    100px
+    118px
+    minmax(150px, 1fr)
+    46px;
+  min-width: 1120px;
+}
+
+@media print {
+  body {
+    background: white !important;
+  }
+
+  .sidebar,
+  .moduleHero,
+  .toolGrid,
+  .statusBanner,
+  .backToTopButton,
+  .marketPrepNoPrint,
+  .marketPrepPage > .spiceWorkspace,
+  .marketPrepPage > section:not(.marketPrepPrintPackList):not(.marketPrepPrintSummary) {
+    display: none !important;
+  }
+
+  .app {
+    display: block !important;
+  }
+
+  .main {
+    padding: 0 !important;
+  }
+
+  .marketPrepPage {
+    display: block !important;
+    background: white !important;
+  }
+
+  .marketPrepPrintSummary,
+  .marketPrepPrintPackList {
+    display: block !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+    margin: 0 0 18px !important;
+    background: white !important;
+  }
+
+  .marketPrepPrintHeader {
+    display: block !important;
+    margin-bottom: 14px;
+  }
+
+  .marketPrepPrintHeader h2 {
+    margin: 0 0 4px;
+    font-size: 20px;
+  }
+
+  .marketPrepPrintHeader p {
+    margin: 0;
+    font-size: 12px;
+  }
+
+  .workspaceHeader {
+    margin-bottom: 10px !important;
+  }
+
+  .workspaceHeader h3 {
+    font-size: 16px !important;
+  }
+
+  .savedList,
+  .recipeLibrary {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .savedItem {
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+
+  .batchTable {
+    border: 1px solid #ddd !important;
+    overflow: visible !important;
+  }
+
+  .marketPrepCompactHeader,
+  .marketPrepCompactRow {
+    min-width: 0 !important;
+    grid-template-columns:
+      42px
+      1.4fr
+      0.9fr
+      0.85fr
+      0.45fr
+      0.75fr
+      0.75fr
+      0.85fr
+      1.1fr !important;
+    font-size: 10px !important;
+    padding: 6px !important;
+    page-break-inside: avoid;
+  }
+
+  .marketPrepCompactHeader span:last-child,
+  .marketPrepCompactRow span:last-child {
+    display: none !important;
+  }
+
+  .marketPrepCompactRow input,
+  .marketPrepCompactRow select {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    font-size: 10px !important;
+    min-height: 0 !important;
+    appearance: none !important;
+  }
+
+  .amountUnitInline {
+    grid-template-columns: 34px 1fr !important;
+    gap: 3px !important;
+  }
+
+  .marketPrepCheckCell input {
+    appearance: auto !important;
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  .marketPrepCalculated {
+    font-size: 10px !important;
+  }
+
+  .marketPrepCalculated small {
+    font-size: 8px !important;
+  }
+}
