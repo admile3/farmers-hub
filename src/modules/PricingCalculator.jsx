@@ -437,13 +437,14 @@ export default function PricingCalculator() {
       </section>
 
       {statusMessage ? (
-        <div className="statusBanner">
-          <span>{statusMessage}</span>
-          <button type="button" onClick={() => setStatusMessage("")}>
-            ×
-          </button>
-        </div>
-      ) : null}
+  <div className="floatingStatus success">
+    <span>ⓘ</span>
+    <span>{statusMessage}</span>
+    <button type="button" onClick={() => setStatusMessage("")}>
+      ×
+    </button>
+  </div>
+) : null}
 
       <section className="toolGrid compactToolGrid">
         {sectionCards.map((card) => {
