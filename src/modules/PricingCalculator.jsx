@@ -759,216 +759,125 @@ export default function PricingCalculator() {
       </section>
 
       <section className="workspacePanel compactPanel scrollAnchor" ref={comparisonRef}>
-        <div className="workspaceHeader compactPanelHeader">
-          <div>
-            <p className="eyebrow">Review</p>
-            <h3>Pricing Comparison</h3>
-          </div>
+  <div className="workspaceHeader compactPanelHeader">
+    <div>
+      <p className="eyebrow">Review</p>
+      <h3>Pricing Comparison</h3>
+    </div>
 
-          <button
-            className="primaryButton compactPrimary"
-            type="button"
-            onClick={saveCalculation}
-            disabled={saving}
-          >
-            <Save size={15} />
-            {saving ? "Saving..." : "Save Changes"}
-          </button>
-        </div>
-
-        <div className="batchTable compactBatchTable pricingComparisonTable">
-  <div className="batchTableHeader pricingComparisonHeader">
-    <span>Product</span>
-    <span>Category</span>
-    <span>Cost / Unit</span>
-    <span>Suggested $</span>
-    <span>Retail $</span>
-    <span>Retail Margin</span>
-    <span>Wholesale $</span>
-    <span>Wholesale Margin</span>
-    <span>Notes</span>
-    <span></span>
+    <button
+      className="primaryButton compactPrimary"
+      type="button"
+      onClick={saveCalculation}
+      disabled={saving}
+    >
+      <Save size={15} />
+      {saving ? "Saving..." : "Save Changes"}
+    </button>
   </div>
 
-  {items.map((item) => {
-    const calc = calculateItem(item);
+  <div className="batchTable compactBatchTable pricingComparisonTable">
+    <div className="batchTableHeader pricingComparisonHeader">
+      <span>Product</span>
+      <span>Category</span>
+      <span>Cost / Unit</span>
+      <span>Suggested $</span>
+      <span>Retail $</span>
+      <span>Retail Margin</span>
+      <span>Wholesale $</span>
+      <span>Wholesale Margin</span>
+      <span>Notes</span>
+      <span></span>
+    </div>
 
-    return (
-      <div className="batchTableRow pricingComparisonRow" key={item.id}>
-        <span>
-          <input
-            value={item.productName}
-            onChange={(event) =>
-              updateItem(item.id, "productName", event.target.value)
-            }
-          />
-        </span>
+    {items.map((item) => {
+      const calc = calculateItem(item);
 
-        <span>
-          <select
-            value={item.category}
-            onChange={(event) =>
-              updateItem(item.id, "category", event.target.value)
-            }
-          >
-            {categories.map((category) => (
-              <option key={category}>{category}</option>
-            ))}
-          </select>
-        </span>
+      return (
+        <div className="batchTableRow pricingComparisonRow" key={item.id}>
+          <span>
+            <input
+              value={item.productName}
+              onChange={(event) =>
+                updateItem(item.id, "productName", event.target.value)
+              }
+            />
+          </span>
 
-        <span className="pricingMetric">
-          ${round(calc.costPerUnit).toFixed(2)}
-        </span>
+          <span>
+            <select
+              value={item.category}
+              onChange={(event) =>
+                updateItem(item.id, "category", event.target.value)
+              }
+            >
+              {categories.map((category) => (
+                <option key={category}>{category}</option>
+              ))}
+            </select>
+          </span>
 
-        <span className="pricingMetric">
-          ${round(calc.suggestedPrice).toFixed(2)}
-        </span>
+          <span className="pricingMetric">
+            ${round(calc.costPerUnit).toFixed(2)}
+          </span>
 
-        <span>
-          <input
-            type="number"
-            step="0.01"
-            value={item.retailPrice}
-            onChange={(event) =>
-              updateItem(item.id, "retailPrice", event.target.value)
-            }
-          />
-        </span>
+          <span className="pricingMetric">
+            ${round(calc.suggestedPrice).toFixed(2)}
+          </span>
 
-        <span className="pricingMetric pricingPositive">
-          {round(calc.retailMargin).toFixed(1)}%
-        </span>
+          <span>
+            <input
+              type="number"
+              step="0.01"
+              value={item.retailPrice}
+              onChange={(event) =>
+                updateItem(item.id, "retailPrice", event.target.value)
+              }
+            />
+          </span>
 
-        <span>
-          <input
-            type="number"
-            step="0.01"
-            value={item.wholesalePrice}
-            onChange={(event) =>
-              updateItem(item.id, "wholesalePrice", event.target.value)
-            }
-          />
-        </span>
+          <span className="pricingMetric pricingPositive">
+            {round(calc.retailMargin).toFixed(1)}%
+          </span>
 
-        <span className="pricingMetric pricingPositive">
-          {round(calc.wholesaleMargin).toFixed(1)}%
-        </span>
+          <span>
+            <input
+              type="number"
+              step="0.01"
+              value={item.wholesalePrice}
+              onChange={(event) =>
+                updateItem(item.id, "wholesalePrice", event.target.value)
+              }
+            />
+          </span>
 
-        <span>
-          <input
-            value={item.notes}
-            onChange={(event) =>
-              updateItem(item.id, "notes", event.target.value)
-            }
-          />
-        </span>
+          <span className="pricingMetric pricingPositive">
+            {round(calc.wholesaleMargin).toFixed(1)}%
+          </span>
 
-        <span>
-          <button
-            className="iconButton danger"
-            type="button"
-            onClick={() => removeItem(item.id)}
-          >
-            <Trash2 size={15} />
-          </button>
-        </span>
-      </div>
-    );
-  })}
-</div>
+          <span>
+            <input
+              value={item.notes}
+              onChange={(event) =>
+                updateItem(item.id, "notes", event.target.value)
+              }
+            />
+          </span>
 
-          {items.map((item) => {
-            const calc = calculateItem(item);
-
-            return (
-              <div className="batchTableRow pricingTableRow" key={item.id}>
-                <span>
-                  <input
-                    value={item.productName}
-                    onChange={(event) =>
-                      updateItem(item.id, "productName", event.target.value)
-                    }
-                  />
-                </span>
-
-                <span>
-                  <select
-                    value={item.category}
-                    onChange={(event) =>
-                      updateItem(item.id, "category", event.target.value)
-                    }
-                  >
-                    {categories.map((category) => (
-                      <option key={category}>{category}</option>
-                    ))}
-                  </select>
-                </span>
-
-                <span className="marketPrepCalculated">
-                  ${round(calc.costPerUnit)}
-                </span>
-
-                <span className="marketPrepCalculated">
-                  ${round(calc.suggestedPrice)}
-                  <small>{item.targetMargin}% target</small>
-                </span>
-
-                <span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={item.retailPrice}
-                    onChange={(event) =>
-                      updateItem(item.id, "retailPrice", event.target.value)
-                    }
-                  />
-                </span>
-
-                <span className="marketPrepCalculated">
-                  {round(calc.retailMargin)}%
-                  <small>${round(calc.retailProfitPerUnit)} / unit</small>
-                </span>
-
-                <span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={item.wholesalePrice}
-                    onChange={(event) =>
-                      updateItem(item.id, "wholesalePrice", event.target.value)
-                    }
-                  />
-                </span>
-
-                <span className="marketPrepCalculated">
-                  {round(calc.wholesaleMargin)}%
-                  <small>${round(calc.wholesaleProfitPerUnit)} / unit</small>
-                </span>
-
-                <span>
-                  <input
-                    value={item.notes}
-                    onChange={(event) =>
-                      updateItem(item.id, "notes", event.target.value)
-                    }
-                  />
-                </span>
-
-                <span>
-                  <button
-                    className="iconButton danger"
-                    type="button"
-                    onClick={() => removeItem(item.id)}
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </span>
-              </div>
-            );
-          })}
+          <span>
+            <button
+              className="iconButton danger"
+              type="button"
+              onClick={() => removeItem(item.id)}
+            >
+              <Trash2 size={15} />
+            </button>
+          </span>
         </div>
-      </section>
+      );
+    })}
+  </div>
+</section>
 
       {showBackToTop ? (
         <button className="backToTopButton" type="button" onClick={scrollToTop}>
