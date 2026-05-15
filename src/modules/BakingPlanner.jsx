@@ -28,7 +28,7 @@ import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db, googleProvider } from "../firebase";
 
-function Card({ children, className = "" }) {
+function Card({ children,  = "" }) {
   return <div className={`card ${className}`}>{children}</div>;
 }
 
@@ -1266,7 +1266,7 @@ export default function BakingPlanner() {
   );
 
   return (
-    <div className="baking-planner-app">
+    <div className="bakingPlanner">
       <div className="page">
         <header className="hero">
           <div className="hero-inner">
