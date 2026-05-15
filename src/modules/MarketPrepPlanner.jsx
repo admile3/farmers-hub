@@ -163,6 +163,16 @@ export default function MarketPrepPlanner() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+  if (!statusMessage) return;
+
+  const timer = window.setTimeout(() => {
+    setStatusMessage("");
+  }, 3000);
+
+  return () => window.clearTimeout(timer);
+}, [statusMessage]);
+  
   function scrollToSection(ref) {
     ref.current?.scrollIntoView({
       behavior: "smooth",
