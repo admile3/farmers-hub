@@ -14,7 +14,8 @@
     "react-dom": "latest",
     "react-router-dom": "latest",
     "lucide-react": "latest",
-    "firebase": "latest"
+    "firebase": "latest",
+    "framer-motion": "latest"
   },
   "devDependencies": {}
 }
