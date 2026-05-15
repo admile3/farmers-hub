@@ -1469,3 +1469,435 @@ input[type="number"] {
 .pricingPositive {
   color: var(--spice);
 }
+.permitGrantModule {
+  display: grid;
+  gap: 18px;
+}
+
+.permitGrantHero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.permitGrantHero h2 {
+  margin: 0 0 8px;
+  font-size: clamp(2rem, 4vw, 3rem);
+  letter-spacing: -0.04em;
+}
+
+.permitGrantHero p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.permitAddButton {
+  border-radius: 10px;
+  background: #20b85a;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 18px;
+  font-weight: 850;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(32, 184, 90, 0.22);
+}
+
+.permitStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.permitStatCard {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 250, 240, 0.86);
+  box-shadow: 0 10px 24px rgba(45, 38, 29, 0.06);
+  padding: 20px;
+}
+
+.permitStatCard p {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.permitStatCard strong {
+  display: block;
+  font-size: 2rem;
+  line-height: 1;
+  margin-bottom: 10px;
+}
+
+.permitStatCard span {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.permitStatCard.warning strong {
+  color: #b7791f;
+}
+
+.permitStatCard.danger strong {
+  color: var(--danger);
+}
+
+.permitFilterBar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 200px 200px 200px;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 250, 240, 0.86);
+  padding: 14px;
+  box-shadow: 0 10px 24px rgba(45, 38, 29, 0.05);
+}
+
+.permitSearch {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.66);
+  padding: 0 11px;
+}
+
+.permitSearch svg {
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+
+.permitSearch input {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding-left: 0;
+}
+
+.permitSearch input:focus {
+  box-shadow: none;
+}
+
+.permitFilterBar label {
+  position: relative;
+}
+
+.permitFilterBar label svg {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+}
+
+.permitFilterBar label svg + select {
+  padding-left: 34px;
+}
+
+.permitTablePanel {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 250, 240, 0.86);
+  box-shadow: var(--shadow);
+  padding: 18px;
+  overflow-x: auto;
+}
+
+.permitTable {
+  min-width: 1320px;
+}
+
+.permitTableHeader,
+.permitTableRow {
+  display: grid;
+  grid-template-columns:
+    minmax(180px, 1.2fr)
+    105px
+    minmax(170px, 1fr)
+    130px
+    100px
+    100px
+    120px
+    120px
+    minmax(170px, 1fr)
+    95px;
+  gap: 10px;
+  align-items: center;
+}
+
+.permitTableHeader {
+  padding: 12px 14px;
+  color: var(--text);
+  font-weight: 900;
+  border-bottom: 1px solid var(--border);
+}
+
+.permitTableRow {
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.permitTableRow:last-child {
+  border-bottom: 0;
+}
+
+.permitName {
+  font-weight: 850;
+  color: var(--text);
+}
+
+.permitMuted {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.permitTypePill,
+.permitStatusPill,
+.permitPriorityPill,
+.permitDeadlinePill {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 8px;
+  padding: 6px 9px;
+  font-weight: 850;
+  font-size: 0.78rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.permitTypePill {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.64);
+  border: 1px solid var(--border);
+}
+
+.permitStatusPill.approved,
+.permitStatusPill.complete {
+  color: white;
+  background: #18a957;
+}
+
+.permitStatusPill.submitted {
+  color: white;
+  background: #3b82f6;
+}
+
+.permitStatusPill.in-progress {
+  color: white;
+  background: #64748b;
+}
+
+.permitStatusPill.renewal-needed,
+.permitStatusPill.not-started {
+  color: white;
+  background: #f59e0b;
+}
+
+.permitStatusPill.denied {
+  color: white;
+  background: var(--danger);
+}
+
+.permitPriorityPill.low {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.permitPriorityPill.normal {
+  color: #1e40af;
+  background: #dbeafe;
+}
+
+.permitPriorityPill.high {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.permitPriorityPill.urgent {
+  color: white;
+  background: var(--danger);
+}
+
+.permitDeadlinePill.good {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.permitDeadlinePill.warning {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.permitDeadlinePill.danger {
+  color: white;
+  background: #ef4444;
+}
+
+.permitDeadlinePill.neutral {
+  color: var(--muted);
+  background: rgba(117, 107, 94, 0.12);
+}
+
+.permitDocument,
+.permitMissingDoc {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.84rem;
+}
+
+.permitDocument {
+  color: var(--muted);
+  max-width: 170px;
+}
+
+.permitDocument a,
+.permitDocument span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.permitMissingDoc {
+  color: #d97706;
+  font-weight: 850;
+}
+
+.permitActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.permitActions button,
+.permitActions a {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  color: var(--text);
+  background: transparent;
+  cursor: pointer;
+}
+
+.permitActions button:last-child {
+  color: var(--danger);
+}
+
+.permitEmptyState {
+  padding: 24px 14px;
+  color: var(--muted);
+}
+
+.permitModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(20, 20, 20, 0.72);
+  display: grid;
+  place-items: center;
+  padding: 28px;
+}
+
+.permitModal {
+  width: min(780px, 100%);
+  max-height: calc(100vh - 56px);
+  overflow: auto;
+  border-radius: 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+}
+
+.permitModalHeader {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--panel);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 22px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.permitModalHeader h3 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.permitModalHeader button {
+  background: transparent;
+  cursor: pointer;
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+}
+
+.permitModalForm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+  padding: 18px 22px 22px;
+}
+
+.permitFull {
+  grid-column: 1 / -1;
+}
+
+.permitModalForm textarea {
+  min-height: 96px;
+}
+
+.permitSelectedFile {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.permitModalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+@media (max-width: 1200px) {
+  .permitStatsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .permitFilterBar {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .permitGrantHero {
+    flex-direction: column;
+  }
+
+  .permitAddButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .permitStatsGrid,
+  .permitFilterBar,
+  .permitModalForm {
+    grid-template-columns: 1fr;
+  }
+
+  .permitModalOverlay {
+    padding: 12px;
+  }
+}
