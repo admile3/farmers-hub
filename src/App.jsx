@@ -4,7 +4,6 @@ import {
   Calculator,
   ChefHat,
   ClipboardList,
-  DollarSign,
   FileText,
   LogIn,
   LogOut,
@@ -16,6 +15,7 @@ import SpiceKitchen from "./modules/SpiceKitchen.jsx";
 import BakingPlanner from "./modules/BakingPlanner.jsx";
 import MarketPrepPlanner from "./modules/MarketPrepPlanner.jsx";
 import PricingCalculator from "./modules/PricingCalculator.jsx";
+import PermitGrantTracker from "./modules/PermitGrantTracker.jsx";
 import { useAuth } from "./AuthContext.jsx";
 
 const modules = [
@@ -59,9 +59,9 @@ const modules = [
     title: "Permit & Grant Tracker",
     description:
       "Track renewals, permits, grants, deadlines, required documents, and funding opportunities.",
-    path: "#",
+    path: "/permit-grants",
     icon: FileText,
-    status: "Coming Soon",
+    status: "Ready",
     accent: "grant"
   }
 ];
@@ -102,6 +102,10 @@ function AppShell({ children }) {
 
           <Link to="/pricing" className="navLink">
             Pricing Calculator
+          </Link>
+
+          <Link to="/permit-grants" className="navLink">
+            Permit & Grant Tracker
           </Link>
         </nav>
 
@@ -176,9 +180,9 @@ function Dashboard() {
 
           <p className="heroText">
             Farmers Hub is built as a parent dashboard for standalone vendor
-            tools. Start with Spice Kitchen, Baking Planner, Market Prep, and
-            Pricing Calculator, then expand into permits, grants, and more
-            without rebuilding the foundation.
+            tools. Start with Spice Kitchen, Baking Planner, Market Prep,
+            Pricing Calculator, and Permit & Grant Tracker, then expand into
+            more specialized workflows without rebuilding the foundation.
           </p>
         </div>
 
@@ -186,16 +190,16 @@ function Dashboard() {
           <div>
             <p className="eyebrow">Newest module</p>
 
-            <h3>Pricing Calculator</h3>
+            <h3>Permit & Grant Tracker</h3>
 
             <p>
-              Calculate batch costs, unit costs, retail prices, wholesale prices,
-              target margins, and profit per product.
+              Track permits, grants, licenses, renewals, market applications,
+              deadlines, fees, notes, and status updates.
             </p>
           </div>
 
-          <Link to="/pricing" className="primaryButton">
-            Open Pricing Calculator
+          <Link to="/permit-grants" className="primaryButton">
+            Open Permit & Grant Tracker
             <ArrowRight size={18} />
           </Link>
         </div>
@@ -304,6 +308,15 @@ export default function App() {
         element={
           <AppShell>
             <PricingCalculator />
+          </AppShell>
+        }
+      />
+
+      <Route
+        path="/permit-grants"
+        element={
+          <AppShell>
+            <PermitGrantTracker />
           </AppShell>
         }
       />
