@@ -1,0 +1,403 @@
+.bakingPlanner {
+  --bp-bg: #f7f4ee;
+  --bp-panel: #ffffff;
+  --bp-soft: #fcfbf8;
+  --bp-ink: #0f172a;
+  --bp-muted: #667085;
+  --bp-line: #e7e5e4;
+  --bp-accent: #9b6b33;
+  --bp-accent-soft: #f6ede2;
+  --bp-success: #22c55e;
+  --bp-warning: #f59e0b;
+  --bp-shadow-sm: 0 2px 10px rgba(15, 23, 42, 0.04);
+  --bp-shadow-md: 0 12px 30px rgba(15, 23, 42, 0.08);
+  --bp-sidebar-width: 220px;
+
+  color: var(--bp-ink);
+}
+
+.bakingPlanner * {
+  box-sizing: border-box;
+}
+
+.bakingPlanner button,
+.bakingPlanner input,
+.bakingPlanner select,
+.bakingPlanner textarea {
+  font: inherit;
+}
+
+.bakingPlanner button {
+  border: 0;
+}
+
+.bakingPlanner .bp-page {
+  display: grid;
+  grid-template-columns: var(--bp-sidebar-width) minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+}
+
+.bakingPlanner .bp-tabs {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.86);
+  border-right: 1px solid var(--bp-line);
+  padding: 24px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bakingPlanner .bp-tabs::before {
+  content: "🥖 Baking Planner";
+  display: block;
+  font-size: 20px;
+  font-weight: 850;
+  line-height: 1.25;
+  margin: 0 4px 28px;
+}
+
+.bakingPlanner .bp-tab {
+  border: 0;
+  background: transparent;
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #1f2937;
+  cursor: pointer;
+  transition: 0.2s ease;
+  font-weight: 650;
+  text-align: left;
+}
+
+.bakingPlanner .bp-tab:hover {
+  background: #f6f1ea;
+}
+
+.bakingPlanner .bp-tab.active {
+  background: var(--bp-accent-soft);
+  color: #8b5e2d;
+  box-shadow: inset 0 0 0 1px rgba(155, 107, 51, 0.14);
+}
+
+.bakingPlanner .bp-hero {
+  grid-column: 2;
+  grid-row: 1;
+  padding: 26px 36px 12px;
+}
+
+.bakingPlanner .bp-hero-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 28px;
+}
+
+.bakingPlanner .bp-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border: 1px solid var(--bp-line);
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 750;
+  color: #8b5e2d;
+  margin-bottom: 12px;
+  box-shadow: var(--bp-shadow-sm);
+}
+
+.bakingPlanner .bp-hero h1 {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.1;
+  letter-spacing: -0.6px;
+  font-weight: 850;
+}
+
+.bakingPlanner .bp-hero p {
+  margin: 8px 0 0;
+  max-width: 720px;
+  color: var(--bp-muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.bakingPlanner .bp-layout {
+  grid-column: 2;
+  grid-row: 2;
+  padding: 18px 36px 40px;
+  display: grid;
+  gap: 24px;
+  align-items: start;
+}
+
+.bakingPlanner .bp-two-col {
+  grid-template-columns: minmax(540px, 0.95fr) minmax(620px, 0.85fr);
+}
+
+.bakingPlanner .bp-recipe-layout {
+  grid-template-columns: 300px minmax(0, 1fr);
+}
+
+.bakingPlanner .bp-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.bakingPlanner .bp-card {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 24px;
+  border: 1px solid rgba(231, 229, 228, 0.9);
+  box-shadow: var(--bp-shadow-md);
+  backdrop-filter: blur(12px);
+}
+
+.bakingPlanner .bp-panel {
+  padding: 24px;
+}
+
+.bakingPlanner .bp-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.bakingPlanner .bp-section-head h2,
+.bakingPlanner .bp-panel h2 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: -0.4px;
+}
+
+.bakingPlanner .bp-section-head p,
+.bakingPlanner .bp-panel p {
+  color: var(--bp-muted);
+  line-height: 1.5;
+}
+
+.bakingPlanner .bp-btn {
+  border: 0;
+  border-radius: 14px;
+  padding: 13px 18px;
+  background: linear-gradient(135deg, #13213e 0%, #0f172a 100%);
+  color: white;
+  cursor: pointer;
+  font-weight: 750;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: 0.2s ease;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14);
+}
+
+.bakingPlanner .bp-btn:hover {
+  transform: translateY(-1px);
+}
+
+.bakingPlanner .bp-btn.outline {
+  background: white;
+  color: var(--bp-ink);
+  border: 1px solid var(--bp-line);
+  box-shadow: none;
+}
+
+.bakingPlanner .bp-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.bakingPlanner .bp-two {
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+}
+
+.bakingPlanner .bp-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.bakingPlanner .bp-four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.bakingPlanner .bp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bakingPlanner .bp-field span {
+  font-size: 13px;
+  font-weight: 650;
+  color: #344054;
+}
+
+.bakingPlanner .bp-input-wrap {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--bp-line);
+  background: white;
+}
+
+.bakingPlanner .bp-input-wrap input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 13px 14px;
+  font-size: 15px;
+  outline: none;
+}
+
+.bakingPlanner .bp-text-field,
+.bakingPlanner .bp-field > input:not(.bp-input-wrap input),
+.bakingPlanner .bp-field select,
+.bakingPlanner .bp-field textarea {
+  width: 100%;
+  border: 1px solid var(--bp-line);
+  border-radius: 14px;
+  background: white;
+  padding: 13px 14px;
+  font-size: 15px;
+  outline: none;
+}
+
+.bakingPlanner .bp-text-field:focus,
+.bakingPlanner .bp-field > input:not(.bp-input-wrap input):focus,
+.bakingPlanner .bp-field select:focus,
+.bakingPlanner .bp-field textarea:focus,
+.bakingPlanner .bp-input-wrap:focus-within {
+  border-color: rgba(155, 107, 51, 0.55);
+  box-shadow: 0 0 0 3px rgba(155, 107, 51, 0.12);
+}
+
+.bakingPlanner .bp-suffix {
+  padding: 13px 14px;
+  border-left: 1px solid var(--bp-line);
+  background: #fafafa;
+  color: var(--bp-muted);
+  font-size: 13px;
+}
+
+.bakingPlanner .bp-soft-panel {
+  background: var(--bp-soft);
+  border: 1px solid var(--bp-line);
+  border-radius: 20px;
+  padding: 20px;
+}
+
+.bakingPlanner .bp-table-wrap {
+  overflow: auto;
+  border-radius: 20px;
+  border: 1px solid var(--bp-line);
+  background: white;
+}
+
+.bakingPlanner table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.bakingPlanner thead {
+  background: linear-gradient(135deg, #162544 0%, #0f172a 100%);
+  color: white;
+}
+
+.bakingPlanner th,
+.bakingPlanner td {
+  padding: 15px 16px;
+  text-align: left;
+  font-size: 13px;
+}
+
+.bakingPlanner tbody tr {
+  border-top: 1px solid var(--bp-line);
+}
+
+.bakingPlanner tbody tr.alt {
+  background: #fafafa;
+}
+
+.bakingPlanner .bp-pill {
+  padding: 15px;
+  border-radius: 16px;
+  background: white;
+  border: 1px solid var(--bp-line);
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.bakingPlanner .bp-button-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1250px) {
+  .bakingPlanner .bp-two-col,
+  .bakingPlanner .bp-recipe-layout,
+  .bakingPlanner .bp-three,
+  .bakingPlanner .bp-four {
+    grid-template-columns: 1fr;
+  }
+
+  .bakingPlanner .bp-two {
+    grid-template-columns: repeat(2, minmax(240px, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .bakingPlanner .bp-page {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
+  }
+
+  .bakingPlanner .bp-tabs {
+    grid-column: 1;
+    grid-row: 1;
+    position: relative;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--bp-line);
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 14px;
+  }
+
+  .bakingPlanner .bp-tabs::before {
+    display: none;
+  }
+
+  .bakingPlanner .bp-hero {
+    grid-column: 1;
+    grid-row: 2;
+    padding: 22px;
+  }
+
+  .bakingPlanner .bp-layout {
+    grid-column: 1;
+    grid-row: 3;
+    padding: 18px 22px 36px;
+  }
+
+  .bakingPlanner .bp-hero-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .bakingPlanner .bp-two,
+  .bakingPlanner .bp-three,
+  .bakingPlanner .bp-four {
+    grid-template-columns: 1fr;
+  }
+}
