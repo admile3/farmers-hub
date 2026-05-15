@@ -1215,10 +1215,9 @@ label {
   .statusBanner,
   .backToTopButton,
   .marketPrepNoPrint,
-  .marketPrepPage > .spiceWorkspace,
-  .marketPrepPage > section:not(.marketPrepPrintPackList):not(.marketPrepPrintSummary) {
-    display: none !important;
-  }
+ .marketPrepPage > section:not(.marketPrepPrintPackList):not(.marketPrepPrintSummary) {
+  display: none !important;
+}
 
   .app {
     display: block !important;
