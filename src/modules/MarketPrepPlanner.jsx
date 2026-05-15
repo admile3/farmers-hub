@@ -320,6 +320,14 @@ export default function MarketPrepPlanner() {
     );
   }
 
+  function togglePacked(id) {
+    setProducts((current) =>
+      current.map((product) =>
+        product.id === id ? { ...product, packed: !product.packed } : product
+      )
+    );
+  }
+
   function removeProduct(id) {
     setProducts((current) => current.filter((product) => product.id !== id));
   }
@@ -348,7 +356,8 @@ export default function MarketPrepPlanner() {
         unitAmount: Number(newProduct.unitAmount) || 0,
         amountUnit: newProduct.amountUnit.trim(),
         bufferPct: Number(newProduct.bufferPct) || 0,
-        notes: newProduct.notes.trim()
+        notes: newProduct.notes.trim(),
+        packed: false
       }
     ]);
 
@@ -740,7 +749,7 @@ export default function MarketPrepPlanner() {
           </form>
         </div>
 
-        <div className="workspacePanel compactPanel">
+        <div className="workspacePanel compactPanel marketPrepPrintSummary">
           <div className="workspaceHeader compactPanelHeader">
             <div>
               <p className="eyebrow">Summary</p>
@@ -769,14 +778,14 @@ export default function MarketPrepPlanner() {
         </div>
       </section>
 
-      <section className="workspacePanel compactPanel scrollAnchor" ref={packListRef}>
+      <section className="workspacePanel compactPanel scrollAnchor marketPrepPrintPackList" ref={packListRef}>
         <div className="workspaceHeader compactPanelHeader">
           <div>
             <p className="eyebrow">Pack List</p>
             <h3>Market Pack + Prep Plan</h3>
           </div>
 
-          <div className="formActions compactActions">
+          <div className="formActions compactActions marketPrepNoPrint">
             <button
               className="secondaryButton compactButton"
               type="button"
@@ -798,8 +807,18 @@ export default function MarketPrepPlanner() {
           </div>
         </div>
 
+        <div className="marketPrepPrintHeader">
+          <h2>{marketName}</h2>
+          <p>
+            {marketDate}
+            {location ? ` • ${location}` : ""}
+            {weatherNotes ? ` • ${weatherNotes}` : ""}
+          </p>
+        </div>
+
         <div className="batchTable compactBatchTable marketPrepCompactTable">
           <div className="batchTableHeader marketPrepCompactHeader">
+            <span>Done</span>
             <span>Product</span>
             <span>Category</span>
             <span>Unit</span>
@@ -808,7 +827,7 @@ export default function MarketPrepPlanner() {
             <span>Total</span>
             <span>Target</span>
             <span>Notes</span>
-            <span></span>
+            <span className="marketPrepNoPrint"></span>
           </div>
 
           {products.map((product) => {
@@ -816,6 +835,14 @@ export default function MarketPrepPlanner() {
 
             return (
               <div className="batchTableRow marketPrepCompactRow" key={product.id}>
+                <span className="marketPrepCheckCell">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(product.packed)}
+                    onChange={() => togglePacked(product.id)}
+                  />
+                </span>
+
                 <span>
                   <input
                     value={product.name}
@@ -896,7 +923,7 @@ export default function MarketPrepPlanner() {
                   />
                 </span>
 
-                <span>
+                <span className="marketPrepNoPrint">
                   <button
                     className="iconButton danger"
                     type="button"
