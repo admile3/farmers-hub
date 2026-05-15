@@ -129,7 +129,7 @@ export default function SpiceKitchen() {
 
   useEffect(() => {
     function handleScroll() {
-      setShowBackToTop(window.scrollY > 450);
+      setShowBackToTop(window.scrollY > 50);
     }
 
     window.addEventListener("scroll", handleScroll);
