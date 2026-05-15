@@ -23,6 +23,7 @@ import {
   LogOut,
   Cloud,
 } from "lucide-react";
+import "./bakingPlanner.css";
 import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db, googleProvider } from "../firebase";
