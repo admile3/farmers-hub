@@ -5,6 +5,7 @@ import {
   ChefHat,
   ClipboardList,
   FileText,
+  ListChecks,
   LogIn,
   LogOut,
   Sprout,
@@ -16,6 +17,7 @@ import BakingPlanner from "./modules/BakingPlanner.jsx";
 import MarketPrepPlanner from "./modules/MarketPrepPlanner.jsx";
 import PricingCalculator from "./modules/PricingCalculator.jsx";
 import PermitGrantTracker from "./modules/PermitGrantTracker.jsx";
+import Lists from "./modules/Lists.jsx";
 import { useAuth } from "./AuthContext.jsx";
 
 const modules = [
@@ -63,6 +65,15 @@ const modules = [
     icon: FileText,
     status: "Ready",
     accent: "grant"
+  },
+  {
+    title: "Lists",
+    description:
+      "Create reusable checklists for market prep, production, shopping, permits, delivery, and ideas.",
+    path: "/lists",
+    icon: ListChecks,
+    status: "Ready",
+    accent: "market"
   }
 ];
 
@@ -106,6 +117,10 @@ function AppShell({ children }) {
 
           <Link to="/permit-grants" className="navLink">
             Permit & Grant Tracker
+          </Link>
+
+          <Link to="/lists" className="navLink">
+            Lists
           </Link>
         </nav>
 
@@ -181,8 +196,8 @@ function Dashboard() {
           <p className="heroText">
             Farmers Hub is built as a parent dashboard for standalone vendor
             tools. Start with Spice Kitchen, Baking Planner, Market Prep,
-            Pricing Calculator, and Permit & Grant Tracker, then expand into
-            more specialized workflows without rebuilding the foundation.
+            Pricing Calculator, Permit & Grant Tracker, and Lists, then expand
+            into more specialized workflows without rebuilding the foundation.
           </p>
         </div>
 
@@ -190,16 +205,16 @@ function Dashboard() {
           <div>
             <p className="eyebrow">Newest module</p>
 
-            <h3>Permit & Grant Tracker</h3>
+            <h3>Lists</h3>
 
             <p>
-              Track permits, grants, licenses, renewals, market applications,
-              deadlines, fees, notes, and status updates.
+              Create reusable checklists for markets, production, shopping,
+              permits, delivery prep, and everyday vendor workflows.
             </p>
           </div>
 
-          <Link to="/permit-grants" className="primaryButton">
-            Open Permit & Grant Tracker
+          <Link to="/lists" className="primaryButton">
+            Open Lists
             <ArrowRight size={18} />
           </Link>
         </div>
@@ -317,6 +332,15 @@ export default function App() {
         element={
           <AppShell>
             <PermitGrantTracker />
+          </AppShell>
+        }
+      />
+
+      <Route
+        path="/lists"
+        element={
+          <AppShell>
+            <Lists />
           </AppShell>
         }
       />
