@@ -57,6 +57,14 @@ function round(value, digits = 2) {
   return Math.round((Number(value) || 0) * factor) / factor;
 }
 
+function money(value) {
+  return `$${round(value).toFixed(2)}`;
+}
+
+function percent(value) {
+  return `${round(value, 1).toFixed(1)}%`;
+}
+
 function makeId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
@@ -73,7 +81,9 @@ function calculateItem(item) {
   const targetMargin = Number(item.targetMargin) || 0;
 
   const laborCost = laborHours * laborRate;
-  const totalBatchCost = batchCost + laborCost + overheadCost + packagingCostPerUnit * batchUnits;
+  const totalBatchCost =
+    batchCost + laborCost + overheadCost + packagingCostPerUnit * batchUnits;
+
   const costPerUnit = batchUnits > 0 ? totalBatchCost / batchUnits : 0;
 
   const retailProfitPerUnit = retailPrice - costPerUnit;
@@ -162,6 +172,10 @@ export default function PricingCalculator() {
 
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  function preventNumberScroll(event) {
+    event.target.blur();
+  }
 
   function scrollToSection(ref) {
     ref.current?.scrollIntoView({
@@ -348,7 +362,7 @@ export default function PricingCalculator() {
     });
 
     setStatusMessage("Product added to pricing sheet.");
-    scrollToSection(calculatorRef);
+    scrollToSection(comparisonRef);
   }
 
   const sectionCards = [
@@ -366,7 +380,7 @@ export default function PricingCalculator() {
     },
     {
       title: "Margin Review",
-      description: "Compare retail and wholesale pricing performance.",
+      description: "Edit products and review retail and wholesale margins.",
       icon: Target,
       ref: comparisonRef
     },
@@ -496,12 +510,12 @@ export default function PricingCalculator() {
               <h4>{totals.itemCount}</h4>
             </div>
             <div>
-              <p className="eyebrow">Retail Profit</p>
-              <h4>${round(totals.retailBatchProfit)}</h4>
+              <p className="eyebrow">Retail Batch Profit</p>
+              <h4>{money(totals.retailBatchProfit)}</h4>
             </div>
             <div>
-              <p className="eyebrow">Wholesale Profit</p>
-              <h4>${round(totals.wholesaleBatchProfit)}</h4>
+              <p className="eyebrow">Wholesale Batch Profit</p>
+              <h4>{money(totals.wholesaleBatchProfit)}</h4>
             </div>
           </div>
         </div>
@@ -527,7 +541,7 @@ export default function PricingCalculator() {
                     <p>
                       {calculation.items?.length || 0} products
                       {calculation.totals?.retailBatchProfit !== undefined
-                        ? ` • $${round(calculation.totals.retailBatchProfit)} retail profit`
+                        ? ` • ${money(calculation.totals.retailBatchProfit)} retail batch profit`
                         : ""}
                     </p>
                   </div>
@@ -600,6 +614,7 @@ export default function PricingCalculator() {
               type="number"
               step="0.01"
               value={newItem.batchCost}
+              onWheel={preventNumberScroll}
               onChange={(event) =>
                 setNewItem((current) => ({
                   ...current,
@@ -616,6 +631,7 @@ export default function PricingCalculator() {
               type="number"
               step="1"
               value={newItem.batchUnits}
+              onWheel={preventNumberScroll}
               onChange={(event) =>
                 setNewItem((current) => ({
                   ...current,
@@ -632,6 +648,7 @@ export default function PricingCalculator() {
               type="number"
               step="0.01"
               value={newItem.packagingCostPerUnit}
+              onWheel={preventNumberScroll}
               onChange={(event) =>
                 setNewItem((current) => ({
                   ...current,
@@ -648,6 +665,7 @@ export default function PricingCalculator() {
               type="number"
               step="0.01"
               value={newItem.laborHours}
+              onWheel={preventNumberScroll}
               onChange={(event) =>
                 setNewItem((current) => ({
                   ...current,
@@ -664,6 +682,7 @@ export default function PricingCalculator() {
               type="number"
               step="0.01"
               value={newItem.laborRate}
+              onWheel={preventNumberScroll}
               onChange={(event) =>
                 setNewItem((current) => ({
                   ...current,
@@ -680,6 +699,7 @@ export default function PricingCalculator() {
               type="number"
               step="0.01"
               value={newItem.overheadCost}
+              onWheel={preventNumberScroll}
               onChange={(event) =>
                 setNewItem((current) => ({
                   ...current,
@@ -696,6 +716,7 @@ export default function PricingCalculator() {
               type="number"
               step="0.01"
               value={newItem.retailPrice}
+              onWheel={preventNumberScroll}
               onChange={(event) =>
                 setNewItem((current) => ({
                   ...current,
@@ -712,6 +733,7 @@ export default function PricingCalculator() {
               type="number"
               step="0.01"
               value={newItem.wholesalePrice}
+              onWheel={preventNumberScroll}
               onChange={(event) =>
                 setNewItem((current) => ({
                   ...current,
@@ -728,6 +750,7 @@ export default function PricingCalculator() {
               type="number"
               step="0.1"
               value={newItem.targetMargin}
+              onWheel={preventNumberScroll}
               onChange={(event) =>
                 setNewItem((current) => ({
                   ...current,
@@ -759,125 +782,206 @@ export default function PricingCalculator() {
       </section>
 
       <section className="workspacePanel compactPanel scrollAnchor" ref={comparisonRef}>
-  <div className="workspaceHeader compactPanelHeader">
-    <div>
-      <p className="eyebrow">Review</p>
-      <h3>Pricing Comparison</h3>
-    </div>
+        <div className="workspaceHeader compactPanelHeader">
+          <div>
+            <p className="eyebrow">Review</p>
+            <h3>Editable Pricing Comparison</h3>
+          </div>
 
-    <button
-      className="primaryButton compactPrimary"
-      type="button"
-      onClick={saveCalculation}
-      disabled={saving}
-    >
-      <Save size={15} />
-      {saving ? "Saving..." : "Save Changes"}
-    </button>
-  </div>
-
-  <div className="batchTable compactBatchTable pricingComparisonTable">
-    <div className="batchTableHeader pricingComparisonHeader">
-      <span>Product</span>
-      <span>Category</span>
-      <span>Cost / Unit</span>
-      <span>Suggested $</span>
-      <span>Retail $</span>
-      <span>Retail Margin</span>
-      <span>Wholesale $</span>
-      <span>Wholesale Margin</span>
-      <span>Notes</span>
-      <span></span>
-    </div>
-
-    {items.map((item) => {
-      const calc = calculateItem(item);
-
-      return (
-        <div className="batchTableRow pricingComparisonRow" key={item.id}>
-          <span>
-            <input
-              value={item.productName}
-              onChange={(event) =>
-                updateItem(item.id, "productName", event.target.value)
-              }
-            />
-          </span>
-
-          <span>
-            <select
-              value={item.category}
-              onChange={(event) =>
-                updateItem(item.id, "category", event.target.value)
-              }
-            >
-              {categories.map((category) => (
-                <option key={category}>{category}</option>
-              ))}
-            </select>
-          </span>
-
-          <span className="pricingMetric">
-            ${round(calc.costPerUnit).toFixed(2)}
-          </span>
-
-          <span className="pricingMetric">
-            ${round(calc.suggestedPrice).toFixed(2)}
-          </span>
-
-          <span>
-            <input
-              type="number"
-              step="0.01"
-              value={item.retailPrice}
-              onChange={(event) =>
-                updateItem(item.id, "retailPrice", event.target.value)
-              }
-            />
-          </span>
-
-          <span className="pricingMetric pricingPositive">
-            {round(calc.retailMargin).toFixed(1)}%
-          </span>
-
-          <span>
-            <input
-              type="number"
-              step="0.01"
-              value={item.wholesalePrice}
-              onChange={(event) =>
-                updateItem(item.id, "wholesalePrice", event.target.value)
-              }
-            />
-          </span>
-
-          <span className="pricingMetric pricingPositive">
-            {round(calc.wholesaleMargin).toFixed(1)}%
-          </span>
-
-          <span>
-            <input
-              value={item.notes}
-              onChange={(event) =>
-                updateItem(item.id, "notes", event.target.value)
-              }
-            />
-          </span>
-
-          <span>
-            <button
-              className="iconButton danger"
-              type="button"
-              onClick={() => removeItem(item.id)}
-            >
-              <Trash2 size={15} />
-            </button>
-          </span>
+          <button
+            className="primaryButton compactPrimary"
+            type="button"
+            onClick={saveCalculation}
+            disabled={saving}
+          >
+            <Save size={15} />
+            {saving ? "Saving..." : "Save Changes"}
+          </button>
         </div>
-      );
-    })}
-  </div>
-</section>
+
+        <div className="batchTable compactBatchTable pricingEditableTable">
+          <div className="batchTableHeader pricingEditableHeader">
+            <span>Product</span>
+            <span>Category</span>
+            <span>Units</span>
+            <span>Batch Cost</span>
+            <span>Pack $</span>
+            <span>Labor Hrs</span>
+            <span>Labor $</span>
+            <span>Overhead</span>
+            <span>Cost / Unit</span>
+            <span>Suggested $</span>
+            <span>Retail $</span>
+            <span>Retail Margin</span>
+            <span>Wholesale $</span>
+            <span>Wholesale Margin</span>
+            <span>Notes</span>
+            <span></span>
+          </div>
+
+          {items.map((item) => {
+            const calc = calculateItem(item);
+
+            return (
+              <div className="batchTableRow pricingEditableRow" key={item.id}>
+                <span>
+                  <input
+                    value={item.productName}
+                    onChange={(event) =>
+                      updateItem(item.id, "productName", event.target.value)
+                    }
+                  />
+                </span>
+
+                <span>
+                  <select
+                    value={item.category}
+                    onChange={(event) =>
+                      updateItem(item.id, "category", event.target.value)
+                    }
+                  >
+                    {categories.map((category) => (
+                      <option key={category}>{category}</option>
+                    ))}
+                  </select>
+                </span>
+
+                <span>
+                  <input
+                    type="number"
+                    step="1"
+                    value={item.batchUnits}
+                    onWheel={preventNumberScroll}
+                    onChange={(event) =>
+                      updateItem(item.id, "batchUnits", event.target.value)
+                    }
+                  />
+                </span>
+
+                <span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={item.batchCost}
+                    onWheel={preventNumberScroll}
+                    onChange={(event) =>
+                      updateItem(item.id, "batchCost", event.target.value)
+                    }
+                  />
+                </span>
+
+                <span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={item.packagingCostPerUnit}
+                    onWheel={preventNumberScroll}
+                    onChange={(event) =>
+                      updateItem(item.id, "packagingCostPerUnit", event.target.value)
+                    }
+                  />
+                </span>
+
+                <span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={item.laborHours}
+                    onWheel={preventNumberScroll}
+                    onChange={(event) =>
+                      updateItem(item.id, "laborHours", event.target.value)
+                    }
+                  />
+                </span>
+
+                <span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={item.laborRate}
+                    onWheel={preventNumberScroll}
+                    onChange={(event) =>
+                      updateItem(item.id, "laborRate", event.target.value)
+                    }
+                  />
+                </span>
+
+                <span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={item.overheadCost}
+                    onWheel={preventNumberScroll}
+                    onChange={(event) =>
+                      updateItem(item.id, "overheadCost", event.target.value)
+                    }
+                  />
+                </span>
+
+                <span className="pricingMetric">{money(calc.costPerUnit)}</span>
+
+                <span className="pricingMetric">
+                  {money(calc.suggestedPrice)}
+                  <small>{item.targetMargin}% target</small>
+                </span>
+
+                <span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={item.retailPrice}
+                    onWheel={preventNumberScroll}
+                    onChange={(event) =>
+                      updateItem(item.id, "retailPrice", event.target.value)
+                    }
+                  />
+                </span>
+
+                <span className="pricingMetric pricingPositive">
+                  {percent(calc.retailMargin)}
+                  <small>{money(calc.retailProfitPerUnit)} / unit</small>
+                </span>
+
+                <span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={item.wholesalePrice}
+                    onWheel={preventNumberScroll}
+                    onChange={(event) =>
+                      updateItem(item.id, "wholesalePrice", event.target.value)
+                    }
+                  />
+                </span>
+
+                <span className="pricingMetric pricingPositive">
+                  {percent(calc.wholesaleMargin)}
+                  <small>{money(calc.wholesaleProfitPerUnit)} / unit</small>
+                </span>
+
+                <span>
+                  <input
+                    value={item.notes}
+                    onChange={(event) =>
+                      updateItem(item.id, "notes", event.target.value)
+                    }
+                  />
+                </span>
+
+                <span>
+                  <button
+                    className="iconButton danger"
+                    type="button"
+                    onClick={() => removeItem(item.id)}
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       {showBackToTop ? (
         <button className="backToTopButton" type="button" onClick={scrollToTop}>
