@@ -13,6 +13,7 @@ import {
 
 import SpiceKitchen from "./modules/SpiceKitchen.jsx";
 import BakingPlanner from "./modules/BakingPlanner.jsx";
+import MarketPrepPlanner from "./modules/MarketPrepPlanner.jsx";
 import { useAuth } from "./AuthContext.jsx";
 
 const modules = [
@@ -38,9 +39,9 @@ const modules = [
     title: "Market Prep Planner",
     description:
       "Estimate harvest, packing, inventory, and product quantities before each market.",
-    path: "#",
+    path: "/market-prep",
     icon: ClipboardList,
-    status: "Coming Soon",
+    status: "Ready",
     accent: "market"
   },
   {
@@ -93,7 +94,10 @@ function AppShell({ children }) {
             Baking Planner
           </Link>
 
-          <span className="navLink disabled">Market Prep</span>
+          <Link to="/market-prep" className="navLink">
+            Market Prep
+          </Link>
+
           <span className="navLink disabled">Pricing</span>
         </nav>
 
@@ -130,9 +134,7 @@ function AppShell({ children }) {
 
               <h3>Save your work</h3>
 
-              <p>
-                Sign in once to use Farmers Hub tools and save your data.
-              </p>
+              <p>Sign in once to use Farmers Hub tools and save your data.</p>
 
               <button
                 className="primaryButton fullButton"
@@ -150,9 +152,7 @@ function AppShell({ children }) {
 
           <h3>Foundation</h3>
 
-          <p>
-            Modular dashboard structure ready for future sub-apps.
-          </p>
+          <p>Modular dashboard structure ready for future sub-apps.</p>
         </div>
       </aside>
 
@@ -168,15 +168,13 @@ function Dashboard() {
         <div>
           <p className="eyebrow">Farmers market vendor SaaS</p>
 
-          <h2>
-            One hub for the tools that keep small food businesses moving.
-          </h2>
+          <h2>One hub for the tools that keep small food businesses moving.</h2>
 
           <p className="heroText">
             Farmers Hub is built as a parent dashboard for standalone vendor
-            tools. Start with Spice Kitchen and Baking Planner, then expand into
-            market prep, pricing, permits, grants, and more without rebuilding
-            the foundation.
+            tools. Start with Spice Kitchen, Baking Planner, and Market Prep,
+            then expand into pricing, permits, grants, and more without
+            rebuilding the foundation.
           </p>
         </div>
 
@@ -184,16 +182,16 @@ function Dashboard() {
           <div>
             <p className="eyebrow">Newest module</p>
 
-            <h3>Baking Planner</h3>
+            <h3>Market Prep Planner</h3>
 
             <p>
-              Production schedules, dough planning, batch calculations, and
-              baking workflow management.
+              Forecast products, calculate harvest targets, build pack lists,
+              and save reusable market plans.
             </p>
           </div>
 
-          <Link to="/baking-planner" className="primaryButton">
-            Open Baking Planner
+          <Link to="/market-prep" className="primaryButton">
+            Open Market Prep
             <ArrowRight size={18} />
           </Link>
         </div>
@@ -284,6 +282,15 @@ export default function App() {
         element={
           <AppShell>
             <BakingPlanner />
+          </AppShell>
+        }
+      />
+
+      <Route
+        path="/market-prep"
+        element={
+          <AppShell>
+            <MarketPrepPlanner />
           </AppShell>
         }
       />
