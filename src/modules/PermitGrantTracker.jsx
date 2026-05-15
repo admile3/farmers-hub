@@ -1,13 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowUp,
+  AlertTriangle,
   CalendarDays,
-  ClipboardCheck,
+  CheckCircle2,
+  Edit3,
+  ExternalLink,
   FileText,
+  Filter,
   Landmark,
   Plus,
   Save,
-  Trash2
+  Search,
+  Trash2,
+  Upload,
+  X
 } from "lucide-react";
 import { useAuth } from "../AuthContext.jsx";
 import {
@@ -40,21 +46,87 @@ const statusOptions = [
 
 const priorityOptions = ["Low", "Normal", "High", "Urgent"];
 
+const blankRecord = {
+  id: "",
+  name: "",
+  type: "Permit",
+  agency: "",
+  status: "Not Started",
+  priority: "Normal",
+  issueDate: "",
+  dueDate: "",
+  submittedDate: "",
+  approvedDate: "",
+  renewalDate: "",
+  reminderAmount: 30,
+  reminderUnit: "days",
+  fee: "",
+  link: "",
+  documentName: "",
+  documentUrl: "",
+  notes: ""
+};
+
 const starterItems = [
   {
-    id: "sample-permit",
-    name: "Market Vendor Application",
-    type: "Market Application",
-    agency: "Farmers Market",
-    status: "In Progress",
+    id: "sample-home-processor",
+    name: "Home-Based Processor",
+    type: "Permit",
+    agency: "Kentucky Food and Safety Branch",
+    status: "Approved",
     priority: "High",
-    dueDate: "",
+    issueDate: "2025-07-16",
+    dueDate: "2026-03-31",
+    submittedDate: "",
+    approvedDate: "2025-07-16",
+    renewalDate: "2026-03-31",
+    reminderAmount: 30,
+    reminderUnit: "days",
+    fee: 50,
+    link: "",
+    documentName: "25 Homebased Processor Permit.pdf",
+    documentUrl: "",
+    notes: "Example record. Replace with your own permit or renewal."
+  },
+  {
+    id: "sample-insurance",
+    name: "General Liability Insurance",
+    type: "Insurance",
+    agency: "FarmGuard Insurance",
+    status: "Renewal Needed",
+    priority: "Urgent",
+    issueDate: "2025-04-01",
+    dueDate: "2026-04-01",
     submittedDate: "",
     approvedDate: "",
-    renewalDate: "",
+    renewalDate: "2026-04-01",
+    reminderAmount: 30,
+    reminderUnit: "days",
     fee: 0,
     link: "",
-    notes: "Example item. Replace with your own permit, grant, or application."
+    documentName: "",
+    documentUrl: "",
+    notes: "Example insurance renewal."
+  },
+  {
+    id: "sample-grant",
+    name: "Local Food Innovation Grant",
+    type: "Grant",
+    agency: "County Economic Development",
+    status: "Submitted",
+    priority: "Normal",
+    issueDate: "",
+    dueDate: "2026-05-30",
+    submittedDate: "2026-05-01",
+    approvedDate: "",
+    renewalDate: "",
+    reminderAmount: 15,
+    reminderUnit: "days",
+    fee: 0,
+    link: "",
+    documentName: "",
+    documentUrl: "",
+    notes: "Example grant application."
   }
 ];
 
@@ -76,69 +148,57 @@ function daysUntil(dateString) {
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
-function getDueStatus(item) {
-  const dueDays = daysUntil(item.dueDate);
-  const renewalDays = daysUntil(item.renewalDate);
-  const relevantDays =
-    renewalDays !== null && item.status === "Approved" ? renewalDays : dueDays;
-
-  if (relevantDays === null) return "No date";
-  if (relevantDays < 0) return "Past due";
-  if (relevantDays <= 7) return "Due soon";
-  if (relevantDays <= 30) return "Upcoming";
-  return "On track";
+function getRelevantDate(item) {
+  if (item.status === "Approved" && item.renewalDate) return item.renewalDate;
+  if (item.renewalDate) return item.renewalDate;
+  return item.dueDate || "";
 }
 
-function getDateLabel(item) {
-  if (item.status === "Approved" && item.renewalDate) {
-    return `Renews ${item.renewalDate}`;
-  }
+function getDueStatus(item) {
+  const relevantDate = getRelevantDate(item);
+  const days = daysUntil(relevantDate);
 
-  if (item.dueDate) {
-    return `Due ${item.dueDate}`;
-  }
+  if (days === null) return { label: "No Date", tone: "neutral", days: null };
+  if (days < 0) return { label: "Expired", tone: "danger", days };
+  if (days === 0) return { label: "Due Today", tone: "danger", days };
+  if (days <= 7) return { label: `Due in ${days}d`, tone: "danger", days };
+  if (days <= 30) return { label: `In ${days}d`, tone: "warning", days };
+  return { label: `In ${days}d`, tone: "good", days };
+}
 
-  return "No due date";
+function statusClass(status) {
+  return status.toLowerCase().replaceAll(" ", "-");
+}
+
+function formatMoney(value) {
+  const number = Number(value) || 0;
+  return `$${number.toFixed(2)}`;
+}
+
+function normalizeRecord(record) {
+  return {
+    ...blankRecord,
+    ...record,
+    fee: record.fee === "" ? "" : Number(record.fee) || 0,
+    reminderAmount: Number(record.reminderAmount) || 30
+  };
 }
 
 export default function PermitGrantTracker() {
   const { user, loginWithGoogle } = useAuth();
 
-  const overviewRef = useRef(null);
-  const addRef = useRef(null);
-  const trackerRef = useRef(null);
-
   const [items, setItems] = useState(starterItems);
   const [statusMessage, setStatusMessage] = useState("");
   const [loadingItems, setLoadingItems] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [showBackToTop, setShowBackToTop] = useState(false);
 
-  const [newItem, setNewItem] = useState({
-    name: "",
-    type: "Permit",
-    agency: "",
-    status: "Not Started",
-    priority: "Normal",
-    dueDate: "",
-    submittedDate: "",
-    approvedDate: "",
-    renewalDate: "",
-    fee: "",
-    link: "",
-    notes: ""
-  });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(blankRecord);
 
-  useEffect(() => {
-    function handleScroll() {
-      setShowBackToTop(window.scrollY > 50);
-    }
-
-    window.addEventListener("scroll", handleScroll);
-    handleScroll();
-
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [typeFilter, setTypeFilter] = useState("All Types");
+  const [statusFilter, setStatusFilter] = useState("All Statuses");
+  const [recordFilter, setRecordFilter] = useState("All Records");
 
   useEffect(() => {
     if (!statusMessage) return;
@@ -157,10 +217,10 @@ export default function PermitGrantTracker() {
 
     try {
       const savedItems = await getPermitGrantItems(user.uid);
-      setItems(savedItems.length ? savedItems : starterItems);
+      setItems(savedItems.length ? savedItems.map(normalizeRecord) : starterItems);
     } catch (error) {
       console.error(error);
-      setStatusMessage("Could not load permit and grant tracker.");
+      setStatusMessage("Could not load permit and grant records.");
     } finally {
       setLoadingItems(false);
     }
@@ -174,78 +234,150 @@ export default function PermitGrantTracker() {
     }
   }, [user]);
 
-  function scrollToSection(ref) {
-    ref.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
-  }
-
-  function scrollToTop() {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
-  }
-
-  function preventNumberScroll(event) {
-    event.target.blur();
-  }
-
   const summary = useMemo(() => {
     return items.reduce(
       (sum, item) => {
         const dueStatus = getDueStatus(item);
+        const isActive = ["Approved", "Complete"].includes(item.status);
+        const isMissingDocs = !item.documentName && !item.documentUrl;
+        const isGrant = item.type === "Grant";
+        const isUpcomingGrant =
+          isGrant && dueStatus.days !== null && dueStatus.days >= 0 && dueStatus.days <= 60;
 
         return {
-          total: sum.total + 1,
-          inProgress:
-            sum.inProgress +
-            (["Not Started", "In Progress", "Submitted", "Renewal Needed"].includes(
-              item.status
-            )
+          active: sum.active + (isActive ? 1 : 0),
+          expiringSoon:
+            sum.expiringSoon +
+            (dueStatus.days !== null && dueStatus.days >= 0 && dueStatus.days <= 30
               ? 1
               : 0),
-          approved: sum.approved + (item.status === "Approved" ? 1 : 0),
-          urgent:
-            sum.urgent +
-            (["Past due", "Due soon"].includes(dueStatus) ||
-            item.priority === "Urgent"
-              ? 1
-              : 0)
+          expired: sum.expired + (dueStatus.days !== null && dueStatus.days < 0 ? 1 : 0),
+          missingDocs: sum.missingDocs + (isMissingDocs ? 1 : 0),
+          upcomingGrants: sum.upcomingGrants + (isUpcomingGrant ? 1 : 0)
         };
       },
       {
-        total: 0,
-        inProgress: 0,
-        approved: 0,
-        urgent: 0
+        active: 0,
+        expiringSoon: 0,
+        expired: 0,
+        missingDocs: 0,
+        upcomingGrants: 0
       }
     );
   }, [items]);
 
-  async function saveItem(item) {
+  const filteredItems = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+
+    return items.filter((item) => {
+      const dueStatus = getDueStatus(item);
+
+      const matchesSearch =
+        !query ||
+        item.name.toLowerCase().includes(query) ||
+        item.agency.toLowerCase().includes(query) ||
+        item.notes.toLowerCase().includes(query);
+
+      const matchesType = typeFilter === "All Types" || item.type === typeFilter;
+      const matchesStatus =
+        statusFilter === "All Statuses" || item.status === statusFilter;
+
+      const matchesRecord =
+        recordFilter === "All Records" ||
+        (recordFilter === "Expiring Soon" &&
+          dueStatus.days !== null &&
+          dueStatus.days >= 0 &&
+          dueStatus.days <= 30) ||
+        (recordFilter === "Expired" && dueStatus.days !== null && dueStatus.days < 0) ||
+        (recordFilter === "Missing Docs" && !item.documentName && !item.documentUrl) ||
+        (recordFilter === "Grants" && item.type === "Grant");
+
+      return matchesSearch && matchesType && matchesStatus && matchesRecord;
+    });
+  }, [items, searchTerm, typeFilter, statusFilter, recordFilter]);
+
+  function openNewRecord() {
+    setEditingRecord({
+      ...blankRecord,
+      id: makeId()
+    });
+    setIsModalOpen(true);
+  }
+
+  function openEditRecord(item) {
+    setEditingRecord(normalizeRecord(item));
+    setIsModalOpen(true);
+  }
+
+  function closeModal() {
+    setIsModalOpen(false);
+    setEditingRecord(blankRecord);
+  }
+
+  function updateEditingRecord(field, value) {
+    setEditingRecord((current) => ({
+      ...current,
+      [field]: value
+    }));
+  }
+
+  function handleDocumentSelection(event) {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    setEditingRecord((current) => ({
+      ...current,
+      documentName: file.name,
+      documentUrl: ""
+    }));
+  }
+
+  async function saveRecord(record = editingRecord) {
+    if (!record.name.trim()) {
+      setStatusMessage("Record name is required.");
+      return;
+    }
+
+    const cleanRecord = normalizeRecord({
+      ...record,
+      name: record.name.trim(),
+      agency: record.agency.trim(),
+      link: record.link.trim(),
+      notes: record.notes.trim()
+    });
+
     if (!user) {
-      setStatusMessage("Sign in from the Farmers Hub sidebar to save tracker items.");
+      setItems((current) => {
+        const exists = current.some((item) => item.id === cleanRecord.id);
+        return exists
+          ? current.map((item) => (item.id === cleanRecord.id ? cleanRecord : item))
+          : [...current, cleanRecord];
+      });
+      setStatusMessage("Record saved locally.");
+      closeModal();
       return;
     }
 
     setSaving(true);
 
     try {
-      const savedId = await savePermitGrantItem(user.uid, item);
+      const savedId = await savePermitGrantItem(user.uid, cleanRecord);
+      const savedRecord = { ...cleanRecord, id: savedId };
 
-      setItems((current) =>
-        current.map((existing) =>
-          existing.id === item.id ? { ...item, id: savedId } : existing
-        )
-      );
+      setItems((current) => {
+        const exists = current.some((item) => item.id === savedRecord.id);
+        return exists
+          ? current.map((item) => (item.id === savedRecord.id ? savedRecord : item))
+          : [...current, savedRecord];
+      });
 
-      setStatusMessage("Tracker item saved.");
+      setStatusMessage("Record saved.");
+      closeModal();
       await loadItems();
     } catch (error) {
       console.error(error);
-      setStatusMessage("Could not save tracker item.");
+      setStatusMessage("Could not save record.");
     } finally {
       setSaving(false);
     }
@@ -254,112 +386,27 @@ export default function PermitGrantTracker() {
   async function removeItem(id) {
     if (!user) {
       setItems((current) => current.filter((item) => item.id !== id));
+      setStatusMessage("Record deleted locally.");
       return;
     }
 
     try {
       await deletePermitGrantItem(user.uid, id);
-      setStatusMessage("Tracker item deleted.");
+      setStatusMessage("Record deleted.");
       await loadItems();
     } catch (error) {
       console.error(error);
-      setStatusMessage("Could not delete tracker item.");
+      setStatusMessage("Could not delete record.");
     }
   }
-
-  function updateItem(id, field, value) {
-    setItems((current) =>
-      current.map((item) => (item.id === id ? { ...item, [field]: value } : item))
-    );
-  }
-
-  async function addItem(event) {
-    event.preventDefault();
-
-    if (!newItem.name.trim()) {
-      setStatusMessage("Item name is required.");
-      return;
-    }
-
-    const item = {
-      id: makeId(),
-      name: newItem.name.trim(),
-      type: newItem.type,
-      agency: newItem.agency.trim(),
-      status: newItem.status,
-      priority: newItem.priority,
-      dueDate: newItem.dueDate,
-      submittedDate: newItem.submittedDate,
-      approvedDate: newItem.approvedDate,
-      renewalDate: newItem.renewalDate,
-      fee: Number(newItem.fee) || 0,
-      link: newItem.link.trim(),
-      notes: newItem.notes.trim()
-    };
-
-    setItems((current) => [...current, item]);
-
-    setNewItem({
-      name: "",
-      type: "Permit",
-      agency: "",
-      status: "Not Started",
-      priority: "Normal",
-      dueDate: "",
-      submittedDate: "",
-      approvedDate: "",
-      renewalDate: "",
-      fee: "",
-      link: "",
-      notes: ""
-    });
-
-    setStatusMessage("Tracker item added.");
-    scrollToSection(trackerRef);
-
-    if (user) {
-      await saveItem(item);
-    }
-  }
-
-  const sectionCards = [
-    {
-      title: "Overview",
-      description: "Review active items, approvals, and urgent deadlines.",
-      icon: ClipboardCheck,
-      ref: overviewRef
-    },
-    {
-      title: "Add Item",
-      description: "Create a permit, grant, application, license, or renewal.",
-      icon: Plus,
-      ref: addRef
-    },
-    {
-      title: "Tracker",
-      description: "Edit due dates, statuses, agencies, links, fees, and notes.",
-      icon: FileText,
-      ref: trackerRef
-    },
-    {
-      title: "Compliance",
-      description: "Keep renewals and recurring obligations visible.",
-      icon: Landmark,
-      ref: trackerRef
-    }
-  ];
 
   if (!user) {
     return (
-      <div className="modulePage permitGrantPage compactSpicePage">
-        <section className="moduleHero compactHero">
+      <div className="permitGrantModule">
+        <section className="permitGrantHero">
           <div>
-            <p className="eyebrow">Permit & Grant Tracker</p>
-            <h2>Sign in to save permits, grants, and renewals.</h2>
-            <p>
-              Track deadlines locally, then sign in to save permit, grant, license,
-              market application, and renewal records to your Farmers Hub account.
-            </p>
+            <h2>Permits & Grants</h2>
+            <p>Sign in to save permits, grants, licenses, insurance, and renewals.</p>
           </div>
 
           <button className="primaryButton" onClick={loginWithGoogle}>
@@ -371,18 +418,7 @@ export default function PermitGrantTracker() {
   }
 
   return (
-    <div className="modulePage permitGrantPage compactSpicePage">
-      <section className="moduleHero compactHero noActionHero">
-        <div>
-          <p className="eyebrow">Permit & Grant Tracker</p>
-          <h2>Track applications, renewals, permits, licenses, and deadlines.</h2>
-          <p>
-            Keep important vendor paperwork organized with due dates, renewal dates,
-            agency contacts, fees, status tracking, notes, and useful links.
-          </p>
-        </div>
-      </section>
-
+    <div className="permitGrantModule">
       {statusMessage ? (
         <div className="floatingStatus success">
           <span>ⓘ</span>
@@ -393,407 +429,411 @@ export default function PermitGrantTracker() {
         </div>
       ) : null}
 
-      <section className="toolGrid compactToolGrid">
-        {sectionCards.map((card) => {
-          const Icon = card.icon;
+      <section className="permitGrantHero">
+        <div>
+          <h2>Permits & Grants</h2>
+          <p>Track permits, licenses, grants, insurance, and renewal deadlines.</p>
+        </div>
 
-          return (
-            <button
-              className="toolCard compactToolCard clickableToolCard"
-              key={card.title}
-              type="button"
-              onClick={() => scrollToSection(card.ref)}
-            >
-              <Icon size={22} />
-              <h3>{card.title}</h3>
-              <p>{card.description}</p>
-            </button>
-          );
-        })}
+        <button className="permitAddButton" type="button" onClick={openNewRecord}>
+          <Plus size={18} />
+          Add Record
+        </button>
       </section>
 
-      <section className="workspacePanel compactPanel scrollAnchor" ref={overviewRef}>
-        <div className="workspaceHeader compactPanelHeader">
-          <div>
-            <p className="eyebrow">Overview</p>
-            <h3>Tracker Summary</h3>
-          </div>
+      <section className="permitStatsGrid">
+        <div className="permitStatCard">
+          <p>Active</p>
+          <strong>{summary.active}</strong>
+          <span>Currently active</span>
+        </div>
 
-          <button
-            className="primaryButton compactPrimary"
-            type="button"
-            onClick={loadItems}
-            disabled={loadingItems}
+        <div className="permitStatCard warning">
+          <p>Expiring Soon</p>
+          <strong>{summary.expiringSoon}</strong>
+          <span>In reminder window</span>
+        </div>
+
+        <div className="permitStatCard danger">
+          <p>Expired</p>
+          <strong>{summary.expired}</strong>
+          <span>Overdue records</span>
+        </div>
+
+        <div className="permitStatCard warning">
+          <p>Missing Docs</p>
+          <strong>{summary.missingDocs}</strong>
+          <span>Need upload</span>
+        </div>
+
+        <div className="permitStatCard">
+          <p>Upcoming Grants</p>
+          <strong>{summary.upcomingGrants}</strong>
+          <span>Deadlines approaching</span>
+        </div>
+      </section>
+
+      <section className="permitFilterBar">
+        <div className="permitSearch">
+          <Search size={18} />
+          <input
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Search by name, agency, or notes..."
+          />
+        </div>
+
+        <label>
+          <Filter size={16} />
+          <select
+            value={typeFilter}
+            onChange={(event) => setTypeFilter(event.target.value)}
           >
-            <CalendarDays size={15} />
-            {loadingItems ? "Refreshing..." : "Refresh"}
-          </button>
-        </div>
+            <option>All Types</option>
+            {itemTypes.map((type) => (
+              <option key={type}>{type}</option>
+            ))}
+          </select>
+        </label>
 
-        <div className="batchTotals compactBatchTotals">
-          <div>
-            <p className="eyebrow">Total Items</p>
-            <h4>{summary.total}</h4>
-          </div>
-          <div>
-            <p className="eyebrow">In Progress</p>
-            <h4>{summary.inProgress}</h4>
-          </div>
-          <div>
-            <p className="eyebrow">Approved</p>
-            <h4>{summary.approved}</h4>
-          </div>
-          <div>
-            <p className="eyebrow">Urgent</p>
-            <h4>{summary.urgent}</h4>
-          </div>
-        </div>
+        <label>
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+          >
+            <option>All Statuses</option>
+            {statusOptions.map((status) => (
+              <option key={status}>{status}</option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          <select
+            value={recordFilter}
+            onChange={(event) => setRecordFilter(event.target.value)}
+          >
+            <option>All Records</option>
+            <option>Expiring Soon</option>
+            <option>Expired</option>
+            <option>Missing Docs</option>
+            <option>Grants</option>
+          </select>
+        </label>
       </section>
 
-      <section className="workspacePanel compactPanel scrollAnchor" ref={addRef}>
-        <div className="workspaceHeader compactPanelHeader">
-          <div>
-            <p className="eyebrow">Add Item</p>
-            <h3>New Permit, Grant, or Renewal</h3>
-          </div>
-        </div>
-
-        <form className="formGrid compactFormGrid" onSubmit={addItem}>
-          <label>
-            Item Name
-            <input
-              value={newItem.name}
-              onChange={(event) =>
-                setNewItem((current) => ({ ...current, name: event.target.value }))
-              }
-              placeholder="e.g., Home-Based Processor Renewal"
-            />
-          </label>
-
-          <label>
-            Type
-            <select
-              value={newItem.type}
-              onChange={(event) =>
-                setNewItem((current) => ({ ...current, type: event.target.value }))
-              }
-            >
-              {itemTypes.map((type) => (
-                <option key={type}>{type}</option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Agency / Organization
-            <input
-              value={newItem.agency}
-              onChange={(event) =>
-                setNewItem((current) => ({ ...current, agency: event.target.value }))
-              }
-              placeholder="e.g., Kentucky Department of Agriculture"
-            />
-          </label>
-
-          <label>
-            Status
-            <select
-              value={newItem.status}
-              onChange={(event) =>
-                setNewItem((current) => ({ ...current, status: event.target.value }))
-              }
-            >
-              {statusOptions.map((status) => (
-                <option key={status}>{status}</option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Priority
-            <select
-              value={newItem.priority}
-              onChange={(event) =>
-                setNewItem((current) => ({
-                  ...current,
-                  priority: event.target.value
-                }))
-              }
-            >
-              {priorityOptions.map((priority) => (
-                <option key={priority}>{priority}</option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Due Date
-            <input
-              type="date"
-              value={newItem.dueDate}
-              onChange={(event) =>
-                setNewItem((current) => ({ ...current, dueDate: event.target.value }))
-              }
-            />
-          </label>
-
-          <label>
-            Submitted Date
-            <input
-              type="date"
-              value={newItem.submittedDate}
-              onChange={(event) =>
-                setNewItem((current) => ({
-                  ...current,
-                  submittedDate: event.target.value
-                }))
-              }
-            />
-          </label>
-
-          <label>
-            Approved Date
-            <input
-              type="date"
-              value={newItem.approvedDate}
-              onChange={(event) =>
-                setNewItem((current) => ({
-                  ...current,
-                  approvedDate: event.target.value
-                }))
-              }
-            />
-          </label>
-
-          <label>
-            Renewal Date
-            <input
-              type="date"
-              value={newItem.renewalDate}
-              onChange={(event) =>
-                setNewItem((current) => ({
-                  ...current,
-                  renewalDate: event.target.value
-                }))
-              }
-            />
-          </label>
-
-          <label>
-            Fee
-            <input
-              type="number"
-              step="0.01"
-              value={newItem.fee}
-              onWheel={preventNumberScroll}
-              onChange={(event) =>
-                setNewItem((current) => ({ ...current, fee: event.target.value }))
-              }
-              placeholder="e.g., 25"
-            />
-          </label>
-
-          <label>
-            Link
-            <input
-              value={newItem.link}
-              onChange={(event) =>
-                setNewItem((current) => ({ ...current, link: event.target.value }))
-              }
-              placeholder="Application, portal, or reference URL"
-            />
-          </label>
-
-          <label>
-            Notes
-            <input
-              value={newItem.notes}
-              onChange={(event) =>
-                setNewItem((current) => ({ ...current, notes: event.target.value }))
-              }
-              placeholder="Requirements, documents needed, next steps"
-            />
-          </label>
-
-          <div className="formActions fullSpan compactActions">
-            <button className="primaryButton compactPrimary" type="submit">
-              <Plus size={15} />
-              Add Item
-            </button>
-          </div>
-        </form>
-      </section>
-
-      <section className="workspacePanel compactPanel scrollAnchor" ref={trackerRef}>
-        <div className="workspaceHeader compactPanelHeader">
-          <div>
-            <p className="eyebrow">Tracker</p>
-            <h3>Permit & Grant Items</h3>
-          </div>
-        </div>
-
-        <div className="batchTable compactBatchTable permitGrantTable">
-          <div className="batchTableHeader permitGrantHeader">
-            <span>Item</span>
+      <section className="permitTablePanel">
+        <div className="permitTable">
+          <div className="permitTableHeader">
+            <span>Name</span>
             <span>Type</span>
-            <span>Agency</span>
+            <span>Organization</span>
             <span>Status</span>
             <span>Priority</span>
-            <span>Due</span>
-            <span>Renewal</span>
-            <span>Fee</span>
-            <span>Link</span>
-            <span>Notes</span>
-            <span>Due Status</span>
-            <span></span>
+            <span>Issue</span>
+            <span>Due / Renewal</span>
+            <span>Reminder</span>
+            <span>Document</span>
+            <span>Actions</span>
           </div>
 
-          {items.map((item) => {
-            const dueStatus = getDueStatus(item);
+          {loadingItems ? (
+            <div className="permitEmptyState">Loading records...</div>
+          ) : filteredItems.length ? (
+            filteredItems.map((item) => {
+              const dueStatus = getDueStatus(item);
 
-            return (
-              <div className="batchTableRow permitGrantRow" key={item.id}>
-                <span>
-                  <input
-                    value={item.name}
-                    onChange={(event) =>
-                      updateItem(item.id, "name", event.target.value)
-                    }
-                  />
-                </span>
+              return (
+                <div className="permitTableRow" key={item.id}>
+                  <span className="permitName">{item.name}</span>
 
-                <span>
-                  <select
-                    value={item.type}
-                    onChange={(event) =>
-                      updateItem(item.id, "type", event.target.value)
-                    }
-                  >
-                    {itemTypes.map((type) => (
-                      <option key={type}>{type}</option>
-                    ))}
-                  </select>
-                </span>
+                  <span>
+                    <span className="permitTypePill">{item.type}</span>
+                  </span>
 
-                <span>
-                  <input
-                    value={item.agency}
-                    onChange={(event) =>
-                      updateItem(item.id, "agency", event.target.value)
-                    }
-                  />
-                </span>
+                  <span className="permitMuted">{item.agency || "None listed"}</span>
 
-                <span>
-                  <select
-                    value={item.status}
-                    onChange={(event) =>
-                      updateItem(item.id, "status", event.target.value)
-                    }
-                  >
-                    {statusOptions.map((status) => (
-                      <option key={status}>{status}</option>
-                    ))}
-                  </select>
-                </span>
+                  <span>
+                    <span className={`permitStatusPill ${statusClass(item.status)}`}>
+                      {item.status}
+                    </span>
+                  </span>
 
-                <span>
-                  <select
-                    value={item.priority}
-                    onChange={(event) =>
-                      updateItem(item.id, "priority", event.target.value)
-                    }
-                  >
-                    {priorityOptions.map((priority) => (
-                      <option key={priority}>{priority}</option>
-                    ))}
-                  </select>
-                </span>
+                  <span>
+                    <span className={`permitPriorityPill ${item.priority.toLowerCase()}`}>
+                      {item.priority}
+                    </span>
+                  </span>
 
-                <span>
-                  <input
-                    type="date"
-                    value={item.dueDate || ""}
-                    onChange={(event) =>
-                      updateItem(item.id, "dueDate", event.target.value)
-                    }
-                  />
-                </span>
+                  <span className="permitMuted">{item.issueDate || "—"}</span>
 
-                <span>
-                  <input
-                    type="date"
-                    value={item.renewalDate || ""}
-                    onChange={(event) =>
-                      updateItem(item.id, "renewalDate", event.target.value)
-                    }
-                  />
-                </span>
+                  <span className="permitMuted">{getRelevantDate(item) || "—"}</span>
 
-                <span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={item.fee}
-                    onWheel={preventNumberScroll}
-                    onChange={(event) =>
-                      updateItem(item.id, "fee", event.target.value)
-                    }
-                  />
-                </span>
+                  <span>
+                    <span className={`permitDeadlinePill ${dueStatus.tone}`}>
+                      {dueStatus.tone === "danger" ? (
+                        <AlertTriangle size={13} />
+                      ) : (
+                        <CalendarDays size={13} />
+                      )}
+                      {dueStatus.label}
+                    </span>
+                  </span>
 
-                <span>
-                  <input
-                    value={item.link}
-                    onChange={(event) =>
-                      updateItem(item.id, "link", event.target.value)
-                    }
-                  />
-                </span>
+                  <span>
+                    {item.documentName || item.documentUrl ? (
+                      <span className="permitDocument">
+                        <FileText size={14} />
+                        {item.documentUrl ? (
+                          <a href={item.documentUrl} target="_blank" rel="noreferrer">
+                            {item.documentName || "Open Document"}
+                          </a>
+                        ) : (
+                          <span>{item.documentName}</span>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="permitMissingDoc">
+                        <Upload size={14} />
+                        Missing
+                      </span>
+                    )}
+                  </span>
 
-                <span>
-                  <input
-                    value={item.notes}
-                    onChange={(event) =>
-                      updateItem(item.id, "notes", event.target.value)
-                    }
-                  />
-                </span>
+                  <span className="permitActions">
+                    {item.link ? (
+                      <a href={item.link} target="_blank" rel="noreferrer">
+                        <ExternalLink size={16} />
+                      </a>
+                    ) : null}
 
-                <span className={`deadlinePill ${dueStatus.replaceAll(" ", "").toLowerCase()}`}>
-                  {getDateLabel(item)}
-                  <small>{dueStatus}</small>
-                </span>
+                    <button type="button" onClick={() => openEditRecord(item)}>
+                      <Edit3 size={16} />
+                    </button>
 
-                <span className="permitGrantActions">
-                  <button
-                    className="iconButton"
-                    type="button"
-                    onClick={() => saveItem(item)}
-                    disabled={saving}
-                  >
-                    <Save size={15} />
-                  </button>
-
-                  <button
-                    className="iconButton danger"
-                    type="button"
-                    onClick={() => removeItem(item.id)}
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </span>
-              </div>
-            );
-          })}
+                    <button type="button" onClick={() => removeItem(item.id)}>
+                      <Trash2 size={16} />
+                    </button>
+                  </span>
+                </div>
+              );
+            })
+          ) : (
+            <div className="permitEmptyState">No matching records found.</div>
+          )}
         </div>
       </section>
 
-      {showBackToTop ? (
-        <button className="backToTopButton" type="button" onClick={scrollToTop}>
-          <ArrowUp size={18} />
-          Top
-        </button>
+      {isModalOpen ? (
+        <div className="permitModalOverlay" role="dialog" aria-modal="true">
+          <div className="permitModal">
+            <div className="permitModalHeader">
+              <h3>
+                {items.some((item) => item.id === editingRecord.id)
+                  ? "Edit Permit / Grant / Document"
+                  : "Add Permit / Grant / Document"}
+              </h3>
+
+              <button type="button" onClick={closeModal}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <form
+              className="permitModalForm"
+              onSubmit={(event) => {
+                event.preventDefault();
+                saveRecord();
+              }}
+            >
+              <label className="permitFull">
+                Name *
+                <input
+                  value={editingRecord.name}
+                  onChange={(event) => updateEditingRecord("name", event.target.value)}
+                  placeholder="e.g., Cottage Food License"
+                />
+              </label>
+
+              <label>
+                Type *
+                <select
+                  value={editingRecord.type}
+                  onChange={(event) => updateEditingRecord("type", event.target.value)}
+                >
+                  {itemTypes.map((type) => (
+                    <option key={type}>{type}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Status *
+                <select
+                  value={editingRecord.status}
+                  onChange={(event) =>
+                    updateEditingRecord("status", event.target.value)
+                  }
+                >
+                  {statusOptions.map((status) => (
+                    <option key={status}>{status}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Priority
+                <select
+                  value={editingRecord.priority}
+                  onChange={(event) =>
+                    updateEditingRecord("priority", event.target.value)
+                  }
+                >
+                  {priorityOptions.map((priority) => (
+                    <option key={priority}>{priority}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Fee
+                <input
+                  type="number"
+                  step="0.01"
+                  value={editingRecord.fee}
+                  onChange={(event) => updateEditingRecord("fee", event.target.value)}
+                  placeholder="e.g., 25"
+                />
+              </label>
+
+              <label className="permitFull">
+                Issuing Organization
+                <input
+                  value={editingRecord.agency}
+                  onChange={(event) => updateEditingRecord("agency", event.target.value)}
+                  placeholder="e.g., State Department of Agriculture"
+                />
+              </label>
+
+              <label>
+                Issue Date
+                <input
+                  type="date"
+                  value={editingRecord.issueDate}
+                  onChange={(event) =>
+                    updateEditingRecord("issueDate", event.target.value)
+                  }
+                />
+              </label>
+
+              <label>
+                Expiration / Deadline Date
+                <input
+                  type="date"
+                  value={editingRecord.dueDate}
+                  onChange={(event) => updateEditingRecord("dueDate", event.target.value)}
+                />
+              </label>
+
+              <label>
+                Renewal Date
+                <input
+                  type="date"
+                  value={editingRecord.renewalDate}
+                  onChange={(event) =>
+                    updateEditingRecord("renewalDate", event.target.value)
+                  }
+                />
+              </label>
+
+              <label>
+                Submitted Date
+                <input
+                  type="date"
+                  value={editingRecord.submittedDate}
+                  onChange={(event) =>
+                    updateEditingRecord("submittedDate", event.target.value)
+                  }
+                />
+              </label>
+
+              <label>
+                Approved Date
+                <input
+                  type="date"
+                  value={editingRecord.approvedDate}
+                  onChange={(event) =>
+                    updateEditingRecord("approvedDate", event.target.value)
+                  }
+                />
+              </label>
+
+              <label>
+                Reminder Amount
+                <input
+                  type="number"
+                  value={editingRecord.reminderAmount}
+                  onChange={(event) =>
+                    updateEditingRecord("reminderAmount", event.target.value)
+                  }
+                />
+              </label>
+
+              <label>
+                Reminder Unit
+                <select
+                  value={editingRecord.reminderUnit}
+                  onChange={(event) =>
+                    updateEditingRecord("reminderUnit", event.target.value)
+                  }
+                >
+                  <option>days</option>
+                  <option>weeks</option>
+                  <option>months</option>
+                </select>
+              </label>
+
+              <label className="permitFull">
+                Link
+                <input
+                  value={editingRecord.link}
+                  onChange={(event) => updateEditingRecord("link", event.target.value)}
+                  placeholder="Application, portal, or reference URL"
+                />
+              </label>
+
+              <label className="permitFull">
+                Notes
+                <textarea
+                  value={editingRecord.notes}
+                  onChange={(event) => updateEditingRecord("notes", event.target.value)}
+                  placeholder="Additional notes or details..."
+                />
+              </label>
+
+              <label className="permitFull">
+                Document Upload
+                <input type="file" onChange={handleDocumentSelection} />
+                {editingRecord.documentName ? (
+                  <span className="permitSelectedFile">
+                    Selected: {editingRecord.documentName}
+                  </span>
+                ) : null}
+              </label>
+
+              <div className="permitModalActions permitFull">
+                <button className="secondaryButton compactButton" type="button" onClick={closeModal}>
+                  Cancel
+                </button>
+
+                <button className="primaryButton compactPrimary" type="submit" disabled={saving}>
+                  <Save size={15} />
+                  {saving ? "Saving..." : "Save Record"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       ) : null}
     </div>
   );
