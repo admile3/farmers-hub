@@ -173,6 +173,16 @@ export default function PricingCalculator() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+  if (!statusMessage) return;
+
+  const timer = window.setTimeout(() => {
+    setStatusMessage("");
+  }, 3000);
+
+  return () => window.clearTimeout(timer);
+}, [statusMessage]);
+  
   function preventNumberScroll(event) {
     event.target.blur();
   }
