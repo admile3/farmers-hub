@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
   ClipboardList,
@@ -9,6 +9,12 @@ import {
   Sprout,
   Trash2
 } from "lucide-react";
+import { useAuth } from "../AuthContext.jsx";
+import {
+  deleteMarketPrepPlan,
+  getMarketPrepPlans,
+  saveMarketPrepPlan
+} from "../services/marketPrepService.js";
 
 const starterProducts = [
   {
@@ -62,12 +68,31 @@ function makeId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+function createBlankPlan() {
+  return {
+    id: "",
+    marketName: "Lexington Farmers Market",
+    marketDate: todayISO(),
+    location: "Southland Drive",
+    weatherNotes: "",
+    products: starterProducts
+  };
+}
+
 export default function MarketPrepPlanner() {
+  const { user, loginWithGoogle } = useAuth();
+
+  const [planId, setPlanId] = useState("");
   const [marketName, setMarketName] = useState("Lexington Farmers Market");
   const [marketDate, setMarketDate] = useState(todayISO());
   const [location, setLocation] = useState("Southland Drive");
   const [weatherNotes, setWeatherNotes] = useState("");
   const [products, setProducts] = useState(starterProducts);
+  const [savedPlans, setSavedPlans] = useState([]);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [loadingPlans, setLoadingPlans] = useState(false);
+  const [saving, setSaving] = useState(false);
+
   const [newProduct, setNewProduct] = useState({
     name: "",
     category: "Microgreens",
@@ -102,6 +127,100 @@ export default function MarketPrepPlanner() {
     );
   }, [products]);
 
+  async function loadSavedPlans() {
+    if (!user) return;
+
+    setLoadingPlans(true);
+
+    try {
+      const plans = await getMarketPrepPlans(user.uid);
+      setSavedPlans(plans);
+    } catch (error) {
+      console.error(error);
+      setStatusMessage("Could not load saved market plans.");
+    } finally {
+      setLoadingPlans(false);
+    }
+  }
+
+  useEffect(() => {
+    if (user) {
+      loadSavedPlans();
+    } else {
+      setSavedPlans([]);
+    }
+  }, [user]);
+
+  function hydratePlan(plan) {
+    setPlanId(plan.id || "");
+    setMarketName(plan.marketName || "Lexington Farmers Market");
+    setMarketDate(plan.marketDate || todayISO());
+    setLocation(plan.location || "");
+    setWeatherNotes(plan.weatherNotes || "");
+    setProducts(Array.isArray(plan.products) ? plan.products : []);
+    setStatusMessage("Loaded saved market plan.");
+  }
+
+  function startNewPlan() {
+    const blank = createBlankPlan();
+    setPlanId(blank.id);
+    setMarketName(blank.marketName);
+    setMarketDate(blank.marketDate);
+    setLocation(blank.location);
+    setWeatherNotes(blank.weatherNotes);
+    setProducts(blank.products);
+    setStatusMessage("Started a new market plan.");
+  }
+
+  async function savePlan() {
+    if (!user) {
+      setStatusMessage("Sign in from the Farmers Hub sidebar to save market plans.");
+      return;
+    }
+
+    setSaving(true);
+
+    const plan = {
+      id: planId,
+      marketName,
+      marketDate,
+      location,
+      weatherNotes,
+      products,
+      totals
+    };
+
+    try {
+      const savedId = await saveMarketPrepPlan(user.uid, plan);
+      setPlanId(savedId);
+      setStatusMessage("Market prep plan saved.");
+      await loadSavedPlans();
+    } catch (error) {
+      console.error(error);
+      setStatusMessage("Could not save market prep plan.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function removeSavedPlan(id) {
+    if (!user) return;
+
+    try {
+      await deleteMarketPrepPlan(user.uid, id);
+
+      if (planId === id) {
+        startNewPlan();
+      }
+
+      setStatusMessage("Saved plan deleted.");
+      await loadSavedPlans();
+    } catch (error) {
+      console.error(error);
+      setStatusMessage("Could not delete saved plan.");
+    }
+  }
+
   function updateProduct(id, field, value) {
     setProducts((current) =>
       current.map((product) =>
@@ -117,7 +236,10 @@ export default function MarketPrepPlanner() {
   function addProduct(event) {
     event.preventDefault();
 
-    if (!newProduct.name.trim()) return;
+    if (!newProduct.name.trim()) {
+      setStatusMessage("Product name is required.");
+      return;
+    }
 
     setProducts((current) => [
       ...current,
@@ -140,10 +262,33 @@ export default function MarketPrepPlanner() {
       harvestBufferPct: 10,
       notes: ""
     });
+
+    setStatusMessage("Product added to market plan.");
   }
 
   function printPlan() {
     window.print();
+  }
+
+  if (!user) {
+    return (
+      <div className="modulePage marketPrepPage compactSpicePage">
+        <section className="moduleHero compactHero">
+          <div>
+            <p className="eyebrow">Market Prep Planner</p>
+            <h2>Sign in to save market prep plans.</h2>
+            <p>
+              Build harvest forecasts and pack lists locally, then sign in to save
+              market plans to your Farmers Hub account.
+            </p>
+          </div>
+
+          <button className="primaryButton" onClick={loginWithGoogle}>
+            Sign in with Google
+          </button>
+        </section>
+      </div>
+    );
   }
 
   return (
@@ -154,10 +299,19 @@ export default function MarketPrepPlanner() {
           <h2>Plan harvest, packing, and product quantities before market day.</h2>
           <p>
             Build a market plan by location and date, estimate 1oz and 2oz container
-            counts, add harvest buffer, and generate a simple prep list.
+            counts, add harvest buffer, save plans, and print a working prep sheet.
           </p>
         </div>
       </section>
+
+      {statusMessage ? (
+        <div className="statusBanner">
+          <span>{statusMessage}</span>
+          <button type="button" onClick={() => setStatusMessage("")}>
+            ×
+          </button>
+        </div>
+      ) : null}
 
       <section className="toolGrid compactToolGrid">
         <div className="toolCard compactToolCard">
@@ -180,8 +334,8 @@ export default function MarketPrepPlanner() {
 
         <div className="toolCard compactToolCard">
           <ClipboardList size={22} />
-          <h3>Prep Summary</h3>
-          <p>Review totals and print a working market prep sheet.</p>
+          <h3>Saved Plans</h3>
+          <p>Load, update, print, and reuse market prep plans.</p>
         </div>
       </section>
 
@@ -193,10 +347,35 @@ export default function MarketPrepPlanner() {
               <h3>Market Details</h3>
             </div>
 
-            <button className="secondaryButton compactButton" type="button" onClick={printPlan}>
-              <Printer size={15} />
-              Print Plan
-            </button>
+            <div className="formActions compactActions">
+              <button
+                className="secondaryButton compactButton"
+                type="button"
+                onClick={startNewPlan}
+              >
+                <Plus size={15} />
+                New Plan
+              </button>
+
+              <button
+                className="secondaryButton compactButton"
+                type="button"
+                onClick={printPlan}
+              >
+                <Printer size={15} />
+                Print
+              </button>
+
+              <button
+                className="primaryButton compactPrimary"
+                type="button"
+                onClick={savePlan}
+                disabled={saving}
+              >
+                <Save size={15} />
+                {saving ? "Saving..." : "Save"}
+              </button>
+            </div>
           </div>
 
           <div className="formGrid compactFormGrid">
@@ -259,6 +438,49 @@ export default function MarketPrepPlanner() {
           </div>
         </div>
 
+        <div className="workspacePanel compactPanel">
+          <div className="workspaceHeader compactPanelHeader">
+            <div>
+              <p className="eyebrow">Saved</p>
+              <h3>Saved Market Plans</h3>
+            </div>
+          </div>
+
+          <div className="savedList compactSavedList">
+            {loadingPlans ? (
+              <div className="placeholderBox compactPlaceholder">
+                Loading saved plans...
+              </div>
+            ) : savedPlans.length ? (
+              savedPlans.map((plan) => (
+                <div className="savedItem compactSavedItem" key={plan.id}>
+                  <div>
+                    <h4>{plan.marketName || "Market Plan"}</h4>
+                    <p>
+                      {plan.marketDate || "No date"} • {plan.location || "No location"}
+                    </p>
+                  </div>
+
+                  <div className="itemActions">
+                    <button type="button" onClick={() => hydratePlan(plan)}>
+                      Load
+                    </button>
+                    <button type="button" onClick={() => removeSavedPlan(plan.id)}>
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="placeholderBox compactPlaceholder">
+                No saved market plans yet.
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="spiceWorkspace compactWorkspace">
         <div className="workspacePanel compactPanel">
           <div className="workspaceHeader compactPanelHeader">
             <div>
@@ -359,13 +581,36 @@ export default function MarketPrepPlanner() {
                 <Plus size={15} />
                 Add Product
               </button>
-
-              <button className="secondaryButton compactButton" type="button">
-                <Save size={15} />
-                Save Coming Soon
-              </button>
             </div>
           </form>
+        </div>
+
+        <div className="workspacePanel compactPanel">
+          <div className="workspaceHeader compactPanelHeader">
+            <div>
+              <p className="eyebrow">Summary</p>
+              <h3>Prep Summary</h3>
+            </div>
+          </div>
+
+          <div className="batchTotals compactBatchTotals">
+            <div>
+              <p className="eyebrow">Packaged</p>
+              <h4>{round(totals.packagedOz)} oz</h4>
+            </div>
+            <div>
+              <p className="eyebrow">Harvest</p>
+              <h4>{round(totals.harvestOz)} oz</h4>
+            </div>
+            <div>
+              <p className="eyebrow">Products</p>
+              <h4>{products.length}</h4>
+            </div>
+          </div>
+
+          <div className="placeholderBox compactPlaceholder">
+            Harvest target includes each product’s buffer percentage.
+          </div>
         </div>
       </section>
 
