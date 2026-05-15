@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
+  ArrowUp,
   Beaker,
+  BookOpen,
   Calculator,
   Edit3,
   Library,
@@ -83,6 +85,11 @@ function gramsToOunces(grams) {
 export default function SpiceKitchen() {
   const { user, loginWithGoogle } = useAuth();
 
+  const pantryRef = useRef(null);
+  const builderRef = useRef(null);
+  const libraryRef = useRef(null);
+  const calculatorRef = useRef(null);
+
   const [ingredients, setIngredients] = useState([]);
   const [recipes, setRecipes] = useState([]);
   const [ingredientForm, setIngredientForm] = useState(emptyIngredient);
@@ -99,11 +106,37 @@ export default function SpiceKitchen() {
   const [statusMessage, setStatusMessage] = useState("");
   const [statusType, setStatusType] = useState("info");
   const [loading, setLoading] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
   function showStatus(message, type = "info") {
     setStatusMessage(message);
     setStatusType(type);
   }
+
+  function scrollToSection(ref) {
+    ref.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  }
+
+  function scrollToTop() {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  }
+
+  useEffect(() => {
+    function handleScroll() {
+      setShowBackToTop(window.scrollY > 450);
+    }
+
+    window.addEventListener("scroll", handleScroll);
+    handleScroll();
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   async function loadData() {
     if (!user) return;
@@ -180,17 +213,9 @@ export default function SpiceKitchen() {
       if (ingredient?.cost) {
         const cost = toNumber(ingredient.cost);
 
-        if (ingredient.costUnit === "oz") {
-          estimatedCost = ounces * cost;
-        }
-
-        if (ingredient.costUnit === "g") {
-          estimatedCost = grams * cost;
-        }
-
-        if (ingredient.costUnit === "lb") {
-          estimatedCost = (ounces / 16) * cost;
-        }
+        if (ingredient.costUnit === "oz") estimatedCost = ounces * cost;
+        if (ingredient.costUnit === "g") estimatedCost = grams * cost;
+        if (ingredient.costUnit === "lb") estimatedCost = (ounces / 16) * cost;
       }
 
       return {
@@ -265,6 +290,7 @@ export default function SpiceKitchen() {
       costUnit: ingredient.costUnit || "oz",
       notes: ingredient.notes || ""
     });
+    scrollToSection(pantryRef);
   }
 
   async function removeIngredient(ingredientId) {
@@ -403,6 +429,7 @@ export default function SpiceKitchen() {
       setRecipeForm(emptyRecipe);
       setEditingRecipeId(null);
       await loadData();
+      scrollToSection(libraryRef);
     } catch (error) {
       console.error(error);
       showStatus("Could not save recipe.", "error");
@@ -417,6 +444,7 @@ export default function SpiceKitchen() {
       notes: recipe.notes || "",
       ingredients: recipe.ingredients || []
     });
+    scrollToSection(builderRef);
   }
 
   async function removeRecipe(recipeId) {
@@ -432,6 +460,33 @@ export default function SpiceKitchen() {
       showStatus("Could not delete recipe.", "error");
     }
   }
+
+  const sectionCards = [
+    {
+      title: "Ingredient Pantry",
+      description: "Save ingredients, costs, suppliers, notes, and categories.",
+      icon: Library,
+      ref: pantryRef
+    },
+    {
+      title: "Recipe Builder",
+      description: "Create blends by parts using your saved pantry ingredients.",
+      icon: Beaker,
+      ref: builderRef
+    },
+    {
+      title: "Recipe Library",
+      description: "Review, edit, and manage your saved seasoning recipes.",
+      icon: BookOpen,
+      ref: libraryRef
+    },
+    {
+      title: "Batch Calculator",
+      description: "Scale saved recipes to exact ounces, grams, and overage targets.",
+      icon: Calculator,
+      ref: calculatorRef
+    }
+  ];
 
   if (!user) {
     return (
@@ -480,33 +535,26 @@ export default function SpiceKitchen() {
       {loading ? <div className="floatingStatus info">Loading Spice Kitchen...</div> : null}
 
       <section className="toolGrid compactToolGrid">
-        <div className="toolCard compactToolCard">
-          <Library size={22} />
-          <h3>Ingredient Pantry</h3>
-          <p>Save ingredients, costs, suppliers, notes, and categories.</p>
-        </div>
+        {sectionCards.map((card) => {
+          const Icon = card.icon;
 
-        <div className="toolCard compactToolCard">
-          <Beaker size={22} />
-          <h3>Recipe Builder</h3>
-          <p>Create blends by parts using your saved pantry ingredients.</p>
-        </div>
-
-        <div className="toolCard compactToolCard">
-          <Scale size={22} />
-          <h3>Batch Scaling</h3>
-          <p>Scale recipes to ounces, grams, package counts, or overage targets.</p>
-        </div>
-
-        <div className="toolCard compactToolCard">
-          <Calculator size={22} />
-          <h3>Cost Estimates</h3>
-          <p>Estimate batch costs from ingredient cost data.</p>
-        </div>
+          return (
+            <button
+              className="toolCard compactToolCard clickableToolCard"
+              key={card.title}
+              type="button"
+              onClick={() => scrollToSection(card.ref)}
+            >
+              <Icon size={22} />
+              <h3>{card.title}</h3>
+              <p>{card.description}</p>
+            </button>
+          );
+        })}
       </section>
 
       <section className="spiceWorkspace compactWorkspace">
-        <div className="workspacePanel compactPanel">
+        <div className="workspacePanel compactPanel scrollAnchor" ref={pantryRef}>
           <div className="workspaceHeader compactPanelHeader">
             <div>
               <p className="eyebrow">Pantry</p>
@@ -646,7 +694,7 @@ export default function SpiceKitchen() {
           </div>
         </div>
 
-        <div className="workspacePanel compactPanel">
+        <div className="workspacePanel compactPanel scrollAnchor" ref={builderRef}>
           <div className="workspaceHeader compactPanelHeader">
             <div>
               <p className="eyebrow">Builder</p>
@@ -861,7 +909,7 @@ export default function SpiceKitchen() {
       </section>
 
       <section className="lowerSpiceGrid">
-        <div className="workspacePanel compactPanel">
+        <div className="workspacePanel compactPanel scrollAnchor" ref={libraryRef}>
           <div className="workspaceHeader compactPanelHeader">
             <div>
               <p className="eyebrow">Saved Recipes</p>
@@ -898,7 +946,7 @@ export default function SpiceKitchen() {
           </div>
         </div>
 
-        <div className="workspacePanel compactPanel">
+        <div className="workspacePanel compactPanel scrollAnchor" ref={calculatorRef}>
           <div className="workspaceHeader compactPanelHeader">
             <div>
               <p className="eyebrow">Batch Calculator</p>
@@ -1000,6 +1048,13 @@ export default function SpiceKitchen() {
           )}
         </div>
       </section>
+
+      {showBackToTop ? (
+        <button className="backToTopButton" type="button" onClick={scrollToTop}>
+          <ArrowUp size={18} />
+          Top
+        </button>
+      ) : null}
     </div>
   );
 }
