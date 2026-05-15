@@ -10,7 +10,9 @@ import {
   Sprout,
   Wheat
 } from "lucide-react";
+
 import SpiceKitchen from "./modules/SpiceKitchen.jsx";
+import BakingPlanner from "./modules/BakingPlanner.jsx";
 import { useAuth } from "./AuthContext.jsx";
 
 const modules = [
@@ -24,12 +26,12 @@ const modules = [
     accent: "spice"
   },
   {
-    title: "Sourdough Planner",
+    title: "Baking Planner",
     description:
-      "Plan sourdough production, feeding schedules, bake timing, and customer order flow.",
-    path: "#",
+      "Plan production schedules, baking timelines, dough calculations, and batch workflow.",
+    path: "/baking-planner",
     icon: Wheat,
-    status: "Coming Soon",
+    status: "Ready",
     accent: "sourdough"
   },
   {
@@ -71,6 +73,7 @@ function AppShell({ children }) {
           <div className="brandIcon">
             <Sprout size={26} />
           </div>
+
           <div>
             <h1>Farmers Hub</h1>
             <p>Vendor tools</p>
@@ -81,10 +84,15 @@ function AppShell({ children }) {
           <Link to="/" className="navLink">
             Dashboard
           </Link>
+
           <Link to="/spice-kitchen" className="navLink">
             Spice Kitchen
           </Link>
-          <span className="navLink disabled">Sourdough Planner</span>
+
+          <Link to="/baking-planner" className="navLink">
+            Baking Planner
+          </Link>
+
           <span className="navLink disabled">Market Prep</span>
           <span className="navLink disabled">Pricing</span>
         </nav>
@@ -119,10 +127,17 @@ function AppShell({ children }) {
           ) : (
             <>
               <p className="eyebrow">Account</p>
-              <h3>Save your work</h3>
-              <p>Sign in once to use Farmers Hub tools and save your data.</p>
 
-              <button className="primaryButton fullButton" onClick={loginWithGoogle}>
+              <h3>Save your work</h3>
+
+              <p>
+                Sign in once to use Farmers Hub tools and save your data.
+              </p>
+
+              <button
+                className="primaryButton fullButton"
+                onClick={loginWithGoogle}
+              >
                 <LogIn size={16} />
                 Sign in with Google
               </button>
@@ -132,8 +147,12 @@ function AppShell({ children }) {
 
         <div className="sidebarCard">
           <p className="eyebrow">Current build</p>
+
           <h3>Foundation</h3>
-          <p>Modular dashboard structure ready for future sub-apps.</p>
+
+          <p>
+            Modular dashboard structure ready for future sub-apps.
+          </p>
         </div>
       </aside>
 
@@ -148,25 +167,33 @@ function Dashboard() {
       <section className="hero">
         <div>
           <p className="eyebrow">Farmers market vendor SaaS</p>
-          <h2>One hub for the tools that keep small food businesses moving.</h2>
+
+          <h2>
+            One hub for the tools that keep small food businesses moving.
+          </h2>
+
           <p className="heroText">
-            Farmers Hub is built as a parent dashboard for standalone vendor tools.
-            Start with Spice Kitchen, then add sourdough planning, market prep,
-            pricing, permits, grants, and more without rebuilding the foundation.
+            Farmers Hub is built as a parent dashboard for standalone vendor
+            tools. Start with Spice Kitchen and Baking Planner, then expand into
+            market prep, pricing, permits, grants, and more without rebuilding
+            the foundation.
           </p>
         </div>
 
         <div className="heroPanel">
           <div>
-            <p className="eyebrow">First module</p>
-            <h3>Spice Kitchen</h3>
+            <p className="eyebrow">Newest module</p>
+
+            <h3>Baking Planner</h3>
+
             <p>
-              Recipe scaling, ingredient pantry, batch planning, and production notes.
+              Production schedules, dough planning, batch calculations, and
+              baking workflow management.
             </p>
           </div>
 
-          <Link to="/spice-kitchen" className="primaryButton">
-            Open Spice Kitchen
+          <Link to="/baking-planner" className="primaryButton">
+            Open Baking Planner
             <ArrowRight size={18} />
           </Link>
         </div>
@@ -190,12 +217,14 @@ function Dashboard() {
                 <div className="moduleIcon">
                   <Icon size={24} />
                 </div>
+
                 <span className={isReady ? "status ready" : "status"}>
                   {module.status}
                 </span>
               </div>
 
               <h3>{module.title}</h3>
+
               <p>{module.description}</p>
 
               <div className="moduleFooter">
@@ -225,7 +254,9 @@ function NotFound() {
     <AppShell>
       <div className="emptyState">
         <h2>Page not found</h2>
+
         <p>This module does not exist yet.</p>
+
         <Link to="/" className="primaryButton">
           Back to Dashboard
         </Link>
@@ -238,6 +269,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Dashboard />} />
+
       <Route
         path="/spice-kitchen"
         element={
@@ -246,6 +278,16 @@ export default function App() {
           </AppShell>
         }
       />
+
+      <Route
+        path="/baking-planner"
+        element={
+          <AppShell>
+            <BakingPlanner />
+          </AppShell>
+        }
+      />
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
