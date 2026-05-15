@@ -1398,3 +1398,74 @@ label {
 .pricingPositive {
   color: var(--spice);
 }
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  margin: 0;
+}
+
+input[type="number"] {
+  appearance: textfield;
+}
+
+.pricingEditableTable {
+  overflow-x: auto;
+}
+
+.pricingEditableHeader,
+.pricingEditableRow {
+  display: grid;
+  grid-template-columns:
+    minmax(150px, 1.15fr)
+    120px
+    72px
+    88px
+    72px
+    72px
+    78px
+    78px
+    92px
+    100px
+    78px
+    105px
+    92px
+    115px
+    minmax(170px, 1fr)
+    46px;
+  gap: 8px;
+  align-items: center;
+  min-width: 1480px;
+}
+
+.pricingEditableHeader {
+  font-size: 0.76rem;
+}
+
+.pricingEditableRow {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.pricingEditableRow input,
+.pricingEditableRow select {
+  min-height: 34px;
+  padding: 7px 9px;
+}
+
+.pricingMetric {
+  font-size: 0.84rem;
+  font-weight: 850;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.pricingMetric small {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.68rem;
+  color: var(--spice);
+  font-weight: 900;
+}
+
+.pricingPositive {
+  color: var(--spice);
+}
