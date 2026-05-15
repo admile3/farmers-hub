@@ -95,16 +95,19 @@ label {
 }
 
 .sidebar {
-  min-height: 100vh;
-  padding: 18px 16px;
-  background: rgba(255, 250, 240, 0.76);
+  height: 100vh;
+  max-height: 100vh;
+  padding: 24px;
+  background: rgba(255, 250, 240, 0.78);
   border-right: 1px solid var(--border);
   backdrop-filter: blur(18px);
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 24px;
   position: sticky;
   top: 0;
+  align-self: start;
+  overflow-y: auto;
 }
 
 .brand {
