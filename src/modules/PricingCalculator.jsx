@@ -776,19 +776,107 @@ export default function PricingCalculator() {
           </button>
         </div>
 
-        <div className="batchTable compactBatchTable marketPrepCompactTable">
-          <div className="batchTableHeader pricingTableHeader">
-            <span>Product</span>
-            <span>Category</span>
-            <span>Cost / Unit</span>
-            <span>Suggested</span>
-            <span>Retail</span>
-            <span>Retail Margin</span>
-            <span>Wholesale</span>
-            <span>Wholesale Margin</span>
-            <span>Notes</span>
-            <span></span>
-          </div>
+        <div className="batchTable compactBatchTable pricingComparisonTable">
+  <div className="batchTableHeader pricingComparisonHeader">
+    <span>Product</span>
+    <span>Category</span>
+    <span>Cost / Unit</span>
+    <span>Suggested $</span>
+    <span>Retail $</span>
+    <span>Retail Margin</span>
+    <span>Wholesale $</span>
+    <span>Wholesale Margin</span>
+    <span>Notes</span>
+    <span></span>
+  </div>
+
+  {items.map((item) => {
+    const calc = calculateItem(item);
+
+    return (
+      <div className="batchTableRow pricingComparisonRow" key={item.id}>
+        <span>
+          <input
+            value={item.productName}
+            onChange={(event) =>
+              updateItem(item.id, "productName", event.target.value)
+            }
+          />
+        </span>
+
+        <span>
+          <select
+            value={item.category}
+            onChange={(event) =>
+              updateItem(item.id, "category", event.target.value)
+            }
+          >
+            {categories.map((category) => (
+              <option key={category}>{category}</option>
+            ))}
+          </select>
+        </span>
+
+        <span className="pricingMetric">
+          ${round(calc.costPerUnit).toFixed(2)}
+        </span>
+
+        <span className="pricingMetric">
+          ${round(calc.suggestedPrice).toFixed(2)}
+        </span>
+
+        <span>
+          <input
+            type="number"
+            step="0.01"
+            value={item.retailPrice}
+            onChange={(event) =>
+              updateItem(item.id, "retailPrice", event.target.value)
+            }
+          />
+        </span>
+
+        <span className="pricingMetric pricingPositive">
+          {round(calc.retailMargin).toFixed(1)}%
+        </span>
+
+        <span>
+          <input
+            type="number"
+            step="0.01"
+            value={item.wholesalePrice}
+            onChange={(event) =>
+              updateItem(item.id, "wholesalePrice", event.target.value)
+            }
+          />
+        </span>
+
+        <span className="pricingMetric pricingPositive">
+          {round(calc.wholesaleMargin).toFixed(1)}%
+        </span>
+
+        <span>
+          <input
+            value={item.notes}
+            onChange={(event) =>
+              updateItem(item.id, "notes", event.target.value)
+            }
+          />
+        </span>
+
+        <span>
+          <button
+            className="iconButton danger"
+            type="button"
+            onClick={() => removeItem(item.id)}
+          >
+            <Trash2 size={15} />
+          </button>
+        </span>
+      </div>
+    );
+  })}
+</div>
 
           {items.map((item) => {
             const calc = calculateItem(item);
