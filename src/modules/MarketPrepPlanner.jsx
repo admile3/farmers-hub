@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ArrowUp,
   CalendarDays,
   ClipboardList,
   PackageCheck,
@@ -123,6 +124,11 @@ function getProductTotals(product) {
 export default function MarketPrepPlanner() {
   const { user, loginWithGoogle } = useAuth();
 
+  const setupRef = useRef(null);
+  const forecastRef = useRef(null);
+  const packListRef = useRef(null);
+  const savedPlansRef = useRef(null);
+
   const [planId, setPlanId] = useState("");
   const [marketName, setMarketName] = useState("Farmers Market");
   const [marketDate, setMarketDate] = useState(todayISO());
@@ -133,6 +139,7 @@ export default function MarketPrepPlanner() {
   const [statusMessage, setStatusMessage] = useState("");
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
   const [newProduct, setNewProduct] = useState({
     name: "",
@@ -144,6 +151,31 @@ export default function MarketPrepPlanner() {
     bufferPct: 0,
     notes: ""
   });
+
+  useEffect(() => {
+    function handleScroll() {
+      setShowBackToTop(window.scrollY > 50);
+    }
+
+    window.addEventListener("scroll", handleScroll);
+    handleScroll();
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  function scrollToSection(ref) {
+    ref.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  }
+
+  function scrollToTop() {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  }
 
   const totals = useMemo(() => {
     return products.reduce(
@@ -216,6 +248,7 @@ export default function MarketPrepPlanner() {
     setWeatherNotes(plan.weatherNotes || "");
     setProducts(Array.isArray(plan.products) ? plan.products : []);
     setStatusMessage("Loaded saved market plan.");
+    scrollToSection(setupRef);
   }
 
   function startNewPlan() {
@@ -227,6 +260,7 @@ export default function MarketPrepPlanner() {
     setWeatherNotes(blank.weatherNotes);
     setProducts(blank.products);
     setStatusMessage("Started a new market plan.");
+    scrollToTop();
   }
 
   async function savePlan() {
@@ -330,11 +364,39 @@ export default function MarketPrepPlanner() {
     });
 
     setStatusMessage("Product added to market plan.");
+    scrollToSection(packListRef);
   }
 
   function printPlan() {
     window.print();
   }
+
+  const sectionCards = [
+    {
+      title: "Market Setup",
+      description: "Set date, location, weather notes, and market context.",
+      icon: CalendarDays,
+      ref: setupRef
+    },
+    {
+      title: "Product Forecast",
+      description: "Plan any vendor product using custom units and categories.",
+      icon: Sprout,
+      ref: forecastRef
+    },
+    {
+      title: "Pack List",
+      description: "Calculate planned units and prep targets by product.",
+      icon: PackageCheck,
+      ref: packListRef
+    },
+    {
+      title: "Saved Plans",
+      description: "Load, update, print, and reuse market prep plans.",
+      icon: ClipboardList,
+      ref: savedPlansRef
+    }
+  ];
 
   if (!user) {
     return (
@@ -381,33 +443,26 @@ export default function MarketPrepPlanner() {
       ) : null}
 
       <section className="toolGrid compactToolGrid">
-        <div className="toolCard compactToolCard">
-          <CalendarDays size={22} />
-          <h3>Market Setup</h3>
-          <p>Set date, location, weather notes, and market context.</p>
-        </div>
+        {sectionCards.map((card) => {
+          const Icon = card.icon;
 
-        <div className="toolCard compactToolCard">
-          <Sprout size={22} />
-          <h3>Product Forecast</h3>
-          <p>Plan any vendor product using custom units and categories.</p>
-        </div>
-
-        <div className="toolCard compactToolCard">
-          <PackageCheck size={22} />
-          <h3>Pack List</h3>
-          <p>Calculate planned units and prep targets by product.</p>
-        </div>
-
-        <div className="toolCard compactToolCard">
-          <ClipboardList size={22} />
-          <h3>Saved Plans</h3>
-          <p>Load, update, print, and reuse market prep plans.</p>
-        </div>
+          return (
+            <button
+              className="toolCard compactToolCard clickableToolCard"
+              key={card.title}
+              type="button"
+              onClick={() => scrollToSection(card.ref)}
+            >
+              <Icon size={22} />
+              <h3>{card.title}</h3>
+              <p>{card.description}</p>
+            </button>
+          );
+        })}
       </section>
 
       <section className="spiceWorkspace compactWorkspace">
-        <div className="workspacePanel compactPanel">
+        <div className="workspacePanel compactPanel scrollAnchor" ref={setupRef}>
           <div className="workspaceHeader compactPanelHeader">
             <div>
               <p className="eyebrow">Setup</p>
@@ -511,7 +566,7 @@ export default function MarketPrepPlanner() {
           </div>
         </div>
 
-        <div className="workspacePanel compactPanel">
+        <div className="workspacePanel compactPanel scrollAnchor" ref={savedPlansRef}>
           <div className="workspaceHeader compactPanelHeader">
             <div>
               <p className="eyebrow">Saved</p>
@@ -554,7 +609,7 @@ export default function MarketPrepPlanner() {
       </section>
 
       <section className="spiceWorkspace compactWorkspace">
-        <div className="workspacePanel compactPanel">
+        <div className="workspacePanel compactPanel scrollAnchor" ref={forecastRef}>
           <div className="workspaceHeader compactPanelHeader">
             <div>
               <p className="eyebrow">Add Product</p>
@@ -714,23 +769,44 @@ export default function MarketPrepPlanner() {
         </div>
       </section>
 
-      <section className="workspacePanel compactPanel">
+      <section className="workspacePanel compactPanel scrollAnchor" ref={packListRef}>
         <div className="workspaceHeader compactPanelHeader">
           <div>
             <p className="eyebrow">Pack List</p>
             <h3>Market Pack + Prep Plan</h3>
           </div>
+
+          <div className="formActions compactActions">
+            <button
+              className="secondaryButton compactButton"
+              type="button"
+              onClick={printPlan}
+            >
+              <Printer size={15} />
+              Print
+            </button>
+
+            <button
+              className="primaryButton compactPrimary"
+              type="button"
+              onClick={savePlan}
+              disabled={saving}
+            >
+              <Save size={15} />
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
         </div>
 
-        <div className="batchTable compactBatchTable">
-          <div className="batchTableHeader marketPrepTableHeader generalizedMarketPrepTable">
+        <div className="batchTable compactBatchTable marketPrepCompactTable">
+          <div className="batchTableHeader marketPrepCompactHeader">
             <span>Product</span>
             <span>Category</span>
-            <span>Unit Label</span>
-            <span>Planned Units</span>
-            <span>Amount / Unit</span>
-            <span>Total Amount</span>
-            <span>Final Target</span>
+            <span>Unit</span>
+            <span>Qty</span>
+            <span>Amt / Unit</span>
+            <span>Total</span>
+            <span>Target</span>
             <span>Notes</span>
             <span></span>
           </div>
@@ -739,10 +815,7 @@ export default function MarketPrepPlanner() {
             const productTotals = getProductTotals(product);
 
             return (
-              <div
-                className="batchTableRow marketPrepTableRow generalizedMarketPrepTable"
-                key={product.id}
-              >
+              <div className="batchTableRow marketPrepCompactRow" key={product.id}>
                 <span>
                   <input
                     value={product.name}
@@ -785,7 +858,7 @@ export default function MarketPrepPlanner() {
                 </span>
 
                 <span>
-                  <div className="inlineMiniFields">
+                  <div className="amountUnitInline">
                     <input
                       type="number"
                       step="0.0001"
@@ -803,13 +876,15 @@ export default function MarketPrepPlanner() {
                   </div>
                 </span>
 
-                <span>
+                <span className="marketPrepCalculated">
                   {round(productTotals.plannedAmount)} {product.amountUnit}
                 </span>
 
-                <span>
+                <span className="marketPrepCalculated">
                   {round(productTotals.finalAmount)} {product.amountUnit}
-                  {Number(product.bufferPct) > 0 ? ` (${product.bufferPct}% buffer)` : ""}
+                  {Number(product.bufferPct) > 0 ? (
+                    <small>{product.bufferPct}% buffer</small>
+                  ) : null}
                 </span>
 
                 <span>
@@ -835,6 +910,13 @@ export default function MarketPrepPlanner() {
           })}
         </div>
       </section>
+
+      {showBackToTop ? (
+        <button className="backToTopButton" type="button" onClick={scrollToTop}>
+          <ArrowUp size={18} />
+          Top
+        </button>
+      ) : null}
     </div>
   );
 }
