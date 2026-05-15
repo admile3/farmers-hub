@@ -9,7 +9,6 @@ import {
   Library,
   Plus,
   Save,
-  Scale,
   Search,
   Trash2,
   X
@@ -85,10 +84,10 @@ function gramsToOunces(grams) {
 export default function SpiceKitchen() {
   const { user, loginWithGoogle } = useAuth();
 
-  const pantryRef = useRef(null);
   const builderRef = useRef(null);
-  const libraryRef = useRef(null);
   const calculatorRef = useRef(null);
+  const pantryRef = useRef(null);
+  const libraryRef = useRef(null);
 
   const [ingredients, setIngredients] = useState([]);
   const [recipes, setRecipes] = useState([]);
@@ -463,28 +462,28 @@ export default function SpiceKitchen() {
 
   const sectionCards = [
     {
-      title: "Ingredient Pantry",
-      description: "Save ingredients, costs, suppliers, notes, and categories.",
-      icon: Library,
-      ref: pantryRef
-    },
-    {
       title: "Recipe Builder",
       description: "Create blends by parts using your saved pantry ingredients.",
       icon: Beaker,
       ref: builderRef
     },
     {
-      title: "Recipe Library",
-      description: "Review, edit, and manage your saved seasoning recipes.",
-      icon: BookOpen,
-      ref: libraryRef
-    },
-    {
       title: "Batch Calculator",
       description: "Scale saved recipes to exact ounces, grams, and overage targets.",
       icon: Calculator,
       ref: calculatorRef
+    },
+    {
+      title: "Ingredient Pantry",
+      description: "Save ingredients, costs, suppliers, notes, and categories.",
+      icon: Library,
+      ref: pantryRef
+    },
+    {
+      title: "Recipe Library",
+      description: "Review, edit, and manage your saved seasoning recipes.",
+      icon: BookOpen,
+      ref: libraryRef
     }
   ];
 
@@ -554,146 +553,6 @@ export default function SpiceKitchen() {
       </section>
 
       <section className="spiceWorkspace compactWorkspace">
-        <div className="workspacePanel compactPanel scrollAnchor" ref={pantryRef}>
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Pantry</p>
-              <h3>Ingredient Pantry</h3>
-            </div>
-
-            <div className="searchBox compactSearch">
-              <Search size={17} />
-              <input
-                value={ingredientSearch}
-                onChange={(event) => setIngredientSearch(event.target.value)}
-                placeholder="Search ingredients..."
-              />
-            </div>
-          </div>
-
-          <form className="formGrid compactFormGrid" onSubmit={saveIngredient}>
-            <label>
-              Ingredient Name
-              <input
-                value={ingredientForm.name}
-                onChange={(event) => updateIngredientField("name", event.target.value)}
-                placeholder="e.g., Dried thyme"
-              />
-            </label>
-
-            <label>
-              Category
-              <select
-                value={ingredientForm.category}
-                onChange={(event) => updateIngredientField("category", event.target.value)}
-              >
-                {ingredientCategories.map((category) => (
-                  <option key={category}>{category}</option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Supplier / Source
-              <input
-                value={ingredientForm.supplier}
-                onChange={(event) =>
-                  updateIngredientField("supplier", event.target.value)
-                }
-                placeholder="e.g., Bulk supplier, farm, store"
-              />
-            </label>
-
-            <div className="inlineFields">
-              <label>
-                Cost
-                <input
-                  type="number"
-                  step="0.0001"
-                  value={ingredientForm.cost}
-                  onChange={(event) => updateIngredientField("cost", event.target.value)}
-                  placeholder="e.g., 2.50"
-                />
-              </label>
-
-              <label>
-                Per
-                <select
-                  value={ingredientForm.costUnit}
-                  onChange={(event) =>
-                    updateIngredientField("costUnit", event.target.value)
-                  }
-                >
-                  <option value="oz">oz</option>
-                  <option value="g">g</option>
-                  <option value="lb">lb</option>
-                </select>
-              </label>
-            </div>
-
-            <label className="fullSpan">
-              Notes
-              <textarea
-                value={ingredientForm.notes}
-                onChange={(event) => updateIngredientField("notes", event.target.value)}
-                placeholder="e.g., Flavor notes, grind size, sourcing notes"
-              />
-            </label>
-
-            <div className="formActions fullSpan compactActions">
-              <button className="primaryButton compactPrimary" type="submit">
-                <Save size={15} />
-                {editingIngredientId ? "Update Ingredient" : "Save Ingredient"}
-              </button>
-
-              <button
-                className="secondaryButton compactButton"
-                type="button"
-                onClick={() => {
-                  setIngredientForm(emptyIngredient);
-                  setEditingIngredientId(null);
-                }}
-              >
-                Clear
-              </button>
-            </div>
-          </form>
-
-          <div className="savedList compactSavedList">
-            <h4 className="smallSectionTitle">Saved Ingredients</h4>
-
-            {filteredIngredients.length ? (
-              filteredIngredients.map((ingredient) => (
-                <div className="savedItem compactSavedItem" key={ingredient.id}>
-                  <div>
-                    <h4>{ingredient.name}</h4>
-                    <p>
-                      {ingredient.category}
-                      {ingredient.supplier ? ` • ${ingredient.supplier}` : ""}
-                      {ingredient.cost
-                        ? ` • $${ingredient.cost} / ${ingredient.costUnit}`
-                        : ""}
-                    </p>
-                  </div>
-
-                  <div className="itemActions">
-                    <button onClick={() => editIngredient(ingredient)}>
-                      <Edit3 size={14} />
-                    </button>
-                    <button onClick={() => removeIngredient(ingredient.id)}>
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="placeholderBox compactPlaceholder">
-                No ingredients saved yet.
-              </div>
-            )}
-          </div>
-        </div>
-
         <div className="workspacePanel compactPanel scrollAnchor" ref={builderRef}>
           <div className="workspaceHeader compactPanelHeader">
             <div>
@@ -906,45 +765,6 @@ export default function SpiceKitchen() {
             </div>
           </form>
         </div>
-      </section>
-
-      <section className="lowerSpiceGrid">
-        <div className="workspacePanel compactPanel scrollAnchor" ref={libraryRef}>
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Saved Recipes</p>
-              <h3>Recipe Library</h3>
-            </div>
-          </div>
-
-          <div className="recipeLibrary compactSavedList">
-            {recipes.length ? (
-              recipes.map((recipe) => (
-                <div className="savedItem recipeItem compactSavedItem" key={recipe.id}>
-                  <div>
-                    <h4>{recipe.name}</h4>
-                    <p>
-                      {recipe.category} • {recipe.ingredients?.length || 0} ingredients
-                    </p>
-                  </div>
-
-                  <div className="itemActions">
-                    <button onClick={() => editRecipe(recipe)}>
-                      <Edit3 size={14} />
-                    </button>
-                    <button onClick={() => removeRecipe(recipe.id)}>
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="placeholderBox compactPlaceholder">
-                No recipes saved yet.
-              </div>
-            )}
-          </div>
-        </div>
 
         <div className="workspacePanel compactPanel scrollAnchor" ref={calculatorRef}>
           <div className="workspaceHeader compactPanelHeader">
@@ -1046,6 +866,185 @@ export default function SpiceKitchen() {
               Select a saved recipe and enter a target amount to generate batch weights.
             </div>
           )}
+        </div>
+      </section>
+
+      <section className="lowerSpiceGrid">
+        <div className="workspacePanel compactPanel scrollAnchor" ref={pantryRef}>
+          <div className="workspaceHeader compactPanelHeader">
+            <div>
+              <p className="eyebrow">Pantry</p>
+              <h3>Ingredient Pantry</h3>
+            </div>
+
+            <div className="searchBox compactSearch">
+              <Search size={17} />
+              <input
+                value={ingredientSearch}
+                onChange={(event) => setIngredientSearch(event.target.value)}
+                placeholder="Search ingredients..."
+              />
+            </div>
+          </div>
+
+          <form className="formGrid compactFormGrid" onSubmit={saveIngredient}>
+            <label>
+              Ingredient Name
+              <input
+                value={ingredientForm.name}
+                onChange={(event) => updateIngredientField("name", event.target.value)}
+                placeholder="e.g., Dried thyme"
+              />
+            </label>
+
+            <label>
+              Category
+              <select
+                value={ingredientForm.category}
+                onChange={(event) => updateIngredientField("category", event.target.value)}
+              >
+                {ingredientCategories.map((category) => (
+                  <option key={category}>{category}</option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              Supplier / Source
+              <input
+                value={ingredientForm.supplier}
+                onChange={(event) =>
+                  updateIngredientField("supplier", event.target.value)
+                }
+                placeholder="e.g., Bulk supplier, farm, store"
+              />
+            </label>
+
+            <div className="inlineFields">
+              <label>
+                Cost
+                <input
+                  type="number"
+                  step="0.0001"
+                  value={ingredientForm.cost}
+                  onChange={(event) => updateIngredientField("cost", event.target.value)}
+                  placeholder="e.g., 2.50"
+                />
+              </label>
+
+              <label>
+                Per
+                <select
+                  value={ingredientForm.costUnit}
+                  onChange={(event) =>
+                    updateIngredientField("costUnit", event.target.value)
+                  }
+                >
+                  <option value="oz">oz</option>
+                  <option value="g">g</option>
+                  <option value="lb">lb</option>
+                </select>
+              </label>
+            </div>
+
+            <label className="fullSpan">
+              Notes
+              <textarea
+                value={ingredientForm.notes}
+                onChange={(event) => updateIngredientField("notes", event.target.value)}
+                placeholder="e.g., Flavor notes, grind size, sourcing notes"
+              />
+            </label>
+
+            <div className="formActions fullSpan compactActions">
+              <button className="primaryButton compactPrimary" type="submit">
+                <Save size={15} />
+                {editingIngredientId ? "Update Ingredient" : "Save Ingredient"}
+              </button>
+
+              <button
+                className="secondaryButton compactButton"
+                type="button"
+                onClick={() => {
+                  setIngredientForm(emptyIngredient);
+                  setEditingIngredientId(null);
+                }}
+              >
+                Clear
+              </button>
+            </div>
+          </form>
+
+          <div className="savedList compactSavedList">
+            <h4 className="smallSectionTitle">Saved Ingredients</h4>
+
+            {filteredIngredients.length ? (
+              filteredIngredients.map((ingredient) => (
+                <div className="savedItem compactSavedItem" key={ingredient.id}>
+                  <div>
+                    <h4>{ingredient.name}</h4>
+                    <p>
+                      {ingredient.category}
+                      {ingredient.supplier ? ` • ${ingredient.supplier}` : ""}
+                      {ingredient.cost
+                        ? ` • $${ingredient.cost} / ${ingredient.costUnit}`
+                        : ""}
+                    </p>
+                  </div>
+
+                  <div className="itemActions">
+                    <button onClick={() => editIngredient(ingredient)}>
+                      <Edit3 size={14} />
+                    </button>
+                    <button onClick={() => removeIngredient(ingredient.id)}>
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="placeholderBox compactPlaceholder">
+                No ingredients saved yet.
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="workspacePanel compactPanel scrollAnchor" ref={libraryRef}>
+          <div className="workspaceHeader compactPanelHeader">
+            <div>
+              <p className="eyebrow">Saved Recipes</p>
+              <h3>Recipe Library</h3>
+            </div>
+          </div>
+
+          <div className="recipeLibrary compactSavedList">
+            {recipes.length ? (
+              recipes.map((recipe) => (
+                <div className="savedItem recipeItem compactSavedItem" key={recipe.id}>
+                  <div>
+                    <h4>{recipe.name}</h4>
+                    <p>
+                      {recipe.category} • {recipe.ingredients?.length || 0} ingredients
+                    </p>
+                  </div>
+
+                  <div className="itemActions">
+                    <button onClick={() => editRecipe(recipe)}>
+                      <Edit3 size={14} />
+                    </button>
+                    <button onClick={() => removeRecipe(recipe.id)}>
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="placeholderBox compactPlaceholder">
+                No recipes saved yet.
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
