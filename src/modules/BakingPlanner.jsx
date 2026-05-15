@@ -28,7 +28,7 @@ import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db, googleProvider } from "../firebase";
 
-function Card({ children,  = "" }) {
+function Card({ children, className = "" }) {
   return <div className={`card ${className}`}>{children}</div>;
 }
 
