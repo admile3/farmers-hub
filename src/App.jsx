@@ -1,6 +1,7 @@
 import { Link, Route, Routes } from "react-router-dom";
 import {
   ArrowRight,
+  Calculator,
   ChefHat,
   ClipboardList,
   DollarSign,
@@ -14,6 +15,7 @@ import {
 import SpiceKitchen from "./modules/SpiceKitchen.jsx";
 import BakingPlanner from "./modules/BakingPlanner.jsx";
 import MarketPrepPlanner from "./modules/MarketPrepPlanner.jsx";
+import PricingCalculator from "./modules/PricingCalculator.jsx";
 import { useAuth } from "./AuthContext.jsx";
 
 const modules = [
@@ -48,9 +50,9 @@ const modules = [
     title: "Pricing Calculator",
     description:
       "Calculate retail pricing, wholesale pricing, margins, batch costs, and profitability.",
-    path: "#",
-    icon: DollarSign,
-    status: "Coming Soon",
+    path: "/pricing",
+    icon: Calculator,
+    status: "Ready",
     accent: "pricing"
   },
   {
@@ -98,7 +100,9 @@ function AppShell({ children }) {
             Market Prep
           </Link>
 
-          <span className="navLink disabled">Pricing</span>
+          <Link to="/pricing" className="navLink">
+            Pricing Calculator
+          </Link>
         </nav>
 
         <div className="authCard">
@@ -172,9 +176,9 @@ function Dashboard() {
 
           <p className="heroText">
             Farmers Hub is built as a parent dashboard for standalone vendor
-            tools. Start with Spice Kitchen, Baking Planner, and Market Prep,
-            then expand into pricing, permits, grants, and more without
-            rebuilding the foundation.
+            tools. Start with Spice Kitchen, Baking Planner, Market Prep, and
+            Pricing Calculator, then expand into permits, grants, and more
+            without rebuilding the foundation.
           </p>
         </div>
 
@@ -182,16 +186,16 @@ function Dashboard() {
           <div>
             <p className="eyebrow">Newest module</p>
 
-            <h3>Market Prep Planner</h3>
+            <h3>Pricing Calculator</h3>
 
             <p>
-              Forecast products, calculate harvest targets, build pack lists,
-              and save reusable market plans.
+              Calculate batch costs, unit costs, retail prices, wholesale prices,
+              target margins, and profit per product.
             </p>
           </div>
 
-          <Link to="/market-prep" className="primaryButton">
-            Open Market Prep
+          <Link to="/pricing" className="primaryButton">
+            Open Pricing Calculator
             <ArrowRight size={18} />
           </Link>
         </div>
@@ -291,6 +295,15 @@ export default function App() {
         element={
           <AppShell>
             <MarketPrepPlanner />
+          </AppShell>
+        }
+      />
+
+      <Route
+        path="/pricing"
+        element={
+          <AppShell>
+            <PricingCalculator />
           </AppShell>
         }
       />
