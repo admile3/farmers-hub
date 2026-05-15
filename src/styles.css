@@ -842,6 +842,18 @@ label {
   color: var(--danger);
 }
 
+.savedItem .itemActions {
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.savedItem .itemActions button {
+  width: auto;
+  min-width: 38px;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
 .quickAddPanel {
   border: 1px dashed rgba(169, 79, 45, 0.34);
   background: rgba(169, 79, 45, 0.06);
@@ -975,6 +987,124 @@ label {
   font-weight: 850;
 }
 
+.clickableToolCard {
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+.clickableToolCard:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
+  border-color: rgba(169, 79, 45, 0.28);
+}
+
+.clickableToolCard:focus-visible {
+  outline: 3px solid rgba(169, 79, 45, 0.22);
+  outline-offset: 3px;
+}
+
+.scrollAnchor {
+  scroll-margin-top: 24px;
+}
+
+.backToTopButton {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 9998;
+  border-radius: 999px;
+  background: var(--green);
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  font-weight: 850;
+  cursor: pointer;
+  box-shadow: 0 16px 38px rgba(53, 72, 46, 0.26);
+}
+
+.backToTopButton:hover {
+  background: var(--green-dark);
+}
+
+.marketPrepPrintHeader {
+  display: none;
+}
+
+.marketPrepCompactTable {
+  overflow-x: auto;
+}
+
+.marketPrepCheckCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.marketPrepCheckCell input {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+}
+
+.marketPrepCompactHeader,
+.marketPrepCompactRow {
+  display: grid;
+  grid-template-columns:
+    54px
+    minmax(170px, 1.3fr)
+    minmax(125px, 0.8fr)
+    minmax(120px, 0.75fr)
+    72px
+    126px
+    100px
+    118px
+    minmax(150px, 1fr)
+    46px;
+  align-items: center;
+  gap: 8px;
+  min-width: 1120px;
+}
+
+.marketPrepCompactHeader {
+  min-width: 1120px;
+}
+
+.marketPrepCompactRow {
+  min-width: 1120px;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+.marketPrepCompactRow input,
+.marketPrepCompactRow select {
+  min-height: 36px;
+  padding: 8px 10px;
+}
+
+.amountUnitInline {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 6px;
+}
+
+.marketPrepCalculated {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.25;
+}
+
+.marketPrepCalculated small {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.72rem;
+  color: var(--spice);
+  font-weight: 850;
+}
+
 @media (max-width: 1200px) {
   .spiceWorkspace,
   .lowerSpiceGrid {
@@ -1054,154 +1184,12 @@ label {
   .floatingStatus {
     top: 16px;
   }
-}
-.clickableToolCard {
-  text-align: left;
-  cursor: pointer;
-  color: inherit;
-}
 
-.clickableToolCard:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow);
-  border-color: rgba(169, 79, 45, 0.28);
-}
-
-.clickableToolCard:focus-visible {
-  outline: 3px solid rgba(169, 79, 45, 0.22);
-  outline-offset: 3px;
-}
-
-.scrollAnchor {
-  scroll-margin-top: 24px;
-}
-
-.backToTopButton {
-  position: fixed;
-  right: 24px;
-  bottom: 24px;
-  z-index: 9998;
-  border-radius: 999px;
-  background: var(--green);
-  color: white;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 11px 16px;
-  font-weight: 850;
-  cursor: pointer;
-  box-shadow: 0 16px 38px rgba(53, 72, 46, 0.26);
-}
-
-.backToTopButton:hover {
-  background: var(--green-dark);
-}
-
-@media (max-width: 700px) {
   .backToTopButton {
     right: 16px;
     bottom: 16px;
     padding: 10px 14px;
   }
-}
-.marketPrepCompactTable {
-  overflow-x: auto;
-}
-
-.marketPrepCompactHeader,
-.marketPrepCompactRow {
-  display: grid;
-  grid-template-columns:
-    minmax(180px, 1.4fr)
-    minmax(130px, 0.8fr)
-    minmax(130px, 0.8fr)
-    82px
-    132px
-    110px
-    125px
-    minmax(160px, 1fr)
-    46px;
-  align-items: center;
-  gap: 8px;
-}
-
-.marketPrepCompactHeader {
-  min-width: 1120px;
-}
-
-.marketPrepCompactRow {
-  min-width: 1120px;
-  padding-top: 9px;
-  padding-bottom: 9px;
-}
-
-.marketPrepCompactRow input,
-.marketPrepCompactRow select {
-  min-height: 36px;
-  padding: 8px 10px;
-}
-
-.amountUnitInline {
-  display: grid;
-  grid-template-columns: 56px 1fr;
-  gap: 6px;
-}
-
-.marketPrepCalculated {
-  color: var(--muted);
-  font-size: 0.84rem;
-  line-height: 1.25;
-}
-
-.marketPrepCalculated small {
-  display: block;
-  margin-top: 3px;
-  font-size: 0.72rem;
-  color: var(--spice);
-  font-weight: 850;
-}
-.savedItem .itemActions {
-  flex-shrink: 0;
-  align-items: center;
-}
-
-.savedItem .itemActions button {
-  width: auto;
-  min-width: 38px;
-  padding: 0 10px;
-  white-space: nowrap;
-}
-.marketPrepPrintHeader {
-  display: none;
-}
-
-.marketPrepCheckCell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.marketPrepCheckCell input {
-  width: 18px;
-  height: 18px;
-  min-height: 18px;
-  padding: 0;
-}
-
-.marketPrepCompactHeader,
-.marketPrepCompactRow {
-  grid-template-columns:
-    54px
-    minmax(170px, 1.3fr)
-    minmax(125px, 0.8fr)
-    minmax(120px, 0.75fr)
-    72px
-    126px
-    100px
-    118px
-    minmax(150px, 1fr)
-    46px;
-  min-width: 1120px;
 }
 
 @media print {
@@ -1214,10 +1202,9 @@ label {
   .toolGrid,
   .statusBanner,
   .backToTopButton,
-  .marketPrepNoPrint,
- .marketPrepPage > section:not(.marketPrepPrintPackList):not(.marketPrepPrintSummary) {
-  display: none !important;
-}
+  .marketPrepNoPrint {
+    display: none !important;
+  }
 
   .app {
     display: block !important;
@@ -1230,6 +1217,19 @@ label {
   .marketPrepPage {
     display: block !important;
     background: white !important;
+  }
+
+  .marketPrepPage > section:not(.marketPrepPrintPackList):not(.marketPrepPrintSummary),
+  .marketPrepPage > .spiceWorkspace:not(:has(.marketPrepPrintSummary)) {
+    display: none !important;
+  }
+
+  .marketPrepPage > .spiceWorkspace:has(.marketPrepPrintSummary) {
+    display: block !important;
+  }
+
+  .marketPrepPage > .spiceWorkspace:has(.marketPrepPrintSummary) > .workspacePanel:not(.marketPrepPrintSummary) {
+    display: none !important;
   }
 
   .marketPrepPrintSummary,
@@ -1265,15 +1265,32 @@ label {
     font-size: 16px !important;
   }
 
-  .savedList,
-  .recipeLibrary {
+  .marketPrepPrintSummary .savedList,
+  .marketPrepPrintSummary .compactSavedList {
+    display: block !important;
     max-height: none !important;
     overflow: visible !important;
   }
 
-  .savedItem {
+  .marketPrepPrintSummary .savedItem {
+    display: block !important;
+    margin-bottom: 8px !important;
+    padding: 8px 10px !important;
+    border: 1px solid #ddd !important;
+    border-radius: 8px !important;
+    background: white !important;
     box-shadow: none !important;
     break-inside: avoid;
+  }
+
+  .marketPrepPrintSummary .savedItem h4 {
+    margin-bottom: 2px !important;
+    font-size: 12px !important;
+  }
+
+  .marketPrepPrintSummary .savedItem p {
+    margin: 0 !important;
+    font-size: 10px !important;
   }
 
   .batchTable {
