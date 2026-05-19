@@ -11,6 +11,7 @@ import {
   Sprout,
   Wheat
 } from "lucide-react";
+import { Analytics } from "@vercel/analytics/react";
 
 import SpiceKitchen from "./modules/SpiceKitchen.jsx";
 import BakingPlanner from "./modules/BakingPlanner.jsx";
@@ -288,64 +289,67 @@ function NotFound() {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Dashboard />} />
+    <>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
 
-      <Route
-        path="/spice-kitchen"
-        element={
-          <AppShell>
-            <SpiceKitchen />
-          </AppShell>
-        }
-      />
+        <Route
+          path="/spice-kitchen"
+          element={
+            <AppShell>
+              <SpiceKitchen />
+            </AppShell>
+          }
+        />
 
-      <Route
-        path="/baking-planner"
-        element={
-          <AppShell>
-            <BakingPlanner />
-          </AppShell>
-        }
-      />
+        <Route
+          path="/baking-planner"
+          element={
+            <AppShell>
+              <BakingPlanner />
+            </AppShell>
+          }
+        />
 
-      <Route
-        path="/market-prep"
-        element={
-          <AppShell>
-            <MarketPrepPlanner />
-          </AppShell>
-        }
-      />
+        <Route
+          path="/market-prep"
+          element={
+            <AppShell>
+              <MarketPrepPlanner />
+            </AppShell>
+          }
+        />
 
-      <Route
-        path="/pricing"
-        element={
-          <AppShell>
-            <PricingCalculator />
-          </AppShell>
-        }
-      />
+        <Route
+          path="/pricing"
+          element={
+            <AppShell>
+              <PricingCalculator />
+            </AppShell>
+          }
+        />
 
-      <Route
-        path="/permit-grants"
-        element={
-          <AppShell>
-            <PermitGrantTracker />
-          </AppShell>
-        }
-      />
+        <Route
+          path="/permit-grants"
+          element={
+            <AppShell>
+              <PermitGrantTracker />
+            </AppShell>
+          }
+        />
 
-      <Route
-        path="/lists"
-        element={
-          <AppShell>
-            <Lists />
-          </AppShell>
-        }
-      />
+        <Route
+          path="/lists"
+          element={
+            <AppShell>
+              <Lists />
+            </AppShell>
+          }
+        />
 
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      <Analytics />
+    </>
   );
 }

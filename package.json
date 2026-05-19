@@ -8,14 +8,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "@vitejs/plugin-react": "latest",
-    "vite": "latest",
+    "firebase": "latest",
+    "framer-motion": "latest",
+    "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
     "react-router-dom": "latest",
-    "lucide-react": "latest",
-    "firebase": "latest",
-    "framer-motion": "latest"
-  },
-  "devDependencies": {}
+    "vite": "latest"
+  }
 }
