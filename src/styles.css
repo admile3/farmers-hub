@@ -2225,3 +2225,63 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+.importExportSidebarCard {
+  margin-top: 0;
+}
+
+.importExportGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.importExportText {
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+
+.importFileNotice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+  color: var(--green-dark);
+  font-weight: 850;
+}
+
+.importReviewPanel {
+  margin-top: 14px;
+}
+
+.backupSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.backupSummaryGrid div {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.48);
+  padding: 14px;
+}
+
+.backupSummaryGrid span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin-bottom: 7px;
+}
+
+.backupSummaryGrid strong {
+  font-size: 1.45rem;
+}
+
+@media (max-width: 900px) {
+  .importExportGrid,
+  .backupSummaryGrid {
+    grid-template-columns: 1fr;
+  }
+}
