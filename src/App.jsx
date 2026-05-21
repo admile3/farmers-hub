@@ -4,11 +4,13 @@ import {
   Calculator,
   ChefHat,
   ClipboardList,
+  Download,
   FileText,
   ListChecks,
   LogIn,
   LogOut,
   Sprout,
+  Upload,
   Wheat
 } from "lucide-react";
 
@@ -18,6 +20,7 @@ import MarketPrepPlanner from "./modules/MarketPrepPlanner.jsx";
 import PricingCalculator from "./modules/PricingCalculator.jsx";
 import PermitGrantTracker from "./modules/PermitGrantTracker.jsx";
 import Lists from "./modules/Lists.jsx";
+import ImportExport from "./modules/ImportExport.jsx";
 import { useAuth } from "./AuthContext.jsx";
 
 const modules = [
@@ -170,6 +173,19 @@ function AppShell({ children }) {
           )}
         </div>
 
+        <div className="sidebarCard importExportSidebarCard">
+          <p className="eyebrow">Backup</p>
+
+          <h3>Import / Export</h3>
+
+          <p>Move saved Hub data between accounts.</p>
+
+          <Link to="/import-export" className="secondaryButton fullButton">
+            <Upload size={16} />
+            Import / Export
+          </Link>
+        </div>
+
         <div className="sidebarCard">
           <p className="eyebrow">Current build</p>
 
@@ -203,18 +219,18 @@ function Dashboard() {
 
         <div className="heroPanel">
           <div>
-            <p className="eyebrow">Newest module</p>
+            <p className="eyebrow">Backup tool</p>
 
-            <h3>Lists</h3>
+            <h3>Import / Export</h3>
 
             <p>
-              Create reusable checklists for markets, production, shopping,
-              permits, delivery prep, and everyday vendor workflows.
+              Export all saved Hub data from one account and import it into
+              another signed-in account.
             </p>
           </div>
 
-          <Link to="/lists" className="primaryButton">
-            Open Lists
+          <Link to="/import-export" className="primaryButton">
+            Open Import / Export
             <ArrowRight size={18} />
           </Link>
         </div>
@@ -341,6 +357,15 @@ export default function App() {
         element={
           <AppShell>
             <Lists />
+          </AppShell>
+        }
+      />
+
+      <Route
+        path="/import-export"
+        element={
+          <AppShell>
+            <ImportExport />
           </AppShell>
         }
       />
