@@ -279,7 +279,7 @@ function Subscribe() {
     setCheckoutLoading(plan);
 
     try {
-      const response = await fetch("/api/create-square-checkout", {
+      const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -299,7 +299,7 @@ function Subscribe() {
       window.location.href = data.checkoutUrl;
     } catch (error) {
       console.error(error);
-      alert("Could not start Square checkout. Please try again.");
+      alert("Could not start checkout session. Please try again.");
     } finally {
       setCheckoutLoading("");
     }
