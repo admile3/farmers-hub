@@ -2126,14 +2126,14 @@ input[type="number"] {
   }
 }
 .spiceLibraryPanel {
-  display: flex;
-  flex-direction: column;
+  display: block;
 }
 
+.spiceExpandableList,
 .spiceRecipeLibraryTall {
-  flex: 1;
-  max-height: none;
-  min-height: 520px;
+  max-height: 360px;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .savedItemBlock {
