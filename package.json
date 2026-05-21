@@ -15,7 +15,6 @@
     "react": "latest",
     "react-dom": "latest",
     "react-router-dom": "latest",
-    "square": "^44.1.0",
     "vite": "latest"
   }
 }
