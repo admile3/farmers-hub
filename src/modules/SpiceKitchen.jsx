@@ -5,6 +5,8 @@ import {
   Beaker,
   BookOpen,
   Calculator,
+  ChevronDown,
+  ChevronUp,
   Edit3,
   Library,
   Plus,
@@ -64,6 +66,14 @@ const emptyRecipe = {
   ingredients: []
 };
 
+function createBlankRecipeLine() {
+  return {
+    ingredientId: "",
+    ingredientName: "",
+    parts: ""
+  };
+}
+
 function toNumber(value) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -93,8 +103,10 @@ export default function SpiceKitchen() {
   const [recipes, setRecipes] = useState([]);
   const [ingredientForm, setIngredientForm] = useState(emptyIngredient);
   const [editingIngredientId, setEditingIngredientId] = useState(null);
+  const [expandedIngredientId, setExpandedIngredientId] = useState(null);
   const [recipeForm, setRecipeForm] = useState(emptyRecipe);
   const [editingRecipeId, setEditingRecipeId] = useState(null);
+  const [expandedRecipeId, setExpandedRecipeId] = useState(null);
   const [ingredientSearch, setIngredientSearch] = useState("");
   const [selectedRecipeId, setSelectedRecipeId] = useState("");
   const [targetAmount, setTargetAmount] = useState("");
@@ -138,19 +150,20 @@ export default function SpiceKitchen() {
   }, []);
 
   useEffect(() => {
-  if (!statusMessage) return;
+    if (!statusMessage) return;
 
-  const timer = window.setTimeout(() => {
-    setStatusMessage("");
-  }, 3000);
+    const timer = window.setTimeout(() => {
+      setStatusMessage("");
+    }, 3000);
 
-  return () => window.clearTimeout(timer);
-}, [statusMessage]);
-  
+    return () => window.clearTimeout(timer);
+  }, [statusMessage]);
+
   async function loadData() {
     if (!user) return;
 
     setLoading(true);
+
     try {
       const [loadedIngredients, loadedRecipes] = await Promise.all([
         getSpiceIngredients(user.uid),
@@ -308,6 +321,7 @@ export default function SpiceKitchen() {
     try {
       await deleteSpiceIngredient(user.uid, ingredientId);
       showStatus("Ingredient deleted.", "success");
+      if (expandedIngredientId === ingredientId) setExpandedIngredientId(null);
       await loadData();
     } catch (error) {
       console.error(error);
@@ -318,14 +332,7 @@ export default function SpiceKitchen() {
   function addRecipeLine() {
     setRecipeForm((current) => ({
       ...current,
-      ingredients: [
-        ...current.ingredients,
-        {
-          ingredientId: "",
-          ingredientName: "",
-          parts: ""
-        }
-      ]
+      ingredients: [...current.ingredients, createBlankRecipeLine()]
     }));
   }
 
@@ -340,6 +347,17 @@ export default function SpiceKitchen() {
       }
 
       nextIngredients[index] = nextLine;
+
+      const isPartsField = field === "parts";
+      const hasPartsValue = String(value).trim() !== "";
+      const isLastLine = index === nextIngredients.length - 1;
+      const lastLine = nextIngredients[nextIngredients.length - 1];
+      const lastLineHasAnyValue =
+        lastLine?.ingredientId || lastLine?.ingredientName || String(lastLine?.parts || "").trim();
+
+      if (isPartsField && hasPartsValue && isLastLine && lastLineHasAnyValue) {
+        nextIngredients.push(createBlankRecipeLine());
+      }
 
       return {
         ...current,
@@ -463,11 +481,17 @@ export default function SpiceKitchen() {
       await deleteSpiceRecipe(user.uid, recipeId);
       showStatus("Recipe deleted.", "success");
       if (selectedRecipeId === recipeId) setSelectedRecipeId("");
+      if (expandedRecipeId === recipeId) setExpandedRecipeId(null);
       await loadData();
     } catch (error) {
       console.error(error);
       showStatus("Could not delete recipe.", "error");
     }
+  }
+
+  function getIngredientName(line) {
+    const ingredient = ingredients.find((item) => item.id === line.ingredientId);
+    return line.ingredientName || ingredient?.name || "Unknown ingredient";
   }
 
   const sectionCards = [
@@ -985,33 +1009,97 @@ export default function SpiceKitchen() {
             </div>
           </form>
 
-          <div className="savedList compactSavedList">
+          <div className="savedList compactSavedList spiceExpandableList">
             <h4 className="smallSectionTitle">Saved Ingredients</h4>
 
             {filteredIngredients.length ? (
-              filteredIngredients.map((ingredient) => (
-                <div className="savedItem compactSavedItem" key={ingredient.id}>
-                  <div>
-                    <h4>{ingredient.name}</h4>
-                    <p>
-                      {ingredient.category}
-                      {ingredient.supplier ? ` • ${ingredient.supplier}` : ""}
-                      {ingredient.cost
-                        ? ` • $${ingredient.cost} / ${ingredient.costUnit}`
-                        : ""}
-                    </p>
-                  </div>
+              filteredIngredients.map((ingredient) => {
+                const isExpanded = expandedIngredientId === ingredient.id;
 
-                  <div className="itemActions">
-                    <button onClick={() => editIngredient(ingredient)}>
-                      <Edit3 size={14} />
+                return (
+                  <div
+                    className={isExpanded ? "savedItemBlock expanded" : "savedItemBlock"}
+                    key={ingredient.id}
+                  >
+                    <button
+                      className="savedItem compactSavedItem expandableSavedItem"
+                      type="button"
+                      onClick={() =>
+                        setExpandedIngredientId(isExpanded ? null : ingredient.id)
+                      }
+                    >
+                      <div>
+                        <h4>{ingredient.name}</h4>
+                        <p>
+                          {ingredient.category}
+                          {ingredient.supplier ? ` • ${ingredient.supplier}` : ""}
+                          {ingredient.cost
+                            ? ` • $${ingredient.cost} / ${ingredient.costUnit}`
+                            : ""}
+                        </p>
+                      </div>
+
+                      <div className="itemActions">
+                        <span className="expandIcon">
+                          {isExpanded ? (
+                            <ChevronUp size={14} />
+                          ) : (
+                            <ChevronDown size={14} />
+                          )}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            editIngredient(ingredient);
+                          }}
+                        >
+                          <Edit3 size={14} />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            removeIngredient(ingredient.id);
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </button>
-                    <button onClick={() => removeIngredient(ingredient.id)}>
-                      <Trash2 size={14} />
-                    </button>
+
+                    {isExpanded ? (
+                      <div className="spiceDetailPanel">
+                        <div>
+                          <strong>Category</strong>
+                          <span>{ingredient.category || "Other"}</span>
+                        </div>
+
+                        <div>
+                          <strong>Supplier / Source</strong>
+                          <span>{ingredient.supplier || "Not listed"}</span>
+                        </div>
+
+                        <div>
+                          <strong>Cost</strong>
+                          <span>
+                            {ingredient.cost
+                              ? `$${ingredient.cost} / ${ingredient.costUnit}`
+                              : "Not listed"}
+                          </span>
+                        </div>
+
+                        <div className="fullSpan">
+                          <strong>Notes</strong>
+                          <span>{ingredient.notes || "No notes saved."}</span>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="placeholderBox compactPlaceholder">
                 No ingredients saved yet.
@@ -1020,7 +1108,7 @@ export default function SpiceKitchen() {
           </div>
         </div>
 
-        <div className="workspacePanel compactPanel scrollAnchor" ref={libraryRef}>
+        <div className="workspacePanel compactPanel scrollAnchor spiceLibraryPanel" ref={libraryRef}>
           <div className="workspaceHeader compactPanelHeader">
             <div>
               <p className="eyebrow">Saved Recipes</p>
@@ -1028,27 +1116,97 @@ export default function SpiceKitchen() {
             </div>
           </div>
 
-          <div className="recipeLibrary compactSavedList">
+          <div className="recipeLibrary compactSavedList spiceRecipeLibraryTall">
             {recipes.length ? (
-              recipes.map((recipe) => (
-                <div className="savedItem recipeItem compactSavedItem" key={recipe.id}>
-                  <div>
-                    <h4>{recipe.name}</h4>
-                    <p>
-                      {recipe.category} • {recipe.ingredients?.length || 0} ingredients
-                    </p>
-                  </div>
+              recipes.map((recipe) => {
+                const isExpanded = expandedRecipeId === recipe.id;
 
-                  <div className="itemActions">
-                    <button onClick={() => editRecipe(recipe)}>
-                      <Edit3 size={14} />
+                return (
+                  <div
+                    className={isExpanded ? "savedItemBlock expanded" : "savedItemBlock"}
+                    key={recipe.id}
+                  >
+                    <button
+                      className="savedItem recipeItem compactSavedItem expandableSavedItem"
+                      type="button"
+                      onClick={() =>
+                        setExpandedRecipeId(isExpanded ? null : recipe.id)
+                      }
+                    >
+                      <div>
+                        <h4>{recipe.name}</h4>
+                        <p>
+                          {recipe.category} • {recipe.ingredients?.length || 0} ingredients
+                        </p>
+                      </div>
+
+                      <div className="itemActions">
+                        <span className="expandIcon">
+                          {isExpanded ? (
+                            <ChevronUp size={14} />
+                          ) : (
+                            <ChevronDown size={14} />
+                          )}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            editRecipe(recipe);
+                          }}
+                        >
+                          <Edit3 size={14} />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            removeRecipe(recipe.id);
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </button>
-                    <button onClick={() => removeRecipe(recipe.id)}>
-                      <Trash2 size={14} />
-                    </button>
+
+                    {isExpanded ? (
+                      <div className="spiceDetailPanel recipeDetailPanel">
+                        <div>
+                          <strong>Category</strong>
+                          <span>{recipe.category || "House Blend"}</span>
+                        </div>
+
+                        <div>
+                          <strong>Total Ingredients</strong>
+                          <span>{recipe.ingredients?.length || 0}</span>
+                        </div>
+
+                        <div className="fullSpan">
+                          <strong>Recipe Notes</strong>
+                          <span>{recipe.notes || "No notes saved."}</span>
+                        </div>
+
+                        <div className="fullSpan recipePartsList">
+                          <strong>Ingredients by Parts</strong>
+
+                          {recipe.ingredients?.length ? (
+                            recipe.ingredients.map((line, index) => (
+                              <div className="recipePartsRow" key={`${line.ingredientId}-${index}`}>
+                                <span>{getIngredientName(line)}</span>
+                                <span>{round(line.parts, 4)} parts</span>
+                              </div>
+                            ))
+                          ) : (
+                            <span>No ingredients saved.</span>
+                          )}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="placeholderBox compactPlaceholder">
                 No recipes saved yet.
