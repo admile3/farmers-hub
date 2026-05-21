@@ -80,7 +80,7 @@ function toNumber(value) {
 }
 
 function round(value, places = 2) {
-  return Number(value || 0).toFixed(places);
+  return Number(value || 0).toFixed(2);
 }
 
 function ouncesToGrams(ounces) {
@@ -887,7 +887,7 @@ export default function SpiceKitchen() {
                 {batchRows.map((row) => (
                   <div className="batchTableRow" key={row.name}>
                     <span>{row.name}</span>
-                    <span>{round(row.parts, 4)}</span>
+                    <span>{formatParts(row.parts)}</span>
                     <span>{round(row.grams)}</span>
                     <span>{round(row.ounces)}</span>
                     <span>${round(row.estimatedCost)}</span>
@@ -1192,15 +1192,17 @@ export default function SpiceKitchen() {
                           <strong>Ingredients by Parts</strong>
 
                           {recipe.ingredients?.length ? (
-                            recipe.ingredients.map((line, index) => (
-                              <div className="recipePartsRow" key={`${line.ingredientId}-${index}`}>
-                                <span>{getIngredientName(line)}</span>
-                                <span>{round(line.parts, 4)} parts</span>
-                              </div>
-                            ))
-                          ) : (
-                            <span>No ingredients saved.</span>
-                          )}
+  [...recipe.ingredients]
+    .sort((a, b) => toNumber(b.parts) - toNumber(a.parts))
+    .map((line, index) => (
+      <div className="recipePartsRow" key={`${line.ingredientId}-${index}`}>
+        <span>{getIngredientName(line)}</span>
+        <span>{formatParts(line.parts)} parts</span>
+      </div>
+    ))
+) : (
+  <span>No ingredients saved.</span>
+)}
                         </div>
                       </div>
                     ) : null}
