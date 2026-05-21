@@ -9,13 +9,13 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
-    "vite": "latest",
+    "firebase": "latest",
+    "framer-motion": "latest",
+    "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
     "react-router-dom": "latest",
-    "lucide-react": "latest",
-    "firebase": "latest",
-    "framer-motion": "latest"
-  },
-  "devDependencies": {}
+    "square": "^44.1.0",
+    "vite": "latest"
+  }
 }
