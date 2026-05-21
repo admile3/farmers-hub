@@ -80,7 +80,12 @@ function toNumber(value) {
 }
 
 function round(value, places = 2) {
-  return Number(value || 0).toFixed(2);
+  return Number(value || 0).toFixed(places);
+}
+
+function formatParts(value) {
+  const number = toNumber(value);
+  return Number(number.toFixed(2)).toString();
 }
 
 function ouncesToGrams(ounces) {
@@ -353,7 +358,9 @@ export default function SpiceKitchen() {
       const isLastLine = index === nextIngredients.length - 1;
       const lastLine = nextIngredients[nextIngredients.length - 1];
       const lastLineHasAnyValue =
-        lastLine?.ingredientId || lastLine?.ingredientName || String(lastLine?.parts || "").trim();
+        lastLine?.ingredientId ||
+        lastLine?.ingredientName ||
+        String(lastLine?.parts || "").trim();
 
       if (isPartsField && hasPartsValue && isLastLine && lastLineHasAnyValue) {
         nextIngredients.push(createBlankRecipeLine());
@@ -1120,6 +1127,9 @@ export default function SpiceKitchen() {
             {recipes.length ? (
               recipes.map((recipe) => {
                 const isExpanded = expandedRecipeId === recipe.id;
+                const sortedRecipeIngredients = [...(recipe.ingredients || [])].sort(
+                  (a, b) => toNumber(b.parts) - toNumber(a.parts)
+                );
 
                 return (
                   <div
@@ -1191,18 +1201,19 @@ export default function SpiceKitchen() {
                         <div className="fullSpan recipePartsList">
                           <strong>Ingredients by Parts</strong>
 
-                          {recipe.ingredients?.length ? (
-  [...recipe.ingredients]
-    .sort((a, b) => toNumber(b.parts) - toNumber(a.parts))
-    .map((line, index) => (
-      <div className="recipePartsRow" key={`${line.ingredientId}-${index}`}>
-        <span>{getIngredientName(line)}</span>
-        <span>{formatParts(line.parts)} parts</span>
-      </div>
-    ))
-) : (
-  <span>No ingredients saved.</span>
-)}
+                          {sortedRecipeIngredients.length ? (
+                            sortedRecipeIngredients.map((line, index) => (
+                              <div
+                                className="recipePartsRow"
+                                key={`${line.ingredientId}-${index}`}
+                              >
+                                <span>{getIngredientName(line)}</span>
+                                <span>{formatParts(line.parts)} parts</span>
+                              </div>
+                            ))
+                          ) : (
+                            <span>No ingredients saved.</span>
+                          )}
                         </div>
                       </div>
                     ) : null}
