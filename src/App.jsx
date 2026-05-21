@@ -270,28 +270,31 @@ function AccessGate({ children }) {
 }
 
 function Subscribe() {
-  const { user } = useAuth();
   const [checkoutLoading, setCheckoutLoading] = useState("");
 
   async function startStripeCheckout(plan) {
-  const response = await fetch("/api/create-checkout-session", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ plan }),
-  });
+    try {
+      setCheckoutLoading(plan);
 
-  const data = await response.json();
+      const response = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ plan })
+      });
 
-  if (!response.ok || !data.url) {
-    alert("Could not start checkout. Please try again.");
-    return;
-  }
+      const data = await response.json();
 
-  window.location.href = data.url;
-} catch (error) {
-      console.error(error);
+      if (!response.ok || !data.url) {
+        console.error("Stripe checkout response:", data);
+        alert("Could not start checkout. Please try again.");
+        return;
+      }
+
+      window.location.href = data.url;
+    } catch (error) {
+      console.error("Stripe checkout error:", error);
       alert("Could not start checkout session. Please try again.");
     } finally {
       setCheckoutLoading("");
@@ -322,7 +325,7 @@ function Subscribe() {
           <button
             className="primaryButton compactPrimary"
             type="button"
-            onClick={() => startCheckout("monthly")}
+            onClick={() => startStripeCheckout("monthly")}
             disabled={checkoutLoading === "monthly"}
           >
             {checkoutLoading === "monthly" ? "Opening Checkout..." : "Subscribe Monthly"}
@@ -339,7 +342,7 @@ function Subscribe() {
           <button
             className="primaryButton compactPrimary"
             type="button"
-            onClick={() => startCheckout("annual")}
+            onClick={() => startStripeCheckout("annual")}
             disabled={checkoutLoading === "annual"}
           >
             {checkoutLoading === "annual" ? "Opening Checkout..." : "Subscribe Annually"}
@@ -441,7 +444,14 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Dashboard />} />
 
-      <Route path="/subscribe" element={<AppShell><Subscribe /></AppShell>} />
+      <Route
+        path="/subscribe"
+        element={
+          <AppShell>
+            <Subscribe />
+          </AppShell>
+        }
+      />
 
       <Route
         path="/spice-kitchen"
