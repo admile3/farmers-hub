@@ -4,7 +4,6 @@ import {
   Calculator,
   ChefHat,
   ClipboardList,
-  Download,
   FileText,
   ListChecks,
   LogIn,
@@ -80,9 +79,84 @@ const modules = [
   }
 ];
 
-function AppShell({ children }) {
-  const { user, loginWithGoogle, logout, authLoading } = useAuth();
+function AccountStatusCard() {
+  const {
+    user,
+    loginWithGoogle,
+    logout,
+    authLoading,
+    accountLoading,
+    accessStatus,
+    isAdmin,
+    isTrial,
+    isExpired,
+    daysRemaining
+  } = useAuth();
 
+  if (authLoading || accountLoading) {
+    return (
+      <div className="authCard">
+        <p>Checking sign-in...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="authCard">
+        <p className="eyebrow">Account</p>
+        <h3>Save your work</h3>
+        <p>Sign in once to use Farmers Hub tools and save your data.</p>
+
+        <button className="primaryButton fullButton" onClick={loginWithGoogle}>
+          <LogIn size={16} />
+          Sign in with Google
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="authCard">
+      <p className="eyebrow">Account</p>
+
+      <div className="userRow">
+        {user.photoURL ? (
+          <img src={user.photoURL} alt={user.displayName || "User"} />
+        ) : (
+          <div className="userInitial">
+            {(user.displayName || user.email || "U").charAt(0)}
+          </div>
+        )}
+
+        <div>
+          <strong>{user.displayName || "Signed in"}</strong>
+          <p>{user.email}</p>
+        </div>
+      </div>
+
+      <div className={`accountStatusPill ${accessStatus.status}`}>
+        {isAdmin ? "Admin access" : null}
+        {isTrial ? `${daysRemaining} trial days left` : null}
+        {accessStatus.status === "active" ? "Active subscription" : null}
+        {isExpired ? "Subscription required" : null}
+      </div>
+
+      {isExpired ? (
+        <Link to="/subscribe" className="primaryButton fullButton">
+          Upgrade Account
+        </Link>
+      ) : null}
+
+      <button className="secondaryButton" onClick={logout}>
+        <LogOut size={16} />
+        Sign out
+      </button>
+    </div>
+  );
+}
+
+function AppShell({ children }) {
   return (
     <div className="app">
       <aside className="sidebar">
@@ -127,57 +201,11 @@ function AppShell({ children }) {
           </Link>
         </nav>
 
-        <div className="authCard">
-          {authLoading ? (
-            <p>Checking sign-in...</p>
-          ) : user ? (
-            <>
-              <p className="eyebrow">Account</p>
-
-              <div className="userRow">
-                {user.photoURL ? (
-                  <img src={user.photoURL} alt={user.displayName || "User"} />
-                ) : (
-                  <div className="userInitial">
-                    {(user.displayName || user.email || "U").charAt(0)}
-                  </div>
-                )}
-
-                <div>
-                  <strong>{user.displayName || "Signed in"}</strong>
-                  <p>{user.email}</p>
-                </div>
-              </div>
-
-              <button className="secondaryButton" onClick={logout}>
-                <LogOut size={16} />
-                Sign out
-              </button>
-            </>
-          ) : (
-            <>
-              <p className="eyebrow">Account</p>
-
-              <h3>Save your work</h3>
-
-              <p>Sign in once to use Farmers Hub tools and save your data.</p>
-
-              <button
-                className="primaryButton fullButton"
-                onClick={loginWithGoogle}
-              >
-                <LogIn size={16} />
-                Sign in with Google
-              </button>
-            </>
-          )}
-        </div>
+        <AccountStatusCard />
 
         <div className="sidebarCard importExportSidebarCard">
           <p className="eyebrow">Backup</p>
-
           <h3>Import / Export</h3>
-
           <p>Move saved Hub data between accounts.</p>
 
           <Link to="/import-export" className="secondaryButton fullButton">
@@ -188,14 +216,101 @@ function AppShell({ children }) {
 
         <div className="sidebarCard">
           <p className="eyebrow">Current build</p>
-
           <h3>Foundation</h3>
-
           <p>Modular dashboard structure ready for future sub-apps.</p>
         </div>
       </aside>
 
       <main className="main">{children}</main>
+    </div>
+  );
+}
+
+function AccessGate({ children }) {
+  const { user, authLoading, accountLoading, loginWithGoogle, hasAccess, isExpired } =
+    useAuth();
+
+  if (authLoading || accountLoading) {
+    return (
+      <AppShell>
+        <div className="emptyState">
+          <h2>Checking account access...</h2>
+          <p>Please wait while Farmers Hub verifies your trial or subscription.</p>
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (!user) {
+    return (
+      <AppShell>
+        <div className="emptyState">
+          <h2>Sign in to continue</h2>
+          <p>Farmers Hub tools require an account so your data can be saved securely.</p>
+
+          <button className="primaryButton" onClick={loginWithGoogle}>
+            <LogIn size={16} />
+            Sign in with Google
+          </button>
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (!hasAccess || isExpired) {
+    return (
+      <AppShell>
+        <Subscribe />
+      </AppShell>
+    );
+  }
+
+  return <AppShell>{children}</AppShell>;
+}
+
+function Subscribe() {
+  return (
+    <div className="subscribePage">
+      <section className="moduleHero compactHero noActionHero">
+        <div>
+          <p className="eyebrow">Subscription Required</p>
+          <h2>Your Farmers Hub trial has ended.</h2>
+          <p>
+            Upgrade to continue accessing your saved tools, recipes, pricing sheets,
+            market plans, permit records, and lists.
+          </p>
+        </div>
+      </section>
+
+      <section className="pricingPlanGrid">
+        <div className="workspacePanel compactPanel">
+          <p className="eyebrow">Monthly</p>
+          <h3>$10/month</h3>
+          <p className="importExportText">
+            Best for trying Farmers Hub month-to-month.
+          </p>
+
+          <button className="primaryButton compactPrimary" type="button">
+            Subscribe Monthly
+          </button>
+        </div>
+
+        <div className="workspacePanel compactPanel">
+          <p className="eyebrow">Annual</p>
+          <h3>$110/year</h3>
+          <p className="importExportText">
+            Save compared to monthly billing and keep access all year.
+          </p>
+
+          <button className="primaryButton compactPrimary" type="button">
+            Subscribe Annually
+          </button>
+        </div>
+      </section>
+
+      <div className="placeholderBox compactPlaceholder">
+        Square checkout will be connected next. For now, these buttons are placeholders.
+      </div>
     </div>
   );
 }
@@ -210,27 +325,24 @@ function Dashboard() {
           <h2>One hub for the tools that keep small food businesses moving.</h2>
 
           <p className="heroText">
-            Farmers Hub is built as a parent dashboard for standalone vendor
-            tools. Start with Spice Kitchen, Baking Planner, Market Prep,
-            Pricing Calculator, Permit & Grant Tracker, and Lists, then expand
-            into more specialized workflows without rebuilding the foundation.
+            Farmers Hub is built as a parent dashboard for standalone vendor tools.
+            Start with Spice Kitchen, Baking Planner, Market Prep, Pricing Calculator,
+            Permit & Grant Tracker, and Lists.
           </p>
         </div>
 
         <div className="heroPanel">
           <div>
-            <p className="eyebrow">Backup tool</p>
-
-            <h3>Import / Export</h3>
-
+            <p className="eyebrow">Access</p>
+            <h3>30-day free trial</h3>
             <p>
-              Export all saved Hub data from one account and import it into
-              another signed-in account.
+              New users get 30 days to try Farmers Hub. After that, a subscription is
+              required to continue using the tools.
             </p>
           </div>
 
-          <Link to="/import-export" className="primaryButton">
-            Open Import / Export
+          <Link to="/subscribe" className="primaryButton">
+            View Plans
             <ArrowRight size={18} />
           </Link>
         </div>
@@ -246,39 +358,27 @@ function Dashboard() {
       <section className="moduleGrid">
         {modules.map((module) => {
           const Icon = module.icon;
-          const isReady = module.status === "Ready";
 
-          const cardContent = (
-            <div className={`moduleCard ${module.accent}`}>
-              <div className="moduleTop">
-                <div className="moduleIcon">
-                  <Icon size={24} />
+          return (
+            <Link key={module.title} to={module.path} className="cardLink">
+              <div className={`moduleCard ${module.accent}`}>
+                <div className="moduleTop">
+                  <div className="moduleIcon">
+                    <Icon size={24} />
+                  </div>
+
+                  <span className="status ready">Ready</span>
                 </div>
 
-                <span className={isReady ? "status ready" : "status"}>
-                  {module.status}
-                </span>
+                <h3>{module.title}</h3>
+                <p>{module.description}</p>
+
+                <div className="moduleFooter">
+                  <span>Open module</span>
+                  <ArrowRight size={18} />
+                </div>
               </div>
-
-              <h3>{module.title}</h3>
-
-              <p>{module.description}</p>
-
-              <div className="moduleFooter">
-                <span>{isReady ? "Open module" : "Planned module"}</span>
-                <ArrowRight size={18} />
-              </div>
-            </div>
-          );
-
-          return isReady ? (
-            <Link key={module.title} to={module.path} className="cardLink">
-              {cardContent}
             </Link>
-          ) : (
-            <div key={module.title} className="cardLink inactive">
-              {cardContent}
-            </div>
           );
         })}
       </section>
@@ -291,7 +391,6 @@ function NotFound() {
     <AppShell>
       <div className="emptyState">
         <h2>Page not found</h2>
-
         <p>This module does not exist yet.</p>
 
         <Link to="/" className="primaryButton">
@@ -307,66 +406,68 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Dashboard />} />
 
+      <Route path="/subscribe" element={<AppShell><Subscribe /></AppShell>} />
+
       <Route
         path="/spice-kitchen"
         element={
-          <AppShell>
+          <AccessGate>
             <SpiceKitchen />
-          </AppShell>
+          </AccessGate>
         }
       />
 
       <Route
         path="/baking-planner"
         element={
-          <AppShell>
+          <AccessGate>
             <BakingPlanner />
-          </AppShell>
+          </AccessGate>
         }
       />
 
       <Route
         path="/market-prep"
         element={
-          <AppShell>
+          <AccessGate>
             <MarketPrepPlanner />
-          </AppShell>
+          </AccessGate>
         }
       />
 
       <Route
         path="/pricing"
         element={
-          <AppShell>
+          <AccessGate>
             <PricingCalculator />
-          </AppShell>
+          </AccessGate>
         }
       />
 
       <Route
         path="/permit-grants"
         element={
-          <AppShell>
+          <AccessGate>
             <PermitGrantTracker />
-          </AppShell>
+          </AccessGate>
         }
       />
 
       <Route
         path="/lists"
         element={
-          <AppShell>
+          <AccessGate>
             <Lists />
-          </AppShell>
+          </AccessGate>
         }
       />
 
       <Route
         path="/import-export"
         element={
-          <AppShell>
+          <AccessGate>
             <ImportExport />
-          </AppShell>
+          </AccessGate>
         }
       />
 
