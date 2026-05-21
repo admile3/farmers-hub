@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, Route, Routes } from "react-router-dom";
 import {
   ArrowRight,
@@ -269,6 +270,41 @@ function AccessGate({ children }) {
 }
 
 function Subscribe() {
+  const { user } = useAuth();
+  const [checkoutLoading, setCheckoutLoading] = useState("");
+
+  async function startCheckout(plan) {
+    if (!user) return;
+
+    setCheckoutLoading(plan);
+
+    try {
+      const response = await fetch("/api/create-square-checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          plan,
+          email: user.email || ""
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.checkoutUrl) {
+        throw new Error(data.error || "Could not create checkout.");
+      }
+
+      window.location.href = data.checkoutUrl;
+    } catch (error) {
+      console.error(error);
+      alert("Could not start Square checkout. Please try again.");
+    } finally {
+      setCheckoutLoading("");
+    }
+  }
+
   return (
     <div className="subscribePage">
       <section className="moduleHero compactHero noActionHero">
@@ -290,8 +326,13 @@ function Subscribe() {
             Best for trying Farmers Hub month-to-month.
           </p>
 
-          <button className="primaryButton compactPrimary" type="button">
-            Subscribe Monthly
+          <button
+            className="primaryButton compactPrimary"
+            type="button"
+            onClick={() => startCheckout("monthly")}
+            disabled={checkoutLoading === "monthly"}
+          >
+            {checkoutLoading === "monthly" ? "Opening Checkout..." : "Subscribe Monthly"}
           </button>
         </div>
 
@@ -302,15 +343,16 @@ function Subscribe() {
             Save compared to monthly billing and keep access all year.
           </p>
 
-          <button className="primaryButton compactPrimary" type="button">
-            Subscribe Annually
+          <button
+            className="primaryButton compactPrimary"
+            type="button"
+            onClick={() => startCheckout("annual")}
+            disabled={checkoutLoading === "annual"}
+          >
+            {checkoutLoading === "annual" ? "Opening Checkout..." : "Subscribe Annually"}
           </button>
         </div>
       </section>
-
-      <div className="placeholderBox compactPlaceholder">
-        Square checkout will be connected next. For now, these buttons are placeholders.
-      </div>
     </div>
   );
 }
