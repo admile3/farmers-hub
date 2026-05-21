@@ -273,31 +273,24 @@ function Subscribe() {
   const { user } = useAuth();
   const [checkoutLoading, setCheckoutLoading] = useState("");
 
-  async function startCheckout(plan) {
-    if (!user) return;
+  async function startStripeCheckout(plan) {
+  const response = await fetch("/api/create-checkout-session", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ plan }),
+  });
 
-    setCheckoutLoading(plan);
+  const data = await response.json();
 
-    try {
-      const response = await fetch("/api/create-checkout-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          plan,
-          email: user.email || ""
-        })
-      });
+  if (!response.ok || !data.url) {
+    alert("Could not start checkout. Please try again.");
+    return;
+  }
 
-      const data = await response.json();
-
-      if (!response.ok || !data.checkoutUrl) {
-        throw new Error(data.error || "Could not create checkout.");
-      }
-
-      window.location.href = data.checkoutUrl;
-    } catch (error) {
+  window.location.href = data.url;
+} catch (error) {
       console.error(error);
       alert("Could not start checkout session. Please try again.");
     } finally {
