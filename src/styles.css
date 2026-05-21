@@ -2125,3 +2125,97 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+.spiceLibraryPanel {
+  display: flex;
+  flex-direction: column;
+}
+
+.spiceRecipeLibraryTall {
+  flex: 1;
+  max-height: none;
+  min-height: 520px;
+}
+
+.savedItemBlock {
+  display: grid;
+  gap: 0;
+}
+
+.expandableSavedItem {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.expandableSavedItem .itemActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.expandIcon {
+  width: 31px;
+  height: 31px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  background: rgba(255, 250, 240, 0.8);
+  border: 1px solid var(--border);
+}
+
+.spiceDetailPanel {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 10px 12px 12px;
+  margin-top: -2px;
+  border: 1px solid var(--border);
+  border-top: 0;
+  border-radius: 0 0 13px 13px;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.spiceDetailPanel div {
+  display: grid;
+  gap: 4px;
+}
+
+.spiceDetailPanel strong {
+  font-size: 0.72rem;
+  color: var(--text);
+}
+
+.spiceDetailPanel span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.recipeDetailPanel {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.recipePartsList {
+  display: grid;
+  gap: 6px;
+}
+
+.recipePartsRow {
+  display: flex !important;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.recipePartsRow:last-child {
+  border-bottom: 0;
+}
+
+@media (max-width: 700px) {
+  .spiceDetailPanel,
+  .recipeDetailPanel {
+    grid-template-columns: 1fr;
+  }
+}
