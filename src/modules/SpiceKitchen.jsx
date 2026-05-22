@@ -7,15 +7,18 @@ import {
   Calculator,
   ChevronDown,
   ChevronUp,
+  DollarSign,
   Edit3,
   Library,
   Plus,
   Save,
   Search,
+  Scale,
   Trash2,
   X
 } from "lucide-react";
 import { useAuth } from "../AuthContext.jsx";
+import StatCard from "../components/StatCard.jsx";
 import {
   createSpiceIngredient,
   createSpiceRecipe,
@@ -262,6 +265,20 @@ export default function SpiceKitchen() {
 
     return { grams, ounces, cost };
   }, [batchRows]);
+
+  const spiceSummary = useMemo(() => {
+    const recipeIngredientCount = recipes.reduce(
+      (sum, recipe) => sum + (recipe.ingredients?.length || 0),
+      0
+    );
+
+    return {
+      ingredients: ingredients.length,
+      recipes: recipes.length,
+      recipeIngredientCount,
+      selectedBatchRows: batchRows.length
+    };
+  }, [ingredients, recipes, batchRows]);
 
   function updateIngredientField(field, value) {
     setIngredientForm((current) => ({ ...current, [field]: value }));
@@ -574,6 +591,40 @@ export default function SpiceKitchen() {
 
       {loading ? <div className="floatingStatus info">Loading Spice Kitchen...</div> : null}
 
+      <section className="hubStatGrid spiceStatGrid">
+        <StatCard
+          icon={Library}
+          label="Ingredients"
+          value={spiceSummary.ingredients}
+          sub="Saved pantry items"
+          accent="spice"
+        />
+
+        <StatCard
+          icon={BookOpen}
+          label="Recipes"
+          value={spiceSummary.recipes}
+          sub="Saved seasoning blends"
+          accent="sourdough"
+        />
+
+        <StatCard
+          icon={Beaker}
+          label="Recipe Lines"
+          value={spiceSummary.recipeIngredientCount}
+          sub="Total saved ingredient lines"
+          accent="market"
+        />
+
+        <StatCard
+          icon={Calculator}
+          label="Active Batch"
+          value={spiceSummary.selectedBatchRows}
+          sub="Ingredients in current calculation"
+          accent="pricing"
+        />
+      </section>
+
       <section className="toolGrid compactToolGrid">
         {sectionCards.map((card) => {
           const Icon = card.icon;
@@ -867,19 +918,30 @@ export default function SpiceKitchen() {
 
           {batchRows.length ? (
             <>
-              <div className="batchTotals compactBatchTotals">
-                <div>
-                  <p className="eyebrow">Total Grams</p>
-                  <h4>{round(batchTotals.grams)} g</h4>
-                </div>
-                <div>
-                  <p className="eyebrow">Total Ounces</p>
-                  <h4>{round(batchTotals.ounces)} oz</h4>
-                </div>
-                <div>
-                  <p className="eyebrow">Estimated Cost</p>
-                  <h4>${round(batchTotals.cost)}</h4>
-                </div>
+              <div className="hubStatGrid spiceBatchStatGrid">
+                <StatCard
+                  icon={Scale}
+                  label="Total Grams"
+                  value={`${round(batchTotals.grams)} g`}
+                  sub="Scaled batch weight"
+                  accent="spice"
+                />
+
+                <StatCard
+                  icon={Beaker}
+                  label="Total Ounces"
+                  value={`${round(batchTotals.ounces)} oz`}
+                  sub="Scaled batch weight"
+                  accent="sourdough"
+                />
+
+                <StatCard
+                  icon={DollarSign}
+                  label="Estimated Cost"
+                  value={`$${round(batchTotals.cost)}`}
+                  sub="Ingredient cost estimate"
+                  accent="pricing"
+                />
               </div>
 
               <div className="batchTable compactBatchTable">
