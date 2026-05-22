@@ -15,6 +15,10 @@ export default async function handler(req, res) {
         ? process.env.STRIPE_ANNUAL_PRICE_ID
         : process.env.STRIPE_MONTHLY_PRICE_ID;
 
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(500).json({ error: "Missing Stripe secret key." });
+    }
+
     if (!priceId) {
       return res.status(500).json({ error: "Missing Stripe price ID." });
     }
@@ -23,26 +27,30 @@ export default async function handler(req, res) {
       process.env.SITE_URL || "https://farmers-hub-inky.vercel.app";
 
     const session = await stripe.checkout.sessions.create({
-  mode: "subscription",
-  line_items: [
-    {
-      price: priceId,
-      quantity: 1
-    }
-  ],
-  subscription_data: {
-    trial_period_days: 15
-  },
-  success_url: `${baseUrl}/?subscription=success`,
-  cancel_url: `${baseUrl}/subscribe`
-});
+      mode: "subscription",
+      customer_email: email || undefined,
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1
+        }
+      ],
+      subscription_data: {
+        trial_period_days: 15
+      },
+      success_url: `${baseUrl}/?subscription=success`,
+      cancel_url: `${baseUrl}/subscribe`
+    });
 
-    return res.status(200).json({ url: session.url });
+    return res.status(200).json({
+      url: session.url
+    });
   } catch (error) {
     console.error("Stripe checkout error:", error);
+
     return res.status(500).json({
       error: "Could not create Stripe checkout session.",
-      message: error.message,
+      message: error.message
     });
   }
 }
