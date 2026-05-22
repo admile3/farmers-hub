@@ -2922,3 +2922,150 @@ input[type="number"] {
     align-items: flex-start;
   }
 }
+/* Dashboard v2 layout fixes */
+
+.dashboardHeroV2 {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 18px;
+  align-items: stretch;
+  margin-bottom: 18px;
+}
+
+.dashboardHeroMainV2,
+.dashboardDatePanel {
+  background: #ffffff;
+  border: 1px solid rgba(22, 27, 34, 0.08);
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(22, 27, 34, 0.06);
+  padding: 28px;
+}
+
+.dashboardHeroMainV2 h2 {
+  max-width: 760px;
+  font-size: clamp(2.4rem, 4vw, 4.5rem);
+  line-height: 1.02;
+  letter-spacing: -0.055em;
+  margin: 0;
+}
+
+.dashboardHeroMainV2 .heroText {
+  max-width: 720px;
+  margin-top: 14px;
+}
+
+.dashboardDatePanel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.dashboardOverviewGrid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0 0 18px;
+}
+
+.dashboardOverviewGrid .hubStatCard {
+  min-height: 120px;
+}
+
+.dashboardTwoColumn {
+  display: grid !important;
+  grid-template-columns: minmax(0, 0.95fr) minmax(360px, 0.55fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.dashboardSideStack {
+  display: grid;
+  gap: 18px;
+}
+
+.dashboardPanel {
+  min-width: 0;
+}
+
+.dashboardList {
+  gap: 0;
+}
+
+.dashboardRow {
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  min-height: 70px;
+}
+
+.dashboardPanel .dashboardRow p {
+  max-width: 620px;
+}
+
+.compactDashboardRow {
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+}
+
+.dashboardRightMeta {
+  display: grid;
+  justify-items: end;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.dashboardTime {
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.dashboardFooterBanner {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.dashboardFooterBanner .button-row {
+  justify-content: flex-end;
+}
+
+@media (max-width: 1350px) {
+  .dashboardOverviewGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .dashboardTwoColumn {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1000px) {
+  .dashboardHeroV2 {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardOverviewGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboardFooterBanner {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardFooterBanner .button-row {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 700px) {
+  .dashboardOverviewGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardRow,
+  .compactDashboardRow {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+
+  .dashboardRow > a,
+  .dashboardRightMeta,
+  .dashboardTime {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
