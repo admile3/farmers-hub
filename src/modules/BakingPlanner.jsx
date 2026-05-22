@@ -1272,7 +1272,7 @@ export default function BakingPlanner() {
         </nav>
 
         {activeTab === "planner" && (
-          <div className="layout two-col">
+          <div className="layout starterLayout">
             <div className="stack">
               <Card>
                 <CardContent className="panel">
