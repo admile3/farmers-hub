@@ -2334,3 +2334,112 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+.pricingModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(45, 38, 29, 0.58);
+  backdrop-filter: blur(8px);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.pricingModal {
+  position: relative;
+  width: min(920px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  border-radius: 28px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: 0 28px 90px rgba(45, 38, 29, 0.28);
+  padding: 30px;
+}
+
+.modalCloseButton {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid var(--border);
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.modalCloseButton:hover {
+  background: white;
+}
+
+.pricingModalHeader {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 22px;
+}
+
+.pricingModalHeader h2 {
+  margin: 8px 0 10px;
+  font-size: clamp(2rem, 5vw, 4rem);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+}
+
+.pricingModalHeader p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.pricingModal .pricingPlanGrid {
+  margin-top: 18px;
+}
+
+.pricingModal .workspacePanel {
+  min-height: 230px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.pricingModalFooter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+
+.pricingModalFooter .secondaryButton {
+  width: fit-content;
+}
+
+.textButton {
+  background: transparent;
+  color: var(--muted);
+  font-weight: 850;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.textButton:hover {
+  color: var(--text);
+}
+
+@media (max-width: 800px) {
+  .pricingModal {
+    padding: 24px 18px;
+    border-radius: 22px;
+  }
+
+  .pricingModalFooter .secondaryButton,
+  .textButton {
+    width: 100%;
+  }
+}
