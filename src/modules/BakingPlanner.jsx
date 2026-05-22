@@ -1274,7 +1274,7 @@ export default function BakingPlanner() {
         {activeTab === "planner" && (
           <div className="layout starterLayout">
             <div className="stack">
-              <Card>
+              <Card className="starterSettingsCard">
                 <CardContent className="panel">
                   <div className="section-head">
                     <div>
@@ -1295,7 +1295,7 @@ export default function BakingPlanner() {
                   </div>
 
                   <div className="soft-panel">
-                    <div className="grid two">
+                    <div className="hubStatGrid starterStatsGrid">
                       <label className="field">
                         <span>Add Recipe to This Bake Cycle</span>
                         <select
