@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Download, Save, Settings, Shield, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Download, Save, Shield, Trash2 } from "lucide-react";
 import { useAuth } from "../AuthContext.jsx";
 import { updateAccountProfile } from "../services/accountService.js";
 
@@ -12,10 +12,24 @@ const defaultSettings = {
   dashboardDensity: "comfortable"
 };
 
+function formatStatus(status) {
+  if (!status) return "Unknown";
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
 export default function AccountSettings() {
-  const { user, accountProfile, refreshAccountProfile, logout } = useAuth();
+  const {
+    user,
+    accountProfile,
+    accessStatus,
+    daysRemaining,
+    refreshAccountProfile,
+    logout
+  } = useAuth();
+
   const [saving, setSaving] = useState(false);
   const [billingLoading, setBillingLoading] = useState(false);
+  const [displayName, setDisplayName] = useState(accountProfile?.displayName || "");
 
   const settings = useMemo(
     () => ({
@@ -26,6 +40,11 @@ export default function AccountSettings() {
   );
 
   const [form, setForm] = useState(settings);
+
+  useEffect(() => {
+    setForm(settings);
+    setDisplayName(accountProfile?.displayName || user?.displayName || "");
+  }, [settings, accountProfile, user]);
 
   function updateField(field, value) {
     setForm((current) => ({
@@ -41,6 +60,7 @@ export default function AccountSettings() {
 
     try {
       await updateAccountProfile(user.uid, {
+        displayName,
         settings: form
       });
 
@@ -60,7 +80,7 @@ export default function AccountSettings() {
       user: {
         uid: user?.uid || "",
         email: user?.email || "",
-        displayName: user?.displayName || ""
+        displayName: displayName || ""
       },
       accountProfile,
       settings: form
@@ -129,7 +149,7 @@ export default function AccountSettings() {
         deletionRequested: true
       });
 
-      alert("Your account has been marked for deletion. For now, billing must be canceled separately in Stripe.");
+      alert("Your account has been marked for deletion. Cancel billing separately in Stripe if needed.");
       await logout();
     } catch (error) {
       console.error(error);
@@ -157,15 +177,20 @@ export default function AccountSettings() {
               <p className="eyebrow">Overview</p>
               <h3>Account</h3>
             </div>
-            <Settings size={22} />
+          </div>
+
+          <div className="settingsFormGrid singleColumnSettings">
+            <label>
+              Name
+              <input
+                value={displayName}
+                onChange={(event) => setDisplayName(event.target.value)}
+                placeholder="Your name"
+              />
+            </label>
           </div>
 
           <div className="settingsInfoList">
-            <div>
-              <span>Name</span>
-              <strong>{user?.displayName || "Not set"}</strong>
-            </div>
-
             <div>
               <span>Email</span>
               <strong>{user?.email || "Not set"}</strong>
@@ -173,7 +198,10 @@ export default function AccountSettings() {
 
             <div>
               <span>Status</span>
-              <strong>{accountProfile?.subscriptionStatus || "Unknown"}</strong>
+              <strong>
+                {formatStatus(accessStatus?.status)}
+                {accessStatus?.isTrial ? `, ${daysRemaining} days remaining` : ""}
+              </strong>
             </div>
           </div>
         </div>
@@ -212,10 +240,7 @@ export default function AccountSettings() {
           <div className="settingsFormGrid">
             <label>
               Temperature
-              <select
-                value={form.temperatureUnit}
-                onChange={(event) => updateField("temperatureUnit", event.target.value)}
-              >
+              <select value={form.temperatureUnit} onChange={(e) => updateField("temperatureUnit", e.target.value)}>
                 <option value="fahrenheit">Fahrenheit</option>
                 <option value="celsius">Celsius</option>
               </select>
@@ -223,10 +248,7 @@ export default function AccountSettings() {
 
             <label>
               Weight
-              <select
-                value={form.weightUnit}
-                onChange={(event) => updateField("weightUnit", event.target.value)}
-              >
+              <select value={form.weightUnit} onChange={(e) => updateField("weightUnit", e.target.value)}>
                 <option value="imperial">Imperial, oz/lb</option>
                 <option value="metric">Metric, g/kg</option>
               </select>
@@ -234,10 +256,7 @@ export default function AccountSettings() {
 
             <label>
               Volume
-              <select
-                value={form.volumeUnit}
-                onChange={(event) => updateField("volumeUnit", event.target.value)}
-              >
+              <select value={form.volumeUnit} onChange={(e) => updateField("volumeUnit", e.target.value)}>
                 <option value="us">US, tsp/tbsp/cups</option>
                 <option value="metric">Metric, mL/L</option>
               </select>
@@ -245,10 +264,7 @@ export default function AccountSettings() {
 
             <label>
               Time Format
-              <select
-                value={form.timeFormat}
-                onChange={(event) => updateField("timeFormat", event.target.value)}
-              >
+              <select value={form.timeFormat} onChange={(e) => updateField("timeFormat", e.target.value)}>
                 <option value="12-hour">12-hour</option>
                 <option value="24-hour">24-hour</option>
               </select>
@@ -256,10 +272,7 @@ export default function AccountSettings() {
 
             <label>
               Date Format
-              <select
-                value={form.dateFormat}
-                onChange={(event) => updateField("dateFormat", event.target.value)}
-              >
+              <select value={form.dateFormat} onChange={(e) => updateField("dateFormat", e.target.value)}>
                 <option value="MM/DD/YYYY">MM/DD/YYYY</option>
                 <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                 <option value="YYYY-MM-DD">YYYY-MM-DD</option>
@@ -268,22 +281,14 @@ export default function AccountSettings() {
 
             <label>
               Dashboard Density
-              <select
-                value={form.dashboardDensity}
-                onChange={(event) => updateField("dashboardDensity", event.target.value)}
-              >
+              <select value={form.dashboardDensity} onChange={(e) => updateField("dashboardDensity", e.target.value)}>
                 <option value="comfortable">Comfortable</option>
                 <option value="compact">Compact</option>
               </select>
             </label>
           </div>
 
-          <button
-            className="primaryButton settingsSaveButton"
-            type="button"
-            onClick={saveSettings}
-            disabled={saving}
-          >
+          <button className="primaryButton settingsSaveButton" type="button" onClick={saveSettings} disabled={saving}>
             <Save size={16} />
             {saving ? "Saving..." : "Save Settings"}
           </button>
