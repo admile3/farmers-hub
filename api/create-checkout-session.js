@@ -23,16 +23,19 @@ export default async function handler(req, res) {
       process.env.SITE_URL || "https://farmers-hub-inky.vercel.app";
 
     const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      success_url: `${baseUrl}/?subscription=success`,
-      cancel_url: `${baseUrl}/subscribe`,
-    });
+  mode: "subscription",
+  line_items: [
+    {
+      price: priceId,
+      quantity: 1
+    }
+  ],
+  subscription_data: {
+    trial_period_days: 15
+  },
+  success_url: `${baseUrl}/?subscription=success`,
+  cancel_url: `${baseUrl}/subscribe`
+});
 
     return res.status(200).json({ url: session.url });
   } catch (error) {
