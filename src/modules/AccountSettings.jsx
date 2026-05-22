@@ -159,17 +159,26 @@ export default function AccountSettings() {
 
   return (
     <div className="modulePage accountSettingsPage">
-      <section className="moduleHero compactHero noActionHero">
-        <div>
-          <p className="eyebrow">Account Settings</p>
-          <h2>Manage your Farmers Hub account.</h2>
-          <p>
-            Control billing, display preferences, data backups, and account security
-            from one place.
-          </p>
-        </div>
-      </section>
+      <section className="moduleHero compactHero accountSettingsHero">
+  <div>
+    <p className="eyebrow">Account Settings</p>
+    <h2>Manage your Farmers Hub account.</h2>
+    <p>
+      Control billing, display preferences, data backups, and account security
+      from one place.
+    </p>
+  </div>
 
+  <button
+    className="primaryButton accountSettingsHeroSave"
+    type="button"
+    onClick={saveSettings}
+    disabled={saving}
+  >
+    <Save size={16} />
+    {saving ? "Saving..." : "Save Settings"}
+  </button>
+    </section>
       <section className="accountSettingsGrid">
         <div className="workspacePanel">
           <div className="workspaceHeader compactPanelHeader">
