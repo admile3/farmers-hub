@@ -11,6 +11,7 @@ import {
   Trash2
 } from "lucide-react";
 import { useAuth } from "../AuthContext.jsx";
+import StatCard from "../components/StatCard.jsx";
 import {
   deleteMarketPrepPlan,
   getMarketPrepPlans,
@@ -164,15 +165,15 @@ export default function MarketPrepPlanner() {
   }, []);
 
   useEffect(() => {
-  if (!statusMessage) return;
+    if (!statusMessage) return;
 
-  const timer = window.setTimeout(() => {
-    setStatusMessage("");
-  }, 3000);
+    const timer = window.setTimeout(() => {
+      setStatusMessage("");
+    }, 3000);
 
-  return () => window.clearTimeout(timer);
-}, [statusMessage]);
-  
+    return () => window.clearTimeout(timer);
+  }, [statusMessage]);
+
   function scrollToSection(ref) {
     ref.current?.scrollIntoView({
       behavior: "smooth",
@@ -453,14 +454,14 @@ export default function MarketPrepPlanner() {
       </section>
 
       {statusMessage ? (
-  <div className="floatingStatus success">
-    <span>ⓘ</span>
-    <span>{statusMessage}</span>
-    <button type="button" onClick={() => setStatusMessage("")}>
-      ×
-    </button>
-  </div>
-) : null}
+        <div className="floatingStatus success">
+          <span>ⓘ</span>
+          <span>{statusMessage}</span>
+          <button type="button" onClick={() => setStatusMessage("")}>
+            ×
+          </button>
+        </div>
+      ) : null}
 
       <section className="toolGrid compactToolGrid">
         {sectionCards.map((card) => {
@@ -558,19 +559,30 @@ export default function MarketPrepPlanner() {
             </label>
           </div>
 
-          <div className="batchTotals compactBatchTotals">
-            <div>
-              <p className="eyebrow">Products</p>
-              <h4>{totals.productCount}</h4>
-            </div>
-            <div>
-              <p className="eyebrow">Planned Units</p>
-              <h4>{totals.plannedUnits}</h4>
-            </div>
-            <div>
-              <p className="eyebrow">Buffered Items</p>
-              <h4>{totals.lineItemsWithBuffer}</h4>
-            </div>
+          <div className="hubStatGrid marketPrepStatsGrid">
+            <StatCard
+              icon={PackageCheck}
+              label="Products"
+              value={totals.productCount}
+              sub="Line items in this plan"
+              accent="market"
+            />
+
+            <StatCard
+              icon={ClipboardList}
+              label="Planned Units"
+              value={totals.plannedUnits}
+              sub="Total units before buffers"
+              accent="pricing"
+            />
+
+            <StatCard
+              icon={Sprout}
+              label="Buffered Items"
+              value={totals.lineItemsWithBuffer}
+              sub="Products with extra prep added"
+              accent="sourdough"
+            />
           </div>
 
           <div className="placeholderBox compactPlaceholder">
