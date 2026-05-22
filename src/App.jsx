@@ -773,10 +773,10 @@ function Dashboard() {
                     <Icon size={20} />
                   </div>
 
-                  <div>
+                  <Link to={module.path} className="dashboardRowTextLink">
                     <h4>{module.title}</h4>
                     <p>{module.description}</p>
-                  </div>
+                  </Link>
 
                   <Link to={module.path} className="secondaryButton compactButton">
                     Open
