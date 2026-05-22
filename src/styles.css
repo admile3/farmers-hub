@@ -2809,3 +2809,116 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+.dashboardOverviewGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0;
+}
+
+.dashboardTwoColumn {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 440px;
+  gap: 18px;
+}
+
+.dashboardPanel {
+  background: #ffffff;
+  border: 1px solid rgba(22, 27, 34, 0.08);
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(22, 27, 34, 0.06);
+  padding: 24px;
+}
+
+.dashboardList {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboardRow {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(22, 27, 34, 0.08);
+}
+
+.dashboardRow:last-child {
+  border-bottom: 0;
+}
+
+.dashboardRowIcon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+}
+
+.dashboardRowIcon.spice { background: #c76343; }
+.dashboardRowIcon.sourdough { background: #dfa04c; }
+.dashboardRowIcon.market { background: #719b70; }
+.dashboardRowIcon.pricing { background: #5f8aa0; }
+.dashboardRowIcon.grant { background: #957d68; }
+.dashboardRowIcon.lists { background: #aaa060; }
+
+.dashboardRow h4 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.dashboardRow p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.dashboardDuePill {
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: #fff0e8;
+  color: #b94f32;
+  font-weight: 900;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.dashboardEmpty {
+  color: #64748b;
+  padding: 14px 0;
+}
+
+.dashboardFooterBanner {
+  margin-top: 18px;
+  background: #fff8eb;
+  border: 1px solid rgba(223, 160, 76, 0.28);
+  border-radius: 18px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+@media (max-width: 1200px) {
+  .dashboardOverviewGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboardTwoColumn {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .dashboardOverviewGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardFooterBanner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
