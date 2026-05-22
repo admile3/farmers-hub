@@ -792,7 +792,7 @@ function Dashboard() {
             <div className="sectionHeader dashboardPanelHeader">
               <div>
                 <p className="eyebrow">Deadlines</p>
-                <h2>Upcoming</h2>
+                <h2>Upcoming <span className="dashboardHeadingMeta">(next 60 days)</span></h2>
               </div>
             </div>
 
