@@ -2119,7 +2119,7 @@ export default function BakingPlanner() {
                   </p>
                 </div>
 
-                <div className="settingsGrid">
+                <div className="grid settingsGrid">
                   <NumberInput
                     label="Altitude"
                     value={settings.altitudeFt}
