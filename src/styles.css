@@ -2632,3 +2632,29 @@ input[type="number"] {
     width: 100%;
   }
 }
+.accountSettingsHero {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.accountSettingsHeroSave {
+  margin-top: 8px;
+  white-space: nowrap;
+  padding: 14px 24px;
+  font-size: 1rem;
+}
+
+.singleColumnSettings {
+  grid-template-columns: 1fr;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 800px) {
+  .accountSettingsHero {
+    grid-template-columns: 1fr;
+  }
+
+  .accountSettingsHeroSave {
+    width: 100%;
+  }
+}
