@@ -804,10 +804,13 @@ function Dashboard() {
                       <CalendarDays size={18} />
                     </div>
 
-                    <div>
-                      <h4>{item.title}</h4>
-                      <p>{item.source}</p>
-                    </div>
+                    <Link
+  to={`/permit-grants?record=${encodeURIComponent(item.id || "")}`}
+  className="dashboardRowTextLink"
+>
+  <h4>{item.title}</h4>
+  <p>{item.source}</p>
+</Link>
 
                     <div className="dashboardRightMeta">
                       <span className="dashboardDuePill">{item.due}</span>
