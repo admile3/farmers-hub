@@ -3069,3 +3069,39 @@ input[type="number"] {
     justify-self: start;
   }
 }
+.dashboardHeroMainV2 {
+  padding: 24px 28px;
+}
+
+.dashboardHeroMainV2 h2 {
+  font-size: clamp(2.2rem, 3vw, 3.5rem);
+  max-width: 950px;
+  white-space: normal;
+}
+
+.dashboardHeroMainV2 .heroText {
+  max-width: 760px;
+  margin-top: 10px;
+}
+
+.dashboardFooterBanner {
+  align-items: center;
+}
+
+.dashboardFooterBanner .button-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboardFooterBanner .button-row a {
+  min-width: 190px;
+  justify-content: center;
+}
+
+.dashboardPanelFooter {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
