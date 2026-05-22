@@ -92,22 +92,30 @@ const modules = [
 function toDate(value) {
   if (!value) return null;
   if (value.toDate) return value.toDate();
+
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
 function daysUntil(date) {
   if (!date) return null;
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+
   const target = new Date(date);
   target.setHours(0, 0, 0, 0);
+
   return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 function formatShortDate(date) {
   if (!date) return "";
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric"
+  });
 }
 
 function formatDueLabel(days) {
@@ -120,6 +128,7 @@ function formatDueLabel(days) {
 
 function formatActivityTime(date) {
   if (!date) return "";
+
   const diffMs = Date.now() - date.getTime();
   const diffMinutes = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMinutes / 60);
@@ -130,6 +139,7 @@ function formatActivityTime(date) {
   if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays === 1) return "Yesterday";
   if (diffDays < 7) return `${diffDays}d ago`;
+
   return formatShortDate(date);
 }
 
@@ -598,15 +608,16 @@ function Dashboard() {
         const days = daysUntil(relevantDate);
 
         return {
+          id: item.id || "",
           title: item.name || "Untitled Record",
           source: item.type || "Permit & Grant Tracker",
           due: formatDueLabel(days),
           date: formatShortDate(relevantDate),
           days,
-          accent: item.type === "Grant" ? "grant" : "grant"
+          accent: "grant"
         };
       })
-      .filter((item) => item.days !== null && item.days >= 0)
+      .filter((item) => item.days !== null && item.days >= 0 && item.days <= 60)
       .sort((a, b) => a.days - b.days)
       .slice(0, 3);
   }, [dashboardData.permitItems]);
@@ -666,9 +677,7 @@ function Dashboard() {
       }
     });
 
-    return activity
-      .sort((a, b) => b.timestamp - a.timestamp)
-      .slice(0, 3);
+    return activity.sort((a, b) => b.timestamp - a.timestamp).slice(0, 3);
   }, [
     dashboardData.spiceRecipes,
     dashboardData.bakingRecipes,
@@ -792,25 +801,28 @@ function Dashboard() {
             <div className="sectionHeader dashboardPanelHeader">
               <div>
                 <p className="eyebrow">Deadlines</p>
-                <h2>Upcoming <span className="dashboardHeadingMeta">(next 60 days)</span></h2>
+                <h2>
+                  Upcoming{" "}
+                  <span className="dashboardHeadingMeta">(next 60 days)</span>
+                </h2>
               </div>
             </div>
 
             <div className="dashboardList">
               {dashboardDeadlines.length ? (
                 dashboardDeadlines.map((item) => (
-                  <div className="dashboardRow compactDashboardRow" key={item.title}>
+                  <div className="dashboardRow compactDashboardRow" key={item.id || item.title}>
                     <div className={`dashboardRowIcon ${item.accent}`}>
                       <CalendarDays size={18} />
                     </div>
 
                     <Link
-  to={`/permit-grants?record=${encodeURIComponent(item.id || "")}`}
-  className="dashboardRowTextLink"
->
-  <h4>{item.title}</h4>
-  <p>{item.source}</p>
-</Link>
+                      to={`/permit-grants?record=${encodeURIComponent(item.id)}`}
+                      className="dashboardRowTextLink"
+                    >
+                      <h4>{item.title}</h4>
+                      <p>{item.source}</p>
+                    </Link>
 
                     <div className="dashboardRightMeta">
                       <span className="dashboardDuePill">{item.due}</span>
@@ -819,9 +831,7 @@ function Dashboard() {
                   </div>
                 ))
               ) : (
-                <p className="dashboardEmpty">
-                  No upcoming deadlines found.
-                </p>
+                <p className="dashboardEmpty">No upcoming deadlines found.</p>
               )}
             </div>
 
