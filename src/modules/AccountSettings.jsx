@@ -169,15 +169,6 @@ export default function AccountSettings() {
     </p>
   </div>
 
-  <button
-    className="primaryButton accountSettingsHeroSave"
-    type="button"
-    onClick={saveSettings}
-    disabled={saving}
-  >
-    <Save size={16} />
-    {saving ? "Saving..." : "Save Settings"}
-  </button>
     </section>
       <section className="accountSettingsGrid">
         <div className="workspacePanel">
