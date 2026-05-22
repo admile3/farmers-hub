@@ -515,7 +515,8 @@ function Dashboard() {
     !authLoading && !accountLoading && !user && showWelcomePricing;
 
   const displayName = user?.displayName || "ArMi Farms";
-  const trialDaysDisplay = isTrial ? daysRemaining : accessStatus.status === "active" ? "Active" : "15";
+  const trialDaysDisplay =
+    isTrial ? daysRemaining : accessStatus.status === "active" ? "Active" : "15";
 
   return (
     <AppShell>
@@ -631,16 +632,12 @@ function Dashboard() {
         <div className="dashboardSideStack">
           <div className="dashboardPanel">
             <div className="sectionHeader dashboardPanelHeader">
-  <div>
-    <p className="eyebrow">Deadlines</p>
-    <h2>Upcoming</h2>
-  </div>
-</div>
-<div className="dashboardPanelFooter">
-  <Link to="/permit-grants" className="secondaryButton compactButton">
-    View all
-  </Link>
-</div>
+              <div>
+                <p className="eyebrow">Deadlines</p>
+                <h2>Upcoming</h2>
+              </div>
+            </div>
+
             <div className="dashboardList">
               {dashboardDeadlines.map((item) => (
                 <div className="dashboardRow compactDashboardRow" key={item.title}>
@@ -659,6 +656,12 @@ function Dashboard() {
                   </div>
                 </div>
               ))}
+            </div>
+
+            <div className="dashboardPanelFooter">
+              <Link to="/permit-grants" className="secondaryButton compactButton">
+                View all
+              </Link>
             </div>
           </div>
 
