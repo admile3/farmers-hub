@@ -1,14 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Download, Save, Shield, Trash2 } from "lucide-react";
 import { useAuth } from "../AuthContext.jsx";
 import { updateAccountProfile } from "../services/accountService.js";
 
 const defaultSettings = {
-  temperatureUnit: "fahrenheit",
-  weightUnit: "imperial",
-  volumeUnit: "us",
-  timeFormat: "12-hour",
-  dateFormat: "MM/DD/YYYY",
   dashboardDensity: "comfortable"
 };
 
@@ -29,25 +24,19 @@ export default function AccountSettings() {
 
   const [saving, setSaving] = useState(false);
   const [billingLoading, setBillingLoading] = useState(false);
-  const [displayName, setDisplayName] = useState(accountProfile?.displayName || "");
-
-  const settings = useMemo(
-    () => ({
-      ...defaultSettings,
-      ...(accountProfile?.settings || {})
-    }),
-    [accountProfile]
-  );
-
-  const [form, setForm] = useState(settings);
+  const [displayName, setDisplayName] = useState("");
+  const [settings, setSettings] = useState(defaultSettings);
 
   useEffect(() => {
-    setForm(settings);
     setDisplayName(accountProfile?.displayName || user?.displayName || "");
-  }, [settings, accountProfile, user]);
+    setSettings({
+      ...defaultSettings,
+      ...(accountProfile?.settings || {})
+    });
+  }, [accountProfile, user]);
 
-  function updateField(field, value) {
-    setForm((current) => ({
+  function updateSetting(field, value) {
+    setSettings((current) => ({
       ...current,
       [field]: value
     }));
@@ -61,7 +50,7 @@ export default function AccountSettings() {
     try {
       await updateAccountProfile(user.uid, {
         displayName,
-        settings: form
+        settings
       });
 
       await refreshAccountProfile();
@@ -83,7 +72,7 @@ export default function AccountSettings() {
         displayName: displayName || ""
       },
       accountProfile,
-      settings: form
+      settings
     };
 
     const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -160,25 +149,26 @@ export default function AccountSettings() {
   return (
     <div className="modulePage accountSettingsPage">
       <section className="moduleHero compactHero accountSettingsHero">
-  <div>
-    <p className="eyebrow">Account Settings</p>
-    <h2>Manage your Farmers Hub account.</h2>
-    <p>
-      Control billing, display preferences, data backups, and account security
-      from one place.
-    </p>
-  </div>
+        <div>
+          <p className="eyebrow">Account Settings</p>
+          <h2>Manage your Farmers Hub account.</h2>
+          <p>
+            Control your profile, subscription, dashboard layout, backups, and
+            account security from one place.
+          </p>
+        </div>
 
-  <button
-    className="primaryButton accountSettingsHeroSave"
-    type="button"
-    onClick={saveSettings}
-    disabled={saving}
-  >
-    <Save size={16} />
-    {saving ? "Saving..." : "Save Settings"}
-  </button>
-</section>
+        <button
+          className="primaryButton accountSettingsHeroSave"
+          type="button"
+          onClick={saveSettings}
+          disabled={saving}
+        >
+          <Save size={16} />
+          {saving ? "Saving..." : "Save Settings"}
+        </button>
+      </section>
+
       <section className="accountSettingsGrid">
         <div className="workspacePanel">
           <div className="workspaceHeader compactPanelHeader">
@@ -241,63 +231,37 @@ export default function AccountSettings() {
         <div className="workspacePanel accountSettingsWide">
           <div className="workspaceHeader compactPanelHeader">
             <div>
-              <p className="eyebrow">Preferences</p>
-              <h3>Display & Units</h3>
+              <p className="eyebrow">Display</p>
+              <h3>Dashboard Density</h3>
             </div>
           </div>
 
-          <div className="settingsFormGrid">
-            <label>
-              Temperature
-              <select value={form.temperatureUnit} onChange={(e) => updateField("temperatureUnit", e.target.value)}>
-                <option value="fahrenheit">Fahrenheit</option>
-                <option value="celsius">Celsius</option>
-              </select>
-            </label>
+          <p className="importExportText">
+            Choose how much spacing Farmers Hub uses across the dashboard and
+            module pages.
+          </p>
 
-            <label>
-              Weight
-              <select value={form.weightUnit} onChange={(e) => updateField("weightUnit", e.target.value)}>
-                <option value="imperial">Imperial, oz/lb</option>
-                <option value="metric">Metric, g/kg</option>
-              </select>
-            </label>
-
-            <label>
-              Volume
-              <select value={form.volumeUnit} onChange={(e) => updateField("volumeUnit", e.target.value)}>
-                <option value="us">US, tsp/tbsp/cups</option>
-                <option value="metric">Metric, mL/L</option>
-              </select>
-            </label>
-
-            <label>
-              Time Format
-              <select value={form.timeFormat} onChange={(e) => updateField("timeFormat", e.target.value)}>
-                <option value="12-hour">12-hour</option>
-                <option value="24-hour">24-hour</option>
-              </select>
-            </label>
-
-            <label>
-              Date Format
-              <select value={form.dateFormat} onChange={(e) => updateField("dateFormat", e.target.value)}>
-                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-              </select>
-            </label>
-
+          <div className="settingsFormGrid singleColumnSettings">
             <label>
               Dashboard Density
-              <select value={form.dashboardDensity} onChange={(e) => updateField("dashboardDensity", e.target.value)}>
+              <select
+                value={settings.dashboardDensity}
+                onChange={(event) =>
+                  updateSetting("dashboardDensity", event.target.value)
+                }
+              >
                 <option value="comfortable">Comfortable</option>
                 <option value="compact">Compact</option>
               </select>
             </label>
           </div>
 
-          <button className="primaryButton settingsSaveButton" type="button" onClick={saveSettings} disabled={saving}>
+          <button
+            className="primaryButton settingsSaveButton"
+            type="button"
+            onClick={saveSettings}
+            disabled={saving}
+          >
             <Save size={16} />
             {saving ? "Saving..." : "Save Settings"}
           </button>
