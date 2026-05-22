@@ -162,14 +162,35 @@ function WelcomePricingModal({ onClose }) {
         </button>
 
         <div className="pricingModalHeader">
-          <p className="eyebrow">Welcome to Farmers Hub</p>
-          <h2>Simple tools for small food businesses.</h2>
-          <p>
-            Start with a 15-day free trial. Choose monthly or yearly access,
-            then use Farmers Hub to manage recipes, pricing, market prep, permits,
-            grants, and lists.
-          </p>
-        </div>
+  <p className="eyebrow">Welcome to Farmers Hub</p>
+  <h2>Simple tools for farmers market vendors.</h2>
+  <p>
+    Start with a 15-day free trial. Farmers Hub helps small vendors stay organized,
+    plan smarter, price confidently, and keep important business details in one place.
+  </p>
+</div>
+
+<div className="pricingFeatureGrid">
+  <div>
+    <strong>Plan your market day</strong>
+    <span>Prep lists, packing quantities, harvest needs, and reusable checklists.</span>
+  </div>
+
+  <div>
+    <strong>Price with confidence</strong>
+    <span>Calculate costs, margins, retail prices, wholesale prices, and profitability.</span>
+  </div>
+
+  <div>
+    <strong>Manage recipes and products</strong>
+    <span>Build seasoning recipes, scale batches, and organize production notes.</span>
+  </div>
+
+  <div>
+    <strong>Track business details</strong>
+    <span>Keep permits, grants, deadlines, documents, lists, and backups organized.</span>
+  </div>
+</div>
 
         <PricingCards
           checkoutLoading={checkoutLoading}
