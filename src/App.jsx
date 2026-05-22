@@ -82,7 +82,7 @@ const modules = [
   }
 ];
 
-async function startStripeCheckout(plan, setCheckoutLoading) {
+async function startStripeCheckout(plan, email, setCheckoutLoading) {
   try {
     setCheckoutLoading(plan);
 
@@ -91,7 +91,10 @@ async function startStripeCheckout(plan, setCheckoutLoading) {
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ plan })
+      body: JSON.stringify({
+        plan,
+        email: email || null
+      })
     });
 
     const data = await response.json();
@@ -112,6 +115,8 @@ async function startStripeCheckout(plan, setCheckoutLoading) {
 }
 
 function PricingCards({ checkoutLoading, setCheckoutLoading }) {
+  const { user } = useAuth();
+
   return (
     <section className="pricingPlanGrid">
       <div className="workspacePanel compactPanel">
@@ -124,7 +129,9 @@ function PricingCards({ checkoutLoading, setCheckoutLoading }) {
         <button
           className="primaryButton compactPrimary"
           type="button"
-          onClick={() => startStripeCheckout("monthly", setCheckoutLoading)}
+          onClick={() =>
+            startStripeCheckout("monthly", user?.email || null, setCheckoutLoading)
+          }
           disabled={checkoutLoading === "monthly"}
         >
           {checkoutLoading === "monthly" ? "Opening Checkout..." : "Start Monthly Trial"}
@@ -141,7 +148,9 @@ function PricingCards({ checkoutLoading, setCheckoutLoading }) {
         <button
           className="primaryButton compactPrimary"
           type="button"
-          onClick={() => startStripeCheckout("annual", setCheckoutLoading)}
+          onClick={() =>
+            startStripeCheckout("annual", user?.email || null, setCheckoutLoading)
+          }
           disabled={checkoutLoading === "annual"}
         >
           {checkoutLoading === "annual" ? "Opening Checkout..." : "Start Yearly Trial"}
@@ -301,6 +310,7 @@ function AccountStatusCard() {
 
 function AppShell({ children }) {
   const { accountProfile } = useAuth();
+
   const densityClass =
     accountProfile?.settings?.dashboardDensity === "compact"
       ? "compactDensity"
