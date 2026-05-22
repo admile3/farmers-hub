@@ -2658,3 +2658,51 @@ input[type="number"] {
     width: 100%;
   }
 }
+.accountSettingsHeroPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 22px;
+  padding: 28px;
+  border-radius: var(--radius);
+  background: rgba(255, 250, 240, 0.84);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.accountSettingsHeroPanel h2 {
+  margin: 7px 0 12px;
+  font-size: clamp(2rem, 4vw, 3.6rem);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+}
+
+.accountSettingsHeroPanel p {
+  max-width: 780px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.accountSettingsHeroSave {
+  min-width: 185px;
+  padding: 15px 24px;
+  font-size: 1rem;
+  box-shadow: 0 14px 28px rgba(53, 72, 46, 0.26);
+}
+
+.unsavedNotice {
+  margin: 12px 0 0;
+  color: var(--spice) !important;
+  font-weight: 900;
+}
+
+@media (max-width: 900px) {
+  .accountSettingsHeroPanel {
+    grid-template-columns: 1fr;
+  }
+
+  .accountSettingsHeroSave {
+    width: 100%;
+  }
+}
