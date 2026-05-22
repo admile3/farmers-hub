@@ -2611,3 +2611,24 @@ input[type="number"] {
   padding: 8px 13px;
   font-size: 0.84rem;
 }
+.accountSettingsHero {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.accountSettingsHeroSave {
+  margin-top: 8px;
+  white-space: nowrap;
+  padding: 13px 20px;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 800px) {
+  .accountSettingsHero {
+    grid-template-columns: 1fr;
+  }
+
+  .accountSettingsHeroSave {
+    width: 100%;
+  }
+}
