@@ -310,14 +310,28 @@ function AccountStatusCard() {
 
 function AppShell({ children }) {
   const { accountProfile } = useAuth();
+  const location = useLocation();
 
   const densityClass =
     accountProfile?.settings?.dashboardDensity === "compact"
       ? "compactDensity"
       : "comfortableDensity";
 
+  const moduleClassByPath = {
+    "/spice-kitchen": "moduleSpiceKitchen",
+    "/baking-planner": "moduleBakingPlanner",
+    "/market-prep": "moduleMarketPrep",
+    "/pricing": "modulePricing",
+    "/permit-grants": "modulePermitGrants",
+    "/lists": "moduleLists",
+    "/import-export": "moduleImportExport",
+    "/account-settings": "moduleAccountSettings"
+  };
+
+  const moduleClass = moduleClassByPath[location.pathname] || "moduleDashboard";
+
   return (
-    <div className={`app ${densityClass}`}>
+    <div className={`app ${densityClass} ${moduleClass}`}>
       <aside className="sidebar">
         <Link to="/" className="brand">
           <div className="brandIcon">
