@@ -6,9 +6,11 @@ import {
   ChefHat,
   ClipboardList,
   FileText,
+  Home,
   ListChecks,
   LogIn,
   LogOut,
+  Settings,
   Sprout,
   Upload,
   Wheat,
@@ -32,7 +34,6 @@ const modules = [
       "Build seasoning recipes, scale batches, manage ingredients, and calculate production needs.",
     path: "/spice-kitchen",
     icon: ChefHat,
-    status: "Ready",
     accent: "spice"
   },
   {
@@ -41,7 +42,6 @@ const modules = [
       "Plan production schedules, baking timelines, dough calculations, and batch workflow.",
     path: "/baking-planner",
     icon: Wheat,
-    status: "Ready",
     accent: "sourdough"
   },
   {
@@ -50,7 +50,6 @@ const modules = [
       "Estimate harvest, packing, inventory, and product quantities before each market.",
     path: "/market-prep",
     icon: ClipboardList,
-    status: "Ready",
     accent: "market"
   },
   {
@@ -59,7 +58,6 @@ const modules = [
       "Calculate retail pricing, wholesale pricing, margins, batch costs, and profitability.",
     path: "/pricing",
     icon: Calculator,
-    status: "Ready",
     accent: "pricing"
   },
   {
@@ -68,7 +66,6 @@ const modules = [
       "Track renewals, permits, grants, deadlines, required documents, and funding opportunities.",
     path: "/permit-grants",
     icon: FileText,
-    status: "Ready",
     accent: "grant"
   },
   {
@@ -77,8 +74,7 @@ const modules = [
       "Create reusable checklists for market prep, production, shopping, permits, delivery, and ideas.",
     path: "/lists",
     icon: ListChecks,
-    status: "Ready",
-    accent: "market"
+    accent: "lists"
   }
 ];
 
@@ -297,6 +293,7 @@ function AccountStatusCard() {
       ) : null}
 
       <Link to="/account-settings" className="secondaryButton fullButton">
+        <Settings size={16} />
         Account Settings
       </Link>
 
@@ -317,22 +314,9 @@ function AppShell({ children }) {
       ? "compactDensity"
       : "comfortableDensity";
 
-  const moduleClassByPath = {
-    "/spice-kitchen": "moduleSpiceKitchen",
-    "/baking-planner": "moduleBakingPlanner",
-    "/market-prep": "moduleMarketPrep",
-    "/pricing": "modulePricing",
-    "/permit-grants": "modulePermitGrants",
-    "/lists": "moduleLists",
-    "/import-export": "moduleImportExport",
-    "/account-settings": "moduleAccountSettings"
-  };
-
-  const moduleClass = moduleClassByPath[location.pathname] || "moduleDashboard";
-
   return (
-    <div className={`app ${densityClass} ${moduleClass}`}>
-      <aside className="sidebar">
+    <div className={`app ${densityClass}`}>
+      <aside className="sidebar modernSidebar">
         <Link to="/" className="brand">
           <div className="brandIcon">
             <Sprout size={26} />
@@ -344,14 +328,33 @@ function AppShell({ children }) {
           </div>
         </Link>
 
-        <nav className="nav">
-          <Link to="/" className="navLink">Dashboard</Link>
-          <Link to="/spice-kitchen" className="navLink">Spice Kitchen</Link>
-          <Link to="/baking-planner" className="navLink">Baking Planner</Link>
-          <Link to="/market-prep" className="navLink">Market Prep</Link>
-          <Link to="/pricing" className="navLink">Pricing Calculator</Link>
-          <Link to="/permit-grants" className="navLink">Permit & Grant Tracker</Link>
-          <Link to="/lists" className="navLink">Lists</Link>
+        <nav className="nav modernNav">
+          <Link
+            to="/"
+            className={`navLink modernNavLink dashboardNav ${
+              location.pathname === "/" ? "active" : ""
+            }`}
+          >
+            <Home size={18} />
+            Dashboard
+          </Link>
+
+          {modules.map((module) => {
+            const Icon = module.icon;
+
+            return (
+              <Link
+                key={module.path}
+                to={module.path}
+                className={`navLink modernNavLink moduleNav ${module.accent} ${
+                  location.pathname === module.path ? "active" : ""
+                }`}
+              >
+                <Icon size={18} />
+                {module.title}
+              </Link>
+            );
+          })}
         </nav>
 
         <AccountStatusCard />
@@ -374,7 +377,7 @@ function AppShell({ children }) {
         </div>
       </aside>
 
-      <main className="main">{children}</main>
+      <main className="main modernMain">{children}</main>
     </div>
   );
 }
@@ -458,8 +461,8 @@ function Dashboard() {
         <WelcomePricingModal onClose={() => setShowWelcomePricing(false)} />
       ) : null}
 
-      <section className="hero">
-        <div>
+      <section className="hero modernHero">
+        <div className="modernHeroMain">
           <p className="eyebrow">Farmers market vendor SaaS</p>
 
           <h2>One hub for the tools that keep market vendors moving.</h2>
@@ -471,7 +474,7 @@ function Dashboard() {
           </p>
         </div>
 
-        <div className="heroPanel">
+        <div className="heroPanel modernAccessPanel">
           <div>
             <p className="eyebrow">Access</p>
             <h3>15-day free trial</h3>
@@ -495,27 +498,29 @@ function Dashboard() {
         </div>
       </section>
 
-      <section className="moduleGrid">
+      <section className="moduleGrid modernModuleGrid">
         {modules.map((module) => {
           const Icon = module.icon;
 
           return (
             <Link key={module.title} to={module.path} className="cardLink">
-              <div className={`moduleCard ${module.accent}`}>
-                <div className="moduleTop">
-                  <div className="moduleIcon">
-                    <Icon size={24} />
-                  </div>
-
-                  <span className="status ready">Ready</span>
+              <div className={`moduleCard modernModuleCard ${module.accent}`}>
+                <div className={`modernModuleIcon ${module.accent}`}>
+                  <Icon size={32} />
                 </div>
 
-                <h3>{module.title}</h3>
-                <p>{module.description}</p>
+                <div className="modernModuleBody">
+                  <div className="modernModuleTopLine">
+                    <h3>{module.title}</h3>
+                    <span className="status ready">Ready</span>
+                  </div>
 
-                <div className="moduleFooter">
-                  <span>Open module</span>
-                  <ArrowRight size={18} />
+                  <p>{module.description}</p>
+
+                  <div className={`modernModuleFooter ${module.accent}`}>
+                    <span>Open module</span>
+                    <ArrowRight size={22} />
+                  </div>
                 </div>
               </div>
             </Link>
