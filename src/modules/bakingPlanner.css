@@ -632,3 +632,39 @@
     grid-template-columns: 1fr;
   }
 }
+.bakingPlanner .table-wrap {
+  background: #ffffff;
+  border: 1px solid rgba(22, 27, 34, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.bakingPlanner thead {
+  background: #fbfaf6;
+  color: #344054;
+}
+
+.bakingPlanner th {
+  color: #64748b;
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(22, 27, 34, 0.08);
+}
+
+.bakingPlanner td {
+  color: #121820;
+}
+
+.bakingPlanner tbody tr.alt {
+  background: #fbfaf6;
+}
+
+.bakingPlanner .table-wrap table tbody:empty::after {
+  content: "No production rows yet. Add products to your bake plan to generate this table.";
+  display: block;
+  padding: 18px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
