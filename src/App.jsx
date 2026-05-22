@@ -300,8 +300,14 @@ function AccountStatusCard() {
 }
 
 function AppShell({ children }) {
+  const { accountProfile } = useAuth();
+  const densityClass =
+    accountProfile?.settings?.dashboardDensity === "compact"
+      ? "compactDensity"
+      : "comfortableDensity";
+
   return (
-    <div className="app">
+    <div className={`app ${densityClass}`}>
       <aside className="sidebar">
         <Link to="/" className="brand">
           <div className="brandIcon">
