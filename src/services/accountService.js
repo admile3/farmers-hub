@@ -6,7 +6,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 
-const TRIAL_DAYS = 30;
+const TRIAL_DAYS = 15;
 
 function addDays(date, days) {
   const next = new Date(date);
@@ -101,9 +101,9 @@ export async function getOrCreateAccountProfile(user) {
     trialEnd: trialEnd.toISOString(),
     subscriptionStatus: "trial",
     subscriptionPlan: null,
-    squareCustomerId: null,
-    squareSubscriptionId: null,
-    squareCheckoutUrl: null
+    stripeCustomerId: null,
+    stripeSubscriptionId: null,
+    stripeCheckoutUrl: null
   };
 
   await setDoc(accountRef, profile, { merge: true });
