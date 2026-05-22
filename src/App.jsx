@@ -11,7 +11,8 @@ import {
   LogOut,
   Sprout,
   Upload,
-  Wheat
+  Wheat,
+  X
 } from "lucide-react";
 
 import SpiceKitchen from "./modules/SpiceKitchen.jsx";
@@ -80,6 +81,116 @@ const modules = [
   }
 ];
 
+async function startStripeCheckout(plan, setCheckoutLoading) {
+  try {
+    setCheckoutLoading(plan);
+
+    const response = await fetch("/api/create-checkout-session", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ plan })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.url) {
+      console.error("Stripe checkout response:", data);
+      alert("Could not start checkout. Please try again.");
+      return;
+    }
+
+    window.location.href = data.url;
+  } catch (error) {
+    console.error("Stripe checkout error:", error);
+    alert("Could not start checkout session. Please try again.");
+  } finally {
+    setCheckoutLoading("");
+  }
+}
+
+function PricingCards({ checkoutLoading, setCheckoutLoading }) {
+  return (
+    <section className="pricingPlanGrid">
+      <div className="workspacePanel compactPanel">
+        <p className="eyebrow">Monthly</p>
+        <h3>$10/month</h3>
+        <p className="importExportText">
+          Includes a 15-day free trial. Best for trying Farmers Hub month-to-month.
+        </p>
+
+        <button
+          className="primaryButton compactPrimary"
+          type="button"
+          onClick={() => startStripeCheckout("monthly", setCheckoutLoading)}
+          disabled={checkoutLoading === "monthly"}
+        >
+          {checkoutLoading === "monthly" ? "Opening Checkout..." : "Start Monthly Trial"}
+        </button>
+      </div>
+
+      <div className="workspacePanel compactPanel">
+        <p className="eyebrow">Yearly</p>
+        <h3>$110/year</h3>
+        <p className="importExportText">
+          Includes a 15-day free trial. Save compared to monthly billing.
+        </p>
+
+        <button
+          className="primaryButton compactPrimary"
+          type="button"
+          onClick={() => startStripeCheckout("annual", setCheckoutLoading)}
+          disabled={checkoutLoading === "annual"}
+        >
+          {checkoutLoading === "annual" ? "Opening Checkout..." : "Start Yearly Trial"}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function WelcomePricingModal({ onClose }) {
+  const { loginWithGoogle } = useAuth();
+  const [checkoutLoading, setCheckoutLoading] = useState("");
+
+  return (
+    <div className="pricingModalOverlay">
+      <div className="pricingModal">
+        <button className="modalCloseButton" type="button" onClick={onClose}>
+          <X size={18} />
+        </button>
+
+        <div className="pricingModalHeader">
+          <p className="eyebrow">Welcome to Farmers Hub</p>
+          <h2>Simple tools for small food businesses.</h2>
+          <p>
+            Start with a 15-day free trial. Choose monthly or yearly access,
+            then use Farmers Hub to manage recipes, pricing, market prep, permits,
+            grants, and lists.
+          </p>
+        </div>
+
+        <PricingCards
+          checkoutLoading={checkoutLoading}
+          setCheckoutLoading={setCheckoutLoading}
+        />
+
+        <div className="pricingModalFooter">
+          <button className="secondaryButton" type="button" onClick={loginWithGoogle}>
+            <LogIn size={16} />
+            Already have an account? Sign in
+          </button>
+
+          <button className="textButton" type="button" onClick={onClose}>
+            Continue browsing
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AccountStatusCard() {
   const {
     user,
@@ -113,6 +224,10 @@ function AccountStatusCard() {
           <LogIn size={16} />
           Sign in with Google
         </button>
+
+        <Link to="/subscribe" className="secondaryButton fullButton">
+          View Plans
+        </Link>
       </div>
     );
   }
@@ -173,33 +288,13 @@ function AppShell({ children }) {
         </Link>
 
         <nav className="nav">
-          <Link to="/" className="navLink">
-            Dashboard
-          </Link>
-
-          <Link to="/spice-kitchen" className="navLink">
-            Spice Kitchen
-          </Link>
-
-          <Link to="/baking-planner" className="navLink">
-            Baking Planner
-          </Link>
-
-          <Link to="/market-prep" className="navLink">
-            Market Prep
-          </Link>
-
-          <Link to="/pricing" className="navLink">
-            Pricing Calculator
-          </Link>
-
-          <Link to="/permit-grants" className="navLink">
-            Permit & Grant Tracker
-          </Link>
-
-          <Link to="/lists" className="navLink">
-            Lists
-          </Link>
+          <Link to="/" className="navLink">Dashboard</Link>
+          <Link to="/spice-kitchen" className="navLink">Spice Kitchen</Link>
+          <Link to="/baking-planner" className="navLink">Baking Planner</Link>
+          <Link to="/market-prep" className="navLink">Market Prep</Link>
+          <Link to="/pricing" className="navLink">Pricing Calculator</Link>
+          <Link to="/permit-grants" className="navLink">Permit & Grant Tracker</Link>
+          <Link to="/lists" className="navLink">Lists</Link>
         </nav>
 
         <AccountStatusCard />
@@ -272,90 +367,40 @@ function AccessGate({ children }) {
 function Subscribe() {
   const [checkoutLoading, setCheckoutLoading] = useState("");
 
-  async function startStripeCheckout(plan) {
-    try {
-      setCheckoutLoading(plan);
-
-      const response = await fetch("/api/create-checkout-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ plan })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.url) {
-        console.error("Stripe checkout response:", data);
-        alert("Could not start checkout. Please try again.");
-        return;
-      }
-
-      window.location.href = data.url;
-    } catch (error) {
-      console.error("Stripe checkout error:", error);
-      alert("Could not start checkout session. Please try again.");
-    } finally {
-      setCheckoutLoading("");
-    }
-  }
-
   return (
     <div className="subscribePage">
       <section className="moduleHero compactHero noActionHero">
         <div>
           <p className="eyebrow">Subscription Required</p>
-          <h2>Your Farmers Hub trial has ended.</h2>
+          <h2>Choose your Farmers Hub plan.</h2>
           <p>
-            Upgrade to continue accessing your saved tools, recipes, pricing sheets,
-            market plans, permit records, and lists.
+            Start with a 15-day free trial. Upgrade to continue accessing your saved
+            tools, recipes, pricing sheets, market plans, permit records, and lists.
           </p>
         </div>
       </section>
 
-      <section className="pricingPlanGrid">
-        <div className="workspacePanel compactPanel">
-          <p className="eyebrow">Monthly</p>
-          <h3>$10/month</h3>
-          <p className="importExportText">
-            Best for trying Farmers Hub month-to-month.
-          </p>
-
-          <button
-            className="primaryButton compactPrimary"
-            type="button"
-            onClick={() => startStripeCheckout("monthly")}
-            disabled={checkoutLoading === "monthly"}
-          >
-            {checkoutLoading === "monthly" ? "Opening Checkout..." : "Subscribe Monthly"}
-          </button>
-        </div>
-
-        <div className="workspacePanel compactPanel">
-          <p className="eyebrow">Annual</p>
-          <h3>$110/year</h3>
-          <p className="importExportText">
-            Save compared to monthly billing and keep access all year.
-          </p>
-
-          <button
-            className="primaryButton compactPrimary"
-            type="button"
-            onClick={() => startStripeCheckout("annual")}
-            disabled={checkoutLoading === "annual"}
-          >
-            {checkoutLoading === "annual" ? "Opening Checkout..." : "Subscribe Annually"}
-          </button>
-        </div>
-      </section>
+      <PricingCards
+        checkoutLoading={checkoutLoading}
+        setCheckoutLoading={setCheckoutLoading}
+      />
     </div>
   );
 }
 
 function Dashboard() {
+  const { user, authLoading, accountLoading } = useAuth();
+  const [showWelcomePricing, setShowWelcomePricing] = useState(true);
+
+  const shouldShowWelcomePricing =
+    !authLoading && !accountLoading && !user && showWelcomePricing;
+
   return (
     <AppShell>
+      {shouldShowWelcomePricing ? (
+        <WelcomePricingModal onClose={() => setShowWelcomePricing(false)} />
+      ) : null}
+
       <section className="hero">
         <div>
           <p className="eyebrow">Farmers market vendor SaaS</p>
@@ -372,9 +417,9 @@ function Dashboard() {
         <div className="heroPanel">
           <div>
             <p className="eyebrow">Access</p>
-            <h3>30-day free trial</h3>
+            <h3>15-day free trial</h3>
             <p>
-              New users get 30 days to try Farmers Hub. After that, a subscription is
+              New users get 15 days to try Farmers Hub. After that, a subscription is
               required to continue using the tools.
             </p>
           </div>
@@ -453,68 +498,13 @@ export default function App() {
         }
       />
 
-      <Route
-        path="/spice-kitchen"
-        element={
-          <AccessGate>
-            <SpiceKitchen />
-          </AccessGate>
-        }
-      />
-
-      <Route
-        path="/baking-planner"
-        element={
-          <AccessGate>
-            <BakingPlanner />
-          </AccessGate>
-        }
-      />
-
-      <Route
-        path="/market-prep"
-        element={
-          <AccessGate>
-            <MarketPrepPlanner />
-          </AccessGate>
-        }
-      />
-
-      <Route
-        path="/pricing"
-        element={
-          <AccessGate>
-            <PricingCalculator />
-          </AccessGate>
-        }
-      />
-
-      <Route
-        path="/permit-grants"
-        element={
-          <AccessGate>
-            <PermitGrantTracker />
-          </AccessGate>
-        }
-      />
-
-      <Route
-        path="/lists"
-        element={
-          <AccessGate>
-            <Lists />
-          </AccessGate>
-        }
-      />
-
-      <Route
-        path="/import-export"
-        element={
-          <AccessGate>
-            <ImportExport />
-          </AccessGate>
-        }
-      />
+      <Route path="/spice-kitchen" element={<AccessGate><SpiceKitchen /></AccessGate>} />
+      <Route path="/baking-planner" element={<AccessGate><BakingPlanner /></AccessGate>} />
+      <Route path="/market-prep" element={<AccessGate><MarketPrepPlanner /></AccessGate>} />
+      <Route path="/pricing" element={<AccessGate><PricingCalculator /></AccessGate>} />
+      <Route path="/permit-grants" element={<AccessGate><PermitGrantTracker /></AccessGate>} />
+      <Route path="/lists" element={<AccessGate><Lists /></AccessGate>} />
+      <Route path="/import-export" element={<AccessGate><ImportExport /></AccessGate>} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>
