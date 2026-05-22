@@ -515,20 +515,39 @@ export default function PricingCalculator() {
             </label>
           </div>
 
-          <div className="batchTotals compactBatchTotals">
-            <div>
-              <p className="eyebrow">Products</p>
-              <h4>{totals.itemCount}</h4>
-            </div>
-            <div>
-              <p className="eyebrow">Retail Batch Profit</p>
-              <h4>{money(totals.retailBatchProfit)}</h4>
-            </div>
-            <div>
-              <p className="eyebrow">Wholesale Batch Profit</p>
-              <h4>{money(totals.wholesaleBatchProfit)}</h4>
-            </div>
-          </div>
+          <div className="hubStatGrid pricingStatGrid">
+  <StatCard
+    icon={Package}
+    label="Products"
+    value={totals.itemCount}
+    sub="Products in this pricing sheet"
+    accent="pricing"
+  />
+
+  <StatCard
+    icon={DollarSign}
+    label="Retail Profit"
+    value={money(totals.retailBatchProfit)}
+    sub="Estimated batch retail profit"
+    accent="market"
+  />
+
+  <StatCard
+    icon={Target}
+    label="Wholesale Profit"
+    value={money(totals.wholesaleBatchProfit)}
+    sub="Estimated batch wholesale profit"
+    accent="spice"
+  />
+
+  <StatCard
+    icon={Calculator}
+    label="Total Batch Cost"
+    value={money(totals.totalBatchCost)}
+    sub="Combined estimated production cost"
+    accent="sourdough"
+  />
+</div>
         </div>
 
         <div className="workspacePanel compactPanel scrollAnchor" ref={savedRef}>
