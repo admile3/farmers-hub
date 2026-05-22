@@ -19,14 +19,13 @@ import {
   FlaskConical,
   Save,
   Copy,
-  LogIn,
-  LogOut,
-  Cloud,
+  Cloud
 } from "lucide-react";
 import "./bakingPlanner.css";
-import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
-import { auth, db, googleProvider } from "../firebase";
+import { db } from "../firebase";
+import { useAuth } from "../AuthContext.jsx";
+import StatCard from "../components/StatCard.jsx";
 
 function Card({ children, className = "" }) {
   return <div className={`card ${className}`}>{children}</div>;
@@ -42,6 +41,7 @@ function Button({ children, onClick, className = "", variant, size, disabled }) 
       onClick={onClick}
       disabled={disabled}
       className={`btn ${variant || ""} ${size || ""} ${className}`}
+      type="button"
     >
       {children}
     </button>
@@ -61,7 +61,7 @@ const initialRecipes = [
     ovenCapacityUnits: 8,
     flourTypes: [
       { name: "Bread Flour", pct: 85 },
-      { name: "Whole Wheat Flour", pct: 15 },
+      { name: "Whole Wheat Flour", pct: 15 }
     ],
     hydrationPct: 78,
     starterPct: 22,
@@ -81,8 +81,8 @@ const initialRecipes = [
       finalProofMin: 180,
       bakeTempF: 475,
       bakeMin: 42,
-      coolMin: 120,
-    },
+      coolMin: 120
+    }
   },
   {
     id: "ciabatta",
@@ -113,8 +113,8 @@ const initialRecipes = [
       finalProofMin: 60,
       bakeTempF: 460,
       bakeMin: 24,
-      coolMin: 60,
-    },
+      coolMin: 60
+    }
   },
   {
     id: "baguette",
@@ -145,8 +145,8 @@ const initialRecipes = [
       finalProofMin: 75,
       bakeTempF: 480,
       bakeMin: 22,
-      coolMin: 45,
-    },
+      coolMin: 45
+    }
   },
   {
     id: "sandwich-loaf",
@@ -166,7 +166,7 @@ const initialRecipes = [
     otherIngredients: [
       { name: "Honey / Sugar", pct: 5 },
       { name: "Butter / Oil", pct: 6 },
-      { name: "Milk Powder", pct: 3 },
+      { name: "Milk Powder", pct: 3 }
     ],
     process: {
       autolyseMin: 0,
@@ -181,9 +181,9 @@ const initialRecipes = [
       finalProofMin: 150,
       bakeTempF: 385,
       bakeMin: 38,
-      coolMin: 120,
-    },
-  },
+      coolMin: 120
+    }
+  }
 ];
 
 const defaultSettings = {
@@ -195,7 +195,7 @@ const defaultSettings = {
   ingredientBufferPct: 3,
   mixerCapacityG: 7000,
   proofingCapacityUnits: 24,
-  defaultStartTime: "06:00",
+  defaultStartTime: "06:00"
 };
 
 function loadFromStorage(key, fallback) {
@@ -225,7 +225,7 @@ function formatGrams(value) {
 function formatOunces(value) {
   return ((Number(value) || 0) / GRAMS_PER_OUNCE).toLocaleString("en-US", {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    maximumFractionDigits: 2
   });
 }
 
@@ -283,7 +283,7 @@ function formatDisplayDate(dateString) {
     weekday: "long",
     month: "long",
     day: "numeric",
-    year: "numeric",
+    year: "numeric"
   });
 }
 
@@ -333,8 +333,8 @@ function normalizeRecipe(recipe) {
       bakeTempF: 400,
       bakeMin: 30,
       coolMin: 60,
-      ...(recipe.process || {}),
-    },
+      ...(recipe.process || {})
+    }
   };
 }
 
@@ -368,13 +368,13 @@ function calculateRecipePlan(rawRecipe, quantity, env, settings) {
   const flourBreakdown = recipe.flourTypes.map((f) => ({
     name: f.name,
     grams: (baseFlourG * f.pct) / 100,
-    pct: f.pct,
+    pct: f.pct
   }));
 
   const otherBreakdown = recipe.otherIngredients.map((item) => ({
     name: item.name,
     grams: (baseFlourG * item.pct) / 100,
-    pct: item.pct,
+    pct: item.pct
   }));
 
   const fermentationFactor = tempFermentationFactor(
@@ -427,7 +427,7 @@ function calculateRecipePlan(rawRecipe, quantity, env, settings) {
     batchesByMixer,
     ovenLoads,
     recipeOvenCapacity,
-    totalProcessMin,
+    totalProcessMin
   };
 }
 
@@ -462,7 +462,7 @@ function buildProductionSchedule(plans, settings) {
       start,
       end: start + duration,
       duration,
-      note,
+      note
     };
 
     schedule.push(task);
@@ -477,7 +477,7 @@ function buildProductionSchedule(plans, settings) {
       resource: "baker",
       start,
       duration,
-      note,
+      note
     });
 
     bakerAvailableAt = task.end;
@@ -492,7 +492,7 @@ function buildProductionSchedule(plans, settings) {
       resource: "mixer",
       start,
       duration,
-      note,
+      note
     });
 
     bakerAvailableAt = task.end;
@@ -508,7 +508,7 @@ function buildProductionSchedule(plans, settings) {
       resource: "oven",
       start,
       duration,
-      note,
+      note
     });
 
     ovenAvailableAt = task.end;
@@ -523,7 +523,7 @@ function buildProductionSchedule(plans, settings) {
       resource: "passive",
       start,
       duration,
-      note,
+      note
     });
   };
 
@@ -538,7 +538,7 @@ function buildProductionSchedule(plans, settings) {
         name: "Start autolyse",
         earliestStart: startMin,
         duration: autolyseMin,
-        note: "",
+        note: ""
       });
 
       autolyseStart = autolyseTask.start;
@@ -554,7 +554,7 @@ function buildProductionSchedule(plans, settings) {
       bulkEnd: null,
       readyForShapeAt: null,
       readyForBakeAt: null,
-      bakedAt: null,
+      bakedAt: null
     });
   });
 
@@ -572,7 +572,7 @@ function buildProductionSchedule(plans, settings) {
       name: "Mix dough",
       earliestStart: state.autolyseEnd,
       duration: Number(process.mixMin) || 0,
-      note: formatWeight(plan.doughWeight, "dough"),
+      note: formatWeight(plan.doughWeight, "dough")
     });
 
     state.mixEnd = mixTask.end;
@@ -584,7 +584,7 @@ function buildProductionSchedule(plans, settings) {
       name: "Bulk fermentation",
       start: state.bulkStart,
       duration: plan.bulkMin,
-      note: "",
+      note: ""
     });
 
     state.readyForShapeAt = state.bulkEnd;
@@ -606,7 +606,7 @@ function buildProductionSchedule(plans, settings) {
         plan,
         name: `Fold ${i}`,
         earliestStart: targetStart,
-        duration: foldDuration,
+        duration: foldDuration
       });
     }
   });
@@ -625,7 +625,7 @@ function buildProductionSchedule(plans, settings) {
         name: fold.name,
         earliestStart: fold.earliestStart,
         duration: fold.duration,
-        note: "",
+        note: ""
       });
     });
 
@@ -647,7 +647,7 @@ function buildProductionSchedule(plans, settings) {
         name: "Divide and pre-shape",
         earliestStart: current,
         duration: divideAndPreshapeMin,
-        note: "",
+        note: ""
       });
 
       current = divideTask.end;
@@ -661,7 +661,7 @@ function buildProductionSchedule(plans, settings) {
         name: "Bench rest",
         start: current,
         duration: benchRestMin,
-        note: "",
+        note: ""
       });
 
       current += benchRestMin;
@@ -675,7 +675,7 @@ function buildProductionSchedule(plans, settings) {
         name: "Final shape",
         earliestStart: current,
         duration: finalShapeMin,
-        note: "",
+        note: ""
       });
 
       current = shapeTask.end;
@@ -686,7 +686,7 @@ function buildProductionSchedule(plans, settings) {
       name: "Final proof",
       start: current,
       duration: plan.finalProofMin,
-      note: "",
+      note: ""
     });
 
     state.readyForBakeAt = current + plan.finalProofMin;
@@ -706,7 +706,7 @@ function buildProductionSchedule(plans, settings) {
         name: plan.ovenLoads > 1 ? `Bake load ${load}` : "Bake",
         earliestStart: current,
         duration: plan.bakeMin,
-        note: `${Math.round(plan.bakeTempF)}°F`,
+        note: `${Math.round(plan.bakeTempF)}°F`
       });
 
       current = bakeTask.end;
@@ -719,7 +719,7 @@ function buildProductionSchedule(plans, settings) {
       name: "Cool",
       start: current,
       duration: Number(plan.recipe.process.coolMin) || 0,
-      note: "",
+      note: ""
     });
   });
 
@@ -730,28 +730,11 @@ function buildProductionSchedule(plans, settings) {
       baker: 1,
       mixer: 2,
       passive: 3,
-      oven: 4,
+      oven: 4
     };
 
     return (resourceOrder[a.resource] || 99) - (resourceOrder[b.resource] || 99);
   });
-}
-
-function StatCard({ icon: Icon, label, value, sub }) {
-  return (
-    <Card className="stat-card">
-      <CardContent className="stat-card-content">
-        <div className="icon-badge">
-          <Icon size={20} />
-        </div>
-        <div>
-          <p className="muted small">{label}</p>
-          <p className="stat-value">{value}</p>
-          {sub && <p className="muted tiny">{sub}</p>}
-        </div>
-      </CardContent>
-    </Card>
-  );
 }
 
 function ProgressBar({ label, value, max, suffix = "", warningAt = 90 }) {
@@ -812,9 +795,9 @@ function TextInput({ label, value, onChange, placeholder = "" }) {
 }
 
 export default function BakingPlanner() {
+  const { user } = useAuth();
+
   const [activeTab, setActiveTab] = useState("planner");
-  const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
   const [cloudLoading, setCloudLoading] = useState(false);
   const [cloudStatus, setCloudStatus] = useState("Local only");
 
@@ -839,11 +822,8 @@ export default function BakingPlanner() {
   const [lastSavedAt, setLastSavedAt] = useState("");
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      setAuthLoading(false);
-
-      if (!currentUser) {
+    async function loadCloudData() {
+      if (!user) {
         setCloudStatus("Local only");
         return;
       }
@@ -852,7 +832,7 @@ export default function BakingPlanner() {
       setCloudStatus("Loading cloud data...");
 
       try {
-        const ref = doc(db, "users", currentUser.uid, "bakingPlanner", "main");
+        const ref = doc(db, "users", user.uid, "bakingPlanner", "main");
         const snapshot = await getDoc(ref);
 
         if (snapshot.exists()) {
@@ -880,10 +860,10 @@ export default function BakingPlanner() {
       } finally {
         setCloudLoading(false);
       }
-    });
+    }
 
-    return () => unsubscribe();
-  }, []);
+    loadCloudData();
+  }, [user]);
 
   const productionRecipes = useMemo(() => {
     return productionItems
@@ -950,7 +930,7 @@ export default function BakingPlanner() {
         Object.entries(flourMap).map(([k, v]) => [k, v * ingredientBuffer])
       ),
       bufferedWaterG: waterG * ingredientBuffer,
-      bufferedSaltG: saltG * ingredientBuffer,
+      bufferedSaltG: saltG * ingredientBuffer
     };
   }, [plans, settings]);
 
@@ -1006,26 +986,6 @@ export default function BakingPlanner() {
     return recipes.filter((recipe) => !usedIds.has(recipe.id));
   }, [recipes, productionItems]);
 
-  async function handleSignIn() {
-    try {
-      setCloudStatus("Signing in...");
-      await signInWithPopup(auth, googleProvider);
-    } catch (error) {
-      console.error(error);
-      setCloudStatus("Sign in failed");
-    }
-  }
-
-  async function handleSignOut() {
-    try {
-      await signOut(auth);
-      setCloudStatus("Local only");
-    } catch (error) {
-      console.error(error);
-      setCloudStatus("Sign out failed");
-    }
-  }
-
   async function savePlannerData() {
     const normalizedRecipes = recipes.map(normalizeRecipe);
 
@@ -1037,7 +997,7 @@ export default function BakingPlanner() {
 
     const savedTime = new Date().toLocaleTimeString("en-US", {
       hour: "numeric",
-      minute: "2-digit",
+      minute: "2-digit"
     });
 
     setLastSavedAt(savedTime);
@@ -1061,7 +1021,7 @@ export default function BakingPlanner() {
           env,
           productionDate,
           productionItems,
-          updatedAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
         },
         { merge: true }
       );
@@ -1089,8 +1049,8 @@ export default function BakingPlanner() {
               ...r,
               process: {
                 ...normalizeRecipe(r).process,
-                [field]: Number(value) || 0,
-              },
+                [field]: Number(value) || 0
+              }
             }
           : r
       )
@@ -1106,7 +1066,7 @@ export default function BakingPlanner() {
           itemIndex === index
             ? {
                 ...item,
-                [field]: field === "pct" ? Number(value) : value,
+                [field]: field === "pct" ? Number(value) : value
               }
             : item
         );
@@ -1122,7 +1082,7 @@ export default function BakingPlanner() {
         recipe.id === selectedRecipe.id
           ? {
               ...recipe,
-              flourTypes: [...recipe.flourTypes, { name: "New Flour", pct: 0 }],
+              flourTypes: [...recipe.flourTypes, { name: "New Flour", pct: 0 }]
             }
           : recipe
       )
@@ -1140,7 +1100,7 @@ export default function BakingPlanner() {
           ...recipe,
           flourTypes: flourTypes.length
             ? flourTypes
-            : [{ name: "Bread Flour", pct: 100 }],
+            : [{ name: "Bread Flour", pct: 100 }]
         };
       })
     );
@@ -1155,7 +1115,7 @@ export default function BakingPlanner() {
           itemIndex === index
             ? {
                 ...item,
-                [field]: field === "pct" ? Number(value) : value,
+                [field]: field === "pct" ? Number(value) : value
               }
             : item
         );
@@ -1173,8 +1133,8 @@ export default function BakingPlanner() {
               ...recipe,
               otherIngredients: [
                 ...recipe.otherIngredients,
-                { name: "New Ingredient", pct: 1 },
-              ],
+                { name: "New Ingredient", pct: 1 }
+              ]
             }
           : recipe
       )
@@ -1189,7 +1149,7 @@ export default function BakingPlanner() {
               ...recipe,
               otherIngredients: recipe.otherIngredients.filter(
                 (_, itemIndex) => itemIndex !== index
-              ),
+              )
             }
           : recipe
       )
@@ -1233,7 +1193,7 @@ export default function BakingPlanner() {
       unitsLabel: "units",
       vesselType: "Tray / Pan",
       flourTypes: [{ name: "Bread Flour", pct: 100 }],
-      otherIngredients: [],
+      otherIngredients: []
     });
     setRecipes((prev) => [...prev, base]);
     setSelectedRecipeId(id);
@@ -1244,7 +1204,7 @@ export default function BakingPlanner() {
     const id = `${selectedRecipe.id}-copy-${Date.now()}`;
     setRecipes((prev) => [
       ...prev,
-      normalizeRecipe({ ...selectedRecipe, id, name: `${selectedRecipe.name} Copy` }),
+      normalizeRecipe({ ...selectedRecipe, id, name: `${selectedRecipe.name} Copy` })
     ]);
     setSelectedRecipeId(id);
   }
@@ -1260,8 +1220,9 @@ export default function BakingPlanner() {
     <button
       onClick={() => setActiveTab(id)}
       className={activeTab === id ? "tab active" : "tab"}
+      type="button"
     >
-      <Icon size={16} /> {label}
+      <Icon size={18} /> {label}
     </button>
   );
 
@@ -1281,26 +1242,12 @@ export default function BakingPlanner() {
                 sheet for your bake day.
               </p>
               <div className="button-row" style={{ marginTop: "14px" }}>
-                {user ? (
-                  <>
-                    <Button variant="outline" onClick={savePlannerData} disabled={cloudLoading}>
-                      <Cloud size={16} /> {cloudLoading ? "Syncing..." : "Save / Sync"}
-                    </Button>
-                    <Button variant="outline" onClick={handleSignOut}>
-                      <LogOut size={16} /> Sign Out
-                    </Button>
-                    <span className="pill">
-                      {user.displayName || user.email} • {cloudStatus}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Button onClick={handleSignIn} disabled={authLoading}>
-                      <LogIn size={16} /> Sign in with Google
-                    </Button>
-                    <span className="pill">{cloudStatus}</span>
-                  </>
-                )}
+                <Button variant="outline" onClick={savePlannerData} disabled={cloudLoading}>
+                  <Cloud size={16} /> {cloudLoading ? "Syncing..." : "Save / Sync"}
+                </Button>
+                <span className="pill">
+                  {user?.displayName || user?.email || "Local user"} • {cloudStatus}
+                </span>
               </div>
             </div>
             <div className="hero-stats">
@@ -1483,24 +1430,28 @@ export default function BakingPlanner() {
                 label="Total Dough"
                 value={`${round(totals.doughWeight / 1000, 1)} kg`}
                 sub="before bake loss"
+                accent="sourdough"
               />
               <StatCard
                 icon={Wheat}
                 label="Preferment Needed"
                 value={formatWeight(totals.bufferedStarterG)}
                 sub={`includes ${settings.levainBufferPct}% preferment buffer`}
+                accent="market"
               />
               <StatCard
                 icon={Clock}
                 label="Longest Product Window"
                 value={minutesToLabel(totals.maxProcess)}
                 sub={`starting near ${addMinutesToTime(settings.defaultStartTime, 0)}`}
+                accent="pricing"
               />
               <StatCard
                 icon={Mountain}
                 label="Altitude Setting"
                 value={`${settings.altitudeFt} ft`}
                 sub="saved as a permanent variable"
+                accent="grant"
               />
 
               <Card>
@@ -1554,6 +1505,7 @@ export default function BakingPlanner() {
                           ? "recipe-select active"
                           : "recipe-select"
                       }
+                      type="button"
                     >
                       <p>{recipe.name}</p>
                       <span>{recipe.category}</span>
@@ -1890,7 +1842,7 @@ export default function BakingPlanner() {
                     onChange={(v) =>
                       setSettings((p) => ({
                         ...p,
-                        starterHydrationPct: Number(v),
+                        starterHydrationPct: Number(v)
                       }))
                     }
                     suffix="%"
@@ -1901,7 +1853,7 @@ export default function BakingPlanner() {
                     onChange={(v) =>
                       setSettings((p) => ({
                         ...p,
-                        levainBufferPct: Number(v),
+                        levainBufferPct: Number(v)
                       }))
                     }
                     suffix="%"
@@ -1916,24 +1868,28 @@ export default function BakingPlanner() {
                 label="Total Mature Preferment"
                 value={formatWeight(levain.totalLevain)}
                 sub="including buffer"
+                accent="sourdough"
               />
               <StatCard
                 icon={Wheat}
                 label="Flour for Levain"
                 value={formatWeight(levain.flour)}
                 sub={`${settings.starterHydrationPct}% hydration`}
+                accent="market"
               />
               <StatCard
                 icon={Droplets}
                 label="Water for Levain"
                 value={formatWeight(levain.water)}
                 sub="for preferment build"
+                accent="pricing"
               />
               <StatCard
                 icon={ChefHat}
                 label="Seed Starter / Preferment Estimate"
                 value={formatWeight(levain.seedStarter)}
                 sub="editable later as preferment ratios are added"
+                accent="grant"
               />
             </div>
           </div>
@@ -1972,26 +1928,30 @@ export default function BakingPlanner() {
                   </div>
                 </div>
 
-                <div className="grid four production-stats-grid">
+                <div className="hubStatGrid production-stats-grid">
                   <StatCard
                     icon={Scale}
                     label="Total Dough"
                     value={`${round(totals.doughWeight / 1000, 2)} kg`}
+                    accent="sourdough"
                   />
                   <StatCard
                     icon={ChefHat}
                     label="Finished Units"
                     value={round(totals.units)}
+                    accent="market"
                   />
                   <StatCard
                     icon={Thermometer}
                     label="Room Temp"
                     value={`${env.tempF}°F`}
+                    accent="spice"
                   />
                   <StatCard
                     icon={Droplets}
                     label="Humidity"
                     value={`${env.humidityPct}%`}
+                    accent="pricing"
                   />
                 </div>
 
@@ -2182,7 +2142,7 @@ export default function BakingPlanner() {
                     onChange={(v) =>
                       setSettings((p) => ({
                         ...p,
-                        baselineHumidityPct: Number(v),
+                        baselineHumidityPct: Number(v)
                       }))
                     }
                     suffix="%"
@@ -2201,7 +2161,7 @@ export default function BakingPlanner() {
                     onChange={(v) =>
                       setSettings((p) => ({
                         ...p,
-                        proofingCapacityUnits: Number(v),
+                        proofingCapacityUnits: Number(v)
                       }))
                     }
                     suffix="units"
@@ -2212,7 +2172,7 @@ export default function BakingPlanner() {
                     onChange={(v) =>
                       setSettings((p) => ({
                         ...p,
-                        ingredientBufferPct: Number(v),
+                        ingredientBufferPct: Number(v)
                       }))
                     }
                     suffix="%"
@@ -2226,7 +2186,7 @@ export default function BakingPlanner() {
                       onChange={(e) =>
                         setSettings((p) => ({
                           ...p,
-                          defaultStartTime: e.target.value,
+                          defaultStartTime: e.target.value
                         }))
                       }
                     />
