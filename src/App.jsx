@@ -631,16 +631,16 @@ function Dashboard() {
         <div className="dashboardSideStack">
           <div className="dashboardPanel">
             <div className="sectionHeader dashboardPanelHeader">
-              <div>
-                <p className="eyebrow">Deadlines</p>
-                <h2>Upcoming</h2>
-              </div>
-
-              <Link to="/permit-grants" className="secondaryButton compactButton">
-                View all
-              </Link>
-            </div>
-
+  <div>
+    <p className="eyebrow">Deadlines</p>
+    <h2>Upcoming</h2>
+  </div>
+</div>
+<div className="dashboardPanelFooter">
+  <Link to="/permit-grants" className="secondaryButton compactButton">
+    View all
+  </Link>
+</div>
             <div className="dashboardList">
               {dashboardDeadlines.map((item) => (
                 <div className="dashboardRow compactDashboardRow" key={item.title}>
