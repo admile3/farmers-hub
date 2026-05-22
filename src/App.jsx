@@ -1,15 +1,19 @@
 import { useState } from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 import {
+  Activity,
   ArrowRight,
   Calculator,
+  CalendarDays,
   ChefHat,
   ClipboardList,
   FileText,
+  Folder,
   Home,
   ListChecks,
   LogIn,
   LogOut,
+  PackageCheck,
   Settings,
   Sprout,
   Upload,
@@ -26,6 +30,7 @@ import Lists from "./modules/Lists.jsx";
 import ImportExport from "./modules/ImportExport.jsx";
 import AccountSettings from "./modules/AccountSettings.jsx";
 import { useAuth } from "./AuthContext.jsx";
+import StatCard from "./components/StatCard.jsx";
 
 const modules = [
   {
@@ -75,6 +80,51 @@ const modules = [
     path: "/lists",
     icon: ListChecks,
     accent: "lists"
+  }
+];
+
+const dashboardDeadlines = [
+  {
+    title: "Home-Based Processor Renewal",
+    source: "Permit & Grant Tracker",
+    due: "Due in 14 days",
+    date: "Jun 10",
+    accent: "grant"
+  },
+  {
+    title: "Saturday Market Prep Plan",
+    source: "Market Prep Planner",
+    due: "Due in 21 days",
+    date: "Jun 17",
+    accent: "market"
+  },
+  {
+    title: "Packaging Supply Checklist",
+    source: "Lists",
+    due: "Due in 35 days",
+    date: "Jul 1",
+    accent: "lists"
+  }
+];
+
+const recentActivity = [
+  {
+    title: "Updated recipe: Sourdough Loaf",
+    source: "Baking Planner",
+    time: "2h ago",
+    accent: "sourdough"
+  },
+  {
+    title: "Added checklist item: Packaging Supplies",
+    source: "Lists",
+    time: "5h ago",
+    accent: "lists"
+  },
+  {
+    title: "Calculated pricing for Herb Blend",
+    source: "Pricing Calculator",
+    time: "Yesterday",
+    accent: "pricing"
   }
 ];
 
@@ -449,11 +499,22 @@ function Subscribe() {
 }
 
 function Dashboard() {
-  const { user, authLoading, accountLoading } = useAuth();
+  const {
+    user,
+    authLoading,
+    accountLoading,
+    daysRemaining,
+    isTrial,
+    accessStatus
+  } = useAuth();
+
   const [showWelcomePricing, setShowWelcomePricing] = useState(true);
 
   const shouldShowWelcomePricing =
     !authLoading && !accountLoading && !user && showWelcomePricing;
+
+  const displayName = user?.displayName || "ArMi Farms";
+  const trialDaysDisplay = isTrial ? daysRemaining : accessStatus.status === "active" ? "Active" : "15";
 
   return (
     <AppShell>
@@ -461,71 +522,192 @@ function Dashboard() {
         <WelcomePricingModal onClose={() => setShowWelcomePricing(false)} />
       ) : null}
 
-      <section className="hero modernHero">
-        <div className="modernHeroMain">
+      <section className="modernHero dashboardHeroV2">
+        <div className="modernHeroMain dashboardHeroMainV2">
           <p className="eyebrow">Farmers market vendor SaaS</p>
 
-          <h2>One hub for the tools that keep market vendors moving.</h2>
+          <h2>{user ? `Welcome back, ${displayName}` : "One hub for market vendors."}</h2>
 
           <p className="heroText">
-            Farmers Hub is built as a parent dashboard for standalone vendor tools.
-            Start with Spice Kitchen, Baking Planner, Market Prep, Pricing Calculator,
-            Permit & Grant Tracker, and Lists, with more vendor types coming over time.
+            Track your vendor tools, upcoming deadlines, saved workflows, recipes,
+            pricing, prep plans, and business activity from one clean dashboard.
           </p>
         </div>
 
-        <div className="heroPanel modernAccessPanel">
+        <div className="heroPanel modernAccessPanel dashboardDatePanel">
           <div>
             <p className="eyebrow">Access</p>
-            <h3>15-day free trial</h3>
+            <h3>{isTrial ? `${daysRemaining}-day trial` : "15-day free trial"}</h3>
             <p>
-              New users get 15 days to try Farmers Hub. After that, a subscription is
-              required to continue using the tools.
+              {user
+                ? "Manage your subscription, saved tools, and account details."
+                : "New users get 15 days to try Farmers Hub."}
             </p>
           </div>
 
-          <Link to="/subscribe" className="primaryButton">
-            View Plans
+          <Link to={user ? "/account-settings" : "/subscribe"} className="primaryButton">
+            {user ? "Manage Account" : "View Plans"}
             <ArrowRight size={18} />
           </Link>
         </div>
       </section>
 
-      <section className="sectionHeader">
-        <div>
-          <p className="eyebrow">Modules</p>
-          <h2>Choose a workspace</h2>
+      <section className="dashboardOverviewGrid">
+        <StatCard
+          icon={PackageCheck}
+          label="Active Modules"
+          value={`${modules.length} / ${modules.length}`}
+          sub="All workspaces ready"
+          accent="pricing"
+        />
+
+        <StatCard
+          icon={CalendarDays}
+          label="Trial Days"
+          value={trialDaysDisplay}
+          sub={isTrial ? "days remaining" : "available to new users"}
+          accent="sourdough"
+        />
+
+        <StatCard
+          icon={BookOpen}
+          label="Saved Recipes"
+          value="12"
+          sub="across recipe tools"
+          accent="market"
+        />
+
+        <StatCard
+          icon={FileText}
+          label="Upcoming Permits"
+          value="2"
+          sub="need attention"
+          accent="grant"
+        />
+
+        <StatCard
+          icon={Folder}
+          label="Open Tasks"
+          value="7"
+          sub="checklist items"
+          accent="lists"
+        />
+      </section>
+
+      <section className="dashboardTwoColumn">
+        <div className="dashboardPanel">
+          <div className="sectionHeader dashboardPanelHeader">
+            <div>
+              <p className="eyebrow">Workspaces</p>
+              <h2>Jump back in</h2>
+            </div>
+          </div>
+
+          <div className="dashboardList">
+            {modules.map((module) => {
+              const Icon = module.icon;
+
+              return (
+                <div className="dashboardRow" key={module.path}>
+                  <div className={`dashboardRowIcon ${module.accent}`}>
+                    <Icon size={20} />
+                  </div>
+
+                  <div>
+                    <h4>{module.title}</h4>
+                    <p>{module.description}</p>
+                  </div>
+
+                  <Link to={module.path} className="secondaryButton compactButton">
+                    Open
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="dashboardSideStack">
+          <div className="dashboardPanel">
+            <div className="sectionHeader dashboardPanelHeader">
+              <div>
+                <p className="eyebrow">Deadlines</p>
+                <h2>Upcoming</h2>
+              </div>
+
+              <Link to="/permit-grants" className="secondaryButton compactButton">
+                View all
+              </Link>
+            </div>
+
+            <div className="dashboardList">
+              {dashboardDeadlines.map((item) => (
+                <div className="dashboardRow compactDashboardRow" key={item.title}>
+                  <div className={`dashboardRowIcon ${item.accent}`}>
+                    <CalendarDays size={18} />
+                  </div>
+
+                  <div>
+                    <h4>{item.title}</h4>
+                    <p>{item.source}</p>
+                  </div>
+
+                  <div className="dashboardRightMeta">
+                    <span className="dashboardDuePill">{item.due}</span>
+                    <small>{item.date}</small>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="dashboardPanel">
+            <div className="sectionHeader dashboardPanelHeader">
+              <div>
+                <p className="eyebrow">Activity</p>
+                <h2>Recent Activity</h2>
+              </div>
+            </div>
+
+            <div className="dashboardList">
+              {recentActivity.map((item) => (
+                <div className="dashboardRow compactDashboardRow" key={item.title}>
+                  <div className={`dashboardRowIcon ${item.accent}`}>
+                    <Activity size={18} />
+                  </div>
+
+                  <div>
+                    <h4>{item.title}</h4>
+                    <p>{item.source}</p>
+                  </div>
+
+                  <small className="dashboardTime">{item.time}</small>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="moduleGrid modernModuleGrid">
-        {modules.map((module) => {
-          const Icon = module.icon;
+      <section className="dashboardFooterBanner">
+        <div>
+          <p className="eyebrow">Subscription</p>
+          <h3>{isTrial ? "Need more time?" : "Keep your vendor tools active."}</h3>
+          <p>
+            Manage your subscription or upgrade anytime to keep your saved tools,
+            workflows, and records available.
+          </p>
+        </div>
 
-          return (
-            <Link key={module.title} to={module.path} className="cardLink">
-              <div className={`moduleCard modernModuleCard ${module.accent}`}>
-                <div className={`modernModuleIcon ${module.accent}`}>
-                  <Icon size={32} />
-                </div>
+        <div className="button-row">
+          <Link to="/account-settings" className="secondaryButton">
+            Manage Subscription
+          </Link>
 
-                <div className="modernModuleBody">
-                  <div className="modernModuleTopLine">
-                    <h3>{module.title}</h3>
-                    <span className="status ready">Ready</span>
-                  </div>
-
-                  <p>{module.description}</p>
-
-                  <div className={`modernModuleFooter ${module.accent}`}>
-                    <span>Open module</span>
-                    <ArrowRight size={22} />
-                  </div>
-                </div>
-              </div>
-            </Link>
-          );
-        })}
+          <Link to="/subscribe" className="primaryButton">
+            Upgrade Now
+          </Link>
+        </div>
       </section>
     </AppShell>
   );
