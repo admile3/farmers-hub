@@ -22,6 +22,7 @@ import PricingCalculator from "./modules/PricingCalculator.jsx";
 import PermitGrantTracker from "./modules/PermitGrantTracker.jsx";
 import Lists from "./modules/Lists.jsx";
 import ImportExport from "./modules/ImportExport.jsx";
+import AccountSettings from "./modules/AccountSettings.jsx";
 import { useAuth } from "./AuthContext.jsx";
 
 const modules = [
@@ -162,35 +163,36 @@ function WelcomePricingModal({ onClose }) {
         </button>
 
         <div className="pricingModalHeader">
-  <p className="eyebrow">Welcome to Farmers Hub</p>
-  <h2>Simple tools for farmers market vendors.</h2>
-  <p>
-    Start with a 15-day free trial. Farmers Hub helps small vendors stay organized,
-    plan smarter, price confidently, and keep important business details in one place.
-  </p>
-</div>
+          <p className="eyebrow">Welcome to Farmers Hub</p>
+          <h2>Simple tools for farmers market vendors.</h2>
+          <p>
+            Start with a 15-day free trial. Farmers Hub helps small vendors stay
+            organized, plan smarter, price confidently, and keep important business
+            details in one place.
+          </p>
+        </div>
 
-<div className="pricingFeatureGrid">
-  <div>
-    <strong>Plan your market day</strong>
-    <span>Prep lists, packing quantities, harvest needs, and reusable checklists.</span>
-  </div>
+        <div className="pricingFeatureGrid">
+          <div>
+            <strong>Plan your market day</strong>
+            <span>Prep lists, packing quantities, harvest needs, and reusable checklists.</span>
+          </div>
 
-  <div>
-    <strong>Price with confidence</strong>
-    <span>Calculate costs, margins, retail prices, wholesale prices, and profitability.</span>
-  </div>
+          <div>
+            <strong>Price with confidence</strong>
+            <span>Calculate costs, margins, retail prices, wholesale prices, and profitability.</span>
+          </div>
 
-  <div>
-    <strong>Manage recipes and products</strong>
-    <span>Build seasoning recipes, scale batches, and organize production notes.</span>
-  </div>
+          <div>
+            <strong>Manage recipes and products</strong>
+            <span>Build seasoning recipes, scale batches, and organize production notes.</span>
+          </div>
 
-  <div>
-    <strong>Track business details</strong>
-    <span>Keep permits, grants, deadlines, documents, lists, and backups organized.</span>
-  </div>
-</div>
+          <div>
+            <strong>Track business details</strong>
+            <span>Keep permits, grants, deadlines, documents, lists, and backups organized.</span>
+          </div>
+        </div>
 
         <PricingCards
           checkoutLoading={checkoutLoading}
@@ -284,6 +286,10 @@ function AccountStatusCard() {
           Upgrade Account
         </Link>
       ) : null}
+
+      <Link to="/account-settings" className="secondaryButton fullButton">
+        Account Settings
+      </Link>
 
       <button className="secondaryButton" onClick={logout}>
         <LogOut size={16} />
@@ -426,12 +432,12 @@ function Dashboard() {
         <div>
           <p className="eyebrow">Farmers market vendor SaaS</p>
 
-          <h2>One hub for the tools that keep small food businesses moving.</h2>
+          <h2>One hub for the tools that keep market vendors moving.</h2>
 
           <p className="heroText">
             Farmers Hub is built as a parent dashboard for standalone vendor tools.
             Start with Spice Kitchen, Baking Planner, Market Prep, Pricing Calculator,
-            Permit & Grant Tracker, and Lists.
+            Permit & Grant Tracker, and Lists, with more vendor types coming over time.
           </p>
         </div>
 
@@ -516,6 +522,15 @@ export default function App() {
           <AppShell>
             <Subscribe />
           </AppShell>
+        }
+      />
+
+      <Route
+        path="/account-settings"
+        element={
+          <AccessGate>
+            <AccountSettings />
+          </AccessGate>
         }
       />
 
