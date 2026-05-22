@@ -3,6 +3,7 @@ import { Link, Route, Routes, useLocation } from "react-router-dom";
 import {
   Activity,
   ArrowRight,
+  BookOpen,
   Calculator,
   CalendarDays,
   ChefHat,
