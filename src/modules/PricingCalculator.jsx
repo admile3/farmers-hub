@@ -15,7 +15,7 @@ import {
   getPricingCalculations,
   savePricingCalculation
 } from "../services/pricingService.js";
-
+import StatCard from "../components/StatCard.jsx";
 const starterItems = [
   {
     id: "sample-microgreens",
