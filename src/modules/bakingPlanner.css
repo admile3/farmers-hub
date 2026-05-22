@@ -596,3 +596,39 @@
     font-size: 9px;
   }
 }
+.bakingPlanner .starterLayout {
+  grid-template-columns: minmax(0, 1fr) 520px;
+  align-items: start;
+}
+
+.bakingPlanner .starterSettingsCard .stack {
+  max-width: 520px;
+}
+
+.bakingPlanner .starterSettingsCard .field {
+  max-width: 420px;
+}
+
+.bakingPlanner .starterStatsGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.bakingPlanner .starterStatsGrid .hubStatCard {
+  min-height: 124px;
+}
+
+@media (max-width: 1250px) {
+  .bakingPlanner .starterLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .bakingPlanner .starterStatsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .bakingPlanner .starterStatsGrid {
+    grid-template-columns: 1fr;
+  }
+}
