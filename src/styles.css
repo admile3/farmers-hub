@@ -2562,3 +2562,52 @@ input[type="number"] {
     grid-column: auto;
   }
 }
+.singleColumnSettings {
+  grid-template-columns: 1fr;
+  margin-bottom: 12px;
+}
+
+.app.compactDensity .main {
+  padding: 18px 22px;
+}
+
+.app.compactDensity .sidebar {
+  gap: 16px;
+  padding: 18px;
+}
+
+.app.compactDensity .hero > div:first-child,
+.app.compactDensity .moduleHero > div:first-child {
+  padding: 22px;
+}
+
+.app.compactDensity .moduleCard,
+.app.compactDensity .workspacePanel,
+.app.compactDensity .toolCard {
+  padding: 16px;
+}
+
+.app.compactDensity .moduleCard {
+  min-height: 180px;
+}
+
+.app.compactDensity .moduleCard h3 {
+  margin: 12px 0 7px;
+}
+
+.app.compactDensity .moduleGrid,
+.app.compactDensity .toolGrid,
+.app.compactDensity .accountSettingsGrid {
+  gap: 10px;
+}
+
+.app.compactDensity .authCard,
+.app.compactDensity .sidebarCard {
+  padding: 13px;
+}
+
+.app.compactDensity .primaryButton,
+.app.compactDensity .secondaryButton {
+  padding: 8px 13px;
+  font-size: 0.84rem;
+}
