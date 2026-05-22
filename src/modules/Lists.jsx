@@ -2,14 +2,18 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   CheckCircle2,
+  CheckSquare,
   ClipboardList,
+  Folder,
   ListPlus,
+  Percent,
   Plus,
   Search,
   Trash2,
   X
 } from "lucide-react";
 import { useAuth } from "../AuthContext.jsx";
+import StatCard from "../components/StatCard.jsx";
 import {
   addListItem,
   createList,
@@ -262,6 +266,24 @@ export default function Lists() {
     };
   }, [selectedList]);
 
+  const listSummary = useMemo(() => {
+    const totalLists = lists.length;
+    const totalItems = lists.reduce((sum, list) => sum + (list.itemCount || 0), 0);
+    const checkedItems = lists.reduce(
+      (sum, list) => sum + (list.checkedCount || 0),
+      0
+    );
+    const completionPercent =
+      totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0;
+
+    return {
+      totalLists,
+      totalItems,
+      checkedItems,
+      completionPercent
+    };
+  }, [lists]);
+
   if (!user) {
     return (
       <div className="listsModule">
@@ -436,6 +458,40 @@ export default function Lists() {
             placeholder="Search lists..."
           />
         </div>
+      </section>
+
+      <section className="hubStatGrid listsStatGrid">
+        <StatCard
+          icon={Folder}
+          label="Lists"
+          value={listSummary.totalLists}
+          sub="Saved workflow lists"
+          accent="lists"
+        />
+
+        <StatCard
+          icon={ClipboardList}
+          label="Total Items"
+          value={listSummary.totalItems}
+          sub="Checklist items across all lists"
+          accent="market"
+        />
+
+        <StatCard
+          icon={CheckSquare}
+          label="Completed"
+          value={listSummary.checkedItems}
+          sub="Items marked complete"
+          accent="pricing"
+        />
+
+        <StatCard
+          icon={Percent}
+          label="Completion"
+          value={`${listSummary.completionPercent}%`}
+          sub="Overall checklist progress"
+          accent="sourdough"
+        />
       </section>
 
       <section className="listsGrid">
