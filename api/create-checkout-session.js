@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { plan } = req.body;
+    const { plan, email } = req.body;
 
     const priceId =
       plan === "annual"
