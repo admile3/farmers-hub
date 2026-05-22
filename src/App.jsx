@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 import {
   Activity,
@@ -21,6 +21,7 @@ import {
   Wheat,
   X
 } from "lucide-react";
+import { doc, getDoc } from "firebase/firestore";
 
 import SpiceKitchen from "./modules/SpiceKitchen.jsx";
 import BakingPlanner from "./modules/BakingPlanner.jsx";
@@ -31,7 +32,11 @@ import Lists from "./modules/Lists.jsx";
 import ImportExport from "./modules/ImportExport.jsx";
 import AccountSettings from "./modules/AccountSettings.jsx";
 import { useAuth } from "./AuthContext.jsx";
+import { db } from "./firebase";
 import StatCard from "./components/StatCard.jsx";
+import { getSpiceRecipes } from "./services/spiceKitchenService.js";
+import { getPermitGrantItems } from "./services/permitGrantService.js";
+import { getLists } from "./services/listsService.js";
 
 const modules = [
   {
@@ -84,50 +89,49 @@ const modules = [
   }
 ];
 
-const dashboardDeadlines = [
-  {
-    title: "Home-Based Processor Renewal",
-    source: "Permit & Grant Tracker",
-    due: "Due in 14 days",
-    date: "Jun 10",
-    accent: "grant"
-  },
-  {
-    title: "Saturday Market Prep Plan",
-    source: "Market Prep Planner",
-    due: "Due in 21 days",
-    date: "Jun 17",
-    accent: "market"
-  },
-  {
-    title: "Packaging Supply Checklist",
-    source: "Lists",
-    due: "Due in 35 days",
-    date: "Jul 1",
-    accent: "lists"
-  }
-];
+function toDate(value) {
+  if (!value) return null;
+  if (value.toDate) return value.toDate();
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
 
-const recentActivity = [
-  {
-    title: "Updated recipe: Sourdough Loaf",
-    source: "Baking Planner",
-    time: "2h ago",
-    accent: "sourdough"
-  },
-  {
-    title: "Added checklist item: Packaging Supplies",
-    source: "Lists",
-    time: "5h ago",
-    accent: "lists"
-  },
-  {
-    title: "Calculated pricing for Herb Blend",
-    source: "Pricing Calculator",
-    time: "Yesterday",
-    accent: "pricing"
-  }
-];
+function daysUntil(date) {
+  if (!date) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(date);
+  target.setHours(0, 0, 0, 0);
+  return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function formatShortDate(date) {
+  if (!date) return "";
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function formatDueLabel(days) {
+  if (days === null) return "No date";
+  if (days < 0) return "Past due";
+  if (days === 0) return "Due today";
+  if (days === 1) return "Due in 1 day";
+  return `Due in ${days} days`;
+}
+
+function formatActivityTime(date) {
+  if (!date) return "";
+  const diffMs = Date.now() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMinutes < 1) return "Just now";
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return formatShortDate(date);
+}
 
 async function startStripeCheckout(plan, email, setCheckoutLoading) {
   try {
@@ -510,13 +514,167 @@ function Dashboard() {
   } = useAuth();
 
   const [showWelcomePricing, setShowWelcomePricing] = useState(true);
+  const [dashboardData, setDashboardData] = useState({
+    spiceRecipes: [],
+    bakingRecipes: [],
+    permitItems: [],
+    lists: [],
+    loading: false
+  });
 
   const shouldShowWelcomePricing =
     !authLoading && !accountLoading && !user && showWelcomePricing;
 
+  useEffect(() => {
+    async function loadDashboardData() {
+      if (!user) {
+        setDashboardData({
+          spiceRecipes: [],
+          bakingRecipes: [],
+          permitItems: [],
+          lists: [],
+          loading: false
+        });
+        return;
+      }
+
+      setDashboardData((current) => ({ ...current, loading: true }));
+
+      try {
+        const [spiceRecipes, permitItems, lists, bakingSnapshot] =
+          await Promise.all([
+            getSpiceRecipes(user.uid),
+            getPermitGrantItems(user.uid),
+            getLists(user.uid),
+            getDoc(doc(db, "users", user.uid, "bakingPlanner", "main"))
+          ]);
+
+        const bakingData = bakingSnapshot.exists() ? bakingSnapshot.data() : {};
+        const bakingRecipes = Array.isArray(bakingData.recipes)
+          ? bakingData.recipes
+          : [];
+
+        setDashboardData({
+          spiceRecipes: Array.isArray(spiceRecipes) ? spiceRecipes : [],
+          bakingRecipes,
+          permitItems: Array.isArray(permitItems) ? permitItems : [],
+          lists: Array.isArray(lists) ? lists : [],
+          loading: false
+        });
+      } catch (error) {
+        console.error("Could not load dashboard data:", error);
+        setDashboardData((current) => ({ ...current, loading: false }));
+      }
+    }
+
+    loadDashboardData();
+  }, [user]);
+
   const displayName = user?.displayName || "ArMi Farms";
   const trialDaysDisplay =
     isTrial ? daysRemaining : accessStatus.status === "active" ? "Active" : "15";
+
+  const savedRecipeCount =
+    dashboardData.spiceRecipes.length + dashboardData.bakingRecipes.length;
+
+  const openTaskCount = dashboardData.lists.reduce((sum, list) => {
+    const total = Number(list.itemCount) || 0;
+    const checked = Number(list.checkedCount) || 0;
+    return sum + Math.max(0, total - checked);
+  }, 0);
+
+  const upcomingPermitsCount = useMemo(() => {
+    return dashboardData.permitItems.filter((item) => {
+      const relevantDate = toDate(item.renewalDate || item.dueDate);
+      const days = daysUntil(relevantDate);
+      return days !== null && days >= 0 && days <= 60;
+    }).length;
+  }, [dashboardData.permitItems]);
+
+  const dashboardDeadlines = useMemo(() => {
+    return dashboardData.permitItems
+      .map((item) => {
+        const relevantDate = toDate(item.renewalDate || item.dueDate);
+        const days = daysUntil(relevantDate);
+
+        return {
+          title: item.name || "Untitled Record",
+          source: item.type || "Permit & Grant Tracker",
+          due: formatDueLabel(days),
+          date: formatShortDate(relevantDate),
+          days,
+          accent: item.type === "Grant" ? "grant" : "grant"
+        };
+      })
+      .filter((item) => item.days !== null && item.days >= 0)
+      .sort((a, b) => a.days - b.days)
+      .slice(0, 3);
+  }, [dashboardData.permitItems]);
+
+  const recentActivity = useMemo(() => {
+    const activity = [];
+
+    dashboardData.spiceRecipes.forEach((recipe) => {
+      const date = toDate(recipe.updatedAt || recipe.createdAt);
+
+      if (date) {
+        activity.push({
+          title: `Updated recipe: ${recipe.name || "Spice recipe"}`,
+          source: "Spice Kitchen",
+          time: formatActivityTime(date),
+          timestamp: date.getTime(),
+          accent: "spice"
+        });
+      }
+    });
+
+    dashboardData.bakingRecipes.forEach((recipe) => {
+      activity.push({
+        title: `Saved recipe: ${recipe.name || "Baking recipe"}`,
+        source: "Baking Planner",
+        time: "Recently",
+        timestamp: 0,
+        accent: "sourdough"
+      });
+    });
+
+    dashboardData.permitItems.forEach((item) => {
+      const date = toDate(item.updatedAt || item.createdAt);
+
+      if (date) {
+        activity.push({
+          title: `Updated record: ${item.name || "Permit or grant"}`,
+          source: "Permit & Grant Tracker",
+          time: formatActivityTime(date),
+          timestamp: date.getTime(),
+          accent: "grant"
+        });
+      }
+    });
+
+    dashboardData.lists.forEach((list) => {
+      const date = toDate(list.updatedAt || list.createdAt);
+
+      if (date) {
+        activity.push({
+          title: `Updated list: ${list.name || "Checklist"}`,
+          source: "Lists",
+          time: formatActivityTime(date),
+          timestamp: date.getTime(),
+          accent: "lists"
+        });
+      }
+    });
+
+    return activity
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, 3);
+  }, [
+    dashboardData.spiceRecipes,
+    dashboardData.bakingRecipes,
+    dashboardData.permitItems,
+    dashboardData.lists
+  ]);
 
   return (
     <AppShell>
@@ -574,24 +732,24 @@ function Dashboard() {
         <StatCard
           icon={BookOpen}
           label="Saved Recipes"
-          value="12"
-          sub="across recipe tools"
+          value={dashboardData.loading ? "..." : savedRecipeCount}
+          sub="Spice Kitchen + Baking Planner"
           accent="market"
         />
 
         <StatCard
           icon={FileText}
           label="Upcoming Permits"
-          value="2"
-          sub="need attention"
+          value={dashboardData.loading ? "..." : upcomingPermitsCount}
+          sub="next 60 days"
           accent="grant"
         />
 
         <StatCard
           icon={Folder}
           label="Open Tasks"
-          value="7"
-          sub="checklist items"
+          value={dashboardData.loading ? "..." : openTaskCount}
+          sub="unchecked list items"
           accent="lists"
         />
       </section>
@@ -639,23 +797,29 @@ function Dashboard() {
             </div>
 
             <div className="dashboardList">
-              {dashboardDeadlines.map((item) => (
-                <div className="dashboardRow compactDashboardRow" key={item.title}>
-                  <div className={`dashboardRowIcon ${item.accent}`}>
-                    <CalendarDays size={18} />
-                  </div>
+              {dashboardDeadlines.length ? (
+                dashboardDeadlines.map((item) => (
+                  <div className="dashboardRow compactDashboardRow" key={item.title}>
+                    <div className={`dashboardRowIcon ${item.accent}`}>
+                      <CalendarDays size={18} />
+                    </div>
 
-                  <div>
-                    <h4>{item.title}</h4>
-                    <p>{item.source}</p>
-                  </div>
+                    <div>
+                      <h4>{item.title}</h4>
+                      <p>{item.source}</p>
+                    </div>
 
-                  <div className="dashboardRightMeta">
-                    <span className="dashboardDuePill">{item.due}</span>
-                    <small>{item.date}</small>
+                    <div className="dashboardRightMeta">
+                      <span className="dashboardDuePill">{item.due}</span>
+                      <small>{item.date}</small>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="dashboardEmpty">
+                  No upcoming deadlines found.
+                </p>
+              )}
             </div>
 
             <div className="dashboardPanelFooter">
@@ -674,20 +838,26 @@ function Dashboard() {
             </div>
 
             <div className="dashboardList">
-              {recentActivity.map((item) => (
-                <div className="dashboardRow compactDashboardRow" key={item.title}>
-                  <div className={`dashboardRowIcon ${item.accent}`}>
-                    <Activity size={18} />
-                  </div>
+              {recentActivity.length ? (
+                recentActivity.map((item) => (
+                  <div className="dashboardRow compactDashboardRow" key={`${item.title}-${item.time}`}>
+                    <div className={`dashboardRowIcon ${item.accent}`}>
+                      <Activity size={18} />
+                    </div>
 
-                  <div>
-                    <h4>{item.title}</h4>
-                    <p>{item.source}</p>
-                  </div>
+                    <div>
+                      <h4>{item.title}</h4>
+                      <p>{item.source}</p>
+                    </div>
 
-                  <small className="dashboardTime">{item.time}</small>
-                </div>
-              ))}
+                    <small className="dashboardTime">{item.time}</small>
+                  </div>
+                ))
+              ) : (
+                <p className="dashboardEmpty">
+                  Recent activity will appear after saved updates.
+                </p>
+              )}
             </div>
           </div>
         </div>
