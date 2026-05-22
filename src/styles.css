@@ -2745,3 +2745,13 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+.marketPrepStatsGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 16px 0;
+}
+
+@media (max-width: 900px) {
+  .marketPrepStatsGrid {
+    grid-template-columns: 1fr;
+  }
+}
