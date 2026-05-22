@@ -17,15 +17,16 @@ export default async function handler(req, res) {
     const baseUrl =
       process.env.SITE_URL || "https://farmers-hub-inky.vercel.app";
 
-    const customers = await stripe.customers.search({
-      query: `email:"${email}"`
+    const customers = await stripe.customers.list({
+      email,
+      limit: 1
     });
 
-    const customer = customers.data[0];
+    let customer = customers.data[0];
 
     if (!customer) {
-      return res.status(404).json({
-        error: "No Stripe customer found for this email."
+      customer = await stripe.customers.create({
+        email
       });
     }
 
