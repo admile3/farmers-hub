@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Download, Save, Shield, Trash2 } from "lucide-react";
 import { useAuth } from "../AuthContext.jsx";
 import { updateAccountProfile } from "../services/accountService.js";
@@ -26,14 +26,74 @@ export default function AccountSettings() {
   const [billingLoading, setBillingLoading] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [settings, setSettings] = useState(defaultSettings);
+  const [savedSnapshot, setSavedSnapshot] = useState("");
+
+  const currentSnapshot = useMemo(
+    () =>
+      JSON.stringify({
+        displayName,
+        settings
+      }),
+    [displayName, settings]
+  );
+
+  const hasUnsavedChanges = savedSnapshot && currentSnapshot !== savedSnapshot;
 
   useEffect(() => {
-    setDisplayName(accountProfile?.displayName || user?.displayName || "");
-    setSettings({
+    const nextDisplayName = accountProfile?.displayName || user?.displayName || "";
+    const nextSettings = {
       ...defaultSettings,
       ...(accountProfile?.settings || {})
-    });
+    };
+
+    setDisplayName(nextDisplayName);
+    setSettings(nextSettings);
+    setSavedSnapshot(
+      JSON.stringify({
+        displayName: nextDisplayName,
+        settings: nextSettings
+      })
+    );
   }, [accountProfile, user]);
+
+  useEffect(() => {
+    function handleBeforeUnload(event) {
+      if (!hasUnsavedChanges) return;
+
+      event.preventDefault();
+      event.returnValue = "";
+    }
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  useEffect(() => {
+    function handleClick(event) {
+      if (!hasUnsavedChanges) return;
+
+      const link = event.target.closest("a");
+
+      if (!link || !link.href) return;
+
+      const isSameOrigin = link.origin === window.location.origin;
+
+      if (!isSameOrigin) return;
+
+      const confirmed = window.confirm(
+        "You have unsaved account changes. Leave without saving?"
+      );
+
+      if (!confirmed) {
+        event.preventDefault();
+      }
+    }
+
+    document.addEventListener("click", handleClick, true);
+
+    return () => document.removeEventListener("click", handleClick, true);
+  }, [hasUnsavedChanges]);
 
   function updateSetting(field, value) {
     setSettings((current) => ({
@@ -54,6 +114,14 @@ export default function AccountSettings() {
       });
 
       await refreshAccountProfile();
+
+      setSavedSnapshot(
+        JSON.stringify({
+          displayName,
+          settings
+        })
+      );
+
       alert("Account settings saved.");
     } catch (error) {
       console.error(error);
@@ -112,7 +180,7 @@ export default function AccountSettings() {
 
       if (!response.ok || !data.url) {
         console.error(data);
-        alert("Could not open billing portal. If you have not subscribed yet, choose a plan first.");
+        alert("Could not open billing portal.");
         return;
       }
 
@@ -138,7 +206,7 @@ export default function AccountSettings() {
         deletionRequested: true
       });
 
-      alert("Your account has been marked for deletion. Cancel billing separately in Stripe if needed.");
+      alert("Your account has been marked for deletion.");
       await logout();
     } catch (error) {
       console.error(error);
@@ -148,7 +216,7 @@ export default function AccountSettings() {
 
   return (
     <div className="modulePage accountSettingsPage">
-      <section className="moduleHero compactHero accountSettingsHero">
+      <section className="accountSettingsHeroPanel">
         <div>
           <p className="eyebrow">Account Settings</p>
           <h2>Manage your Farmers Hub account.</h2>
@@ -156,6 +224,10 @@ export default function AccountSettings() {
             Control your profile, subscription, dashboard layout, backups, and
             account security from one place.
           </p>
+
+          {hasUnsavedChanges ? (
+            <p className="unsavedNotice">You have unsaved changes.</p>
+          ) : null}
         </div>
 
         <button
@@ -164,7 +236,7 @@ export default function AccountSettings() {
           onClick={saveSettings}
           disabled={saving}
         >
-          <Save size={16} />
+          <Save size={18} />
           {saving ? "Saving..." : "Save Settings"}
         </button>
       </section>
