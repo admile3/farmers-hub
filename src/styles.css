@@ -2608,3 +2608,46 @@ input[type="number"] {
   background: #34753e;
   margin-bottom: 4px;
 }
+.modulePage::before,
+.subscribePage::before,
+.accountSettingsPage::before,
+.bakingPlanner::before,
+.permitGrantModule::before,
+.listsModule::before {
+  content: "";
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  margin-bottom: 14px;
+  background: #34753e;
+}
+
+.app:has(.spicePage) .modulePage::before {
+  background: #c76343;
+}
+
+.app:has(.bakingPlanner) .bakingPlanner::before {
+  background: #dfa04c;
+}
+
+.app:has(.marketPrepPage) .modulePage::before {
+  background: #719b70;
+}
+
+.app:has(.pricingCalculatorPage) .modulePage::before,
+.app:has(.pricingPage) .modulePage::before {
+  background: #5f8aa0;
+}
+
+.app:has(.permitGrantModule) .permitGrantModule::before {
+  background: #957d68;
+}
+
+.app:has(.listsModule) .listsModule::before {
+  background: #aaa060;
+}
+
+.app:has(.subscribePage) .subscribePage::before,
+.app:has(.accountSettingsPage) .accountSettingsPage::before {
+  background: #34753e;
+}
