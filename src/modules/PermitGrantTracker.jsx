@@ -2,20 +2,20 @@ import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   CalendarDays,
-  CheckCircle2,
   Edit3,
   ExternalLink,
   FileText,
   Filter,
-  Landmark,
   Plus,
   Save,
   Search,
+  ShieldCheck,
   Trash2,
   Upload,
   X
 } from "lucide-react";
 import { useAuth } from "../AuthContext.jsx";
+import StatCard from "../components/StatCard.jsx";
 import {
   deletePermitGrantItem,
   getPermitGrantItems,
@@ -170,11 +170,6 @@ function statusClass(status) {
   return status.toLowerCase().replaceAll(" ", "-");
 }
 
-function formatMoney(value) {
-  const number = Number(value) || 0;
-  return `$${number.toFixed(2)}`;
-}
-
 function normalizeRecord(record) {
   return {
     ...blankRecord,
@@ -242,7 +237,10 @@ export default function PermitGrantTracker() {
         const isMissingDocs = !item.documentName && !item.documentUrl;
         const isGrant = item.type === "Grant";
         const isUpcomingGrant =
-          isGrant && dueStatus.days !== null && dueStatus.days >= 0 && dueStatus.days <= 60;
+          isGrant &&
+          dueStatus.days !== null &&
+          dueStatus.days >= 0 &&
+          dueStatus.days <= 60;
 
         return {
           active: sum.active + (isActive ? 1 : 0),
@@ -441,36 +439,46 @@ export default function PermitGrantTracker() {
         </button>
       </section>
 
-      <section className="permitStatsGrid">
-        <div className="permitStatCard">
-          <p>Active</p>
-          <strong>{summary.active}</strong>
-          <span>Currently active</span>
-        </div>
+      <section className="hubStatGrid">
+        <StatCard
+          icon={ShieldCheck}
+          label="Active"
+          value={summary.active}
+          sub="Currently active"
+          accent="market"
+        />
 
-        <div className="permitStatCard warning">
-          <p>Expiring Soon</p>
-          <strong>{summary.expiringSoon}</strong>
-          <span>In reminder window</span>
-        </div>
+        <StatCard
+          icon={CalendarDays}
+          label="Expiring Soon"
+          value={summary.expiringSoon}
+          sub="In reminder window"
+          accent="sourdough"
+        />
 
-        <div className="permitStatCard danger">
-          <p>Expired</p>
-          <strong>{summary.expired}</strong>
-          <span>Overdue records</span>
-        </div>
+        <StatCard
+          icon={AlertTriangle}
+          label="Expired"
+          value={summary.expired}
+          sub="Overdue records"
+          accent="spice"
+        />
 
-        <div className="permitStatCard warning">
-          <p>Missing Docs</p>
-          <strong>{summary.missingDocs}</strong>
-          <span>Need upload</span>
-        </div>
+        <StatCard
+          icon={Upload}
+          label="Missing Docs"
+          value={summary.missingDocs}
+          sub="Need upload"
+          accent="pricing"
+        />
 
-        <div className="permitStatCard">
-          <p>Upcoming Grants</p>
-          <strong>{summary.upcomingGrants}</strong>
-          <span>Deadlines approaching</span>
-        </div>
+        <StatCard
+          icon={FileText}
+          label="Upcoming Grants"
+          value={summary.upcomingGrants}
+          sub="Deadlines approaching"
+          accent="grant"
+        />
       </section>
 
       <section className="permitFilterBar">
@@ -822,7 +830,11 @@ export default function PermitGrantTracker() {
               </label>
 
               <div className="permitModalActions permitFull">
-                <button className="secondaryButton compactButton" type="button" onClick={closeModal}>
+                <button
+                  className="secondaryButton compactButton"
+                  type="button"
+                  onClick={closeModal}
+                >
                   Cancel
                 </button>
 
