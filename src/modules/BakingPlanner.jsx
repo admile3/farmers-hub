@@ -1826,8 +1826,8 @@ export default function BakingPlanner() {
         )}
 
         {activeTab === "starter" && (
-          <div className="layout two-col">
-            <Card>
+          <div className="layout starterLayout">
+            <Card className="starterSettingsCard">
               <CardContent className="panel">
                 <h2>Starter / Preferment Builder</h2>
                 <p>
@@ -1862,7 +1862,7 @@ export default function BakingPlanner() {
               </CardContent>
             </Card>
 
-            <div className="grid two">
+            <div className="hubStatGrid starterStatsGrid">
               <StatCard
                 icon={FlaskConical}
                 label="Total Mature Preferment"
