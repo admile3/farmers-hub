@@ -125,6 +125,28 @@ function getMonthDays(viewDate) {
   return days;
 }
 
+function sumProductUnits(products) {
+  if (!Array.isArray(products)) return "";
+
+  return products.reduce((sum, product) => {
+    return sum + (Number(product.quantity) || Number(product.units) || 0);
+  }, 0);
+}
+
+function getProductCount(bakingData) {
+  if (Array.isArray(bakingData.products)) return bakingData.products.length;
+  if (Array.isArray(bakingData.activeProducts)) return bakingData.activeProducts.length;
+  if (Array.isArray(bakingData.bakePlan)) return bakingData.bakePlan.length;
+  return "";
+}
+
+function getPlannedUnits(bakingData) {
+  if (Array.isArray(bakingData.products)) return sumProductUnits(bakingData.products);
+  if (Array.isArray(bakingData.activeProducts)) return sumProductUnits(bakingData.activeProducts);
+  if (Array.isArray(bakingData.bakePlan)) return sumProductUnits(bakingData.bakePlan);
+  return "";
+}
+
 function getPermitDetails(item) {
   return {
     name: item.name || "",
@@ -233,9 +255,13 @@ function normalizeImportedEvents({ marketPlans, permitItems, bakingData }) {
       details: {
         productionDate: bakingData.productionDate,
         defaultStartTime: bakingData.settings?.defaultStartTime || "",
-        altitude: bakingData.settings?.altitude || "",
-        baselineTemperature: bakingData.settings?.baselineTemperature || "",
-        baselineHumidity: bakingData.settings?.baselineHumidity || "",
+        plannedProducts: getProductCount(bakingData),
+        plannedUnits: getPlannedUnits(bakingData),
+        starterNeeded:
+          bakingData.starterNeeded ||
+          bakingData.totalPreferment ||
+          bakingData.prefermentNeeded ||
+          "",
         mixerCapacity: bakingData.settings?.mixerCapacity || "",
         proofingCapacity: bakingData.settings?.proofingCapacity || ""
       }
@@ -731,7 +757,7 @@ export default function Calendar() {
                 <DetailCard label="Type" value={selectedEvent.type || "Event"} />
                 <DetailCard label="Date" value={formatDisplayDate(selectedEvent.date)} />
 
-                {selectedEvent.startTime ? (
+                {selectedEvent.startTime && selectedEvent.source !== "bakingPlanner" ? (
                   <DetailCard
                     label="Time"
                     value={`${selectedEvent.startTime}${
@@ -804,10 +830,18 @@ export default function Calendar() {
                       value={selectedEvent.details?.defaultStartTime}
                     />
                     <DetailCard
-                      label="Altitude"
+                      label="Products / Recipes"
+                      value={selectedEvent.details?.plannedProducts}
+                    />
+                    <DetailCard
+                      label="Planned Units"
+                      value={selectedEvent.details?.plannedUnits}
+                    />
+                    <DetailCard
+                      label="Starter Needed"
                       value={
-                        selectedEvent.details?.altitude
-                          ? `${selectedEvent.details.altitude} ft`
+                        selectedEvent.details?.starterNeeded
+                          ? `${selectedEvent.details.starterNeeded} g`
                           : ""
                       }
                     />
@@ -816,14 +850,6 @@ export default function Calendar() {
                       value={
                         selectedEvent.details?.mixerCapacity
                           ? `${selectedEvent.details.mixerCapacity} g dough`
-                          : ""
-                      }
-                    />
-                    <DetailCard
-                      label="Proofing Capacity"
-                      value={
-                        selectedEvent.details?.proofingCapacity
-                          ? `${selectedEvent.details.proofingCapacity} units`
                           : ""
                       }
                     />
