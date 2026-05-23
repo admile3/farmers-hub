@@ -5,7 +5,6 @@ import {
   ChevronRight,
   Clock,
   Link as LinkIcon,
-  MapPin,
   Plus,
   Save,
   Trash2,
@@ -55,16 +54,9 @@ function monthKey(date) {
   return `${date.getFullYear()}-${date.getMonth()}`;
 }
 
-function toDate(value) {
-  if (!value) return null;
-  if (value.toDate) return value.toDate();
-
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-}
-
 function parseLocalDate(dateString) {
   if (!dateString) return null;
+
   const [year, month, day] = dateString.split("-").map(Number);
   return new Date(year, month - 1, day);
 }
@@ -405,7 +397,7 @@ export default function Calendar() {
   if (!user) {
     return (
       <div className="calendarModule">
-        <button className="primaryButton calendarAddButton">
+        <section className="moduleHero compactHero calendarHero">
           <div>
             <p className="eyebrow">Calendar</p>
             <h2>Sign in to view your vendor calendar.</h2>
@@ -415,7 +407,11 @@ export default function Calendar() {
             </p>
           </div>
 
-          <button className="primaryButton" onClick={loginWithGoogle}>
+          <button
+            className="primaryButton calendarAddButton"
+            type="button"
+            onClick={loginWithGoogle}
+          >
             Sign in with Google
           </button>
         </section>
@@ -436,24 +432,24 @@ export default function Calendar() {
       ) : null}
 
       <section className="moduleHero compactHero calendarHero">
-  <div>
-    <p className="eyebrow">Calendar</p>
-    <h2>See every dated vendor task in one place.</h2>
-    <p>
-      Market plans, permit deadlines, grant renewals, baking production dates,
-      and manually added events appear together on your calendar.
-    </p>
-  </div>
+        <div>
+          <p className="eyebrow">Calendar</p>
+          <h2>See every dated vendor task in one place.</h2>
+          <p>
+            Market plans, permit deadlines, grant renewals, baking production dates,
+            and manually added events appear together on your calendar.
+          </p>
+        </div>
 
-  <button
-    className="primaryButton calendarAddButton"
-    type="button"
-    onClick={() => openNewEvent()}
-  >
-    <Plus size={16} />
-    Add Event
-  </button>
-</section>
+        <button
+          className="primaryButton calendarAddButton"
+          type="button"
+          onClick={() => openNewEvent()}
+        >
+          <Plus size={16} />
+          Add Event
+        </button>
+      </section>
 
       <section className="hubStatGrid calendarStatGrid">
         <StatCard
@@ -498,15 +494,27 @@ export default function Calendar() {
             </div>
 
             <div className="calendarToolbarActions">
-              <button type="button" className="secondaryButton compactButton" onClick={() => shiftMonth(-1)}>
+              <button
+                type="button"
+                className="secondaryButton compactButton"
+                onClick={() => shiftMonth(-1)}
+              >
                 <ChevronLeft size={16} />
               </button>
 
-              <button type="button" className="secondaryButton compactButton" onClick={() => setViewDate(new Date())}>
+              <button
+                type="button"
+                className="secondaryButton compactButton"
+                onClick={() => setViewDate(new Date())}
+              >
                 Today
               </button>
 
-              <button type="button" className="secondaryButton compactButton" onClick={() => shiftMonth(1)}>
+              <button
+                type="button"
+                className="secondaryButton compactButton"
+                onClick={() => shiftMonth(1)}
+              >
                 <ChevronRight size={16} />
               </button>
             </div>
@@ -542,7 +550,10 @@ export default function Calendar() {
 
                   <div className="calendarDayEvents">
                     {dayEvents.slice(0, 3).map((event) => (
-                      <span key={event.id} className={`calendarEventDot ${event.accent || "calendar"}`}>
+                      <span
+                        key={event.id}
+                        className={`calendarEventDot ${event.accent || "calendar"}`}
+                      >
                         {event.title}
                       </span>
                     ))}
@@ -565,7 +576,11 @@ export default function Calendar() {
                 <h3>{formatDisplayDate(selectedDate)}</h3>
               </div>
 
-              <button className="secondaryButton compactButton" type="button" onClick={() => openNewEvent(selectedDate)}>
+              <button
+                className="secondaryButton compactButton"
+                type="button"
+                onClick={() => openNewEvent(selectedDate)}
+              >
                 <Plus size={15} />
                 Add
               </button>
@@ -585,7 +600,9 @@ export default function Calendar() {
                     <div>
                       <strong>{event.title}</strong>
                       <p>
-                        {event.startTime ? `${event.startTime}${event.endTime ? ` - ${event.endTime}` : ""}` : event.type}
+                        {event.startTime
+                          ? `${event.startTime}${event.endTime ? ` - ${event.endTime}` : ""}`
+                          : event.type}
                       </p>
                     </div>
                   </button>
@@ -806,7 +823,7 @@ export default function Calendar() {
                   Cancel
                 </button>
 
-                <button className="primaryButton calendarAddButton" type="submit">
+                <button className="primaryButton compactPrimary" type="submit">
                   <Save size={15} />
                   Save Event
                 </button>
