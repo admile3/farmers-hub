@@ -214,6 +214,10 @@ label {
   background: var(--lists);
 }
 
+.modernNavLink.moduleNav.calendar {
+  background: #7a8fbe;
+}
+
 .modernNavLink.active {
   outline: 3px solid rgba(255, 255, 255, 0.8);
   box-shadow: 0 8px 20px rgba(22, 27, 34, 0.08);
@@ -596,6 +600,11 @@ label {
 .modernModuleIcon.lists,
 .moduleCard.lists .moduleIcon {
   background: var(--lists);
+}
+
+.modernModuleIcon.calendar,
+.moduleCard.calendar .moduleIcon {
+  background: #7a8fbe;
 }
 
 .modernModuleBody {
@@ -2598,6 +2607,10 @@ input[type="number"] {
   background: #aaa060;
 }
 
+.modernModuleCard.calendar::before {
+  background: #7a8fbe;
+}
+
 .modulePage::before,
 .subscribePage::before,
 .accountSettingsPage::before {
@@ -2613,7 +2626,8 @@ input[type="number"] {
 .accountSettingsPage::before,
 .bakingPlanner::before,
 .permitGrantModule::before,
-.listsModule::before {
+.listsModule::before,
+.calendarModule::before {
   content: "";
   display: block;
   height: 6px;
@@ -2645,6 +2659,10 @@ input[type="number"] {
 
 .app:has(.listsModule) .listsModule::before {
   background: #aaa060;
+}
+
+.app:has(.calendarModule) .calendarModule::before {
+  background: #7a8fbe;
 }
 
 .app:has(.subscribePage) .subscribePage::before,
@@ -2704,6 +2722,10 @@ input[type="number"] {
 
 .hubStatIcon.lists {
   background: #aaa060;
+}
+
+.hubStatIcon.calendar {
+  background: #7a8fbe;
 }
 
 .hubStatText {
@@ -2863,6 +2885,7 @@ input[type="number"] {
 .dashboardRowIcon.pricing { background: #5f8aa0; }
 .dashboardRowIcon.grant { background: #957d68; }
 .dashboardRowIcon.lists { background: #aaa060; }
+.dashboardRowIcon.calendar { background: #7a8fbe; }
 
 .dashboardRow h4 {
   margin: 0 0 4px;
@@ -3234,7 +3257,7 @@ input[type="number"] {
 
 .calendarEventDot.calendar,
 .calendarAgendaColor.calendar {
-  background: #34753e;
+  background: #7a8fbe;
 }
 
 .calendarEventDot.market,
@@ -3336,43 +3359,90 @@ input[type="number"] {
     flex-direction: column;
   }
 }
-.calendar {
-  background: #7a8fbe;
-  color: #ffffff;
-}
-
 .calendarAccent {
   background: #7a8fbe;
 }
+
+/* Calendar module polish */
 .calendarHero {
   position: relative;
-  padding-right: 220px;
+  display: block;
+  margin-bottom: 18px;
+  padding: 28px 220px 28px 28px;
+  border-radius: var(--radius);
+  background: #ffffff;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.calendarHero > div:first-child {
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.calendarHero h2 {
+  margin: 7px 0 10px;
+  color: var(--text);
+  font-size: clamp(2rem, 3.2vw, 3.45rem);
+  line-height: 1.02;
+  letter-spacing: -0.055em;
+}
+
+.calendarHero p {
+  max-width: 880px;
+  color: var(--muted);
+  font-size: 0.96rem;
+  line-height: 1.5;
 }
 
 .calendarAddButton {
   position: absolute;
-  top: 32px;
-  right: 32px;
-
+  top: 50%;
+  right: 28px;
+  transform: translateY(-50%);
   min-height: 52px;
   padding: 0 22px;
-
   border-radius: 14px;
-
   font-size: 0.95rem;
-  font-weight: 700;
-
-  background: #2f6b3b;
+  font-weight: 850;
+  background: var(--green);
   color: #ffffff;
-
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
-
   box-shadow: 0 8px 20px rgba(47, 107, 59, 0.16);
 }
 
 .calendarAddButton:hover {
-  transform: translateY(-1px);
-  background: #275933;
+  transform: translateY(calc(-50% - 1px));
+  background: var(--green-dark);
+}
+
+.calendarStatGrid .hubStatCard {
+  background: #ffffff;
+}
+
+.calendarStatGrid .hubStatCard.calendar {
+  background: #ffffff;
+  color: var(--text);
+}
+
+@media (max-width: 900px) {
+  .calendarHero {
+    padding: 26px;
+  }
+
+  .calendarAddButton {
+    position: static;
+    transform: none;
+    margin-top: 18px;
+  }
+
+  .calendarAddButton:hover {
+    transform: translateY(-1px);
+  }
 }
