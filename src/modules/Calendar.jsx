@@ -88,6 +88,18 @@ function formatDue(days) {
   return `${days} days`;
 }
 
+function formatPlainDate(dateString) {
+  if (!dateString) return "";
+  const date = parseLocalDate(dateString);
+  if (!date) return dateString;
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric"
+  });
+}
+
 function getMonthDays(viewDate) {
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -113,6 +125,36 @@ function getMonthDays(viewDate) {
   return days;
 }
 
+function getPermitDetails(item) {
+  return {
+    name: item.name || "",
+    type: item.type || "",
+    organization: item.organization || item.agency || "",
+    status: item.status || "",
+    priority: item.priority || "",
+    issueDate: item.issueDate || "",
+    dueDate: item.dueDate || "",
+    renewalDate: item.renewalDate || "",
+    reminderDays: item.reminderDays || item.reminder || "",
+    documentName: item.documentName || item.documentFileName || "",
+    documentUrl: item.documentUrl || "",
+    notes: item.notes || ""
+  };
+}
+
+function getMarketPlanDetails(plan) {
+  return {
+    name: plan.marketName || "Market Plan",
+    marketDate: plan.marketDate || "",
+    location: plan.location || "",
+    weatherNotes: plan.weatherNotes || "",
+    notes: plan.notes || "",
+    productsCount: Array.isArray(plan.products) ? plan.products.length : "",
+    totalUnits: plan.totalUnits || "",
+    totalRevenue: plan.totalRevenue || ""
+  };
+}
+
 function normalizeImportedEvents({ marketPlans, permitItems, bakingData }) {
   const events = [];
 
@@ -127,16 +169,18 @@ function normalizeImportedEvents({ marketPlans, permitItems, bakingData }) {
       startTime: "",
       endTime: "",
       location: plan.location || "",
-      notes: plan.weatherNotes || "",
+      notes: plan.weatherNotes || plan.notes || "",
       source: "marketPrep",
       sourcePath: "/market-prep",
-      accent: "market"
+      accent: "market",
+      details: getMarketPlanDetails(plan)
     });
   });
 
   permitItems.forEach((item) => {
     const renewalDate = item.renewalDate || "";
     const dueDate = item.dueDate || "";
+    const details = getPermitDetails(item);
 
     if (renewalDate) {
       events.push({
@@ -146,11 +190,12 @@ function normalizeImportedEvents({ marketPlans, permitItems, bakingData }) {
         date: renewalDate,
         startTime: "",
         endTime: "",
-        location: item.agency || "",
+        location: item.organization || item.agency || "",
         notes: item.notes || "",
         source: "permitGrant",
         sourcePath: `/permit-grants?record=${encodeURIComponent(item.id || "")}`,
-        accent: "grant"
+        accent: "grant",
+        details
       });
     }
 
@@ -162,11 +207,12 @@ function normalizeImportedEvents({ marketPlans, permitItems, bakingData }) {
         date: dueDate,
         startTime: "",
         endTime: "",
-        location: item.agency || "",
+        location: item.organization || item.agency || "",
         notes: item.notes || "",
         source: "permitGrant",
         sourcePath: `/permit-grants?record=${encodeURIComponent(item.id || "")}`,
-        accent: "grant"
+        accent: "grant",
+        details
       });
     }
   });
@@ -183,11 +229,31 @@ function normalizeImportedEvents({ marketPlans, permitItems, bakingData }) {
       notes: "Generated from Baking Planner production date.",
       source: "bakingPlanner",
       sourcePath: "/baking-planner",
-      accent: "sourdough"
+      accent: "sourdough",
+      details: {
+        productionDate: bakingData.productionDate,
+        defaultStartTime: bakingData.settings?.defaultStartTime || "",
+        altitude: bakingData.settings?.altitude || "",
+        baselineTemperature: bakingData.settings?.baselineTemperature || "",
+        baselineHumidity: bakingData.settings?.baselineHumidity || "",
+        mixerCapacity: bakingData.settings?.mixerCapacity || "",
+        proofingCapacity: bakingData.settings?.proofingCapacity || ""
+      }
     });
   }
 
   return events;
+}
+
+function DetailCard({ label, value }) {
+  if (value === undefined || value === null || value === "") return null;
+
+  return (
+    <div>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
 }
 
 export default function Calendar() {
@@ -223,7 +289,8 @@ export default function Calendar() {
         savedEvents.map((event) => ({
           ...event,
           source: "manual",
-          accent: "calendar"
+          accent: "calendar",
+          details: event.details || {}
         }))
       );
 
@@ -660,72 +727,161 @@ export default function Calendar() {
             </div>
 
             <div className="calendarEventDetail calendarEventDetailV2">
-  <div className="calendarDetailGrid">
-    <div>
-      <span>Type</span>
-      <strong>{selectedEvent.type}</strong>
-    </div>
+              <div className="calendarDetailGrid">
+                <DetailCard label="Type" value={selectedEvent.type || "Event"} />
+                <DetailCard label="Date" value={formatDisplayDate(selectedEvent.date)} />
 
-    <div>
-      <span>Date</span>
-      <strong>{formatDisplayDate(selectedEvent.date)}</strong>
-    </div>
+                {selectedEvent.startTime ? (
+                  <DetailCard
+                    label="Time"
+                    value={`${selectedEvent.startTime}${
+                      selectedEvent.endTime ? ` - ${selectedEvent.endTime}` : ""
+                    }`}
+                  />
+                ) : null}
 
-    {selectedEvent.startTime ? (
-      <div>
-        <span>Time</span>
-        <strong>
-          {selectedEvent.startTime}
-          {selectedEvent.endTime ? ` - ${selectedEvent.endTime}` : ""}
-        </strong>
-      </div>
-    ) : null}
+                <DetailCard
+                  label={
+                    selectedEvent.source === "permitGrant"
+                      ? "Organization"
+                      : "Location"
+                  }
+                  value={
+                    selectedEvent.details?.organization ||
+                    selectedEvent.details?.location ||
+                    selectedEvent.location
+                  }
+                />
 
-    {selectedEvent.location ? (
-      <div>
-        <span>Location</span>
-        <strong>{selectedEvent.location}</strong>
-      </div>
-    ) : null}
-  </div>
+                <DetailCard label="Status" value={selectedEvent.details?.status} />
+                <DetailCard label="Priority" value={selectedEvent.details?.priority} />
+                <DetailCard
+                  label="Issue Date"
+                  value={formatPlainDate(selectedEvent.details?.issueDate)}
+                />
+                <DetailCard
+                  label="Due Date"
+                  value={formatPlainDate(selectedEvent.details?.dueDate)}
+                />
+                <DetailCard
+                  label="Renewal Date"
+                  value={formatPlainDate(selectedEvent.details?.renewalDate)}
+                />
+                <DetailCard
+                  label="Reminder"
+                  value={
+                    selectedEvent.details?.reminderDays
+                      ? `${selectedEvent.details.reminderDays} days before`
+                      : ""
+                  }
+                />
+                <DetailCard
+                  label="Document"
+                  value={selectedEvent.details?.documentName}
+                />
 
-  {selectedEvent.notes ? (
-    <div className="calendarDetailNotes">
-      <span>Notes</span>
-      <p>{selectedEvent.notes}</p>
-    </div>
-  ) : null}
+                {selectedEvent.source === "marketPrep" ? (
+                  <>
+                    <DetailCard
+                      label="Products"
+                      value={selectedEvent.details?.productsCount}
+                    />
+                    <DetailCard
+                      label="Total Units"
+                      value={selectedEvent.details?.totalUnits}
+                    />
+                    <DetailCard
+                      label="Projected Revenue"
+                      value={selectedEvent.details?.totalRevenue}
+                    />
+                  </>
+                ) : null}
 
-  <div className="calendarDetailActions">
-    {selectedEvent.sourcePath ? (
-      <Link to={selectedEvent.sourcePath} className="primaryButton compactPrimary">
-        Open Source
-      </Link>
-    ) : null}
+                {selectedEvent.source === "bakingPlanner" ? (
+                  <>
+                    <DetailCard
+                      label="Start Time"
+                      value={selectedEvent.details?.defaultStartTime}
+                    />
+                    <DetailCard
+                      label="Altitude"
+                      value={
+                        selectedEvent.details?.altitude
+                          ? `${selectedEvent.details.altitude} ft`
+                          : ""
+                      }
+                    />
+                    <DetailCard
+                      label="Mixer Capacity"
+                      value={
+                        selectedEvent.details?.mixerCapacity
+                          ? `${selectedEvent.details.mixerCapacity} g dough`
+                          : ""
+                      }
+                    />
+                    <DetailCard
+                      label="Proofing Capacity"
+                      value={
+                        selectedEvent.details?.proofingCapacity
+                          ? `${selectedEvent.details.proofingCapacity} units`
+                          : ""
+                      }
+                    />
+                  </>
+                ) : null}
+              </div>
 
-    {selectedEvent.source === "manual" ? (
-      <button
-        type="button"
-        className="secondaryButton compactButton"
-        onClick={() => {
-          setEventForm({
-            id: selectedEvent.id || "",
-            title: selectedEvent.title || "",
-            type: selectedEvent.type || "Market",
-            date: selectedEvent.date || todayISO(),
-            startTime: selectedEvent.startTime || "",
-            endTime: selectedEvent.endTime || "",
-            location: selectedEvent.location || "",
-            notes: selectedEvent.notes || ""
-          });
-          setIsEventFormOpen(true);
-        }}
-      >
-        Edit Event
-      </button>
-    ) : null}
-  </div>
-</div>
+              {selectedEvent.notes || selectedEvent.details?.notes ? (
+                <div className="calendarDetailNotes">
+                  <span>Notes</span>
+                  <p>{selectedEvent.notes || selectedEvent.details.notes}</p>
+                </div>
+              ) : null}
+
+              <div className="calendarDetailActions">
+                {selectedEvent.details?.documentUrl ? (
+                  <a
+                    href={selectedEvent.details.documentUrl}
+                    className="secondaryButton compactButton"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Open Document
+                  </a>
+                ) : null}
+
+                {selectedEvent.sourcePath ? (
+                  <Link
+                    to={selectedEvent.sourcePath}
+                    className="primaryButton compactPrimary"
+                  >
+                    Open Source
+                  </Link>
+                ) : null}
+
+                {selectedEvent.source === "manual" ? (
+                  <button
+                    type="button"
+                    className="secondaryButton compactButton"
+                    onClick={() => {
+                      setEventForm({
+                        id: selectedEvent.id || "",
+                        title: selectedEvent.title || "",
+                        type: selectedEvent.type || "Market",
+                        date: selectedEvent.date || todayISO(),
+                        startTime: selectedEvent.startTime || "",
+                        endTime: selectedEvent.endTime || "",
+                        location: selectedEvent.location || "",
+                        notes: selectedEvent.notes || ""
+                      });
+                      setIsEventFormOpen(true);
+                    }}
+                  >
+                    Edit Event
+                  </button>
+                ) : null}
+              </div>
+            </div>
           </div>
         </div>
       ) : null}
