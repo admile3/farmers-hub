@@ -3344,3 +3344,35 @@ input[type="number"] {
 .calendarAccent {
   background: #7a8fbe;
 }
+.calendarHero {
+  position: relative;
+  padding-right: 220px;
+}
+
+.calendarAddButton {
+  position: absolute;
+  top: 32px;
+  right: 32px;
+
+  min-height: 52px;
+  padding: 0 22px;
+
+  border-radius: 14px;
+
+  font-size: 0.95rem;
+  font-weight: 700;
+
+  background: #2f6b3b;
+  color: #ffffff;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  box-shadow: 0 8px 20px rgba(47, 107, 59, 0.16);
+}
+
+.calendarAddButton:hover {
+  transform: translateY(-1px);
+  background: #275933;
+}
