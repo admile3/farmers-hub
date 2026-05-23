@@ -46,6 +46,18 @@ const eventTypes = [
   "Other"
 ];
 
+const defaultBakingSettings = {
+  altitudeFt: 980,
+  baselineTempF: 72,
+  baselineHumidityPct: 55,
+  starterHydrationPct: 100,
+  levainBufferPct: 10,
+  ingredientBufferPct: 3,
+  mixerCapacityG: 7000,
+  proofingCapacityUnits: 24,
+  defaultStartTime: "06:00"
+};
+
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -100,6 +112,19 @@ function formatPlainDate(dateString) {
   });
 }
 
+function formatGrams(value) {
+  const grams = Math.round(Number(value) || 0);
+  return `${grams.toLocaleString("en-US")}g`;
+}
+
+function formatKilograms(value) {
+  const kg = (Number(value) || 0) / 1000;
+  return `${kg.toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  })} kg`;
+}
+
 function getMonthDays(viewDate) {
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -125,26 +150,124 @@ function getMonthDays(viewDate) {
   return days;
 }
 
-function sumProductUnits(products) {
-  if (!Array.isArray(products)) return "";
-
-  return products.reduce((sum, product) => {
-    return sum + (Number(product.quantity) || Number(product.units) || 0);
-  }, 0);
+function normalizeRecipe(recipe) {
+  return {
+    ...recipe,
+    flourTypes: recipe.flourTypes || [{ name: "Bread Flour", pct: 100 }],
+    otherIngredients: recipe.otherIngredients || [],
+    process: {
+      autolyseMin: 0,
+      mixMin: 0,
+      bulkMin: 0,
+      foldCount: 0,
+      foldIntervalMin: 30,
+      foldDurationMin: 5,
+      divideAndPreshapeMin: 12,
+      benchRestMin: 0,
+      finalShapeMin: 10,
+      finalProofMin: 0,
+      bakeTempF: 400,
+      bakeMin: 30,
+      coolMin: 60,
+      ...(recipe.process || {})
+    }
+  };
 }
 
-function getProductCount(bakingData) {
-  if (Array.isArray(bakingData.products)) return bakingData.products.length;
-  if (Array.isArray(bakingData.activeProducts)) return bakingData.activeProducts.length;
-  if (Array.isArray(bakingData.bakePlan)) return bakingData.bakePlan.length;
-  return "";
+function calculateBakingRecipePlan(rawRecipe, quantity, settings) {
+  const recipe = normalizeRecipe(rawRecipe);
+  const qty = Number(quantity) || 0;
+
+  if (qty <= 0) {
+    return null;
+  }
+
+  const finishedUnitWeight = Number(recipe.finishedUnitWeight) || 0;
+  const bakeLossPct = Number(recipe.bakeLossPct) || 0;
+  const desiredBakedWeight = qty * finishedUnitWeight;
+  const doughWeight = bakeLossPct >= 100
+    ? desiredBakedWeight
+    : desiredBakedWeight / (1 - bakeLossPct / 100);
+
+  const otherPct = (recipe.otherIngredients || []).reduce(
+    (sum, item) => sum + (Number(item.pct) || 0),
+    0
+  );
+
+  const hydrationPct = Number(recipe.hydrationPct) || 0;
+  const starterPct = Number(recipe.starterPct) || 0;
+  const saltPct = Number(recipe.saltPct) || 0;
+  const formulaTotalPct = 100 + hydrationPct + starterPct + saltPct + otherPct;
+
+  const baseFlourG = formulaTotalPct > 0 ? doughWeight / (formulaTotalPct / 100) : 0;
+  const starterG = (baseFlourG * starterPct) / 100;
+
+  const mixerCapacity = Number(settings.mixerCapacityG) || 1;
+  const recipeBatchMax = Number(recipe.batchMaxDoughG) || mixerCapacity;
+  const maxBatchSize = Math.max(1, Math.min(recipeBatchMax, mixerCapacity));
+  const mixerBatches = Math.ceil(doughWeight / maxBatchSize);
+
+  const ovenCapacity = Math.max(1, Number(recipe.ovenCapacityUnits) || 1);
+  const ovenLoads = Math.ceil(qty / ovenCapacity);
+
+  return {
+    recipe,
+    quantity: qty,
+    doughWeight,
+    starterG,
+    mixerBatches,
+    ovenLoads
+  };
 }
 
-function getPlannedUnits(bakingData) {
-  if (Array.isArray(bakingData.products)) return sumProductUnits(bakingData.products);
-  if (Array.isArray(bakingData.activeProducts)) return sumProductUnits(bakingData.activeProducts);
-  if (Array.isArray(bakingData.bakePlan)) return sumProductUnits(bakingData.bakePlan);
-  return "";
+function getBakingPlanDetails(bakingData) {
+  const settings = {
+    ...defaultBakingSettings,
+    ...(bakingData.settings || {})
+  };
+
+  const recipes = Array.isArray(bakingData.recipes)
+    ? bakingData.recipes.map(normalizeRecipe)
+    : [];
+
+  const productionItems = Array.isArray(bakingData.productionItems)
+    ? bakingData.productionItems
+    : [];
+
+  const plans = productionItems
+    .map((item) => {
+      const recipe = recipes.find((savedRecipe) => savedRecipe.id === item.recipeId);
+      if (!recipe) return null;
+      return calculateBakingRecipePlan(recipe, item.quantity, settings);
+    })
+    .filter(Boolean);
+
+  const plannedProducts = plans.length;
+  const plannedUnits = plans.reduce((sum, plan) => sum + plan.quantity, 0);
+  const totalDoughG = plans.reduce((sum, plan) => sum + plan.doughWeight, 0);
+  const starterNeededG =
+    plans.reduce((sum, plan) => sum + plan.starterG, 0) *
+    (1 + (Number(settings.levainBufferPct) || 0) / 100);
+  const mixerBatches = plans.reduce((sum, plan) => sum + plan.mixerBatches, 0);
+  const ovenLoads = plans.reduce((sum, plan) => sum + plan.ovenLoads, 0);
+
+  const productSummary = plans
+    .map((plan) => `${plan.recipe.name}: ${plan.quantity} ${plan.recipe.unitsLabel || "units"}`)
+    .join(", ");
+
+  return {
+    productionDate: bakingData.productionDate || "",
+    defaultStartTime: settings.defaultStartTime || "",
+    plannedProducts,
+    plannedUnits,
+    totalDoughG,
+    starterNeededG,
+    mixerBatches,
+    ovenLoads,
+    productSummary,
+    mixerCapacityG: settings.mixerCapacityG || "",
+    proofingCapacityUnits: settings.proofingCapacityUnits || ""
+  };
 }
 
 function getPermitDetails(item) {
@@ -240,31 +363,21 @@ function normalizeImportedEvents({ marketPlans, permitItems, bakingData }) {
   });
 
   if (bakingData?.productionDate) {
+    const details = getBakingPlanDetails(bakingData);
+
     events.push({
       id: "baking-production-date",
       title: "Baking production day",
       type: "Production",
       date: bakingData.productionDate,
-      startTime: bakingData.settings?.defaultStartTime || "",
+      startTime: details.defaultStartTime || "",
       endTime: "",
       location: "",
       notes: "Generated from Baking Planner production date.",
       source: "bakingPlanner",
       sourcePath: "/baking-planner",
       accent: "sourdough",
-      details: {
-        productionDate: bakingData.productionDate,
-        defaultStartTime: bakingData.settings?.defaultStartTime || "",
-        plannedProducts: getProductCount(bakingData),
-        plannedUnits: getPlannedUnits(bakingData),
-        starterNeeded:
-          bakingData.starterNeeded ||
-          bakingData.totalPreferment ||
-          bakingData.prefermentNeeded ||
-          "",
-        mixerCapacity: bakingData.settings?.mixerCapacity || "",
-        proofingCapacity: bakingData.settings?.proofingCapacity || ""
-      }
+      details
     });
   }
 
@@ -838,24 +951,56 @@ export default function Calendar() {
                       value={selectedEvent.details?.plannedUnits}
                     />
                     <DetailCard
-                      label="Starter Needed"
+                      label="Total Dough"
                       value={
-                        selectedEvent.details?.starterNeeded
-                          ? `${selectedEvent.details.starterNeeded} g`
+                        selectedEvent.details?.totalDoughG
+                          ? formatKilograms(selectedEvent.details.totalDoughG)
                           : ""
                       }
                     />
                     <DetailCard
+                      label="Preferment Needed"
+                      value={
+                        selectedEvent.details?.starterNeededG
+                          ? formatGrams(selectedEvent.details.starterNeededG)
+                          : ""
+                      }
+                    />
+                    <DetailCard
+                      label="Mixer Batches"
+                      value={selectedEvent.details?.mixerBatches}
+                    />
+                    <DetailCard
+                      label="Oven Loads"
+                      value={selectedEvent.details?.ovenLoads}
+                    />
+                    <DetailCard
                       label="Mixer Capacity"
                       value={
-                        selectedEvent.details?.mixerCapacity
-                          ? `${selectedEvent.details.mixerCapacity} g dough`
+                        selectedEvent.details?.mixerCapacityG
+                          ? `${selectedEvent.details.mixerCapacityG}g dough`
+                          : ""
+                      }
+                    />
+                    <DetailCard
+                      label="Proofing Capacity"
+                      value={
+                        selectedEvent.details?.proofingCapacityUnits
+                          ? `${selectedEvent.details.proofingCapacityUnits} units`
                           : ""
                       }
                     />
                   </>
                 ) : null}
               </div>
+
+              {selectedEvent.source === "bakingPlanner" &&
+              selectedEvent.details?.productSummary ? (
+                <div className="calendarDetailNotes">
+                  <span>Products</span>
+                  <p>{selectedEvent.details.productSummary}</p>
+                </div>
+              ) : null}
 
               {selectedEvent.notes || selectedEvent.details?.notes ? (
                 <div className="calendarDetailNotes">
