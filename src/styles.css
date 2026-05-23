@@ -3336,3 +3336,11 @@ input[type="number"] {
     flex-direction: column;
   }
 }
+.calendar {
+  background: #7a8fbe;
+  color: #ffffff;
+}
+
+.calendarAccent {
+  background: #7a8fbe;
+}
