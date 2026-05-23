@@ -3446,3 +3446,73 @@ input[type="number"] {
     transform: translateY(-1px);
   }
 }
+.calendarModal {
+  width: min(760px, calc(100vw - 32px));
+}
+
+.calendarEventDetailV2 {
+  padding: 22px;
+}
+
+.calendarDetailGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.calendarDetailGrid div,
+.calendarDetailNotes {
+  border: 1px solid rgba(22, 27, 34, 0.08);
+  border-radius: 14px;
+  background: #fbfaf6;
+  padding: 14px;
+}
+
+.calendarDetailGrid span,
+.calendarDetailNotes span {
+  display: block;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 6px;
+}
+
+.calendarDetailGrid strong {
+  display: block;
+  color: #121820;
+  font-size: 1rem;
+}
+
+.calendarDetailNotes {
+  margin-top: 12px;
+}
+
+.calendarDetailNotes p {
+  margin: 0;
+  color: #344054;
+  line-height: 1.5;
+}
+
+.calendarDetailActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+@media (max-width: 700px) {
+  .calendarDetailGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .calendarDetailActions {
+    flex-direction: column;
+  }
+
+  .calendarDetailActions .primaryButton,
+  .calendarDetailActions .secondaryButton {
+    width: 100%;
+  }
+}
