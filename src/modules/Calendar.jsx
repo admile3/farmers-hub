@@ -659,33 +659,73 @@ export default function Calendar() {
               </button>
             </div>
 
-            <div className="calendarEventDetail">
-              <p>
-                <strong>Type:</strong> {selectedEvent.type}
-              </p>
+            <div className="calendarEventDetail calendarEventDetailV2">
+  <div className="calendarDetailGrid">
+    <div>
+      <span>Type</span>
+      <strong>{selectedEvent.type}</strong>
+    </div>
 
-              <p>
-                <strong>Date:</strong> {formatDisplayDate(selectedEvent.date)}
-              </p>
+    <div>
+      <span>Date</span>
+      <strong>{formatDisplayDate(selectedEvent.date)}</strong>
+    </div>
 
-              {selectedEvent.location ? (
-                <p>
-                  <strong>Location:</strong> {selectedEvent.location}
-                </p>
-              ) : null}
+    {selectedEvent.startTime ? (
+      <div>
+        <span>Time</span>
+        <strong>
+          {selectedEvent.startTime}
+          {selectedEvent.endTime ? ` - ${selectedEvent.endTime}` : ""}
+        </strong>
+      </div>
+    ) : null}
 
-              {selectedEvent.notes ? (
-                <p>
-                  <strong>Notes:</strong> {selectedEvent.notes}
-                </p>
-              ) : null}
+    {selectedEvent.location ? (
+      <div>
+        <span>Location</span>
+        <strong>{selectedEvent.location}</strong>
+      </div>
+    ) : null}
+  </div>
 
-              {selectedEvent.sourcePath ? (
-                <Link to={selectedEvent.sourcePath} className="primaryButton compactPrimary">
-                  Open Source
-                </Link>
-              ) : null}
-            </div>
+  {selectedEvent.notes ? (
+    <div className="calendarDetailNotes">
+      <span>Notes</span>
+      <p>{selectedEvent.notes}</p>
+    </div>
+  ) : null}
+
+  <div className="calendarDetailActions">
+    {selectedEvent.sourcePath ? (
+      <Link to={selectedEvent.sourcePath} className="primaryButton compactPrimary">
+        Open Source
+      </Link>
+    ) : null}
+
+    {selectedEvent.source === "manual" ? (
+      <button
+        type="button"
+        className="secondaryButton compactButton"
+        onClick={() => {
+          setEventForm({
+            id: selectedEvent.id || "",
+            title: selectedEvent.title || "",
+            type: selectedEvent.type || "Market",
+            date: selectedEvent.date || todayISO(),
+            startTime: selectedEvent.startTime || "",
+            endTime: selectedEvent.endTime || "",
+            location: selectedEvent.location || "",
+            notes: selectedEvent.notes || ""
+          });
+          setIsEventFormOpen(true);
+        }}
+      >
+        Edit Event
+      </button>
+    ) : null}
+  </div>
+</div>
           </div>
         </div>
       ) : null}
