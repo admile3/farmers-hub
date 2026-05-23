@@ -29,6 +29,7 @@ import MarketPrepPlanner from "./modules/MarketPrepPlanner.jsx";
 import PricingCalculator from "./modules/PricingCalculator.jsx";
 import PermitGrantTracker from "./modules/PermitGrantTracker.jsx";
 import Lists from "./modules/Lists.jsx";
+import Calendar from "./modules/Calendar.jsx";
 import ImportExport from "./modules/ImportExport.jsx";
 import AccountSettings from "./modules/AccountSettings.jsx";
 import { useAuth } from "./AuthContext.jsx";
@@ -86,6 +87,14 @@ const modules = [
     path: "/lists",
     icon: ListChecks,
     accent: "lists"
+  },
+  {
+    title: "Calendar",
+    description:
+      "View market plans, permit deadlines, grant renewals, production dates, and manual events.",
+    path: "/calendar",
+    icon: CalendarDays,
+    accent: "calendar"
   }
 ];
 
@@ -944,6 +953,7 @@ export default function App() {
       <Route path="/pricing" element={<AccessGate><PricingCalculator /></AccessGate>} />
       <Route path="/permit-grants" element={<AccessGate><PermitGrantTracker /></AccessGate>} />
       <Route path="/lists" element={<AccessGate><Lists /></AccessGate>} />
+      <Route path="/calendar" element={<AccessGate><Calendar /></AccessGate>} />
       <Route path="/import-export" element={<AccessGate><ImportExport /></AccessGate>} />
 
       <Route path="*" element={<NotFound />} />
