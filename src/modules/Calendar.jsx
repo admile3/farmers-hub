@@ -405,7 +405,7 @@ export default function Calendar() {
   if (!user) {
     return (
       <div className="calendarModule">
-        <section className="moduleHero compactHero">
+        <button className="primaryButton calendarAddButton">
           <div>
             <p className="eyebrow">Calendar</p>
             <h2>Sign in to view your vendor calendar.</h2>
@@ -802,7 +802,7 @@ export default function Calendar() {
                   Cancel
                 </button>
 
-                <button className="primaryButton compactPrimary" type="submit">
+                <button className="primaryButton calendarAddButton" type="submit">
                   <Save size={15} />
                   Save Event
                 </button>
