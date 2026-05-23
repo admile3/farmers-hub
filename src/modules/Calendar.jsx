@@ -436,20 +436,24 @@ export default function Calendar() {
       ) : null}
 
       <section className="moduleHero compactHero calendarHero">
-        <div>
-          <p className="eyebrow">Calendar</p>
-          <h2>See every dated vendor task in one place.</h2>
-          <p>
-            Market plans, permit deadlines, grant renewals, baking production dates,
-            and manually added events appear together on your calendar.
-          </p>
-        </div>
+  <div>
+    <p className="eyebrow">Calendar</p>
+    <h2>See every dated vendor task in one place.</h2>
+    <p>
+      Market plans, permit deadlines, grant renewals, baking production dates,
+      and manually added events appear together on your calendar.
+    </p>
+  </div>
 
-        <button className="primaryButton compactPrimary" type="button" onClick={() => openNewEvent()}>
-          <Plus size={16} />
-          Add Event
-        </button>
-      </section>
+  <button
+    className="primaryButton calendarAddButton"
+    type="button"
+    onClick={() => openNewEvent()}
+  >
+    <Plus size={16} />
+    Add Event
+  </button>
+</section>
 
       <section className="hubStatGrid calendarStatGrid">
         <StatCard
