@@ -89,13 +89,13 @@ const modules = [
     accent: "lists"
   },
   {
-    title: "Calendar",
-    description:
-      "View market plans, permit deadlines, grant renewals, production dates, and manual events.",
-    path: "/calendar",
-    icon: CalendarDays,
-    accent: "calendar"
-  }
+  title: "Calendar",
+  description:
+    "View market plans, permit deadlines, grant renewals, production dates, and manual events.",
+  path: "/calendar",
+  icon: CalendarDays,
+  accent: "calendar"
+}
 ];
 
 function toDate(value) {
