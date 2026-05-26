@@ -16,10 +16,11 @@ import {
   savePricingCalculation
 } from "../services/pricingService.js";
 import StatCard from "../components/StatCard.jsx";
+
 const starterItems = [
   {
     id: "sample-microgreens",
-    productName: "Microgreens",
+    productName: "SAMPLE - Microgreens",
     category: "Produce",
     batchCost: 18,
     batchUnits: 24,
@@ -30,7 +31,7 @@ const starterItems = [
     retailPrice: 4,
     wholesalePrice: 2.5,
     targetMargin: 70,
-    notes: "Example fresh product."
+    notes: "Example fresh product. Edit or delete anytime."
   }
 ];
 
@@ -67,6 +68,13 @@ function percent(value) {
 
 function makeId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function createSampleItems() {
+  return starterItems.map((item) => ({
+    ...item,
+    id: `${item.id}-${makeId()}`
+  }));
 }
 
 function calculateItem(item) {
@@ -125,7 +133,7 @@ function createBlankCalculation() {
     id: "",
     name: "New Pricing Sheet",
     notes: "",
-    items: starterItems
+    items: []
   };
 }
 
@@ -140,7 +148,7 @@ export default function PricingCalculator() {
   const [calculationId, setCalculationId] = useState("");
   const [sheetName, setSheetName] = useState("Market Pricing Sheet");
   const [sheetNotes, setSheetNotes] = useState("");
-  const [items, setItems] = useState(starterItems);
+  const [items, setItems] = useState([]);
   const [savedCalculations, setSavedCalculations] = useState([]);
   const [statusMessage, setStatusMessage] = useState("");
   const [loadingSaved, setLoadingSaved] = useState(false);
@@ -174,15 +182,15 @@ export default function PricingCalculator() {
   }, []);
 
   useEffect(() => {
-  if (!statusMessage) return;
+    if (!statusMessage) return;
 
-  const timer = window.setTimeout(() => {
-    setStatusMessage("");
-  }, 3000);
+    const timer = window.setTimeout(() => {
+      setStatusMessage("");
+    }, 3000);
 
-  return () => window.clearTimeout(timer);
-}, [statusMessage]);
-  
+    return () => window.clearTimeout(timer);
+  }, [statusMessage]);
+
   function preventNumberScroll(event) {
     event.target.blur();
   }
@@ -268,8 +276,22 @@ export default function PricingCalculator() {
     setSheetName(blank.name);
     setSheetNotes(blank.notes);
     setItems(blank.items);
-    setStatusMessage("Started a new pricing sheet.");
+    setStatusMessage("Started a new empty pricing sheet.");
     scrollToTop();
+  }
+
+  function loadSampleItems() {
+    if (items.length > 0) {
+      const confirmed = window.confirm(
+        "This will add sample pricing items to the current sheet. Continue?"
+      );
+
+      if (!confirmed) return;
+    }
+
+    setItems((current) => [...current, ...createSampleItems()]);
+    setStatusMessage("Sample pricing item added. You can edit or delete it anytime.");
+    scrollToSection(comparisonRef);
   }
 
   async function saveCalculation() {
@@ -437,14 +459,14 @@ export default function PricingCalculator() {
       </section>
 
       {statusMessage ? (
-  <div className="floatingStatus success">
-    <span>ⓘ</span>
-    <span>{statusMessage}</span>
-    <button type="button" onClick={() => setStatusMessage("")}>
-      ×
-    </button>
-  </div>
-) : null}
+        <div className="floatingStatus success">
+          <span>ⓘ</span>
+          <span>{statusMessage}</span>
+          <button type="button" onClick={() => setStatusMessage("")}>
+            ×
+          </button>
+        </div>
+      ) : null}
 
       <section className="toolGrid compactToolGrid">
         {sectionCards.map((card) => {
@@ -484,6 +506,15 @@ export default function PricingCalculator() {
               </button>
 
               <button
+                className="secondaryButton compactButton"
+                type="button"
+                onClick={loadSampleItems}
+              >
+                <Package size={15} />
+                Load Sample Item
+              </button>
+
+              <button
                 className="primaryButton compactPrimary"
                 type="button"
                 onClick={saveCalculation}
@@ -516,38 +547,38 @@ export default function PricingCalculator() {
           </div>
 
           <div className="hubStatGrid pricingStatGrid">
-  <StatCard
-    icon={Package}
-    label="Products"
-    value={totals.itemCount}
-    sub="Products in this pricing sheet"
-    accent="pricing"
-  />
+            <StatCard
+              icon={Package}
+              label="Products"
+              value={totals.itemCount}
+              sub="Products in this pricing sheet"
+              accent="pricing"
+            />
 
-  <StatCard
-    icon={DollarSign}
-    label="Retail Profit"
-    value={money(totals.retailBatchProfit)}
-    sub="Estimated batch retail profit"
-    accent="market"
-  />
+            <StatCard
+              icon={DollarSign}
+              label="Retail Profit"
+              value={money(totals.retailBatchProfit)}
+              sub="Estimated batch retail profit"
+              accent="market"
+            />
 
-  <StatCard
-    icon={Target}
-    label="Wholesale Profit"
-    value={money(totals.wholesaleBatchProfit)}
-    sub="Estimated batch wholesale profit"
-    accent="spice"
-  />
+            <StatCard
+              icon={Target}
+              label="Wholesale Profit"
+              value={money(totals.wholesaleBatchProfit)}
+              sub="Estimated batch wholesale profit"
+              accent="spice"
+            />
 
-  <StatCard
-    icon={Calculator}
-    label="Total Batch Cost"
-    value={money(totals.totalBatchCost)}
-    sub="Combined estimated production cost"
-    accent="sourdough"
-  />
-</div>
+            <StatCard
+              icon={Calculator}
+              label="Total Batch Cost"
+              value={money(totals.totalBatchCost)}
+              sub="Combined estimated production cost"
+              accent="sourdough"
+            />
+          </div>
         </div>
 
         <div className="workspacePanel compactPanel scrollAnchor" ref={savedRef}>
@@ -818,15 +849,26 @@ export default function PricingCalculator() {
             <h3>Editable Pricing Comparison</h3>
           </div>
 
-          <button
-            className="primaryButton compactPrimary"
-            type="button"
-            onClick={saveCalculation}
-            disabled={saving}
-          >
-            <Save size={15} />
-            {saving ? "Saving..." : "Save Changes"}
-          </button>
+          <div className="formActions compactActions">
+            <button
+              className="secondaryButton compactButton"
+              type="button"
+              onClick={loadSampleItems}
+            >
+              <Package size={15} />
+              Load Sample Item
+            </button>
+
+            <button
+              className="primaryButton compactPrimary"
+              type="button"
+              onClick={saveCalculation}
+              disabled={saving}
+            >
+              <Save size={15} />
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
         </div>
 
         <div className="batchTable compactBatchTable pricingEditableTable">
@@ -849,167 +891,174 @@ export default function PricingCalculator() {
             <span></span>
           </div>
 
-          {items.map((item) => {
-            const calc = calculateItem(item);
+          {items.length ? (
+            items.map((item) => {
+              const calc = calculateItem(item);
 
-            return (
-              <div className="batchTableRow pricingEditableRow" key={item.id}>
-                <span>
-                  <input
-                    value={item.productName}
-                    onChange={(event) =>
-                      updateItem(item.id, "productName", event.target.value)
-                    }
-                  />
-                </span>
+              return (
+                <div className="batchTableRow pricingEditableRow" key={item.id}>
+                  <span>
+                    <input
+                      value={item.productName}
+                      onChange={(event) =>
+                        updateItem(item.id, "productName", event.target.value)
+                      }
+                    />
+                  </span>
 
-                <span>
-                  <select
-                    value={item.category}
-                    onChange={(event) =>
-                      updateItem(item.id, "category", event.target.value)
-                    }
-                  >
-                    {categories.map((category) => (
-                      <option key={category}>{category}</option>
-                    ))}
-                  </select>
-                </span>
+                  <span>
+                    <select
+                      value={item.category}
+                      onChange={(event) =>
+                        updateItem(item.id, "category", event.target.value)
+                      }
+                    >
+                      {categories.map((category) => (
+                        <option key={category}>{category}</option>
+                      ))}
+                    </select>
+                  </span>
 
-                <span>
-                  <input
-                    type="number"
-                    step="1"
-                    value={item.batchUnits}
-                    onWheel={preventNumberScroll}
-                    onChange={(event) =>
-                      updateItem(item.id, "batchUnits", event.target.value)
-                    }
-                  />
-                </span>
+                  <span>
+                    <input
+                      type="number"
+                      step="1"
+                      value={item.batchUnits}
+                      onWheel={preventNumberScroll}
+                      onChange={(event) =>
+                        updateItem(item.id, "batchUnits", event.target.value)
+                      }
+                    />
+                  </span>
 
-                <span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={item.batchCost}
-                    onWheel={preventNumberScroll}
-                    onChange={(event) =>
-                      updateItem(item.id, "batchCost", event.target.value)
-                    }
-                  />
-                </span>
+                  <span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={item.batchCost}
+                      onWheel={preventNumberScroll}
+                      onChange={(event) =>
+                        updateItem(item.id, "batchCost", event.target.value)
+                      }
+                    />
+                  </span>
 
-                <span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={item.packagingCostPerUnit}
-                    onWheel={preventNumberScroll}
-                    onChange={(event) =>
-                      updateItem(item.id, "packagingCostPerUnit", event.target.value)
-                    }
-                  />
-                </span>
+                  <span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={item.packagingCostPerUnit}
+                      onWheel={preventNumberScroll}
+                      onChange={(event) =>
+                        updateItem(item.id, "packagingCostPerUnit", event.target.value)
+                      }
+                    />
+                  </span>
 
-                <span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={item.laborHours}
-                    onWheel={preventNumberScroll}
-                    onChange={(event) =>
-                      updateItem(item.id, "laborHours", event.target.value)
-                    }
-                  />
-                </span>
+                  <span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={item.laborHours}
+                      onWheel={preventNumberScroll}
+                      onChange={(event) =>
+                        updateItem(item.id, "laborHours", event.target.value)
+                      }
+                    />
+                  </span>
 
-                <span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={item.laborRate}
-                    onWheel={preventNumberScroll}
-                    onChange={(event) =>
-                      updateItem(item.id, "laborRate", event.target.value)
-                    }
-                  />
-                </span>
+                  <span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={item.laborRate}
+                      onWheel={preventNumberScroll}
+                      onChange={(event) =>
+                        updateItem(item.id, "laborRate", event.target.value)
+                      }
+                    />
+                  </span>
 
-                <span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={item.overheadCost}
-                    onWheel={preventNumberScroll}
-                    onChange={(event) =>
-                      updateItem(item.id, "overheadCost", event.target.value)
-                    }
-                  />
-                </span>
+                  <span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={item.overheadCost}
+                      onWheel={preventNumberScroll}
+                      onChange={(event) =>
+                        updateItem(item.id, "overheadCost", event.target.value)
+                      }
+                    />
+                  </span>
 
-                <span className="pricingMetric">{money(calc.costPerUnit)}</span>
+                  <span className="pricingMetric">{money(calc.costPerUnit)}</span>
 
-                <span className="pricingMetric">
-                  {money(calc.suggestedPrice)}
-                  <small>{item.targetMargin}% target</small>
-                </span>
+                  <span className="pricingMetric">
+                    {money(calc.suggestedPrice)}
+                    <small>{item.targetMargin}% target</small>
+                  </span>
 
-                <span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={item.retailPrice}
-                    onWheel={preventNumberScroll}
-                    onChange={(event) =>
-                      updateItem(item.id, "retailPrice", event.target.value)
-                    }
-                  />
-                </span>
+                  <span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={item.retailPrice}
+                      onWheel={preventNumberScroll}
+                      onChange={(event) =>
+                        updateItem(item.id, "retailPrice", event.target.value)
+                      }
+                    />
+                  </span>
 
-                <span className="pricingMetric pricingPositive">
-                  {percent(calc.retailMargin)}
-                  <small>{money(calc.retailProfitPerUnit)} / unit</small>
-                </span>
+                  <span className="pricingMetric pricingPositive">
+                    {percent(calc.retailMargin)}
+                    <small>{money(calc.retailProfitPerUnit)} / unit</small>
+                  </span>
 
-                <span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={item.wholesalePrice}
-                    onWheel={preventNumberScroll}
-                    onChange={(event) =>
-                      updateItem(item.id, "wholesalePrice", event.target.value)
-                    }
-                  />
-                </span>
+                  <span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={item.wholesalePrice}
+                      onWheel={preventNumberScroll}
+                      onChange={(event) =>
+                        updateItem(item.id, "wholesalePrice", event.target.value)
+                      }
+                    />
+                  </span>
 
-                <span className="pricingMetric pricingPositive">
-                  {percent(calc.wholesaleMargin)}
-                  <small>{money(calc.wholesaleProfitPerUnit)} / unit</small>
-                </span>
+                  <span className="pricingMetric pricingPositive">
+                    {percent(calc.wholesaleMargin)}
+                    <small>{money(calc.wholesaleProfitPerUnit)} / unit</small>
+                  </span>
 
-                <span>
-                  <input
-                    value={item.notes}
-                    onChange={(event) =>
-                      updateItem(item.id, "notes", event.target.value)
-                    }
-                  />
-                </span>
+                  <span>
+                    <input
+                      value={item.notes}
+                      onChange={(event) =>
+                        updateItem(item.id, "notes", event.target.value)
+                      }
+                    />
+                  </span>
 
-                <span>
-                  <button
-                    className="iconButton danger"
-                    type="button"
-                    onClick={() => removeItem(item.id)}
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </span>
-              </div>
-            );
-          })}
+                  <span>
+                    <button
+                      className="iconButton danger"
+                      type="button"
+                      onClick={() => removeItem(item.id)}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </span>
+                </div>
+              );
+            })
+          ) : (
+            <div className="placeholderBox compactPlaceholder">
+              No products in this pricing sheet yet. Add a product above, or use
+              Load Sample Item to add an editable sample.
+            </div>
+          )}
         </div>
       </section>
 
