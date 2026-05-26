@@ -703,3 +703,37 @@
     grid-template-columns: 1fr;
   }
 }
+.starterLayout {
+  grid-template-columns: minmax(360px, 0.65fr) minmax(720px, 1.35fr);
+  align-items: stretch;
+}
+
+.starterStatsGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.starterStatsGrid .hubStatCard {
+  min-width: 0;
+}
+
+.starterStatsGrid .hubStatText strong {
+  font-size: clamp(1.25rem, 1.45vw, 1.8rem);
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1300px) {
+  .starterLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .starterStatsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .starterStatsGrid {
+    grid-template-columns: 1fr;
+  }
+}
