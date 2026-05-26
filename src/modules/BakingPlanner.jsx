@@ -802,8 +802,8 @@ export default function BakingPlanner() {
   const [cloudStatus, setCloudStatus] = useState("Local only");
 
   const [recipes, setRecipes] = useState(() =>
-    loadFromStorage("bakingPlannerRecipes", initialRecipes).map(normalizeRecipe)
-  );
+  loadFromStorage("bakingPlannerRecipes", []).map(normalizeRecipe)
+);
   const [settings, setSettings] = useState(() =>
     loadFromStorage("bakingPlannerSettings", defaultSettings)
   );
@@ -817,8 +817,8 @@ export default function BakingPlanner() {
     loadFromStorage("bakingPlannerProductionItems", [])
   );
   const [selectedRecipeId, setSelectedRecipeId] = useState(
-    recipes[0]?.id || initialRecipes[0].id
-  );
+  recipes[0]?.id || ""
+);
   const [lastSavedAt, setLastSavedAt] = useState("");
 
   useEffect(() => {
