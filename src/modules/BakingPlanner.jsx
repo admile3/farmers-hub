@@ -802,8 +802,8 @@ export default function BakingPlanner() {
   const [cloudStatus, setCloudStatus] = useState("Local only");
 
   const [recipes, setRecipes] = useState(() =>
-  loadFromStorage("bakingPlannerRecipes", []).map(normalizeRecipe)
-);
+    loadFromStorage("bakingPlannerRecipes", initialRecipes).map(normalizeRecipe)
+  );
   const [settings, setSettings] = useState(() =>
     loadFromStorage("bakingPlannerSettings", defaultSettings)
   );
@@ -817,8 +817,8 @@ export default function BakingPlanner() {
     loadFromStorage("bakingPlannerProductionItems", [])
   );
   const [selectedRecipeId, setSelectedRecipeId] = useState(
-  recipes[0]?.id || ""
-);
+    recipes[0]?.id || initialRecipes[0].id
+  );
   const [lastSavedAt, setLastSavedAt] = useState("");
 
   useEffect(() => {
@@ -839,8 +839,12 @@ export default function BakingPlanner() {
           const data = snapshot.data();
 
           if (Array.isArray(data.recipes)) {
-            setRecipes(data.recipes.map(normalizeRecipe));
-            setSelectedRecipeId(data.recipes[0]?.id || initialRecipes[0].id);
+            const cloudRecipes = data.recipes.map(normalizeRecipe);
+            setRecipes(cloudRecipes);
+            setSelectedRecipeId(cloudRecipes[0]?.id || "");
+          } else {
+            setRecipes([]);
+            setSelectedRecipeId("");
           }
 
           if (data.settings) setSettings({ ...defaultSettings, ...data.settings });
@@ -848,10 +852,15 @@ export default function BakingPlanner() {
           if (data.productionDate) setProductionDate(data.productionDate);
           if (Array.isArray(data.productionItems)) {
             setProductionItems(data.productionItems);
+          } else {
+            setProductionItems([]);
           }
 
           setCloudStatus("Cloud data loaded");
         } else {
+          setRecipes([]);
+          setSelectedRecipeId("");
+          setProductionItems([]);
           setCloudStatus("No cloud save yet");
         }
       } catch (error) {
@@ -979,7 +988,7 @@ export default function BakingPlanner() {
   }, [plans, settings, env]);
 
   const selectedRecipe =
-    recipes.find((r) => r.id === selectedRecipeId) || recipes[0];
+    recipes.find((r) => r.id === selectedRecipeId) || recipes[0] || null;
 
   const availableRecipesForCycle = useMemo(() => {
     const usedIds = new Set(productionItems.map((item) => item.recipeId));
@@ -1185,16 +1194,40 @@ export default function BakingPlanner() {
 
   function addRecipe() {
     const id = `recipe-${Date.now()}`;
+
     const base = normalizeRecipe({
-      ...initialRecipes[0],
       id,
       name: "New Recipe",
       category: "Custom",
       unitsLabel: "units",
       vesselType: "Tray / Pan",
+      finishedUnitWeight: 500,
+      bakeLossPct: 10,
+      batchMaxDoughG: settings.mixerCapacityG || 7000,
+      ovenCapacityUnits: 12,
       flourTypes: [{ name: "Bread Flour", pct: 100 }],
-      otherIngredients: []
+      hydrationPct: 70,
+      starterPct: 20,
+      starterHydrationPct: settings.starterHydrationPct || 100,
+      saltPct: 2,
+      otherIngredients: [],
+      process: {
+        autolyseMin: 0,
+        mixMin: 10,
+        bulkMin: 240,
+        foldCount: 2,
+        foldIntervalMin: 30,
+        foldDurationMin: 5,
+        divideAndPreshapeMin: 10,
+        benchRestMin: 20,
+        finalShapeMin: 10,
+        finalProofMin: 90,
+        bakeTempF: 425,
+        bakeMin: 30,
+        coolMin: 60
+      }
     });
+
     setRecipes((prev) => [...prev, base]);
     setSelectedRecipeId(id);
     setActiveTab("recipes");
@@ -1210,10 +1243,11 @@ export default function BakingPlanner() {
   }
 
   function deleteRecipe(id) {
-    if (recipes.length <= 1) return;
-    setRecipes((prev) => prev.filter((r) => r.id !== id));
+    const remainingRecipes = recipes.filter((r) => r.id !== id);
+
+    setRecipes(remainingRecipes);
     setProductionItems((prev) => prev.filter((item) => item.recipeId !== id));
-    setSelectedRecipeId(recipes.find((r) => r.id !== id)?.id || recipes[0].id);
+    setSelectedRecipeId(remainingRecipes[0]?.id || "");
   }
 
   const tabButton = (id, label, Icon) => (
@@ -1515,11 +1549,12 @@ export default function BakingPlanner() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="panel">
-                <div className="section-head">
-                  <div>
-                    <h2>Edit Recipe</h2>
+            {selectedRecipe ? (
+              <Card>
+                <CardContent className="panel">
+                  <div className="section-head">
+                    <div>
+                      <h2>Edit Recipe</h2>
                     <p>
                       Build the full recipe formula, including flour types,
                       added ingredients, dish type, yield, timing, and oven
@@ -1820,8 +1855,22 @@ export default function BakingPlanner() {
                     />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="panel">
+                  <h2>No recipes yet</h2>
+                  <p className="muted small">
+                    Create your first recipe from scratch, or later choose to import sample recipes.
+                  </p>
+
+                  <Button onClick={addRecipe}>
+                    <Plus size={16} /> Create Recipe
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
 
