@@ -3585,3 +3585,84 @@ input[type="number"] {
 .pricingModal .pricingPlanGrid .primaryButton {
   display: none;
 }
+.subscribePage .pricingPlanGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.planModulePicker {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 16px;
+}
+
+.planModuleButton {
+  width: 100%;
+  min-height: 42px;
+  border-radius: 11px;
+  padding: 9px 11px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #ffffff;
+  font-weight: 850;
+  cursor: pointer;
+  opacity: 0.88;
+  border: 2px solid transparent;
+}
+
+.planModuleButton.spice {
+  background: var(--spice);
+}
+
+.planModuleButton.sourdough {
+  background: var(--sourdough);
+}
+
+.planModuleButton.market {
+  background: var(--market);
+}
+
+.planModuleButton.pricing {
+  background: var(--pricing);
+}
+
+.planModuleButton.grant {
+  background: var(--grant);
+}
+
+.planModuleButton.lists {
+  background: var(--lists);
+}
+
+.planModuleButton.calendar {
+  background: #7a8fbe;
+}
+
+.planModuleButton.selected {
+  opacity: 1;
+  border-color: rgba(18, 24, 32, 0.4);
+  box-shadow: 0 8px 18px rgba(22, 27, 34, 0.12);
+}
+
+.planModuleButton.disabled {
+  opacity: 0.24;
+  cursor: not-allowed;
+  filter: grayscale(1);
+}
+
+.proIncludedModules .planModuleButton {
+  cursor: default;
+}
+
+.modulePickerHint {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 850;
+}
+
+@media (max-width: 1100px) {
+  .subscribePage .pricingPlanGrid {
+    grid-template-columns: 1fr;
+  }
+}
