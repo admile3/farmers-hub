@@ -41,6 +41,7 @@ import { getLists } from "./services/listsService.js";
 
 const modules = [
   {
+    key: "spice",
     title: "Spice Kitchen",
     description:
       "Build seasoning recipes, scale batches, manage ingredients, and calculate production needs.",
@@ -49,6 +50,7 @@ const modules = [
     accent: "spice"
   },
   {
+    key: "baking",
     title: "Baking Planner",
     description:
       "Plan production schedules, baking timelines, dough calculations, and batch workflow.",
@@ -57,6 +59,7 @@ const modules = [
     accent: "sourdough"
   },
   {
+    key: "market",
     title: "Market Prep Planner",
     description:
       "Estimate harvest, packing, inventory, and product quantities before each market.",
@@ -65,6 +68,7 @@ const modules = [
     accent: "market"
   },
   {
+    key: "pricing",
     title: "Pricing Calculator",
     description:
       "Calculate retail pricing, wholesale pricing, margins, batch costs, and profitability.",
@@ -73,6 +77,7 @@ const modules = [
     accent: "pricing"
   },
   {
+    key: "permit-grants",
     title: "Permit & Grant Tracker",
     description:
       "Track renewals, permits, grants, deadlines, required documents, and funding opportunities.",
@@ -81,6 +86,7 @@ const modules = [
     accent: "grant"
   },
   {
+    key: "lists",
     title: "Lists",
     description:
       "Create reusable checklists for market prep, production, shopping, permits, delivery, and ideas.",
@@ -89,13 +95,38 @@ const modules = [
     accent: "lists"
   },
   {
-  title: "Calendar",
-  description:
-    "View market plans, permit deadlines, grant renewals, production dates, and manual events.",
-  path: "/calendar",
-  icon: CalendarDays,
-  accent: "calendar"
-}
+    key: "calendar",
+    title: "Calendar",
+    description:
+      "View market plans, permit deadlines, grant renewals, production dates, and manual events.",
+    path: "/calendar",
+    icon: CalendarDays,
+    accent: "calendar"
+  }
+];
+
+const pricingPlans = [
+  {
+    plan: "basic",
+    eyebrow: "Basic",
+    price: "$5/month",
+    description: "Choose 1 module after your trial. Best for vendors who only need one focused tool.",
+    feature: "1 module"
+  },
+  {
+    plan: "growth",
+    eyebrow: "Growth",
+    price: "$10/month",
+    description: "Access 3 core modules after your trial. Best for vendors managing regular production.",
+    feature: "3 modules"
+  },
+  {
+    plan: "pro",
+    eyebrow: "Pro",
+    price: "$15/month",
+    description: "Unlock every Farmers Hub module after your trial. Best for full business management.",
+    feature: "All modules"
+  }
 ];
 
 function toDate(value) {
@@ -152,7 +183,12 @@ function formatActivityTime(date) {
   return formatShortDate(date);
 }
 
-async function startStripeCheckout(plan, email, setCheckoutLoading) {
+async function startStripeCheckout({
+  plan,
+  user,
+  selectedModule,
+  setCheckoutLoading
+}) {
   try {
     setCheckoutLoading(plan);
 
@@ -163,7 +199,9 @@ async function startStripeCheckout(plan, email, setCheckoutLoading) {
       },
       body: JSON.stringify({
         plan,
-        email: email || null
+        uid: user?.uid || null,
+        email: user?.email || null,
+        selectedModule: selectedModule || null
       })
     });
 
@@ -171,7 +209,7 @@ async function startStripeCheckout(plan, email, setCheckoutLoading) {
 
     if (!response.ok || !data.url) {
       console.error("Stripe checkout response:", data);
-      alert("Could not start checkout. Please try again.");
+      alert(data.error || "Could not start checkout. Please try again.");
       return;
     }
 
@@ -184,54 +222,86 @@ async function startStripeCheckout(plan, email, setCheckoutLoading) {
   }
 }
 
-function PricingCards({ checkoutLoading, setCheckoutLoading }) {
-  const { user } = useAuth();
+function PricingCards({
+  mode = "trial",
+  checkoutLoading,
+  setCheckoutLoading,
+  selectedModule,
+  setSelectedModule
+}) {
+  const { user, loginWithGoogle } = useAuth();
+
+  async function handlePlanClick(plan) {
+    if (mode === "trial") {
+      await loginWithGoogle();
+      return;
+    }
+
+    if (!user) {
+      await loginWithGoogle();
+      return;
+    }
+
+    if (plan === "basic" && !selectedModule) {
+      alert("Please choose the module you want included with the Basic plan.");
+      return;
+    }
+
+    await startStripeCheckout({
+      plan,
+      user,
+      selectedModule: plan === "basic" ? selectedModule : null,
+      setCheckoutLoading
+    });
+  }
 
   return (
     <section className="pricingPlanGrid">
-      <div className="workspacePanel compactPanel">
-        <p className="eyebrow">Monthly</p>
-        <h3>$10/month</h3>
-        <p className="importExportText">
-          Includes a 15-day free trial. Best for trying Farmers Hub month-to-month.
-        </p>
+      {pricingPlans.map((plan) => (
+        <div className="workspacePanel compactPanel" key={plan.plan}>
+          <p className="eyebrow">{plan.eyebrow}</p>
+          <h3>{plan.price}</h3>
+          <p className="importExportText">{plan.description}</p>
+          <p className="importExportText">
+            <strong>{plan.feature}</strong>
+          </p>
 
-        <button
-          className="primaryButton compactPrimary"
-          type="button"
-          onClick={() =>
-            startStripeCheckout("monthly", user?.email || null, setCheckoutLoading)
-          }
-          disabled={checkoutLoading === "monthly"}
-        >
-          {checkoutLoading === "monthly" ? "Opening Checkout..." : "Start Monthly Trial"}
-        </button>
-      </div>
+          {mode === "checkout" && plan.plan === "basic" ? (
+            <label className="fieldLabel">
+              Choose your module
+              <select
+                value={selectedModule}
+                onChange={(event) => setSelectedModule(event.target.value)}
+              >
+                <option value="">Select a module</option>
+                {modules.map((module) => (
+                  <option value={module.key} key={module.key}>
+                    {module.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
 
-      <div className="workspacePanel compactPanel">
-        <p className="eyebrow">Yearly</p>
-        <h3>$110/year</h3>
-        <p className="importExportText">
-          Includes a 15-day free trial. Save compared to monthly billing.
-        </p>
-
-        <button
-          className="primaryButton compactPrimary"
-          type="button"
-          onClick={() =>
-            startStripeCheckout("annual", user?.email || null, setCheckoutLoading)
-          }
-          disabled={checkoutLoading === "annual"}
-        >
-          {checkoutLoading === "annual" ? "Opening Checkout..." : "Start Yearly Trial"}
-        </button>
-      </div>
+          <button
+            className="primaryButton compactPrimary"
+            type="button"
+            onClick={() => handlePlanClick(plan.plan)}
+            disabled={checkoutLoading === plan.plan}
+          >
+            {mode === "trial"
+              ? "Start 15-day Trial"
+              : checkoutLoading === plan.plan
+                ? "Opening Checkout..."
+                : "Choose Plan"}
+          </button>
+        </div>
+      ))}
     </section>
   );
 }
 
 function WelcomePricingModal({ onClose }) {
-  const { loginWithGoogle } = useAuth();
   const [checkoutLoading, setCheckoutLoading] = useState("");
 
   return (
@@ -243,11 +313,11 @@ function WelcomePricingModal({ onClose }) {
 
         <div className="pricingModalHeader">
           <p className="eyebrow">Welcome to Farmers Hub</p>
-          <h2>Simple tools for farmers market vendors.</h2>
+          <h2>Start with full access for 15 days.</h2>
           <p>
-            Start with a 15-day free trial. Farmers Hub helps small vendors stay
-            organized, plan smarter, price confidently, and keep important business
-            details in one place.
+            Create your account to try every Farmers Hub module free for 15 days.
+            No subscription is required to start. After the trial, choose the plan
+            that fits how many tools you want to keep using.
           </p>
         </div>
 
@@ -274,15 +344,16 @@ function WelcomePricingModal({ onClose }) {
         </div>
 
         <PricingCards
+          mode="trial"
           checkoutLoading={checkoutLoading}
           setCheckoutLoading={setCheckoutLoading}
         />
 
         <div className="pricingModalFooter">
-          <button className="secondaryButton" type="button" onClick={loginWithGoogle}>
-            <LogIn size={16} />
-            Already have an account? Sign in
-          </button>
+          <p className="importExportText">
+            All plans start with the same 15-day full-access trial. You only choose
+            a paid plan when you are ready to continue.
+          </p>
 
           <button className="textButton" type="button" onClick={onClose}>
             Continue browsing
@@ -319,12 +390,12 @@ function AccountStatusCard() {
     return (
       <div className="authCard">
         <p className="eyebrow">Account</p>
-        <h3>Save your work</h3>
-        <p>Sign in once to use Farmers Hub tools and save your data.</p>
+        <h3>Start your free trial</h3>
+        <p>Sign in once to start your 15-day trial and save your Farmers Hub data.</p>
 
         <button className="primaryButton fullButton" onClick={loginWithGoogle}>
           <LogIn size={16} />
-          Sign in with Google
+          Start 15-day Trial
         </button>
 
         <Link to="/subscribe" className="secondaryButton fullButton">
@@ -475,12 +546,12 @@ function AccessGate({ children }) {
     return (
       <AppShell>
         <div className="emptyState">
-          <h2>Sign in to continue</h2>
-          <p>Farmers Hub tools require an account so your data can be saved securely.</p>
+          <h2>Start your 15-day trial</h2>
+          <p>Create an account to use every Farmers Hub module free for 15 days.</p>
 
           <button className="primaryButton" onClick={loginWithGoogle}>
             <LogIn size={16} />
-            Sign in with Google
+            Start 15-day Trial
           </button>
         </div>
       </AppShell>
@@ -499,24 +570,59 @@ function AccessGate({ children }) {
 }
 
 function Subscribe() {
+  const { user, loginWithGoogle } = useAuth();
   const [checkoutLoading, setCheckoutLoading] = useState("");
+  const [selectedModule, setSelectedModule] = useState("");
+
+  if (!user) {
+    return (
+      <div className="subscribePage">
+        <section className="moduleHero compactHero noActionHero">
+          <div>
+            <p className="eyebrow">15-day free trial</p>
+            <h2>Try every Farmers Hub module before choosing a plan.</h2>
+            <p>
+              Create an account to start your free trial. You will not need to pick
+              a paid plan until the trial ends or you decide to upgrade early.
+            </p>
+          </div>
+        </section>
+
+        <PricingCards
+          mode="trial"
+          checkoutLoading={checkoutLoading}
+          setCheckoutLoading={setCheckoutLoading}
+        />
+
+        <div className="button-row">
+          <button className="primaryButton" type="button" onClick={loginWithGoogle}>
+            <LogIn size={16} />
+            Start 15-day Trial
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="subscribePage">
       <section className="moduleHero compactHero noActionHero">
         <div>
-          <p className="eyebrow">Subscription Required</p>
-          <h2>Choose your Farmers Hub plan.</h2>
+          <p className="eyebrow">Choose your plan</p>
+          <h2>Keep Farmers Hub active after your trial.</h2>
           <p>
-            Start with a 15-day free trial. Upgrade to continue accessing your saved
-            tools, recipes, pricing sheets, market plans, permit records, and lists.
+            Choose the plan that fits your workflow. Basic includes 1 module, Growth
+            includes 3 modules, and Pro unlocks every Farmers Hub module.
           </p>
         </div>
       </section>
 
       <PricingCards
+        mode="checkout"
         checkoutLoading={checkoutLoading}
         setCheckoutLoading={setCheckoutLoading}
+        selectedModule={selectedModule}
+        setSelectedModule={setSelectedModule}
       />
     </div>
   );
@@ -719,7 +825,7 @@ function Dashboard() {
             <p>
               {user
                 ? "Manage your subscription, saved tools, and account details."
-                : "New users get 15 days to try Farmers Hub."}
+                : "New users get full access for 15 days."}
             </p>
           </div>
 
