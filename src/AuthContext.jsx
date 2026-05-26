@@ -1,5 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut
+} from "firebase/auth";
 import { auth, googleProvider } from "./firebase";
 import {
   getAccessStatus,
@@ -69,6 +75,26 @@ export function AuthProvider({ children }) {
     await signInWithPopup(auth, googleProvider);
   }
 
+  async function createAccountWithEmail(email, password) {
+    const credential = await createUserWithEmailAndPassword(
+      auth,
+      email.trim(),
+      password
+    );
+
+    return credential.user;
+  }
+
+  async function loginWithEmail(email, password) {
+    const credential = await signInWithEmailAndPassword(
+      auth,
+      email.trim(),
+      password
+    );
+
+    return credential.user;
+  }
+
   async function logout() {
     await signOut(auth);
   }
@@ -122,6 +148,8 @@ export function AuthProvider({ children }) {
       accountLoading,
 
       loginWithGoogle,
+      createAccountWithEmail,
+      loginWithEmail,
       logout,
       refreshAccountProfile,
       canAccessModule
