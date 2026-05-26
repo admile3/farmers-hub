@@ -39,7 +39,7 @@ const marketCategories = [
 const starterProducts = [
   {
     id: "sample-produce",
-    name: "Tomatoes",
+    name: "SAMPLE - Tomatoes",
     category: "Produce",
     unitLabel: "1 lb bag",
     plannedUnits: 12,
@@ -50,7 +50,7 @@ const starterProducts = [
   },
   {
     id: "sample-bread",
-    name: "Sourdough Loaf",
+    name: "SAMPLE - Sourdough Loaf",
     category: "Bread",
     unitLabel: "loaf",
     plannedUnits: 18,
@@ -61,7 +61,7 @@ const starterProducts = [
   },
   {
     id: "sample-spice",
-    name: "Seasoning Pouch",
+    name: "SAMPLE - Seasoning Pouch",
     category: "Spices",
     unitLabel: "0.2 oz pouch",
     plannedUnits: 30,
@@ -72,7 +72,7 @@ const starterProducts = [
   },
   {
     id: "sample-eggs",
-    name: "Chicken Eggs",
+    name: "SAMPLE - Chicken Eggs",
     category: "Eggs",
     unitLabel: "dozen",
     plannedUnits: 10,
@@ -103,8 +103,16 @@ function createBlankPlan() {
     marketDate: todayISO(),
     location: "",
     weatherNotes: "",
-    products: starterProducts
+    products: []
   };
+}
+
+function createSampleProducts() {
+  return starterProducts.map((product) => ({
+    ...product,
+    id: `${product.id}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    packed: false
+  }));
 }
 
 function getProductTotals(product) {
@@ -135,7 +143,7 @@ export default function MarketPrepPlanner() {
   const [marketDate, setMarketDate] = useState(todayISO());
   const [location, setLocation] = useState("");
   const [weatherNotes, setWeatherNotes] = useState("");
-  const [products, setProducts] = useState(starterProducts);
+  const [products, setProducts] = useState([]);
   const [savedPlans, setSavedPlans] = useState([]);
   const [statusMessage, setStatusMessage] = useState("");
   const [loadingPlans, setLoadingPlans] = useState(false);
@@ -270,8 +278,22 @@ export default function MarketPrepPlanner() {
     setLocation(blank.location);
     setWeatherNotes(blank.weatherNotes);
     setProducts(blank.products);
-    setStatusMessage("Started a new market plan.");
+    setStatusMessage("Started a new empty market plan.");
     scrollToTop();
+  }
+
+  function loadSampleProducts() {
+    if (products.length > 0) {
+      const confirmed = window.confirm(
+        "This will add sample products to the current plan. Continue?"
+      );
+
+      if (!confirmed) return;
+    }
+
+    setProducts((current) => [...current, ...createSampleProducts()]);
+    setStatusMessage("Sample products added. You can edit or delete them anytime.");
+    scrollToSection(packListRef);
   }
 
   async function savePlan() {
@@ -498,6 +520,15 @@ export default function MarketPrepPlanner() {
               >
                 <Plus size={15} />
                 New Plan
+              </button>
+
+              <button
+                className="secondaryButton compactButton"
+                type="button"
+                onClick={loadSampleProducts}
+              >
+                <Sprout size={15} />
+                Load Sample Products
               </button>
 
               <button
@@ -794,7 +825,7 @@ export default function MarketPrepPlanner() {
               ))
             ) : (
               <div className="placeholderBox compactPlaceholder">
-                Add products to see category totals.
+                Add products or load sample products to see category totals.
               </div>
             )}
           </div>
@@ -809,6 +840,15 @@ export default function MarketPrepPlanner() {
           </div>
 
           <div className="formActions compactActions marketPrepNoPrint">
+            <button
+              className="secondaryButton compactButton"
+              type="button"
+              onClick={loadSampleProducts}
+            >
+              <Sprout size={15} />
+              Load Samples
+            </button>
+
             <button
               className="secondaryButton compactButton"
               type="button"
@@ -853,111 +893,118 @@ export default function MarketPrepPlanner() {
             <span className="marketPrepNoPrint"></span>
           </div>
 
-          {products.map((product) => {
-            const productTotals = getProductTotals(product);
+          {products.length ? (
+            products.map((product) => {
+              const productTotals = getProductTotals(product);
 
-            return (
-              <div className="batchTableRow marketPrepCompactRow" key={product.id}>
-                <span className="marketPrepCheckCell">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(product.packed)}
-                    onChange={() => togglePacked(product.id)}
-                  />
-                </span>
+              return (
+                <div className="batchTableRow marketPrepCompactRow" key={product.id}>
+                  <span className="marketPrepCheckCell">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(product.packed)}
+                      onChange={() => togglePacked(product.id)}
+                    />
+                  </span>
 
-                <span>
-                  <input
-                    value={product.name}
-                    onChange={(event) =>
-                      updateProduct(product.id, "name", event.target.value)
-                    }
-                  />
-                </span>
+                  <span>
+                    <input
+                      value={product.name}
+                      onChange={(event) =>
+                        updateProduct(product.id, "name", event.target.value)
+                      }
+                    />
+                  </span>
 
-                <span>
-                  <select
-                    value={product.category}
-                    onChange={(event) =>
-                      updateProduct(product.id, "category", event.target.value)
-                    }
-                  >
-                    {marketCategories.map((category) => (
-                      <option key={category}>{category}</option>
-                    ))}
-                  </select>
-                </span>
+                  <span>
+                    <select
+                      value={product.category}
+                      onChange={(event) =>
+                        updateProduct(product.id, "category", event.target.value)
+                      }
+                    >
+                      {marketCategories.map((category) => (
+                        <option key={category}>{category}</option>
+                      ))}
+                    </select>
+                  </span>
 
-                <span>
-                  <input
-                    value={product.unitLabel}
-                    onChange={(event) =>
-                      updateProduct(product.id, "unitLabel", event.target.value)
-                    }
-                  />
-                </span>
+                  <span>
+                    <input
+                      value={product.unitLabel}
+                      onChange={(event) =>
+                        updateProduct(product.id, "unitLabel", event.target.value)
+                      }
+                    />
+                  </span>
 
-                <span>
-                  <input
-                    type="number"
-                    value={product.plannedUnits}
-                    onChange={(event) =>
-                      updateProduct(product.id, "plannedUnits", event.target.value)
-                    }
-                  />
-                </span>
-
-                <span>
-                  <div className="amountUnitInline">
+                  <span>
                     <input
                       type="number"
-                      step="0.0001"
-                      value={product.unitAmount}
+                      value={product.plannedUnits}
                       onChange={(event) =>
-                        updateProduct(product.id, "unitAmount", event.target.value)
+                        updateProduct(product.id, "plannedUnits", event.target.value)
                       }
                     />
+                  </span>
+
+                  <span>
+                    <div className="amountUnitInline">
+                      <input
+                        type="number"
+                        step="0.0001"
+                        value={product.unitAmount}
+                        onChange={(event) =>
+                          updateProduct(product.id, "unitAmount", event.target.value)
+                        }
+                      />
+                      <input
+                        value={product.amountUnit}
+                        onChange={(event) =>
+                          updateProduct(product.id, "amountUnit", event.target.value)
+                        }
+                      />
+                    </div>
+                  </span>
+
+                  <span className="marketPrepCalculated">
+                    {round(productTotals.plannedAmount)} {product.amountUnit}
+                  </span>
+
+                  <span className="marketPrepCalculated">
+                    {round(productTotals.finalAmount)} {product.amountUnit}
+                    {Number(product.bufferPct) > 0 ? (
+                      <small>{product.bufferPct}% buffer</small>
+                    ) : null}
+                  </span>
+
+                  <span>
                     <input
-                      value={product.amountUnit}
+                      value={product.notes}
                       onChange={(event) =>
-                        updateProduct(product.id, "amountUnit", event.target.value)
+                        updateProduct(product.id, "notes", event.target.value)
                       }
                     />
-                  </div>
-                </span>
+                  </span>
 
-                <span className="marketPrepCalculated">
-                  {round(productTotals.plannedAmount)} {product.amountUnit}
-                </span>
-
-                <span className="marketPrepCalculated">
-                  {round(productTotals.finalAmount)} {product.amountUnit}
-                  {Number(product.bufferPct) > 0 ? (
-                    <small>{product.bufferPct}% buffer</small>
-                  ) : null}
-                </span>
-
-                <span>
-                  <input
-                    value={product.notes}
-                    onChange={(event) =>
-                      updateProduct(product.id, "notes", event.target.value)
-                    }
-                  />
-                </span>
-
-                <span className="marketPrepNoPrint">
-                  <button
-                    className="iconButton danger"
-                    type="button"
-                    onClick={() => removeProduct(product.id)}
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </span>
-              </div>
-            );
-          })}
+                  <span className="marketPrepNoPrint">
+                    <button
+                      className="iconButton danger"
+                      type="button"
+                      onClick={() => removeProduct(product.id)}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </span>
+                </div>
+              );
+            })
+          ) : (
+            <div className="placeholderBox compactPlaceholder">
+              No products in this market plan yet. Add a product above, or use
+              Load Samples to add editable sample products.
+            </div>
+          )}
         </div>
       </section>
 
