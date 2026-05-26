@@ -4,6 +4,7 @@ import {
   serverTimestamp,
   setDoc
 } from "firebase/firestore";
+
 import { db } from "../firebase";
 
 const TRIAL_DAYS = 15;
@@ -14,6 +15,23 @@ function addDays(date, days) {
   return next;
 }
 
+function calculateDaysRemaining(trialEnd) {
+  if (!trialEnd) return 0;
+
+  const endDate = trialEnd?.toDate
+    ? trialEnd.toDate()
+    : new Date(trialEnd);
+
+  const now = new Date();
+
+  const diffMs = endDate.getTime() - now.getTime();
+
+  return Math.max(
+    0,
+    Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+  );
+}
+
 export function getAccessStatus(account) {
   if (!account) {
     return {
@@ -21,7 +39,9 @@ export function getAccessStatus(account) {
       hasAccess: false,
       daysRemaining: 0,
       isTrial: false,
-      isExpired: true
+      isExpired: true,
+      plan: null,
+      allowedModules: []
     };
   }
 
@@ -31,7 +51,9 @@ export function getAccessStatus(account) {
       hasAccess: true,
       daysRemaining: null,
       isTrial: false,
-      isExpired: false
+      isExpired: false,
+      plan: "admin",
+      allowedModules: "all"
     };
   }
 
@@ -41,44 +63,46 @@ export function getAccessStatus(account) {
       hasAccess: true,
       daysRemaining: null,
       isTrial: false,
-      isExpired: false
+      isExpired: false,
+      plan: account.subscriptionPlan || null,
+      allowedModules: account.allowedModules || []
     };
   }
 
-  const trialEnd = account.trialEnd?.toDate
-    ? account.trialEnd.toDate()
-    : account.trialEnd
-      ? new Date(account.trialEnd)
-      : null;
+  const daysRemaining = calculateDaysRemaining(account.trialEnd);
 
-  if (!trialEnd) {
-    return {
-      status: "expired",
-      hasAccess: false,
-      daysRemaining: 0,
-      isTrial: false,
-      isExpired: true
-    };
-  }
-
-  const now = new Date();
-  const diffMs = trialEnd.getTime() - now.getTime();
-  const daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
-  const hasAccess = diffMs > 0;
+  const isTrial =
+    account.subscriptionStatus === "trial" &&
+    daysRemaining > 0;
 
   return {
-    status: hasAccess ? "trial" : "expired",
-    hasAccess,
+    status: isTrial ? "trial" : "expired",
+
+    hasAccess: isTrial,
+
     daysRemaining,
-    isTrial: hasAccess,
-    isExpired: !hasAccess
+
+    isTrial,
+
+    isExpired: !isTrial,
+
+    plan: "trial",
+
+    allowedModules: "all"
   };
 }
 
 export async function getOrCreateAccountProfile(user) {
   if (!user) return null;
 
-  const accountRef = doc(db, "users", user.uid, "account", "profile");
+  const accountRef = doc(
+    db,
+    "users",
+    user.uid,
+    "account",
+    "profile"
+  );
+
   const snapshot = await getDoc(accountRef);
 
   if (snapshot.exists()) {
@@ -89,30 +113,53 @@ export async function getOrCreateAccountProfile(user) {
   }
 
   const now = new Date();
+
   const trialEnd = addDays(now, TRIAL_DAYS);
 
   const profile = {
     email: user.email || "",
+
     displayName: user.displayName || "",
+
     photoURL: user.photoURL || "",
+
     createdAt: serverTimestamp(),
+
     updatedAt: serverTimestamp(),
+
     trialStart: now.toISOString(),
+
     trialEnd: trialEnd.toISOString(),
+
     subscriptionStatus: "trial",
+
     subscriptionPlan: null,
+
+    allowedModules: "all",
+
     stripeCustomerId: null,
-    stripeSubscriptionId: null,
-    stripeCheckoutUrl: null
+
+    stripeSubscriptionId: null
   };
 
-  await setDoc(accountRef, profile, { merge: true });
+  await setDoc(accountRef, profile, {
+    merge: true
+  });
 
   return profile;
 }
 
-export async function updateAccountProfile(userId, updates) {
-  const accountRef = doc(db, "users", userId, "account", "profile");
+export async function updateAccountProfile(
+  userId,
+  updates
+) {
+  const accountRef = doc(
+    db,
+    "users",
+    userId,
+    "account",
+    "profile"
+  );
 
   await setDoc(
     accountRef,
@@ -122,4 +169,22 @@ export async function updateAccountProfile(userId, updates) {
     },
     { merge: true }
   );
+}
+
+export function canAccessModule(account, moduleKey) {
+  if (!account) return false;
+
+  const access = getAccessStatus(account);
+
+  if (!access.hasAccess) return false;
+
+  if (access.allowedModules === "all") {
+    return true;
+  }
+
+  if (!Array.isArray(access.allowedModules)) {
+    return false;
+  }
+
+  return access.allowedModules.includes(moduleKey);
 }
