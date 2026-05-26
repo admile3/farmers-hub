@@ -3516,3 +3516,41 @@ input[type="number"] {
     width: 100%;
   }
 }
+/* Pricing modal 3-column layout fix */
+.pricingModal {
+  width: min(1080px, calc(100vw - 56px));
+  max-height: calc(100vh - 40px);
+  padding: 24px 28px;
+}
+
+.pricingModalHeader {
+  margin-bottom: 16px;
+}
+
+.pricingModalHeader h2 {
+  font-size: clamp(2.4rem, 4vw, 4.5rem);
+}
+
+.pricingFeatureGrid {
+  margin: 14px auto 16px;
+}
+
+.pricingModal .pricingPlanGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.pricingModal .workspacePanel {
+  min-height: 250px;
+}
+
+.pricingModalFooter {
+  margin-top: 16px;
+}
+
+@media (max-width: 950px) {
+  .pricingModal .pricingPlanGrid {
+    grid-template-columns: 1fr;
+  }
+}
