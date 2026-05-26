@@ -110,21 +110,24 @@ const pricingPlans = [
     plan: "basic",
     eyebrow: "Basic",
     price: "$5/month",
-    description: "Choose 1 module after your trial. Best for vendors who only need one focused tool.",
+    description:
+      "Choose 1 module after your trial. Best for vendors who only need one focused tool.",
     feature: "1 module"
   },
   {
     plan: "growth",
     eyebrow: "Growth",
     price: "$10/month",
-    description: "Access 3 core modules after your trial. Best for vendors managing regular production.",
+    description:
+      "Choose 3 modules after your trial. Best for vendors managing regular production.",
     feature: "3 modules"
   },
   {
     plan: "pro",
     eyebrow: "Pro",
     price: "$15/month",
-    description: "Unlock every Farmers Hub module after your trial. Best for full business management.",
+    description:
+      "Unlock every Farmers Hub module after your trial. Best for full business management.",
     feature: "All modules"
   }
 ];
@@ -248,12 +251,18 @@ async function startStripeCheckout({
   }
 }
 
+function ScrollToTop() {
+  const location = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
+  return null;
+}
+
 function TrialSignupBox() {
-  const {
-    loginWithGoogle,
-    createAccountWithEmail,
-    loginWithEmail
-  } = useAuth();
+  const { loginWithGoogle, createAccountWithEmail, loginWithEmail } = useAuth();
 
   const [authMode, setAuthMode] = useState("create");
   const [email, setEmail] = useState("");
@@ -407,26 +416,6 @@ function ModuleSelector({ selectedModules, setSelectedModules, limit }) {
   );
 }
 
-function IncludedModuleList() {
-  return (
-    <div className="planModulePicker proIncludedModules">
-      {modules.map((module) => {
-        const Icon = module.icon;
-
-        return (
-          <div
-            key={module.key}
-            className={`planModuleButton ${module.accent} selected`}
-          >
-            <Icon size={16} />
-            <span>{module.title}</span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 function PricingCards({
   mode = "trial",
   checkoutLoading,
@@ -487,46 +476,51 @@ function PricingCards({
         const isPro = plan.plan === "pro";
 
         return (
-          <div className="workspacePanel compactPanel pricingPlanCard" key={plan.plan}>
-            <div>
-              <p className="eyebrow">{plan.eyebrow}</p>
-              <h3>{plan.price}</h3>
-              <p className="importExportText">{plan.description}</p>
-              <p className="importExportText">
-                <strong>{plan.feature}</strong>
-              </p>
-            </div>
+          <div className="workspacePanel compactPanel" key={plan.plan}>
+            <p className="eyebrow">{plan.eyebrow}</p>
+            <h3>{plan.price}</h3>
+            <p className="importExportText">{plan.description}</p>
+            <p className="importExportText">
+              <strong>{plan.feature}</strong>
+            </p>
 
             {mode === "checkout" && isBasic ? (
-              <div className="moduleSelectionBlock">
+              <>
                 <p className="modulePickerHint">Select 1 module:</p>
-
                 <ModuleSelector
                   selectedModules={basicModules}
                   setSelectedModules={setBasicModules}
                   limit={1}
                 />
-              </div>
+              </>
             ) : null}
 
             {mode === "checkout" && isGrowth ? (
-              <div className="moduleSelectionBlock">
-                <p className="modulePickerHint">
-                  Select 3 modules: {growthModules.length}/3 selected
-                </p>
-
+              <>
+                <p className="modulePickerHint">Select 3 modules:</p>
                 <ModuleSelector
                   selectedModules={growthModules}
                   setSelectedModules={setGrowthModules}
                   limit={3}
                 />
-              </div>
+              </>
             ) : null}
 
             {mode === "checkout" && isPro ? (
-              <div className="moduleSelectionBlock">
-                <p className="modulePickerHint">All modules included:</p>
-                <IncludedModuleList />
+              <div className="planModulePicker proIncludedModules">
+                {modules.map((module) => {
+                  const Icon = module.icon;
+
+                  return (
+                    <div
+                      key={module.key}
+                      className={`planModuleButton ${module.accent} selected`}
+                    >
+                      <Icon size={16} />
+                      <span>{module.title}</span>
+                    </div>
+                  );
+                })}
               </div>
             ) : null}
 
@@ -822,7 +816,7 @@ function AccessGate({ children }) {
 }
 
 function Subscribe() {
-  const { user, loginWithGoogle } = useAuth();
+  const { user } = useAuth();
   const [checkoutLoading, setCheckoutLoading] = useState("");
 
   if (!user) {
@@ -874,14 +868,14 @@ function Subscribe() {
 
 function Dashboard() {
   const {
-  user,
-  accountProfile,
-  authLoading,
-  accountLoading,
-  daysRemaining,
-  isTrial,
-  accessStatus
-} = useAuth();
+    user,
+    accountProfile,
+    authLoading,
+    accountLoading,
+    daysRemaining,
+    isTrial,
+    accessStatus
+  } = useAuth();
 
   const [showWelcomePricing, setShowWelcomePricing] = useState(true);
   const [dashboardData, setDashboardData] = useState({
@@ -941,10 +935,11 @@ function Dashboard() {
   }, [user]);
 
   const displayName =
-  accountProfile?.displayName?.trim() ||
-  user?.displayName ||
-  user?.email?.split("@")[0] ||
-  "there";
+    accountProfile?.displayName?.trim() ||
+    user?.displayName ||
+    user?.email?.split("@")[0] ||
+    "there";
+
   const trialDaysDisplay =
     isTrial ? daysRemaining : accessStatus.status === "active" ? "Active" : "15";
 
@@ -1281,37 +1276,41 @@ function NotFound() {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Dashboard />} />
+    <>
+      <ScrollToTop />
 
-      <Route
-        path="/subscribe"
-        element={
-          <AppShell>
-            <Subscribe />
-          </AppShell>
-        }
-      />
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
 
-      <Route
-        path="/account-settings"
-        element={
-          <AccessGate>
-            <AccountSettings />
-          </AccessGate>
-        }
-      />
+        <Route
+          path="/subscribe"
+          element={
+            <AppShell>
+              <Subscribe />
+            </AppShell>
+          }
+        />
 
-      <Route path="/spice-kitchen" element={<AccessGate><SpiceKitchen /></AccessGate>} />
-      <Route path="/baking-planner" element={<AccessGate><BakingPlanner /></AccessGate>} />
-      <Route path="/market-prep" element={<AccessGate><MarketPrepPlanner /></AccessGate>} />
-      <Route path="/pricing" element={<AccessGate><PricingCalculator /></AccessGate>} />
-      <Route path="/permit-grants" element={<AccessGate><PermitGrantTracker /></AccessGate>} />
-      <Route path="/lists" element={<AccessGate><Lists /></AccessGate>} />
-      <Route path="/calendar" element={<AccessGate><Calendar /></AccessGate>} />
-      <Route path="/import-export" element={<AccessGate><ImportExport /></AccessGate>} />
+        <Route
+          path="/account-settings"
+          element={
+            <AccessGate>
+              <AccountSettings />
+            </AccessGate>
+          }
+        />
 
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        <Route path="/spice-kitchen" element={<AccessGate><SpiceKitchen /></AccessGate>} />
+        <Route path="/baking-planner" element={<AccessGate><BakingPlanner /></AccessGate>} />
+        <Route path="/market-prep" element={<AccessGate><MarketPrepPlanner /></AccessGate>} />
+        <Route path="/pricing" element={<AccessGate><PricingCalculator /></AccessGate>} />
+        <Route path="/permit-grants" element={<AccessGate><PermitGrantTracker /></AccessGate>} />
+        <Route path="/lists" element={<AccessGate><Lists /></AccessGate>} />
+        <Route path="/calendar" element={<AccessGate><Calendar /></AccessGate>} />
+        <Route path="/import-export" element={<AccessGate><ImportExport /></AccessGate>} />
+
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
   );
 }
