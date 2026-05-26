@@ -704,12 +704,14 @@
   }
 }
 .starterLayout {
-  grid-template-columns: minmax(360px, 0.65fr) minmax(720px, 1.35fr);
-  align-items: stretch;
+  grid-template-columns: minmax(320px, 0.45fr) minmax(900px, 1.55fr);
+  align-items: start;
+  gap: 18px;
 }
 
 .starterStatsGrid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  gap: 18px;
 }
 
 .starterStatsGrid .hubStatCard {
@@ -717,12 +719,12 @@
 }
 
 .starterStatsGrid .hubStatText strong {
-  font-size: clamp(1.25rem, 1.45vw, 1.8rem);
+  font-size: clamp(1.35rem, 1.2vw, 2rem);
   line-height: 1.05;
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 1300px) {
+@media (max-width: 1400px) {
   .starterLayout {
     grid-template-columns: 1fr;
   }
