@@ -839,7 +839,11 @@ function Dashboard() {
     loadDashboardData();
   }, [user]);
 
-  const displayName = user?.displayName || "ArMi Farms";
+  const displayName =
+  accountProfile?.displayName?.trim() ||
+  user?.displayName ||
+  user?.email?.split("@")[0] ||
+  "there";
   const trialDaysDisplay =
     isTrial ? daysRemaining : accessStatus.status === "active" ? "Active" : "15";
 
