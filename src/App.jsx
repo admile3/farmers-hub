@@ -212,7 +212,7 @@ function friendlyAuthError(error) {
 async function startStripeCheckout({
   plan,
   user,
-  selectedModule,
+  selectedModules,
   setCheckoutLoading
 }) {
   try {
@@ -227,7 +227,7 @@ async function startStripeCheckout({
         plan,
         uid: user?.uid || null,
         email: user?.email || null,
-        selectedModule: selectedModule || null
+        selectedModules: selectedModules || []
       })
     });
 
@@ -367,14 +367,74 @@ function TrialSignupBox() {
   );
 }
 
+function ModuleSelector({ selectedModules, setSelectedModules, limit }) {
+  function toggleModule(moduleKey) {
+    const alreadySelected = selectedModules.includes(moduleKey);
+
+    if (alreadySelected) {
+      setSelectedModules(selectedModules.filter((key) => key !== moduleKey));
+      return;
+    }
+
+    if (selectedModules.length >= limit) return;
+
+    setSelectedModules([...selectedModules, moduleKey]);
+  }
+
+  return (
+    <div className="planModulePicker">
+      {modules.map((module) => {
+        const Icon = module.icon;
+        const isSelected = selectedModules.includes(module.key);
+        const isDisabled = !isSelected && selectedModules.length >= limit;
+
+        return (
+          <button
+            key={module.key}
+            type="button"
+            className={`planModuleButton ${module.accent} ${
+              isSelected ? "selected" : ""
+            } ${isDisabled ? "disabled" : ""}`}
+            onClick={() => toggleModule(module.key)}
+            disabled={isDisabled}
+          >
+            <Icon size={16} />
+            <span>{module.title}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function IncludedModuleList() {
+  return (
+    <div className="planModulePicker proIncludedModules">
+      {modules.map((module) => {
+        const Icon = module.icon;
+
+        return (
+          <div
+            key={module.key}
+            className={`planModuleButton ${module.accent} selected`}
+          >
+            <Icon size={16} />
+            <span>{module.title}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function PricingCards({
   mode = "trial",
   checkoutLoading,
-  setCheckoutLoading,
-  selectedModule,
-  setSelectedModule
+  setCheckoutLoading
 }) {
   const { user, loginWithGoogle } = useAuth();
+  const [basicModules, setBasicModules] = useState([]);
+  const [growthModules, setGrowthModules] = useState([]);
 
   async function handlePlanClick(plan) {
     if (mode === "trial") {
@@ -387,59 +447,102 @@ function PricingCards({
       return;
     }
 
-    if (plan === "basic" && !selectedModule) {
-      alert("Please choose the module you want included with the Basic plan.");
-      return;
+    let selectedModules = [];
+
+    if (plan === "basic") {
+      selectedModules = basicModules;
+
+      if (selectedModules.length !== 1) {
+        alert("Please choose 1 module for the Basic plan.");
+        return;
+      }
+    }
+
+    if (plan === "growth") {
+      selectedModules = growthModules;
+
+      if (selectedModules.length !== 3) {
+        alert("Please choose 3 modules for the Growth plan.");
+        return;
+      }
+    }
+
+    if (plan === "pro") {
+      selectedModules = modules.map((module) => module.key);
     }
 
     await startStripeCheckout({
       plan,
       user,
-      selectedModule: plan === "basic" ? selectedModule : null,
+      selectedModules,
       setCheckoutLoading
     });
   }
 
   return (
     <section className="pricingPlanGrid">
-      {pricingPlans.map((plan) => (
-        <div className="workspacePanel compactPanel" key={plan.plan}>
-          <p className="eyebrow">{plan.eyebrow}</p>
-          <h3>{plan.price}</h3>
-          <p className="importExportText">{plan.description}</p>
-          <p className="importExportText">
-            <strong>{plan.feature}</strong>
-          </p>
+      {pricingPlans.map((plan) => {
+        const isBasic = plan.plan === "basic";
+        const isGrowth = plan.plan === "growth";
+        const isPro = plan.plan === "pro";
 
-          {mode === "checkout" && plan.plan === "basic" ? (
-            <label className="fieldLabel">
-              Choose your module
-              <select
-                value={selectedModule}
-                onChange={(event) => setSelectedModule(event.target.value)}
+        return (
+          <div className="workspacePanel compactPanel pricingPlanCard" key={plan.plan}>
+            <div>
+              <p className="eyebrow">{plan.eyebrow}</p>
+              <h3>{plan.price}</h3>
+              <p className="importExportText">{plan.description}</p>
+              <p className="importExportText">
+                <strong>{plan.feature}</strong>
+              </p>
+            </div>
+
+            {mode === "checkout" && isBasic ? (
+              <div className="moduleSelectionBlock">
+                <p className="modulePickerHint">Select 1 module:</p>
+
+                <ModuleSelector
+                  selectedModules={basicModules}
+                  setSelectedModules={setBasicModules}
+                  limit={1}
+                />
+              </div>
+            ) : null}
+
+            {mode === "checkout" && isGrowth ? (
+              <div className="moduleSelectionBlock">
+                <p className="modulePickerHint">
+                  Select 3 modules: {growthModules.length}/3 selected
+                </p>
+
+                <ModuleSelector
+                  selectedModules={growthModules}
+                  setSelectedModules={setGrowthModules}
+                  limit={3}
+                />
+              </div>
+            ) : null}
+
+            {mode === "checkout" && isPro ? (
+              <div className="moduleSelectionBlock">
+                <p className="modulePickerHint">All modules included:</p>
+                <IncludedModuleList />
+              </div>
+            ) : null}
+
+            {mode === "checkout" ? (
+              <button
+                className="primaryButton compactPrimary"
+                type="button"
+                onClick={() => handlePlanClick(plan.plan)}
+                disabled={checkoutLoading === plan.plan}
               >
-                <option value="">Select a module</option>
-                {modules.map((module) => (
-                  <option value={module.key} key={module.key}>
-                    {module.title}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
-
-          {mode === "checkout" ? (
-            <button
-              className="primaryButton compactPrimary"
-              type="button"
-              onClick={() => handlePlanClick(plan.plan)}
-              disabled={checkoutLoading === plan.plan}
-            >
-              {checkoutLoading === plan.plan ? "Opening Checkout..." : "Choose Plan"}
-            </button>
-          ) : null}
-        </div>
-      ))}
+                {checkoutLoading === plan.plan ? "Opening Checkout..." : "Choose Plan"}
+              </button>
+            ) : null}
+          </div>
+        );
+      })}
     </section>
   );
 }
@@ -721,7 +824,6 @@ function AccessGate({ children }) {
 function Subscribe() {
   const { user, loginWithGoogle } = useAuth();
   const [checkoutLoading, setCheckoutLoading] = useState("");
-  const [selectedModule, setSelectedModule] = useState("");
 
   if (!user) {
     return (
@@ -765,8 +867,6 @@ function Subscribe() {
         mode="checkout"
         checkoutLoading={checkoutLoading}
         setCheckoutLoading={setCheckoutLoading}
-        selectedModule={selectedModule}
-        setSelectedModule={setSelectedModule}
       />
     </div>
   );
