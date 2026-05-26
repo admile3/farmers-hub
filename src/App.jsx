@@ -183,6 +183,32 @@ function formatActivityTime(date) {
   return formatShortDate(date);
 }
 
+function friendlyAuthError(error) {
+  const code = error?.code || "";
+
+  if (code.includes("email-already-in-use")) {
+    return "That email already has an account. Try signing in instead.";
+  }
+
+  if (code.includes("invalid-email")) {
+    return "Please enter a valid email address.";
+  }
+
+  if (code.includes("weak-password")) {
+    return "Please use a stronger password, at least 6 characters.";
+  }
+
+  if (code.includes("wrong-password") || code.includes("invalid-credential")) {
+    return "The email or password was not correct.";
+  }
+
+  if (code.includes("user-not-found")) {
+    return "No account was found with that email. Try creating an account.";
+  }
+
+  return "Something went wrong. Please try again.";
+}
+
 async function startStripeCheckout({
   plan,
   user,
@@ -220,6 +246,125 @@ async function startStripeCheckout({
   } finally {
     setCheckoutLoading("");
   }
+}
+
+function TrialSignupBox() {
+  const {
+    loginWithGoogle,
+    createAccountWithEmail,
+    loginWithEmail
+  } = useAuth();
+
+  const [authMode, setAuthMode] = useState("create");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [authActionLoading, setAuthActionLoading] = useState("");
+  const [authError, setAuthError] = useState("");
+
+  async function handleGoogle() {
+    try {
+      setAuthError("");
+      setAuthActionLoading("google");
+      await loginWithGoogle();
+    } catch (error) {
+      console.error("Google sign-in error:", error);
+      setAuthError(friendlyAuthError(error));
+    } finally {
+      setAuthActionLoading("");
+    }
+  }
+
+  async function handleEmailAuth(event) {
+    event.preventDefault();
+
+    try {
+      setAuthError("");
+      setAuthActionLoading("email");
+
+      if (authMode === "create") {
+        await createAccountWithEmail(email, password);
+      } else {
+        await loginWithEmail(email, password);
+      }
+    } catch (error) {
+      console.error("Email auth error:", error);
+      setAuthError(friendlyAuthError(error));
+    } finally {
+      setAuthActionLoading("");
+    }
+  }
+
+  return (
+    <div className="workspacePanel compactPanel trialSignupBox">
+      <p className="eyebrow">Start your trial</p>
+      <h3>Create your account</h3>
+      <p className="importExportText">
+        Start with 15 days of full access. No subscription is required today.
+      </p>
+
+      <button
+        className="primaryButton fullButton"
+        type="button"
+        onClick={handleGoogle}
+        disabled={authActionLoading === "google"}
+      >
+        <LogIn size={16} />
+        {authActionLoading === "google" ? "Opening Google..." : "Continue with Google"}
+      </button>
+
+      <form className="trialEmailForm" onSubmit={handleEmailAuth}>
+        <label>
+          Email
+          <input
+            type="email"
+            value={email}
+            autoComplete="email"
+            onChange={(event) => setEmail(event.target.value)}
+            required
+          />
+        </label>
+
+        <label>
+          Password
+          <input
+            type="password"
+            value={password}
+            autoComplete={authMode === "create" ? "new-password" : "current-password"}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+            minLength={6}
+          />
+        </label>
+
+        {authError ? <p className="authErrorText">{authError}</p> : null}
+
+        <button
+          className="secondaryButton fullButton"
+          type="submit"
+          disabled={authActionLoading === "email"}
+        >
+          {authActionLoading === "email"
+            ? "Working..."
+            : authMode === "create"
+              ? "Create account and start trial"
+              : "Sign in with email"}
+        </button>
+      </form>
+
+      <button
+        className="textButton authSwitchButton"
+        type="button"
+        onClick={() => {
+          setAuthError("");
+          setAuthMode(authMode === "create" ? "signin" : "create");
+        }}
+      >
+        {authMode === "create"
+          ? "Already have an account? Sign in"
+          : "Need an account? Create one"}
+      </button>
+    </div>
+  );
 }
 
 function PricingCards({
@@ -283,18 +428,16 @@ function PricingCards({
             </label>
           ) : null}
 
-          <button
-            className="primaryButton compactPrimary"
-            type="button"
-            onClick={() => handlePlanClick(plan.plan)}
-            disabled={checkoutLoading === plan.plan}
-          >
-            {mode === "trial"
-              ? "Start 15-day Trial"
-              : checkoutLoading === plan.plan
-                ? "Opening Checkout..."
-                : "Choose Plan"}
-          </button>
+          {mode === "checkout" ? (
+            <button
+              className="primaryButton compactPrimary"
+              type="button"
+              onClick={() => handlePlanClick(plan.plan)}
+              disabled={checkoutLoading === plan.plan}
+            >
+              {checkoutLoading === plan.plan ? "Opening Checkout..." : "Choose Plan"}
+            </button>
+          ) : null}
         </div>
       ))}
     </section>
@@ -349,6 +492,8 @@ function WelcomePricingModal({ onClose }) {
           setCheckoutLoading={setCheckoutLoading}
         />
 
+        <TrialSignupBox />
+
         <div className="pricingModalFooter">
           <p className="importExportText">
             All plans start with the same 15-day full-access trial. You only choose
@@ -395,7 +540,7 @@ function AccountStatusCard() {
 
         <button className="primaryButton fullButton" onClick={loginWithGoogle}>
           <LogIn size={16} />
-          Start 15-day Trial
+          Start with Google
         </button>
 
         <Link to="/subscribe" className="secondaryButton fullButton">
@@ -551,8 +696,12 @@ function AccessGate({ children }) {
 
           <button className="primaryButton" onClick={loginWithGoogle}>
             <LogIn size={16} />
-            Start 15-day Trial
+            Start with Google
           </button>
+
+          <Link to="/subscribe" className="secondaryButton">
+            View all sign-in options
+          </Link>
         </div>
       </AppShell>
     );
@@ -594,12 +743,7 @@ function Subscribe() {
           setCheckoutLoading={setCheckoutLoading}
         />
 
-        <div className="button-row">
-          <button className="primaryButton" type="button" onClick={loginWithGoogle}>
-            <LogIn size={16} />
-            Start 15-day Trial
-          </button>
-        </div>
+        <TrialSignupBox />
       </div>
     );
   }
