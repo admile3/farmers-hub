@@ -1,11 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import {
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  signInWithPopup,
-  signOut
-} from "firebase/auth";
-import { auth } from "./firebase";
+import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
+import { auth, googleProvider } from "./firebase";
 import {
   getAccessStatus,
   getOrCreateAccountProfile
@@ -13,16 +8,21 @@ import {
 
 const AuthContext = createContext(null);
 
+const defaultAccessStatus = {
+  status: "unknown",
+  hasAccess: false,
+  daysRemaining: 0,
+  isTrial: false,
+  isExpired: true,
+  plan: null,
+  allowedModules: [],
+  trialEndsAt: null
+};
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [accountProfile, setAccountProfile] = useState(null);
-  const [accessStatus, setAccessStatus] = useState({
-    status: "unknown",
-    hasAccess: false,
-    daysRemaining: 0,
-    isTrial: false,
-    isExpired: true
-  });
+  const [accessStatus, setAccessStatus] = useState(defaultAccessStatus);
   const [authLoading, setAuthLoading] = useState(true);
   const [accountLoading, setAccountLoading] = useState(false);
 
@@ -32,14 +32,9 @@ export function AuthProvider({ children }) {
 
       if (!firebaseUser) {
         setAccountProfile(null);
-        setAccessStatus({
-          status: "unknown",
-          hasAccess: false,
-          daysRemaining: 0,
-          isTrial: false,
-          isExpired: true
-        });
+        setAccessStatus(defaultAccessStatus);
         setAuthLoading(false);
+        setAccountLoading(false);
         return;
       }
 
@@ -56,10 +51,9 @@ export function AuthProvider({ children }) {
 
         setAccountProfile(null);
         setAccessStatus({
+          ...defaultAccessStatus,
           status: "expired",
           hasAccess: false,
-          daysRemaining: 0,
-          isTrial: false,
           isExpired: true
         });
       } finally {
@@ -72,8 +66,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   async function loginWithGoogle() {
-    const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    await signInWithPopup(auth, googleProvider);
   }
 
   async function logout() {
@@ -101,21 +94,37 @@ export function AuthProvider({ children }) {
     }
   }
 
+  function canAccessModule(moduleKey) {
+    if (!accessStatus?.hasAccess) return false;
+
+    if (accessStatus.allowedModules === "all") return true;
+
+    if (!Array.isArray(accessStatus.allowedModules)) return false;
+
+    return accessStatus.allowedModules.includes(moduleKey);
+  }
+
   const value = useMemo(
     () => ({
       user,
       accountProfile,
       accessStatus,
+
       hasAccess: accessStatus.hasAccess,
       isAdmin: accessStatus.status === "admin",
       isTrial: accessStatus.isTrial,
       isExpired: accessStatus.isExpired,
       daysRemaining: accessStatus.daysRemaining,
+      plan: accessStatus.plan,
+      allowedModules: accessStatus.allowedModules,
+
       authLoading,
       accountLoading,
+
       loginWithGoogle,
       logout,
-      refreshAccountProfile
+      refreshAccountProfile,
+      canAccessModule
     }),
     [user, accountProfile, accessStatus, authLoading, accountLoading]
   );
