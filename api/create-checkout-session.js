@@ -17,8 +17,18 @@ const VALID_MODULES = [
   "spice",
   "market",
   "pricing",
+  "permit-grants",
+  "lists",
   "calendar"
 ];
+
+function cleanSelectedModules(selectedModules) {
+  if (!Array.isArray(selectedModules)) return [];
+
+  return selectedModules
+    .filter((moduleKey) => VALID_MODULES.includes(moduleKey))
+    .filter((moduleKey, index, array) => array.indexOf(moduleKey) === index);
+}
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -26,7 +36,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { plan, email, uid, selectedModule } = req.body;
+    const { plan, email, uid } = req.body;
+
+    const selectedModules = cleanSelectedModules(req.body.selectedModules);
 
     if (!uid) {
       return res.status(400).json({ error: "Missing Firebase user ID." });
@@ -43,12 +55,22 @@ export default async function handler(req, res) {
       });
     }
 
-    if (plan === "basic" && !VALID_MODULES.includes(selectedModule)) {
+    if (plan === "basic" && selectedModules.length !== 1) {
       return res.status(400).json({
-        error: "Basic plan requires one selected module.",
+        error: "Basic plan requires exactly one selected module.",
         validModules: VALID_MODULES
       });
     }
+
+    if (plan === "growth" && selectedModules.length !== 3) {
+      return res.status(400).json({
+        error: "Growth plan requires exactly three selected modules.",
+        validModules: VALID_MODULES
+      });
+    }
+
+    const finalSelectedModules =
+      plan === "pro" ? VALID_MODULES : selectedModules;
 
     const priceId = PRICE_IDS[plan];
 
@@ -60,6 +82,8 @@ export default async function handler(req, res) {
 
     const baseUrl =
       process.env.SITE_URL || "https://farmers-hub-inky.vercel.app";
+
+    const modulesMetadata = finalSelectedModules.join(",");
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
@@ -74,13 +98,13 @@ export default async function handler(req, res) {
       metadata: {
         uid,
         plan,
-        selectedModule: selectedModule || ""
+        selectedModules: modulesMetadata
       },
       subscription_data: {
         metadata: {
           uid,
           plan,
-          selectedModule: selectedModule || ""
+          selectedModules: modulesMetadata
         }
       },
       success_url: `${baseUrl}/?subscription=success`,
