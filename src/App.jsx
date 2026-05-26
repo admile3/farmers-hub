@@ -774,13 +774,14 @@ function Subscribe() {
 
 function Dashboard() {
   const {
-    user,
-    authLoading,
-    accountLoading,
-    daysRemaining,
-    isTrial,
-    accessStatus
-  } = useAuth();
+  user,
+  accountProfile,
+  authLoading,
+  accountLoading,
+  daysRemaining,
+  isTrial,
+  accessStatus
+} = useAuth();
 
   const [showWelcomePricing, setShowWelcomePricing] = useState(true);
   const [dashboardData, setDashboardData] = useState({
