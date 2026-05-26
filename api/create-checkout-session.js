@@ -1,6 +1,24 @@
 import Stripe from "stripe";
 
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error("Missing STRIPE_SECRET_KEY environment variable.");
+}
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+const PRICE_IDS = {
+  basic: process.env.STRIPE_BASIC_PRICE_ID,
+  growth: process.env.STRIPE_GROWTH_PRICE_ID,
+  pro: process.env.STRIPE_PRO_PRICE_ID
+};
+
+const VALID_MODULES = [
+  "baking",
+  "spice",
+  "market",
+  "pricing",
+  "calendar"
+];
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -8,19 +26,36 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { plan, email } = req.body;
+    const { plan, email, uid, selectedModule } = req.body;
 
-    const priceId =
-      plan === "annual"
-        ? process.env.STRIPE_ANNUAL_PRICE_ID
-        : process.env.STRIPE_MONTHLY_PRICE_ID;
-
-    if (!process.env.STRIPE_SECRET_KEY) {
-      return res.status(500).json({ error: "Missing Stripe secret key." });
+    if (!uid) {
+      return res.status(400).json({ error: "Missing Firebase user ID." });
     }
 
+    if (!email) {
+      return res.status(400).json({ error: "Missing user email." });
+    }
+
+    if (!plan || !PRICE_IDS[plan]) {
+      return res.status(400).json({
+        error: "Invalid plan selected.",
+        validPlans: Object.keys(PRICE_IDS)
+      });
+    }
+
+    if (plan === "basic" && !VALID_MODULES.includes(selectedModule)) {
+      return res.status(400).json({
+        error: "Basic plan requires one selected module.",
+        validModules: VALID_MODULES
+      });
+    }
+
+    const priceId = PRICE_IDS[plan];
+
     if (!priceId) {
-      return res.status(500).json({ error: "Missing Stripe price ID." });
+      return res.status(500).json({
+        error: `Missing Stripe price ID for ${plan} plan.`
+      });
     }
 
     const baseUrl =
@@ -28,15 +63,25 @@ export default async function handler(req, res) {
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
-      customer_email: email || undefined,
+      customer_email: email,
       line_items: [
         {
           price: priceId,
           quantity: 1
         }
       ],
+      client_reference_id: uid,
+      metadata: {
+        uid,
+        plan,
+        selectedModule: selectedModule || ""
+      },
       subscription_data: {
-        trial_period_days: 15
+        metadata: {
+          uid,
+          plan,
+          selectedModule: selectedModule || ""
+        }
       },
       success_url: `${baseUrl}/?subscription=success`,
       cancel_url: `${baseUrl}/subscribe`
