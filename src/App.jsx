@@ -957,7 +957,26 @@ function Subscribe() {
     </div>
   );
 }
+function DashboardRoute() {
+  const { user, authLoading, accountLoading, accountProfile } = useAuth();
 
+  if (authLoading || accountLoading) {
+    return (
+      <AppShell>
+        <div className="emptyState">
+          <h2>Loading dashboard...</h2>
+          <p>Please wait while Farmers Hub checks your account setup.</p>
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (user && accountProfile && !accountProfile.onboardingComplete) {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  return <Dashboard />;
+}
 function Dashboard() {
   const {
     user,
@@ -980,16 +999,6 @@ function Dashboard() {
 
   const shouldShowWelcomePricing =
     !authLoading && !accountLoading && !user && showWelcomePricing;
-
-  if (
-    user &&
-    !authLoading &&
-    !accountLoading &&
-    accountProfile &&
-    !accountProfile.onboardingComplete
-  ) {
-    return <Navigate to="/onboarding" replace />;
-  }
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -1382,7 +1391,7 @@ export default function App() {
       <ScrollToTop />
 
       <Routes>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={<DashboardRoute />} />
 
         <Route path="/onboarding" element={<OnboardingRoute />} />
 
