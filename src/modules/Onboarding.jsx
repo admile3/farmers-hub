@@ -59,7 +59,7 @@ const onboardingModules = [
     accent: "lists",
     text:
       "Create reusable checklists for market prep, shopping, deliveries, production, or business ideas."
-  }
+  },
   {
   title: "Calendar",
   icon: CalendarDays,
