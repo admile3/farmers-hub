@@ -3723,3 +3723,18 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+.savedList,
+.compactSavedList {
+  align-content: start;
+  align-items: start;
+}
+
+.savedItem,
+.compactSavedItem {
+  align-self: start;
+}
+
+.recipeLibraryPanel .savedList,
+.recipeLibraryPanel .compactSavedList {
+  align-content: start;
+}
