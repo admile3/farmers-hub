@@ -70,7 +70,7 @@ const blankRecord = {
 const starterItems = [
   {
     id: "sample-home-processor",
-    name: "Home-Based Processor",
+    name: "SAMPLE - Home-Based Processor",
     type: "Permit",
     agency: "Kentucky Food and Safety Branch",
     status: "Approved",
@@ -84,13 +84,13 @@ const starterItems = [
     reminderUnit: "days",
     fee: 50,
     link: "",
-    documentName: "25 Homebased Processor Permit.pdf",
+    documentName: "Sample Homebased Processor Permit.pdf",
     documentUrl: "",
     notes: "Example record. Replace with your own permit or renewal."
   },
   {
     id: "sample-insurance",
-    name: "General Liability Insurance",
+    name: "SAMPLE - General Liability Insurance",
     type: "Insurance",
     agency: "FarmGuard Insurance",
     status: "Renewal Needed",
@@ -106,11 +106,11 @@ const starterItems = [
     link: "",
     documentName: "",
     documentUrl: "",
-    notes: "Example insurance renewal."
+    notes: "Example insurance renewal. Edit or delete anytime."
   },
   {
     id: "sample-grant",
-    name: "Local Food Innovation Grant",
+    name: "SAMPLE - Local Food Innovation Grant",
     type: "Grant",
     agency: "County Economic Development",
     status: "Submitted",
@@ -126,7 +126,7 @@ const starterItems = [
     link: "",
     documentName: "",
     documentUrl: "",
-    notes: "Example grant application."
+    notes: "Example grant application. Edit or delete anytime."
   }
 ];
 
@@ -136,6 +136,15 @@ function todayISO() {
 
 function makeId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function createSampleItems() {
+  return starterItems.map((item) =>
+    normalizeRecord({
+      ...item,
+      id: `${item.id}-${makeId()}`
+    })
+  );
 }
 
 function daysUntil(dateString) {
@@ -182,7 +191,7 @@ function normalizeRecord(record) {
 export default function PermitGrantTracker() {
   const { user, loginWithGoogle } = useAuth();
 
-  const [items, setItems] = useState(starterItems);
+  const [items, setItems] = useState([]);
   const [statusMessage, setStatusMessage] = useState("");
   const [loadingItems, setLoadingItems] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -212,7 +221,7 @@ export default function PermitGrantTracker() {
 
     try {
       const savedItems = await getPermitGrantItems(user.uid);
-      setItems(savedItems.length ? savedItems.map(normalizeRecord) : starterItems);
+      setItems(Array.isArray(savedItems) ? savedItems.map(normalizeRecord) : []);
     } catch (error) {
       console.error(error);
       setStatusMessage("Could not load permit and grant records.");
@@ -225,7 +234,7 @@ export default function PermitGrantTracker() {
     if (user) {
       loadItems();
     } else {
-      setItems(starterItems);
+      setItems([]);
     }
   }, [user]);
 
@@ -381,6 +390,45 @@ export default function PermitGrantTracker() {
     }
   }
 
+  async function saveSampleRecord(record) {
+    if (!user) {
+      setItems((current) => [...current, record]);
+      return;
+    }
+
+    await savePermitGrantItem(user.uid, record);
+  }
+
+  async function loadSampleRecords() {
+    if (items.length > 0) {
+      const confirmed = window.confirm(
+        "This will add sample permit, insurance, and grant records. Continue?"
+      );
+
+      if (!confirmed) return;
+    }
+
+    const sampleRecords = createSampleItems();
+
+    setSaving(true);
+
+    try {
+      if (user) {
+        await Promise.all(sampleRecords.map((record) => saveSampleRecord(record)));
+        await loadItems();
+      } else {
+        setItems((current) => [...current, ...sampleRecords]);
+      }
+
+      setStatusMessage("Sample records added. You can edit or delete them anytime.");
+    } catch (error) {
+      console.error(error);
+      setStatusMessage("Could not add sample records.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function removeItem(id) {
     if (!user) {
       setItems((current) => current.filter((item) => item.id !== id));
@@ -433,10 +481,22 @@ export default function PermitGrantTracker() {
           <p>Track permits, licenses, grants, insurance, and renewal deadlines.</p>
         </div>
 
-        <button className="permitAddButton" type="button" onClick={openNewRecord}>
-          <Plus size={18} />
-          Add Record
-        </button>
+        <div className="formActions compactActions">
+          <button
+            className="secondaryButton compactButton"
+            type="button"
+            onClick={loadSampleRecords}
+            disabled={saving}
+          >
+            <FileText size={15} />
+            Load Sample Records
+          </button>
+
+          <button className="permitAddButton" type="button" onClick={openNewRecord}>
+            <Plus size={18} />
+            Add Record
+          </button>
+        </div>
       </section>
 
       <section className="hubStatGrid">
@@ -627,7 +687,10 @@ export default function PermitGrantTracker() {
               );
             })
           ) : (
-            <div className="permitEmptyState">No matching records found.</div>
+            <div className="permitEmptyState">
+              No records yet. Add your first permit, grant, license, insurance,
+              or renewal, or load sample records to explore the tracker.
+            </div>
           )}
         </div>
       </section>
