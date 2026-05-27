@@ -205,8 +205,8 @@ async function importBakingSamples(userId) {
         tempF: 74,
         humidityPct: 52
       },
-      productionDate: todayISO(),
-      productionItems: [],
+      productionDate: "",
+productionItems: [],
       updatedAt: serverTimestamp()
     },
     { merge: true }
