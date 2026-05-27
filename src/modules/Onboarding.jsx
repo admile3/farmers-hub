@@ -59,6 +59,13 @@ const onboardingModules = [
     text:
       "Create reusable checklists for market prep, shopping, deliveries, production, or business ideas."
   }
+  {
+  title: "Calendar",
+  icon: CalendarDays,
+  accent: "calendar",
+  text:
+    "View market plans, production schedules, permit deadlines, grant renewals, and business events in one shared timeline. Calendar does not receive sample records because it automatically reflects activity from your other modules."
+  }
 ];
 
 export default function Onboarding() {
@@ -228,11 +235,6 @@ export default function Onboarding() {
               </div>
             );
           })}
-        </div>
-
-        <div className="placeholderBox compactPlaceholder">
-          <strong>Calendar note:</strong> Calendar does not receive sample data.
-          It automatically reflects events and deadlines from the other modules.
         </div>
       </section>
 
