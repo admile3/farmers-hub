@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, Route, Routes, useLocation } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import {
   Activity,
   ArrowRight,
@@ -32,6 +32,7 @@ import Lists from "./modules/Lists.jsx";
 import Calendar from "./modules/Calendar.jsx";
 import ImportExport from "./modules/ImportExport.jsx";
 import AccountSettings from "./modules/AccountSettings.jsx";
+import Onboarding from "./modules/Onboarding.jsx";
 import { useAuth } from "./AuthContext.jsx";
 import { db } from "./firebase";
 import StatCard from "./components/StatCard.jsx";
@@ -609,6 +610,7 @@ function WelcomePricingModal({ onClose }) {
 function AccountStatusCard() {
   const {
     user,
+    accountProfile,
     loginWithGoogle,
     logout,
     authLoading,
@@ -647,21 +649,26 @@ function AccountStatusCard() {
     );
   }
 
+  const displayName =
+    accountProfile?.displayName?.trim() ||
+    user.displayName ||
+    "Signed in";
+
   return (
     <div className="authCard">
       <p className="eyebrow">Account</p>
 
       <div className="userRow">
         {user.photoURL ? (
-          <img src={user.photoURL} alt={user.displayName || "User"} />
+          <img src={user.photoURL} alt={displayName} />
         ) : (
           <div className="userInitial">
-            {(user.displayName || user.email || "U").charAt(0)}
+            {(displayName || user.email || "U").charAt(0)}
           </div>
         )}
 
         <div>
-          <strong>{user.displayName || "Signed in"}</strong>
+          <strong>{displayName}</strong>
           <p>{user.email}</p>
         </div>
       </div>
@@ -672,6 +679,12 @@ function AccountStatusCard() {
         {accessStatus.status === "active" ? "Active subscription" : null}
         {isExpired ? "Subscription required" : null}
       </div>
+
+      {accountProfile?.onboardingComplete ? null : (
+        <Link to="/onboarding" className="primaryButton fullButton">
+          Finish Setup
+        </Link>
+      )}
 
       {isExpired ? (
         <Link to="/subscribe" className="primaryButton fullButton">
@@ -770,8 +783,17 @@ function AppShell({ children }) {
 }
 
 function AccessGate({ children }) {
-  const { user, authLoading, accountLoading, loginWithGoogle, hasAccess, isExpired } =
-    useAuth();
+  const {
+    user,
+    authLoading,
+    accountLoading,
+    accountProfile,
+    loginWithGoogle,
+    hasAccess,
+    isExpired
+  } = useAuth();
+
+  const location = useLocation();
 
   if (authLoading || accountLoading) {
     return (
@@ -812,7 +834,77 @@ function AccessGate({ children }) {
     );
   }
 
+  const canSkipOnboardingRedirect =
+    location.pathname === "/onboarding" ||
+    location.pathname === "/account-settings" ||
+    location.pathname === "/subscribe";
+
+  if (!accountProfile?.onboardingComplete && !canSkipOnboardingRedirect) {
+    return <Navigate to="/onboarding" replace />;
+  }
+
   return <AppShell>{children}</AppShell>;
+}
+
+function OnboardingRoute() {
+  const {
+    user,
+    authLoading,
+    accountLoading,
+    accountProfile,
+    loginWithGoogle,
+    hasAccess,
+    isExpired
+  } = useAuth();
+
+  if (authLoading || accountLoading) {
+    return (
+      <AppShell>
+        <div className="emptyState">
+          <h2>Loading setup...</h2>
+          <p>Please wait while Farmers Hub checks your account.</p>
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (!user) {
+    return (
+      <AppShell>
+        <div className="emptyState">
+          <h2>Create an account to set up Farmers Hub</h2>
+          <p>Start your 15-day trial, then choose whether to begin fresh or load sample data.</p>
+
+          <button className="primaryButton" onClick={loginWithGoogle}>
+            <LogIn size={16} />
+            Start with Google
+          </button>
+
+          <Link to="/subscribe" className="secondaryButton">
+            View all sign-in options
+          </Link>
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (!hasAccess || isExpired) {
+    return (
+      <AppShell>
+        <Subscribe />
+      </AppShell>
+    );
+  }
+
+  if (accountProfile?.onboardingComplete) {
+    return <Navigate to="/" replace />;
+  }
+
+  return (
+    <AppShell>
+      <Onboarding />
+    </AppShell>
+  );
 }
 
 function Subscribe() {
@@ -888,6 +980,16 @@ function Dashboard() {
 
   const shouldShowWelcomePricing =
     !authLoading && !accountLoading && !user && showWelcomePricing;
+
+  if (
+    user &&
+    !authLoading &&
+    !accountLoading &&
+    accountProfile &&
+    !accountProfile.onboardingComplete
+  ) {
+    return <Navigate to="/onboarding" replace />;
+  }
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -1281,6 +1383,8 @@ export default function App() {
 
       <Routes>
         <Route path="/" element={<Dashboard />} />
+
+        <Route path="/onboarding" element={<OnboardingRoute />} />
 
         <Route
           path="/subscribe"
