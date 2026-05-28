@@ -3835,3 +3835,9 @@ input[type="number"] {
 .dangerButton:hover {
   background: #fee2e2;
 }
+.primaryButton.dirtySaveButton,
+.compactPrimary.dirtySaveButton {
+  background: #b45309;
+  border-color: #b45309;
+  color: #fff;
+}
