@@ -199,7 +199,18 @@ const defaultSettings = {
   defaultStartTime: "06:00",
   bakingPlannerMode: "",
   starterName: "",
-  useStarterNameInLabels: false
+  useStarterNameInLabels: false,
+  starterFeedingPreset: "1:2:2",
+  starterSeedParts: 1,
+  starterFlourParts: 2,
+  starterWaterParts: 2
+};
+
+const starterFeedingPresets = {
+  "1:1:1": { seed: 1, flour: 1, water: 1 },
+  "1:2:2": { seed: 1, flour: 2, water: 2 },
+  "1:3:3": { seed: 1, flour: 3, water: 3 },
+  "1:5:5": { seed: 1, flour: 5, water: 5 }
 };
 
 function loadFromStorage(key, fallback) {
@@ -218,6 +229,11 @@ function saveToStorage(key, value) {
 function round(value, digits = 0) {
   const factor = Math.pow(10, digits);
   return Math.round((Number(value) || 0) * factor) / factor;
+}
+
+function formatNumber(value, digits = 2) {
+  const rounded = round(value, digits);
+  return Number.isInteger(rounded) ? String(rounded) : String(rounded);
 }
 
 const GRAMS_PER_OUNCE = 28.349523125;
@@ -1004,12 +1020,46 @@ export default function BakingPlanner() {
 
   const levain = useMemo(() => {
     const totalLevain = totals.bufferedStarterG;
-    const hydration = settings.starterHydrationPct / 100;
-    const flour = totalLevain / (1 + hydration);
-    const water = totalLevain - flour;
-    const seedStarter = totalLevain * 0.2;
-    return { totalLevain, flour, water, seedStarter };
-  }, [totals.bufferedStarterG, settings.starterHydrationPct]);
+    const preset = starterFeedingPresets[settings.starterFeedingPreset];
+    const seedParts = Math.max(0, Number(preset?.seed ?? settings.starterSeedParts) || 0);
+    const flourParts = Math.max(0, Number(preset?.flour ?? settings.starterFlourParts) || 0);
+    const waterParts = Math.max(0, Number(preset?.water ?? settings.starterWaterParts) || 0);
+    const totalParts = seedParts + flourParts + waterParts;
+
+    if (totalParts <= 0 || totalLevain <= 0) {
+      return {
+        totalLevain,
+        flour: 0,
+        water: 0,
+        seedStarter: 0,
+        seedParts,
+        flourParts,
+        waterParts,
+        ratioLabel: `${seedParts}:${flourParts}:${waterParts}`
+      };
+    }
+
+    const seedStarter = (totalLevain * seedParts) / totalParts;
+    const flour = (totalLevain * flourParts) / totalParts;
+    const water = (totalLevain * waterParts) / totalParts;
+
+    return {
+      totalLevain,
+      flour,
+      water,
+      seedStarter,
+      seedParts,
+      flourParts,
+      waterParts,
+      ratioLabel: `${seedParts}:${flourParts}:${waterParts}`
+    };
+  }, [
+    totals.bufferedStarterG,
+    settings.starterFeedingPreset,
+    settings.starterSeedParts,
+    settings.starterFlourParts,
+    settings.starterWaterParts
+  ]);
 
   const warnings = useMemo(() => {
     const list = [];
@@ -1108,6 +1158,34 @@ export default function BakingPlanner() {
   const starterWaterSub = shouldUseStarterName
     ? `for ${trimmedStarterName}`
     : "for preferment build";
+  const starterFeedRatioLabel = `Feeding ratio ${levain.ratioLabel || "1:2:2"}`;
+  const starterFlourLabel = shouldUseStarterName
+    ? `Flour to Feed ${trimmedStarterName}`
+    : "Flour to Feed";
+  const starterWaterLabel = shouldUseStarterName
+    ? `Water to Feed ${trimmedStarterName}`
+    : "Water to Feed";
+
+  function updateSettingField(field, value) {
+    markBakingDirty();
+    setSettings((previous) => ({
+      ...previous,
+      [field]: value
+    }));
+  }
+
+  function updateStarterFeedingPreset(value) {
+    markBakingDirty();
+    const preset = starterFeedingPresets[value];
+
+    setSettings((previous) => ({
+      ...previous,
+      starterFeedingPreset: value,
+      starterSeedParts: preset ? preset.seed : previous.starterSeedParts,
+      starterFlourParts: preset ? preset.flour : previous.starterFlourParts,
+      starterWaterParts: preset ? preset.water : previous.starterWaterParts
+    }));
+  }
 
   async function savePlannerData() {
     const normalizedRecipes = recipes.map(normalizeRecipe);
@@ -1606,9 +1684,9 @@ export default function BakingPlanner() {
                           <div>
                             <p className="recipe-title">{recipe.name}</p>
                             <p className="muted small">
-                              {round(recipe.preBakeUnitWeight)}g dough weight •{" "}
+                              {formatNumber(recipe.preBakeUnitWeight, 2)}g dough weight •{" "}
                               {recipe.hydrationPct}% final hydration •{" "}
-                              {recipe.starterPct}% starter • {recipe.vesselType}
+                              {recipe.starterPct}% {shouldUseStarterName ? trimmedStarterName : "starter"} • {recipe.vesselType}
                             </p>
                           </div>
 
@@ -1845,7 +1923,7 @@ export default function BakingPlanner() {
 
                   <NumberInput
                     label="Pre-Baked Unit Dough Weight"
-                    value={selectedRecipe.preBakeUnitWeight}
+                    value={formatNumber(selectedRecipe.preBakeUnitWeight, 2)}
                     onChange={(v) =>
                       updateRecipeField("preBakeUnitWeight", Number(v))
                     }
@@ -2183,10 +2261,7 @@ export default function BakingPlanner() {
                     label="Starter Name"
                     value={settings.starterName || ""}
                     onChange={(v) =>
-                      setSettings((p) => ({
-                        ...p,
-                        starterName: v
-                      }))
+                      updateSettingField("starterName", v)
                     }
                     placeholder="Optional, e.g. Doughlene, Bertha, Bready Mercury"
                   />
@@ -2197,10 +2272,7 @@ export default function BakingPlanner() {
                       className="text-field"
                       value={settings.useStarterNameInLabels ? "yes" : "no"}
                       onChange={(e) =>
-                        setSettings((p) => ({
-                          ...p,
-                          useStarterNameInLabels: e.target.value === "yes"
-                        }))
+                        updateSettingField("useStarterNameInLabels", e.target.value === "yes")
                       }
                     >
                       <option value="no">No, keep standard labels</option>
@@ -2212,10 +2284,7 @@ export default function BakingPlanner() {
                     label={starterHydrationLabel}
                     value={settings.starterHydrationPct}
                     onChange={(v) =>
-                      setSettings((p) => ({
-                        ...p,
-                        starterHydrationPct: Number(v)
-                      }))
+                      updateSettingField("starterHydrationPct", Number(v))
                     }
                     suffix="%"
                   />
@@ -2223,13 +2292,59 @@ export default function BakingPlanner() {
                     label={starterBufferLabel}
                     value={settings.levainBufferPct}
                     onChange={(v) =>
-                      setSettings((p) => ({
-                        ...p,
-                        levainBufferPct: Number(v)
-                      }))
+                      updateSettingField("levainBufferPct", Number(v))
                     }
                     suffix="%"
                   />
+
+                  <label className="field">
+                    <span>Feeding Ratio</span>
+                    <select
+                      className="text-field"
+                      value={settings.starterFeedingPreset || "custom"}
+                      onChange={(e) => updateStarterFeedingPreset(e.target.value)}
+                    >
+                      <option value="1:1:1">1:1:1</option>
+                      <option value="1:2:2">1:2:2</option>
+                      <option value="1:3:3">1:3:3</option>
+                      <option value="1:5:5">1:5:5</option>
+                      <option value="custom">Custom</option>
+                    </select>
+                  </label>
+
+                  <div className="grid three">
+                    <NumberInput
+                      label="Seed Parts"
+                      value={settings.starterSeedParts}
+                      onChange={(v) => {
+                        updateSettingField("starterFeedingPreset", "custom");
+                        updateSettingField("starterSeedParts", Number(v));
+                      }}
+                      min={0}
+                    />
+                    <NumberInput
+                      label="Flour Parts"
+                      value={settings.starterFlourParts}
+                      onChange={(v) => {
+                        updateSettingField("starterFeedingPreset", "custom");
+                        updateSettingField("starterFlourParts", Number(v));
+                      }}
+                      min={0}
+                    />
+                    <NumberInput
+                      label="Water Parts"
+                      value={settings.starterWaterParts}
+                      onChange={(v) => {
+                        updateSettingField("starterFeedingPreset", "custom");
+                        updateSettingField("starterWaterParts", Number(v));
+                      }}
+                      min={0}
+                    />
+                  </div>
+
+                  <p className="pill">
+                    Current feed: <strong>{levain.ratioLabel}</strong> seed : flour : water
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -2244,23 +2359,23 @@ export default function BakingPlanner() {
               />
               <StatCard
                 icon={Wheat}
-                label="Flour for Levain"
+                label={starterFlourLabel}
                 value={formatWeight(levain.flour)}
-                sub={starterFlourSub}
+                sub={starterFeedRatioLabel}
                 accent="market"
               />
               <StatCard
                 icon={Droplets}
-                label="Water for Levain"
+                label={starterWaterLabel}
                 value={formatWeight(levain.water)}
-                sub={starterWaterSub}
+                sub={starterFeedRatioLabel}
                 accent="pricing"
               />
               <StatCard
                 icon={ChefHat}
                 label={starterSeedLabel}
                 value={formatWeight(levain.seedStarter)}
-                sub="editable later as preferment ratios are added"
+                sub={starterFeedRatioLabel}
                 accent="grant"
               />
             </div>
