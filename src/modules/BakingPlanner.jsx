@@ -197,7 +197,9 @@ const defaultSettings = {
   mixerCapacityG: 7000,
   proofingCapacityUnits: 24,
   defaultStartTime: "06:00",
-  bakingPlannerMode: ""
+  bakingPlannerMode: "",
+  starterName: "",
+  useStarterNameInLabels: false
 };
 
 function loadFromStorage(key, fallback) {
@@ -1066,6 +1068,22 @@ export default function BakingPlanner() {
   }
 
   const isAdvancedMode = settings.bakingPlannerMode === "advanced";
+  const trimmedStarterName = String(settings.starterName || "").trim();
+  const shouldUseStarterName = Boolean(
+    trimmedStarterName && settings.useStarterNameInLabels
+  );
+  const starterDisplayName = shouldUseStarterName
+    ? trimmedStarterName
+    : "Preferment";
+  const starterSeedLabel = shouldUseStarterName
+    ? `Seed ${trimmedStarterName} Estimate`
+    : "Seed Starter / Preferment Estimate";
+  const starterFlourSub = shouldUseStarterName
+    ? `for ${trimmedStarterName} at ${settings.starterHydrationPct}% hydration`
+    : `${settings.starterHydrationPct}% hydration`;
+  const starterWaterSub = shouldUseStarterName
+    ? `for ${trimmedStarterName}`
+    : "for preferment build";
 
   async function savePlannerData() {
     const normalizedRecipes = recipes.map(normalizeRecipe);
@@ -2140,6 +2158,35 @@ export default function BakingPlanner() {
                 </p>
 
                 <div className="stack">
+                  <TextInput
+                    label="Starter Name"
+                    value={settings.starterName || ""}
+                    onChange={(v) =>
+                      setSettings((p) => ({
+                        ...p,
+                        starterName: v
+                      }))
+                    }
+                    placeholder="Optional, e.g. Doughlene, Bertha, Bready Mercury"
+                  />
+
+                  <label className="field">
+                    <span>Use Starter Name in Labels</span>
+                    <select
+                      className="text-field"
+                      value={settings.useStarterNameInLabels ? "yes" : "no"}
+                      onChange={(e) =>
+                        setSettings((p) => ({
+                          ...p,
+                          useStarterNameInLabels: e.target.value === "yes"
+                        }))
+                      }
+                    >
+                      <option value="no">No, keep standard labels</option>
+                      <option value="yes">Yes, use the starter name</option>
+                    </select>
+                  </label>
+
                   <NumberInput
                     label="Starter Hydration"
                     value={settings.starterHydrationPct}
@@ -2169,7 +2216,7 @@ export default function BakingPlanner() {
             <div className="hubStatGrid starterStatsGrid">
               <StatCard
                 icon={FlaskConical}
-                label="Total Mature Preferment"
+                label={`Total Mature ${starterDisplayName}`}
                 value={formatWeight(levain.totalLevain)}
                 sub="including buffer"
                 accent="sourdough"
@@ -2178,19 +2225,19 @@ export default function BakingPlanner() {
                 icon={Wheat}
                 label="Flour for Levain"
                 value={formatWeight(levain.flour)}
-                sub={`${settings.starterHydrationPct}% hydration`}
+                sub={starterFlourSub}
                 accent="market"
               />
               <StatCard
                 icon={Droplets}
                 label="Water for Levain"
                 value={formatWeight(levain.water)}
-                sub="for preferment build"
+                sub={starterWaterSub}
                 accent="pricing"
               />
               <StatCard
                 icon={ChefHat}
-                label="Seed Starter / Preferment Estimate"
+                label={starterSeedLabel}
                 value={formatWeight(levain.seedStarter)}
                 sub="editable later as preferment ratios are added"
                 accent="grant"
