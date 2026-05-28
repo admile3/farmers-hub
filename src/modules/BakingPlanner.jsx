@@ -19,7 +19,8 @@ import {
   FlaskConical,
   Save,
   Copy,
-  Cloud
+  Cloud,
+  Package
 } from "lucide-react";
 import "./bakingPlanner.css";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
@@ -212,6 +213,84 @@ const starterFeedingPresets = {
   "1:3:3": { seed: 1, flour: 3, water: 3 },
   "1:5:5": { seed: 1, flour: 5, water: 5 }
 };
+
+const pantryCategories = [
+  "Flour",
+  "Grain",
+  "Starter",
+  "Sweetener",
+  "Fat",
+  "Salt",
+  "Dairy",
+  "Add-In",
+  "Seed",
+  "Spice",
+  "Packaging",
+  "Other"
+];
+
+const pantryUnits = ["g", "kg", "oz", "lb"];
+
+const blankPantryItem = {
+  id: "",
+  name: "",
+  category: "Flour",
+  source: "",
+  packageSize: "",
+  packageUnit: "lb",
+  packageCost: "",
+  notes: ""
+};
+
+const unitToGrams = {
+  g: 1,
+  kg: 1000,
+  oz: 28.349523125,
+  lb: 453.59237
+};
+
+function makeId(prefix = "item") {
+  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function convertToGrams(size, unit) {
+  return (Number(size) || 0) * (unitToGrams[unit] || 1);
+}
+
+function formatMoney(value, digits = 4) {
+  const number = Number(value) || 0;
+
+  return number.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: number > 0 && number < 1 ? digits : 2,
+    maximumFractionDigits: number > 0 && number < 1 ? digits : 2
+  });
+}
+
+function normalizePantryItem(item = {}) {
+  const packageSize = item.packageSize === "" ? "" : Number(item.packageSize) || 0;
+  const packageCost = item.packageCost === "" ? "" : Number(item.packageCost) || 0;
+  const packageUnit = pantryUnits.includes(item.packageUnit) ? item.packageUnit : "lb";
+  const packageGrams = convertToGrams(packageSize, packageUnit);
+  const costPerGram =
+    packageGrams > 0 && Number(packageCost) > 0
+      ? Number(packageCost) / packageGrams
+      : 0;
+
+  return {
+    ...blankPantryItem,
+    ...item,
+    id: item.id || makeId("pantry"),
+    packageSize,
+    packageUnit,
+    packageCost,
+    packageGrams,
+    costPerGram,
+    costPerOunce: costPerGram * 28.349523125,
+    costPerPound: costPerGram * 453.59237
+  };
+}
 
 function loadFromStorage(key, fallback) {
   try {
@@ -884,6 +963,10 @@ export default function BakingPlanner() {
   const [productionItems, setProductionItems] = useState(() =>
     loadFromStorage("bakingPlannerProductionItems", [])
   );
+  const [pantryItems, setPantryItems] = useState(() =>
+    loadFromStorage("bakingPlannerPantryItems", []).map(normalizePantryItem)
+  );
+  const [pantryDraft, setPantryDraft] = useState(blankPantryItem);
   const [selectedRecipeId, setSelectedRecipeId] = useState(
     recipes[0]?.id || ""
   );
@@ -931,11 +1014,18 @@ export default function BakingPlanner() {
             setProductionItems([]);
           }
 
+          if (Array.isArray(data.pantryItems)) {
+            setPantryItems(data.pantryItems.map(normalizePantryItem));
+          } else {
+            setPantryItems([]);
+          }
+
           setCloudStatus("Cloud data loaded");
         } else {
           setRecipes([]);
           setSelectedRecipeId("");
           setProductionItems([]);
+          setPantryItems([]);
           setCloudStatus("No cloud save yet");
         }
       } catch (error) {
@@ -1195,6 +1285,7 @@ export default function BakingPlanner() {
     saveToStorage("bakingPlannerEnv", env);
     saveToStorage("bakingPlannerProductionDate", productionItems.length ? productionDate : "");
     saveToStorage("bakingPlannerProductionItems", productionItems);
+    saveToStorage("bakingPlannerPantryItems", pantryItems.map(normalizePantryItem));
 
     const savedTime = new Date().toLocaleTimeString("en-US", {
       hour: "numeric",
@@ -1223,6 +1314,7 @@ export default function BakingPlanner() {
           env,
           productionDate: productionItems.length ? productionDate : "",
           productionItems,
+          pantryItems: pantryItems.map(normalizePantryItem),
           updatedAt: serverTimestamp()
         },
         { merge: true }
@@ -1504,6 +1596,54 @@ export default function BakingPlanner() {
     setSelectedRecipeId(remainingRecipes[0]?.id || "");
   }
 
+  function updatePantryDraft(field, value) {
+    setPantryDraft((previous) => ({
+      ...previous,
+      [field]: value
+    }));
+  }
+
+  function addPantryItem() {
+    const cleanName = String(pantryDraft.name || "").trim();
+
+    if (!cleanName) return;
+
+    markBakingDirty();
+
+    const item = normalizePantryItem({
+      ...pantryDraft,
+      id: makeId("pantry"),
+      name: cleanName,
+      source: String(pantryDraft.source || "").trim(),
+      notes: String(pantryDraft.notes || "").trim()
+    });
+
+    setPantryItems((previous) =>
+      [...previous, item].sort((a, b) => a.name.localeCompare(b.name))
+    );
+    setPantryDraft(blankPantryItem);
+  }
+
+  function updatePantryItem(itemId, field, value) {
+    markBakingDirty();
+
+    setPantryItems((previous) =>
+      previous.map((item) =>
+        item.id === itemId
+          ? normalizePantryItem({
+              ...item,
+              [field]: value
+            })
+          : item
+      )
+    );
+  }
+
+  function deletePantryItem(itemId) {
+    markBakingDirty();
+    setPantryItems((previous) => previous.filter((item) => item.id !== itemId));
+  }
+
   const tabButton = (id, label, Icon) => (
     <button
       onClick={() => setActiveTab(id)}
@@ -1606,6 +1746,7 @@ export default function BakingPlanner() {
           {tabButton("planner", "Bake Plan", ClipboardList)}
           {tabButton("recipes", "Recipes", BookOpen)}
           {tabButton("starter", "Starter", FlaskConical)}
+          {tabButton("pantry", "Pantry", Package)}
           {tabButton("sheet", "Production Sheet", Printer)}
           {tabButton("settings", "Settings", Settings)}
         </nav>
@@ -2379,6 +2520,282 @@ export default function BakingPlanner() {
                 accent="grant"
               />
             </div>
+          </div>
+        )}
+
+        {activeTab === "pantry" && (
+          <div className="layout">
+            <Card>
+              <CardContent className="panel">
+                <div className="section-head">
+                  <div>
+                    <h2>Pantry</h2>
+                    <p>
+                      Save ingredient package sizes, sources, and costs. This will
+                      become the foundation for package pull estimates and batch costing.
+                    </p>
+                  </div>
+
+                  <Button
+                    className={hasUnsavedChanges ? "dirtySaveButton" : ""}
+                    onClick={savePlannerData}
+                    disabled={cloudLoading}
+                  >
+                    <Save size={16} /> {hasUnsavedChanges ? "Save Changes" : "Save"}
+                  </Button>
+                </div>
+
+                <div className="soft-panel">
+                  <h3>Add Pantry Item</h3>
+                  <div className="grid three">
+                    <TextInput
+                      label="Ingredient Name"
+                      value={pantryDraft.name}
+                      onChange={(value) => updatePantryDraft("name", value)}
+                      placeholder="Bread Flour"
+                    />
+
+                    <label className="field">
+                      <span>Category</span>
+                      <select
+                        className="text-field"
+                        value={pantryDraft.category}
+                        onChange={(event) =>
+                          updatePantryDraft("category", event.target.value)
+                        }
+                      >
+                        {pantryCategories.map((category) => (
+                          <option key={category}>{category}</option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <TextInput
+                      label="Source / Vendor"
+                      value={pantryDraft.source}
+                      onChange={(value) => updatePantryDraft("source", value)}
+                      placeholder="Restaurant Depot, Azure, Costco"
+                    />
+
+                    <NumberInput
+                      label="Package Size"
+                      value={pantryDraft.packageSize}
+                      onChange={(value) =>
+                        updatePantryDraft("packageSize", Number(value))
+                      }
+                      min={0}
+                    />
+
+                    <label className="field">
+                      <span>Package Unit</span>
+                      <select
+                        className="text-field"
+                        value={pantryDraft.packageUnit}
+                        onChange={(event) =>
+                          updatePantryDraft("packageUnit", event.target.value)
+                        }
+                      >
+                        {pantryUnits.map((unit) => (
+                          <option key={unit} value={unit}>
+                            {unit}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <NumberInput
+                      label="Package Cost"
+                      value={pantryDraft.packageCost}
+                      onChange={(value) =>
+                        updatePantryDraft("packageCost", Number(value))
+                      }
+                      min={0}
+                      step="0.01"
+                      suffix="$"
+                    />
+
+                    <label className="field span-two">
+                      <span>Notes</span>
+                      <textarea
+                        className="text-field"
+                        value={pantryDraft.notes}
+                        onChange={(event) =>
+                          updatePantryDraft("notes", event.target.value)
+                        }
+                        placeholder="Optional SKU, brand, protein %, storage note, or preferred use."
+                      />
+                    </label>
+
+                    <div className="field">
+                      <span>Calculated Cost</span>
+                      <div className="pill">
+                        {(() => {
+                          const preview = normalizePantryItem(pantryDraft);
+                          return preview.costPerGram
+                            ? `${formatMoney(preview.costPerPound, 2)} / lb`
+                            : "Enter size and cost";
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="button-row" style={{ marginTop: "16px" }}>
+                    <Button onClick={addPantryItem}>
+                      <Plus size={16} /> Add to Pantry
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="soft-panel">
+                  <div className="section-head">
+                    <div>
+                      <h3>Saved Pantry Items</h3>
+                      <p className="muted small">
+                        Edit package sizes, units, source, and costs here. Cost
+                        per gram, ounce, and pound updates automatically.
+                      </p>
+                    </div>
+                    <span className="pill">
+                      {pantryItems.length} item{pantryItems.length === 1 ? "" : "s"}
+                    </span>
+                  </div>
+
+                  {pantryItems.length ? (
+                    <div className="table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Ingredient</th>
+                            <th>Category</th>
+                            <th>Source</th>
+                            <th>Package</th>
+                            <th>Cost</th>
+                            <th>Cost / g</th>
+                            <th>Cost / oz</th>
+                            <th>Cost / lb</th>
+                            <th>Notes</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pantryItems.map((item, index) => (
+                            <tr key={item.id} className={index % 2 ? "" : "alt"}>
+                              <td>
+                                <input
+                                  className="text-field"
+                                  value={item.name}
+                                  onChange={(event) =>
+                                    updatePantryItem(item.id, "name", event.target.value)
+                                  }
+                                />
+                              </td>
+                              <td>
+                                <select
+                                  className="text-field"
+                                  value={item.category}
+                                  onChange={(event) =>
+                                    updatePantryItem(item.id, "category", event.target.value)
+                                  }
+                                >
+                                  {pantryCategories.map((category) => (
+                                    <option key={category}>{category}</option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td>
+                                <input
+                                  className="text-field"
+                                  value={item.source}
+                                  onChange={(event) =>
+                                    updatePantryItem(item.id, "source", event.target.value)
+                                  }
+                                />
+                              </td>
+                              <td>
+                                <div className="grid two">
+                                  <input
+                                    className="text-field"
+                                    type="number"
+                                    min="0"
+                                    step="any"
+                                    value={item.packageSize}
+                                    onChange={(event) =>
+                                      updatePantryItem(
+                                        item.id,
+                                        "packageSize",
+                                        Number(event.target.value)
+                                      )
+                                    }
+                                  />
+                                  <select
+                                    className="text-field"
+                                    value={item.packageUnit}
+                                    onChange={(event) =>
+                                      updatePantryItem(
+                                        item.id,
+                                        "packageUnit",
+                                        event.target.value
+                                      )
+                                    }
+                                  >
+                                    {pantryUnits.map((unit) => (
+                                      <option key={unit} value={unit}>
+                                        {unit}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </td>
+                              <td>
+                                <input
+                                  className="text-field"
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={item.packageCost}
+                                  onChange={(event) =>
+                                    updatePantryItem(
+                                      item.id,
+                                      "packageCost",
+                                      Number(event.target.value)
+                                    )
+                                  }
+                                />
+                              </td>
+                              <td>{formatMoney(item.costPerGram, 4)}</td>
+                              <td>{formatMoney(item.costPerOunce, 4)}</td>
+                              <td>{formatMoney(item.costPerPound, 2)}</td>
+                              <td>
+                                <textarea
+                                  className="text-field"
+                                  value={item.notes}
+                                  onChange={(event) =>
+                                    updatePantryItem(item.id, "notes", event.target.value)
+                                  }
+                                />
+                              </td>
+                              <td>
+                                <Button
+                                  variant="outline"
+                                  onClick={() => deletePantryItem(item.id)}
+                                >
+                                  <Trash2 size={16} /> Delete
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="notice good-box">
+                      No pantry items yet. Add flour, salt, sugar, butter, seeds,
+                      packaging, or other recurring baking supplies above.
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 
