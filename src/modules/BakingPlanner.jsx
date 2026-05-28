@@ -1075,6 +1075,30 @@ export default function BakingPlanner() {
   const starterDisplayName = shouldUseStarterName
     ? trimmedStarterName
     : "Preferment";
+  const starterRecipeLabel = shouldUseStarterName
+    ? trimmedStarterName
+    : "Starter / Levain";
+  const starterNeededLabel = shouldUseStarterName
+    ? `${trimmedStarterName} Needed`
+    : "Preferment Needed";
+  const starterBufferSub = shouldUseStarterName
+    ? `includes ${settings.levainBufferPct}% ${trimmedStarterName} buffer`
+    : `includes ${settings.levainBufferPct}% preferment buffer`;
+  const starterBuilderTitle = shouldUseStarterName
+    ? `${trimmedStarterName} Builder`
+    : "Starter / Preferment Builder";
+  const starterBuilderDescription = shouldUseStarterName
+    ? `This uses the total ${trimmedStarterName} required across the active bake plan and adds your saved buffer.`
+    : "This uses the total starter or preferment required across the active bake plan and adds your saved buffer.";
+  const starterHydrationLabel = shouldUseStarterName
+    ? `${trimmedStarterName} Hydration`
+    : "Starter Hydration";
+  const starterBufferLabel = shouldUseStarterName
+    ? `${trimmedStarterName} Buffer`
+    : "Preferment Buffer";
+  const matureStarterPullLabel = shouldUseStarterName
+    ? `Mature ${trimmedStarterName}`
+    : "Mature Starter / Preferment";
   const starterSeedLabel = shouldUseStarterName
     ? `Seed ${trimmedStarterName} Estimate`
     : "Seed Starter / Preferment Estimate";
@@ -1671,9 +1695,9 @@ export default function BakingPlanner() {
               />
               <StatCard
                 icon={Wheat}
-                label="Preferment Needed"
+                label={starterNeededLabel}
                 value={formatWeight(totals.bufferedStarterG)}
-                sub={`includes ${settings.levainBufferPct}% preferment buffer`}
+                sub={starterBufferSub}
                 accent="market"
               />
               <StatCard
@@ -1854,7 +1878,7 @@ export default function BakingPlanner() {
                   />
 
                   <NumberInput
-                    label="Starter / Levain"
+                    label={starterRecipeLabel}
                     value={selectedRecipe.starterPct}
                     onChange={(v) =>
                       updateRecipeField("starterPct", Number(v))
@@ -2151,11 +2175,8 @@ export default function BakingPlanner() {
           <div className="layout starterLayout">
             <Card className="starterSettingsCard">
               <CardContent className="panel">
-                <h2>Starter / Preferment Builder</h2>
-                <p>
-                  This uses the total starter or preferment required across the active bake
-                  plan and adds your saved buffer.
-                </p>
+                <h2>{starterBuilderTitle}</h2>
+                <p>{starterBuilderDescription}</p>
 
                 <div className="stack">
                   <TextInput
@@ -2188,7 +2209,7 @@ export default function BakingPlanner() {
                   </label>
 
                   <NumberInput
-                    label="Starter Hydration"
+                    label={starterHydrationLabel}
                     value={settings.starterHydrationPct}
                     onChange={(v) =>
                       setSettings((p) => ({
@@ -2199,7 +2220,7 @@ export default function BakingPlanner() {
                     suffix="%"
                   />
                   <NumberInput
-                    label="Preferment Buffer"
+                    label={starterBufferLabel}
                     value={settings.levainBufferPct}
                     onChange={(v) =>
                       setSettings((p) => ({
@@ -2337,7 +2358,7 @@ export default function BakingPlanner() {
                         </div>
                       ) : null}
                       <div className="line-item">
-                        <span>Mature Starter / Preferment</span>
+                        <span>{matureStarterPullLabel}</span>
                         <strong>{formatWeight(totals.bufferedStarterG)}</strong>
                       </div>
                       <div className="line-item">
