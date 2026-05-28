@@ -25,6 +25,7 @@ import "./bakingPlanner.css";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../AuthContext.jsx";
+import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import StatCard from "../components/StatCard.jsx";
 
 function Card({ children, className = "" }) {
@@ -844,6 +845,7 @@ function TextInput({ label, value, onChange, placeholder = "" }) {
 
 export default function BakingPlanner() {
   const { user } = useAuth();
+  const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } = useUnsavedChanges();
 
   const [activeTab, setActiveTab] = useState("planner");
   const [cloudLoading, setCloudLoading] = useState(false);
@@ -868,6 +870,13 @@ export default function BakingPlanner() {
     recipes[0]?.id || ""
   );
   const [lastSavedAt, setLastSavedAt] = useState("");
+
+  function markBakingDirty() {
+    markUnsaved({
+      source: "Baking Planner",
+      onSave: savePlannerData
+    });
+  }
 
   useEffect(() => {
     async function loadCloudData() {
@@ -1044,6 +1053,7 @@ export default function BakingPlanner() {
   }, [recipes, productionItems]);
 
   function setBakingPlannerMode(mode) {
+    markBakingDirty();
     setSettings((previous) => {
       const next = {
         ...previous,
@@ -1075,6 +1085,7 @@ export default function BakingPlanner() {
 
     if (!user) {
       setCloudStatus("Saved locally");
+      markSaved();
       return;
     }
 
@@ -1098,6 +1109,7 @@ export default function BakingPlanner() {
       );
 
       setCloudStatus(`Cloud saved at ${savedTime}`);
+      markSaved();
     } catch (error) {
       console.error(error);
       setCloudStatus("Cloud save failed");
@@ -1107,6 +1119,7 @@ export default function BakingPlanner() {
   }
 
   function updateRecipeField(field, value) {
+    markBakingDirty();
     if (!selectedRecipe) return;
 
     setRecipes((prev) =>
@@ -1153,6 +1166,7 @@ export default function BakingPlanner() {
   }
 
   function updateRecipeProcess(field, value) {
+    markBakingDirty();
     setRecipes((prev) =>
       prev.map((r) =>
         r.id === selectedRecipe.id
@@ -1169,6 +1183,7 @@ export default function BakingPlanner() {
   }
 
   function updateFlourType(index, field, value) {
+    markBakingDirty();
     setRecipes((prev) =>
       prev.map((recipe) => {
         if (recipe.id !== selectedRecipe.id) return recipe;
@@ -1188,6 +1203,7 @@ export default function BakingPlanner() {
   }
 
   function addFlourType() {
+    markBakingDirty();
     setRecipes((prev) =>
       prev.map((recipe) =>
         recipe.id === selectedRecipe.id
@@ -1201,6 +1217,7 @@ export default function BakingPlanner() {
   }
 
   function deleteFlourType(index) {
+    markBakingDirty();
     setRecipes((prev) =>
       prev.map((recipe) => {
         if (recipe.id !== selectedRecipe.id) return recipe;
@@ -1218,6 +1235,7 @@ export default function BakingPlanner() {
   }
 
   function updateOtherIngredient(index, field, value) {
+    markBakingDirty();
     setRecipes((prev) =>
       prev.map((recipe) => {
         if (recipe.id !== selectedRecipe.id) return recipe;
@@ -1237,6 +1255,7 @@ export default function BakingPlanner() {
   }
 
   function addOtherIngredient() {
+    markBakingDirty();
     setRecipes((prev) =>
       prev.map((recipe) =>
         recipe.id === selectedRecipe.id
@@ -1253,6 +1272,7 @@ export default function BakingPlanner() {
   }
 
   function deleteOtherIngredient(index) {
+    markBakingDirty();
     setRecipes((prev) =>
       prev.map((recipe) =>
         recipe.id === selectedRecipe.id
@@ -1268,6 +1288,7 @@ export default function BakingPlanner() {
   }
 
   function addRecipeToCycle(recipeId) {
+    markBakingDirty();
     if (!recipeId) return;
 
     setProductionItems((prev) => {
@@ -1277,6 +1298,7 @@ export default function BakingPlanner() {
   }
 
   function updateCycleQuantity(recipeId, quantity) {
+    markBakingDirty();
     setProductionItems((prev) =>
       prev.map((item) =>
         item.recipeId === recipeId
@@ -1287,14 +1309,17 @@ export default function BakingPlanner() {
   }
 
   function removeRecipeFromCycle(recipeId) {
+    markBakingDirty();
     setProductionItems((prev) => prev.filter((item) => item.recipeId !== recipeId));
   }
 
   function clearCycle() {
+    markBakingDirty();
     setProductionItems([]);
   }
 
   function addRecipe() {
+    markBakingDirty();
     const id = `recipe-${Date.now()}`;
 
     const base = normalizeRecipe({
@@ -1341,6 +1366,7 @@ export default function BakingPlanner() {
   }
 
   function duplicateRecipe() {
+    markBakingDirty();
     const id = `${selectedRecipe.id}-copy-${Date.now()}`;
     setRecipes((prev) => [
       ...prev,
@@ -1350,6 +1376,7 @@ export default function BakingPlanner() {
   }
 
   function deleteRecipe(id) {
+    markBakingDirty();
     const remainingRecipes = recipes.filter((r) => r.id !== id);
 
     setRecipes(remainingRecipes);
@@ -1368,7 +1395,7 @@ export default function BakingPlanner() {
   );
 
   return (
-    <div className="bakingPlanner">
+    <div className="bakingPlanner" onChangeCapture={markBakingDirty}>
       {!settings.bakingPlannerMode ? (
         <div className="bakingModeOverlay" role="dialog" aria-modal="true">
           <div className="bakingModeModal">
@@ -1429,8 +1456,13 @@ export default function BakingPlanner() {
                 sheet for your bake day.
               </p>
               <div className="button-row" style={{ marginTop: "14px" }}>
-                <Button variant="outline" onClick={savePlannerData} disabled={cloudLoading}>
-                  <Cloud size={16} /> {cloudLoading ? "Syncing..." : "Save / Sync"}
+                <Button
+                  variant="outline"
+                  className={hasUnsavedChanges ? "dirtySaveButton" : ""}
+                  onClick={savePlannerData}
+                  disabled={cloudLoading}
+                >
+                  <Cloud size={16} /> {cloudLoading ? "Syncing..." : hasUnsavedChanges ? "Save Changes" : "Save / Sync"}
                 </Button>
                 <span className="pill">
                   {user?.displayName || user?.email || "Local user"} • {cloudStatus}
@@ -1718,8 +1750,11 @@ export default function BakingPlanner() {
                     )}
                   </div>
                   <div className="button-row">
-                    <Button onClick={savePlannerData}>
-                      <Save size={16} /> Save
+                    <Button
+                      className={hasUnsavedChanges ? "dirtySaveButton" : ""}
+                      onClick={savePlannerData}
+                    >
+                      <Save size={16} /> {hasUnsavedChanges ? "Save Changes" : "Save"}
                     </Button>
                     <Button variant="outline" onClick={duplicateRecipe}>
                       <Copy size={16} /> Duplicate
