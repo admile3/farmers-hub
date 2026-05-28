@@ -10,6 +10,7 @@ import {
   Trash2
 } from "lucide-react";
 import { useAuth } from "../AuthContext.jsx";
+import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import {
   deletePricingCalculation,
   getPricingCalculations,
@@ -139,6 +140,12 @@ function createBlankCalculation() {
 
 export default function PricingCalculator() {
   const { user, loginWithGoogle } = useAuth();
+  const {
+    isDirty: hasUnsavedChanges,
+    markUnsaved,
+    markSaved
+  } = useUnsavedChanges();
+
 
   const setupRef = useRef(null);
   const calculatorRef = useRef(null);
@@ -169,6 +176,13 @@ export default function PricingCalculator() {
     targetMargin: 70,
     notes: ""
   });
+
+  function markPricingDirty() {
+    markUnsaved({
+      source: "Pricing Calculator",
+      onSave: saveCalculation
+    });
+  }
 
   useEffect(() => {
     function handleScroll() {
@@ -270,6 +284,7 @@ export default function PricingCalculator() {
   }
 
   function startNewCalculation() {
+    markPricingDirty();
     const blank = createBlankCalculation();
 
     setCalculationId(blank.id);
@@ -281,6 +296,8 @@ export default function PricingCalculator() {
   }
 
   function loadSampleItems() {
+    markPricingDirty();
+
     if (items.length > 0) {
       const confirmed = window.confirm(
         "This will add sample pricing items to the current sheet. Continue?"
@@ -314,6 +331,7 @@ export default function PricingCalculator() {
       const savedId = await savePricingCalculation(user.uid, calculation);
       setCalculationId(savedId);
       setStatusMessage("Pricing sheet saved.");
+      markSaved();
       await loadSavedCalculations();
     } catch (error) {
       console.error(error);
@@ -325,6 +343,7 @@ export default function PricingCalculator() {
 
   async function removeSavedCalculation(id) {
     if (!user) return;
+    if (calculationId === id) markPricingDirty();
 
     try {
       await deletePricingCalculation(user.uid, id);
@@ -342,12 +361,15 @@ export default function PricingCalculator() {
   }
 
   function updateItem(id, field, value) {
+    markPricingDirty();
+
     setItems((current) =>
       current.map((item) => (item.id === id ? { ...item, [field]: value } : item))
     );
   }
 
   function removeItem(id) {
+    markPricingDirty();
     setItems((current) => current.filter((item) => item.id !== id));
   }
 
@@ -358,6 +380,8 @@ export default function PricingCalculator() {
       setStatusMessage("Product name is required.");
       return;
     }
+
+    markPricingDirty();
 
     setItems((current) => [
       ...current,
@@ -426,7 +450,7 @@ export default function PricingCalculator() {
 
   if (!user) {
     return (
-      <div className="modulePage pricingPage compactSpicePage">
+      <div className="modulePage pricingPage compactSpicePage" onChangeCapture={markPricingDirty}>
         <section className="moduleHero compactHero">
           <div>
             <p className="eyebrow">Pricing Calculator</p>
@@ -446,7 +470,7 @@ export default function PricingCalculator() {
   }
 
   return (
-    <div className="modulePage pricingPage compactSpicePage">
+    <div className="modulePage pricingPage compactSpicePage" onChangeCapture={markPricingDirty}>
       <section className="moduleHero compactHero noActionHero">
         <div>
           <p className="eyebrow">Pricing Calculator</p>
@@ -515,13 +539,13 @@ export default function PricingCalculator() {
               </button>
 
               <button
-                className="primaryButton compactPrimary"
+                className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`}
                 type="button"
                 onClick={saveCalculation}
                 disabled={saving}
               >
                 <Save size={15} />
-                {saving ? "Saving..." : "Save"}
+                {saving ? "Saving..." : hasUnsavedChanges ? "Save Changes" : "Save"}
               </button>
             </div>
           </div>
@@ -860,13 +884,13 @@ export default function PricingCalculator() {
             </button>
 
             <button
-              className="primaryButton compactPrimary"
+              className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`}
               type="button"
               onClick={saveCalculation}
               disabled={saving}
             >
               <Save size={15} />
-              {saving ? "Saving..." : "Save Changes"}
+              {saving ? "Saving..." : hasUnsavedChanges ? "Save Changes" : "Save"}
             </button>
           </div>
         </div>
