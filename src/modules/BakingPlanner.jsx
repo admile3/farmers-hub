@@ -1705,7 +1705,7 @@ export default function BakingPlanner() {
       <div className="page">
         <header className="hero">
           <div className="hero-inner">
-            <div>
+            <div className="hero-copy">
               <div className="eyebrow">
                 <Wheat size={16} /> Baking Planner
               </div>
@@ -1729,7 +1729,7 @@ export default function BakingPlanner() {
                 </span>
               </div>
             </div>
-            <div className="hero-stats">
+            <div className="hero-stats hero-actions">
               <div>
                 <p>Products</p>
                 <strong>{recipes.length}</strong>
@@ -1738,6 +1738,17 @@ export default function BakingPlanner() {
                 <p>Planned Units</p>
                 <strong>{round(totals.units)}</strong>
               </div>
+              <button
+                className={activeTab === "settings" ? "hero-settings-card active" : "hero-settings-card"}
+                type="button"
+                onClick={() => setActiveTab("settings")}
+              >
+                <Settings size={18} />
+                <span>
+                  <p>Settings</p>
+                  <strong>Open</strong>
+                </span>
+              </button>
             </div>
           </div>
         </header>
@@ -1748,7 +1759,6 @@ export default function BakingPlanner() {
           {tabButton("starter", "Starter", FlaskConical)}
           {tabButton("pantry", "Pantry", Package)}
           {tabButton("sheet", "Production Sheet", Printer)}
-          {tabButton("settings", "Settings", Settings)}
         </nav>
 
         {activeTab === "planner" && (
