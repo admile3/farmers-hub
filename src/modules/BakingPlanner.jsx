@@ -366,6 +366,57 @@ function formatPackagePull(row) {
 }
 
 
+function buildPlanCostRows(plan, pantryItems, starterLabel, includeBuffer = false, ingredientBufferPct = 0) {
+  if (!plan) return [];
+
+  const multiplier = includeBuffer ? 1 + (Number(ingredientBufferPct) || 0) / 100 : 1;
+  const rows = [];
+
+  plan.flourBreakdown.forEach((flour) => {
+    rows.push(buildIngredientPullRow(flour.name, flour.grams * multiplier, pantryItems));
+  });
+
+  rows.push(buildIngredientPullRow("Water", plan.waterG * multiplier, pantryItems));
+
+  if (plan.bassinageWaterG > 0) {
+    rows.push(buildIngredientPullRow("Bassinage Water", plan.bassinageWaterG * multiplier, pantryItems));
+  }
+
+  rows.push(buildIngredientPullRow(starterLabel, plan.starterG * multiplier, pantryItems));
+  rows.push(buildIngredientPullRow("Salt", plan.saltG * multiplier, pantryItems));
+
+  plan.otherBreakdown.forEach((ingredient) => {
+    rows.push(buildIngredientPullRow(ingredient.name, ingredient.grams * multiplier, pantryItems));
+  });
+
+  return rows.filter((row) => row.grams > 0);
+}
+
+function calculatePlanIngredientCost(plan, pantryItems, starterLabel, includeBuffer = false, ingredientBufferPct = 0) {
+  const rows = buildPlanCostRows(
+    plan,
+    pantryItems,
+    starterLabel,
+    includeBuffer,
+    ingredientBufferPct
+  );
+
+  const totalCost = rows.reduce((sum, row) => sum + (row.estimatedCost || 0), 0);
+  const matchedRows = rows.filter((row) => row.pantryItem).length;
+  const totalRows = rows.length;
+  const unmatchedRows = rows.filter((row) => !row.pantryItem);
+
+  return {
+    rows,
+    totalCost,
+    costPerUnit: plan?.quantity ? totalCost / plan.quantity : totalCost,
+    matchedRows,
+    totalRows,
+    unmatchedRows
+  };
+}
+
+
 function loadFromStorage(key, fallback) {
   try {
     const saved = localStorage.getItem(key);
@@ -1381,6 +1432,51 @@ export default function BakingPlanner() {
     0
   );
 
+  const planCostRows = useMemo(() => {
+    return plans.map((plan) => ({
+      plan,
+      cost: calculatePlanIngredientCost(
+        plan,
+        pantryItems,
+        matureStarterPullLabel,
+        false,
+        settings.ingredientBufferPct
+      )
+    }));
+  }, [plans, pantryItems, matureStarterPullLabel, settings.ingredientBufferPct]);
+
+  const bakeCycleIngredientCost = planCostRows.reduce(
+    (sum, row) => sum + (row.cost.totalCost || 0),
+    0
+  );
+
+  const bakeCycleMatchedIngredientCount = planCostRows.reduce(
+    (sum, row) => sum + row.cost.matchedRows,
+    0
+  );
+
+  const bakeCycleIngredientCount = planCostRows.reduce(
+    (sum, row) => sum + row.cost.totalRows,
+    0
+  );
+
+  const averageIngredientCostPerUnit =
+    totals.units > 0 ? bakeCycleIngredientCost / totals.units : 0;
+
+  const selectedRecipeCostPreview = useMemo(() => {
+    if (!selectedRecipe) return null;
+
+    const previewPlan = calculateRecipePlan(selectedRecipe, 1, env, settings);
+
+    return calculatePlanIngredientCost(
+      previewPlan,
+      pantryItems,
+      matureStarterPullLabel,
+      false,
+      settings.ingredientBufferPct
+    );
+  }, [selectedRecipe, env, settings, pantryItems, matureStarterPullLabel]);
+
   function updateSettingField(field, value) {
     markBakingDirty();
     setSettings((previous) => ({
@@ -2325,6 +2421,48 @@ export default function BakingPlanner() {
                 <div className="soft-panel">
                   <div className="section-head">
                     <div>
+                      <h3>Recipe Cost Preview</h3>
+                      <p className="muted small">
+                        Ingredient-only estimate for one {selectedRecipe.unitsLabel || "unit"} using Pantry matches.
+                      </p>
+                    </div>
+                    <span className="pill">
+                      {selectedRecipeCostPreview
+                        ? `${formatMoney(selectedRecipeCostPreview.totalCost, 2)} / ${selectedRecipe.unitsLabel || "unit"}`
+                        : "Add pantry items to estimate cost"}
+                    </span>
+                  </div>
+
+                  {selectedRecipeCostPreview ? (
+                    <div className="grid three">
+                      <div className="pill">
+                        <strong>{formatMoney(selectedRecipeCostPreview.totalCost, 2)}</strong>
+                        <br />
+                        <span className="muted tiny">Estimated ingredient cost per unit</span>
+                      </div>
+                      <div className="pill">
+                        <strong>
+                          {selectedRecipeCostPreview.matchedRows} / {selectedRecipeCostPreview.totalRows}
+                        </strong>
+                        <br />
+                        <span className="muted tiny">Ingredients matched to Pantry</span>
+                      </div>
+                      <div className="pill">
+                        <strong>
+                          {selectedRecipeCostPreview.unmatchedRows.length
+                            ? selectedRecipeCostPreview.unmatchedRows.map((row) => row.name).join(", ")
+                            : "All matched"}
+                        </strong>
+                        <br />
+                        <span className="muted tiny">Missing Pantry matches</span>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="soft-panel">
+                  <div className="section-head">
+                    <div>
                       <h3>Flour Formula</h3>
                       <p className="muted small">
                         These percentages should usually total 100%.
@@ -2992,6 +3130,20 @@ export default function BakingPlanner() {
                     value={`${env.humidityPct}%`}
                     accent="pricing"
                   />
+                  <StatCard
+                    icon={Package}
+                    label="Bake Cycle Cost"
+                    value={formatMoney(bakeCycleIngredientCost, 2)}
+                    sub="ingredient cost only"
+                    accent="grant"
+                  />
+                  <StatCard
+                    icon={Scale}
+                    label="Average Cost / Unit"
+                    value={formatMoney(averageIngredientCostPerUnit, 2)}
+                    sub={`${bakeCycleMatchedIngredientCount}/${bakeCycleIngredientCount} ingredients matched`}
+                    accent="market"
+                  />
                 </div>
 
                 <div className="grid two">
@@ -3077,6 +3229,40 @@ export default function BakingPlanner() {
                 </div>
 
                 <div className="soft-panel">
+                  <div className="section-head">
+                    <div>
+                      <h3>Bake Cycle Costing</h3>
+                      <p className="muted small">
+                        These are ingredient-only estimates from Pantry. Labor, packaging, overhead, and market fees can be added in a later pricing phase.
+                      </p>
+                    </div>
+                    <span className="pill">
+                      Total formula cost: {formatMoney(bakeCycleIngredientCost, 2)}
+                    </span>
+                  </div>
+
+                  <div className="grid three">
+                    <div className="pill">
+                      <strong>{formatMoney(bakeCycleIngredientCost, 2)}</strong>
+                      <br />
+                      <span className="muted tiny">Total ingredient cost</span>
+                    </div>
+                    <div className="pill">
+                      <strong>{formatMoney(averageIngredientCostPerUnit, 2)}</strong>
+                      <br />
+                      <span className="muted tiny">Average ingredient cost per unit</span>
+                    </div>
+                    <div className="pill">
+                      <strong>
+                        {bakeCycleMatchedIngredientCount} / {bakeCycleIngredientCount}
+                      </strong>
+                      <br />
+                      <span className="muted tiny">Ingredient rows matched to Pantry</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="soft-panel">
                   <h3>Resource-Aware Production Timeline</h3>
                   <p className="muted small">
                     This schedule prioritizes shared phases: all autolyse steps
@@ -3127,6 +3313,8 @@ export default function BakingPlanner() {
                         <th>Product</th>
                         <th>Qty</th>
                         <th>Total Dough</th>
+                        <th>Ingredient Cost</th>
+                        <th>Cost / Unit</th>
                         <th>Mixer Batches</th>
                         <th>Dish / Vessel</th>
                         <th>Oven Capacity</th>
@@ -3137,13 +3325,23 @@ export default function BakingPlanner() {
                       </tr>
                     </thead>
                     <tbody>
-                      {plans.map((plan, idx) => (
+                      {planCostRows.map(({ plan, cost }, idx) => (
                         <tr key={plan.recipe.id} className={idx % 2 ? "" : "alt"}>
                           <td>
                             <strong>{plan.recipe.name}</strong>
                           </td>
                           <td>{plan.quantity}</td>
                           <td>{formatWeight(plan.doughWeight)}</td>
+                          <td>
+                            {cost.totalCost
+                              ? formatMoney(cost.totalCost, 2)
+                              : "No pantry cost"}
+                          </td>
+                          <td>
+                            {cost.costPerUnit
+                              ? formatMoney(cost.costPerUnit, 2)
+                              : "No pantry cost"}
+                          </td>
                           <td>{plan.batchesByMixer}</td>
                           <td>{plan.recipe.vesselType || ""}</td>
                           <td>
