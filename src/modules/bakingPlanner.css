@@ -848,3 +848,14 @@
     grid-template-columns: 1fr;
   }
 }
+.bakingPlanner .btn.unsavedSaveButton {
+  background: #b45309;
+  color: #fff;
+  border-color: #b45309;
+  box-shadow: 0 10px 24px rgba(180, 83, 9, 0.22);
+}
+
+.bakingPlanner .btn.unsavedSaveButton:hover {
+  background: #92400e;
+  border-color: #92400e;
+}
