@@ -25,7 +25,6 @@ import "./bakingPlanner.css";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../AuthContext.jsx";
-import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import StatCard from "../components/StatCard.jsx";
 
 function Card({ children, className = "" }) {
@@ -196,8 +195,7 @@ const defaultSettings = {
   ingredientBufferPct: 3,
   mixerCapacityG: 7000,
   proofingCapacityUnits: 24,
-  defaultStartTime: "06:00",
-  bakingPlannerMode: ""
+  defaultStartTime: "06:00"
 };
 
 function loadFromStorage(key, fallback) {
@@ -317,32 +315,8 @@ function altitudeBakeAdjustment(altitudeFt) {
 }
 
 function normalizeRecipe(recipe) {
-  const bakeLossPct = Number(recipe.bakeLossPct) || 0;
-  const preBakeUnitWeight =
-    Number(recipe.preBakeUnitWeight) ||
-    (Number(recipe.finishedUnitWeight)
-      ? Number(recipe.finishedUnitWeight) / (1 - bakeLossPct / 100)
-      : 500);
-  const finishedUnitWeight =
-    Number(recipe.finishedUnitWeight) ||
-    preBakeUnitWeight * (1 - bakeLossPct / 100);
-  const bassinagePct = Number(recipe.bassinagePct) || 0;
-  const hydrationPct = Number(recipe.hydrationPct) || 0;
-  const initialHydrationPct =
-    recipe.initialHydrationPct !== undefined
-      ? Number(recipe.initialHydrationPct) || 0
-      : Math.max(0, hydrationPct - bassinagePct);
-
   return {
     ...recipe,
-    preBakeUnitWeight,
-    finishedUnitWeight,
-    mixingMethod:
-      recipe.mixingMethod ||
-      (Number(recipe.process?.autolyseMin) > 0 ? "autolyse" : "straight"),
-    useBassinage: Boolean(recipe.useBassinage),
-    initialHydrationPct,
-    bassinagePct,
     flourTypes: recipe.flourTypes || [{ name: "Bread Flour", pct: 100 }],
     otherIngredients: recipe.otherIngredients || [],
     process: {
@@ -367,12 +341,8 @@ function normalizeRecipe(recipe) {
 function calculateRecipePlan(rawRecipe, quantity, env, settings) {
   const recipe = normalizeRecipe(rawRecipe);
   const qty = Number(quantity) || 0;
-  const doughWeight = qty * recipe.preBakeUnitWeight;
-  const desiredBakedWeight = doughWeight * (1 - recipe.bakeLossPct / 100);
-
-  const finalHydrationPct = recipe.useBassinage
-    ? Number(recipe.initialHydrationPct || 0) + Number(recipe.bassinagePct || 0)
-    : Number(recipe.hydrationPct) || 0;
+  const desiredBakedWeight = qty * recipe.finishedUnitWeight;
+  const doughWeight = desiredBakedWeight / (1 - recipe.bakeLossPct / 100);
 
   const humidityAdj = humidityHydrationAdjustment(
     env.humidityPct,
@@ -380,14 +350,7 @@ function calculateRecipePlan(rawRecipe, quantity, env, settings) {
   );
   const altitudeAdj = altitudeBakeAdjustment(settings.altitudeFt);
   const adjustedHydrationPct =
-    finalHydrationPct + humidityAdj + altitudeAdj.hydrationPct;
-
-  const adjustedInitialHydrationPct = recipe.useBassinage
-    ? Number(recipe.initialHydrationPct || 0) + humidityAdj + altitudeAdj.hydrationPct
-    : adjustedHydrationPct;
-  const adjustedBassinagePct = recipe.useBassinage
-    ? Number(recipe.bassinagePct || 0)
-    : 0;
+    recipe.hydrationPct + humidityAdj + altitudeAdj.hydrationPct;
 
   const otherPct = recipe.otherIngredients.reduce(
     (sum, item) => sum + Number(item.pct || 0),
@@ -400,8 +363,6 @@ function calculateRecipePlan(rawRecipe, quantity, env, settings) {
   const baseFlourG = doughWeight / (formulaTotalPct / 100);
   const starterG = (baseFlourG * recipe.starterPct) / 100;
   const waterG = (baseFlourG * adjustedHydrationPct) / 100;
-  const initialWaterG = (baseFlourG * adjustedInitialHydrationPct) / 100;
-  const bassinageWaterG = (baseFlourG * adjustedBassinagePct) / 100;
   const saltG = (baseFlourG * recipe.saltPct) / 100;
 
   const flourBreakdown = recipe.flourTypes.map((f) => ({
@@ -452,8 +413,6 @@ function calculateRecipePlan(rawRecipe, quantity, env, settings) {
     baseFlourG,
     starterG,
     waterG,
-    initialWaterG,
-    bassinageWaterG,
     saltG,
     flourBreakdown,
     otherBreakdown,
@@ -569,22 +528,14 @@ function buildProductionSchedule(plans, settings) {
   };
 
   sortedPlans.forEach((plan) => {
-    const mixingMethod = plan.recipe.mixingMethod || "straight";
-    const autolyseMin =
-      mixingMethod === "straight" ? 0 : Number(plan.recipe.process.autolyseMin) || 0;
-    const methodLabels = {
-      autolyse: "Start autolyse",
-      fermentolyse: "Start fermentolyse",
-      saltolyse: "Start saltolyse",
-      straight: "Straight mix"
-    };
+    const autolyseMin = Number(plan.recipe.process.autolyseMin) || 0;
     let autolyseStart = startMin;
     let autolyseEnd = startMin;
 
     if (autolyseMin > 0) {
       const autolyseTask = scheduleBakerTask({
         plan,
-        name: methodLabels[mixingMethod] || "Start method rest",
+        name: "Start autolyse",
         earliestStart: startMin,
         duration: autolyseMin,
         note: ""
@@ -845,14 +796,13 @@ function TextInput({ label, value, onChange, placeholder = "" }) {
 
 export default function BakingPlanner() {
   const { user } = useAuth();
-  const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } = useUnsavedChanges();
 
   const [activeTab, setActiveTab] = useState("planner");
   const [cloudLoading, setCloudLoading] = useState(false);
   const [cloudStatus, setCloudStatus] = useState("Local only");
 
   const [recipes, setRecipes] = useState(() =>
-    loadFromStorage("bakingPlannerRecipes", []).map(normalizeRecipe)
+    loadFromStorage("bakingPlannerRecipes", initialRecipes).map(normalizeRecipe)
   );
   const [settings, setSettings] = useState(() =>
     loadFromStorage("bakingPlannerSettings", defaultSettings)
@@ -861,22 +811,15 @@ export default function BakingPlanner() {
     loadFromStorage("bakingPlannerEnv", { tempF: 74, humidityPct: 52 })
   );
   const [productionDate, setProductionDate] = useState(() =>
-    loadFromStorage("bakingPlannerProductionDate", getTodayISODate())
+    loadFromStorage("bakingPlannerProductionDate", "")
   );
   const [productionItems, setProductionItems] = useState(() =>
     loadFromStorage("bakingPlannerProductionItems", [])
   );
   const [selectedRecipeId, setSelectedRecipeId] = useState(
-    recipes[0]?.id || ""
+    recipes[0]?.id || initialRecipes[0].id
   );
   const [lastSavedAt, setLastSavedAt] = useState("");
-
-  function markBakingDirty() {
-    markUnsaved({
-      source: "Baking Planner",
-      onSave: savePlannerData
-    });
-  }
 
   useEffect(() => {
     async function loadCloudData() {
@@ -906,7 +849,7 @@ export default function BakingPlanner() {
 
           if (data.settings) setSettings({ ...defaultSettings, ...data.settings });
           if (data.env) setEnv(data.env);
-          if (data.productionDate) setProductionDate(data.productionDate);
+          setProductionDate(data.productionDate || "");
           if (Array.isArray(data.productionItems)) {
             setProductionItems(data.productionItems);
           } else {
@@ -1052,21 +995,6 @@ export default function BakingPlanner() {
     return recipes.filter((recipe) => !usedIds.has(recipe.id));
   }, [recipes, productionItems]);
 
-  function setBakingPlannerMode(mode) {
-    markBakingDirty();
-    setSettings((previous) => {
-      const next = {
-        ...previous,
-        bakingPlannerMode: mode
-      };
-
-      saveToStorage("bakingPlannerSettings", next);
-      return next;
-    });
-  }
-
-  const isAdvancedMode = settings.bakingPlannerMode === "advanced";
-
   async function savePlannerData() {
     const normalizedRecipes = recipes.map(normalizeRecipe);
 
@@ -1085,7 +1013,6 @@ export default function BakingPlanner() {
 
     if (!user) {
       setCloudStatus("Saved locally");
-      markSaved();
       return;
     }
 
@@ -1101,7 +1028,7 @@ export default function BakingPlanner() {
           recipes: normalizedRecipes,
           settings,
           env,
-          productionDate,
+          productionDate: productionItems.length ? productionDate : "",
           productionItems,
           updatedAt: serverTimestamp()
         },
@@ -1109,7 +1036,6 @@ export default function BakingPlanner() {
       );
 
       setCloudStatus(`Cloud saved at ${savedTime}`);
-      markSaved();
     } catch (error) {
       console.error(error);
       setCloudStatus("Cloud save failed");
@@ -1119,54 +1045,12 @@ export default function BakingPlanner() {
   }
 
   function updateRecipeField(field, value) {
-    markBakingDirty();
-    if (!selectedRecipe) return;
-
     setRecipes((prev) =>
-      prev.map((r) => {
-        if (r.id !== selectedRecipe.id) return r;
-
-        const next = { ...r, [field]: value };
-
-        if (field === "preBakeUnitWeight" || field === "bakeLossPct") {
-          const preBake =
-            field === "preBakeUnitWeight"
-              ? Number(value) || 0
-              : Number(next.preBakeUnitWeight) || 0;
-          const bakeLoss =
-            field === "bakeLossPct"
-              ? Number(value) || 0
-              : Number(next.bakeLossPct) || 0;
-
-          next.finishedUnitWeight = preBake * (1 - bakeLoss / 100);
-        }
-
-        if (field === "initialHydrationPct" || field === "bassinagePct") {
-          const initial =
-            field === "initialHydrationPct"
-              ? Number(value) || 0
-              : Number(next.initialHydrationPct) || 0;
-          const bassinage =
-            field === "bassinagePct"
-              ? Number(value) || 0
-              : Number(next.bassinagePct) || 0;
-
-          next.hydrationPct = initial + bassinage;
-        }
-
-        if (field === "hydrationPct") {
-          next.initialHydrationPct = Number(value) || 0;
-          next.bassinagePct = 0;
-          next.useBassinage = false;
-        }
-
-        return next;
-      })
+      prev.map((r) => (r.id === selectedRecipe.id ? { ...r, [field]: value } : r))
     );
   }
 
   function updateRecipeProcess(field, value) {
-    markBakingDirty();
     setRecipes((prev) =>
       prev.map((r) =>
         r.id === selectedRecipe.id
@@ -1183,7 +1067,6 @@ export default function BakingPlanner() {
   }
 
   function updateFlourType(index, field, value) {
-    markBakingDirty();
     setRecipes((prev) =>
       prev.map((recipe) => {
         if (recipe.id !== selectedRecipe.id) return recipe;
@@ -1203,7 +1086,6 @@ export default function BakingPlanner() {
   }
 
   function addFlourType() {
-    markBakingDirty();
     setRecipes((prev) =>
       prev.map((recipe) =>
         recipe.id === selectedRecipe.id
@@ -1217,7 +1099,6 @@ export default function BakingPlanner() {
   }
 
   function deleteFlourType(index) {
-    markBakingDirty();
     setRecipes((prev) =>
       prev.map((recipe) => {
         if (recipe.id !== selectedRecipe.id) return recipe;
@@ -1235,7 +1116,6 @@ export default function BakingPlanner() {
   }
 
   function updateOtherIngredient(index, field, value) {
-    markBakingDirty();
     setRecipes((prev) =>
       prev.map((recipe) => {
         if (recipe.id !== selectedRecipe.id) return recipe;
@@ -1255,7 +1135,6 @@ export default function BakingPlanner() {
   }
 
   function addOtherIngredient() {
-    markBakingDirty();
     setRecipes((prev) =>
       prev.map((recipe) =>
         recipe.id === selectedRecipe.id
@@ -1272,7 +1151,6 @@ export default function BakingPlanner() {
   }
 
   function deleteOtherIngredient(index) {
-    markBakingDirty();
     setRecipes((prev) =>
       prev.map((recipe) =>
         recipe.id === selectedRecipe.id
@@ -1288,7 +1166,6 @@ export default function BakingPlanner() {
   }
 
   function addRecipeToCycle(recipeId) {
-    markBakingDirty();
     if (!recipeId) return;
 
     setProductionItems((prev) => {
@@ -1298,7 +1175,6 @@ export default function BakingPlanner() {
   }
 
   function updateCycleQuantity(recipeId, quantity) {
-    markBakingDirty();
     setProductionItems((prev) =>
       prev.map((item) =>
         item.recipeId === recipeId
@@ -1309,17 +1185,14 @@ export default function BakingPlanner() {
   }
 
   function removeRecipeFromCycle(recipeId) {
-    markBakingDirty();
     setProductionItems((prev) => prev.filter((item) => item.recipeId !== recipeId));
   }
 
   function clearCycle() {
-    markBakingDirty();
     setProductionItems([]);
   }
 
   function addRecipe() {
-    markBakingDirty();
     const id = `recipe-${Date.now()}`;
 
     const base = normalizeRecipe({
@@ -1328,13 +1201,8 @@ export default function BakingPlanner() {
       category: "Custom",
       unitsLabel: "units",
       vesselType: "Tray / Pan",
-      preBakeUnitWeight: 560,
-      finishedUnitWeight: 504,
+      finishedUnitWeight: 500,
       bakeLossPct: 10,
-      mixingMethod: "straight",
-      useBassinage: false,
-      initialHydrationPct: 70,
-      bassinagePct: 0,
       batchMaxDoughG: settings.mixerCapacityG || 7000,
       ovenCapacityUnits: 12,
       flourTypes: [{ name: "Bread Flour", pct: 100 }],
@@ -1366,7 +1234,6 @@ export default function BakingPlanner() {
   }
 
   function duplicateRecipe() {
-    markBakingDirty();
     const id = `${selectedRecipe.id}-copy-${Date.now()}`;
     setRecipes((prev) => [
       ...prev,
@@ -1376,7 +1243,6 @@ export default function BakingPlanner() {
   }
 
   function deleteRecipe(id) {
-    markBakingDirty();
     const remainingRecipes = recipes.filter((r) => r.id !== id);
 
     setRecipes(remainingRecipes);
@@ -1395,53 +1261,7 @@ export default function BakingPlanner() {
   );
 
   return (
-    <div className="bakingPlanner" onChangeCapture={markBakingDirty}>
-      {!settings.bakingPlannerMode ? (
-        <div className="bakingModeOverlay" role="dialog" aria-modal="true">
-          <div className="bakingModeModal">
-            <p className="eyebrow">Baking Planner Setup</p>
-            <h2>Choose your baking workflow.</h2>
-            <p>
-              Pick the setup that matches how you bake. You can change this later
-              in Settings.
-            </p>
-
-            <div className="bakingModeGrid">
-              <button
-                type="button"
-                className="bakingModeCard"
-                onClick={() => setBakingPlannerMode("basic")}
-              >
-                <strong>Basic</strong>
-                <span>
-                  Best for small operations, simple loaves, cookies, muffins, and
-                  straightforward production planning.
-                </span>
-                <small>
-                  Shows core recipe, dough weight, hydration, starter, salt, timing,
-                  and bake-day planning fields.
-                </small>
-              </button>
-
-              <button
-                type="button"
-                className="bakingModeCard featured"
-                onClick={() => setBakingPlannerMode("advanced")}
-              >
-                <strong>Advanced / Professional</strong>
-                <span>
-                  Best for bakers who use detailed fermentation and mixing methods.
-                </span>
-                <small>
-                  Adds straight mix, autolyse, fermentolyse, saltolyse, bassinage,
-                  initial hydration, and bassinage water fields.
-                </small>
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
+    <div className="bakingPlanner">
       <div className="page">
         <header className="hero">
           <div className="hero-inner">
@@ -1451,18 +1271,13 @@ export default function BakingPlanner() {
               </div>
               <h1>Plan consistent baking days with fewer surprises.</h1>
               <p>
-                Scale baking recipes by pre-baked dough weight, adjust for temperature,
+                Scale baking recipes by finished goods, adjust for temperature,
                 humidity, and altitude, then generate a practical production
                 sheet for your bake day.
               </p>
               <div className="button-row" style={{ marginTop: "14px" }}>
-                <Button
-                  variant="outline"
-                  className={hasUnsavedChanges ? "dirtySaveButton" : ""}
-                  onClick={savePlannerData}
-                  disabled={cloudLoading}
-                >
-                  <Cloud size={16} /> {cloudLoading ? "Syncing..." : hasUnsavedChanges ? "Save Changes" : "Save / Sync"}
+                <Button variant="outline" onClick={savePlannerData} disabled={cloudLoading}>
+                  <Cloud size={16} /> {cloudLoading ? "Syncing..." : "Save / Sync"}
                 </Button>
                 <span className="pill">
                   {user?.displayName || user?.email || "Local user"} • {cloudStatus}
@@ -1564,8 +1379,8 @@ export default function BakingPlanner() {
                           <div>
                             <p className="recipe-title">{recipe.name}</p>
                             <p className="muted small">
-                              {round(recipe.preBakeUnitWeight)}g dough weight •{" "}
-                              {recipe.hydrationPct}% final hydration •{" "}
+                              {recipe.finishedUnitWeight}g finished weight •{" "}
+                              {recipe.hydrationPct}% base hydration •{" "}
                               {recipe.starterPct}% starter • {recipe.vesselType}
                             </p>
                           </div>
@@ -1750,11 +1565,8 @@ export default function BakingPlanner() {
                     )}
                   </div>
                   <div className="button-row">
-                    <Button
-                      className={hasUnsavedChanges ? "dirtySaveButton" : ""}
-                      onClick={savePlannerData}
-                    >
-                      <Save size={16} /> {hasUnsavedChanges ? "Save Changes" : "Save"}
+                    <Button onClick={savePlannerData}>
+                      <Save size={16} /> Save
                     </Button>
                     <Button variant="outline" onClick={duplicateRecipe}>
                       <Copy size={16} /> Duplicate
@@ -1802,10 +1614,10 @@ export default function BakingPlanner() {
                   />
 
                   <NumberInput
-                    label="Pre-Baked Unit Dough Weight"
-                    value={selectedRecipe.preBakeUnitWeight}
+                    label="Finished Unit Weight"
+                    value={selectedRecipe.finishedUnitWeight}
                     onChange={(v) =>
-                      updateRecipeField("preBakeUnitWeight", Number(v))
+                      updateRecipeField("finishedUnitWeight", Number(v))
                     }
                     suffix="g"
                   />
@@ -1818,13 +1630,6 @@ export default function BakingPlanner() {
                     }
                     suffix="%"
                   />
-
-                  <label className="field">
-                    <span>Estimated Finished Unit Weight</span>
-                    <div className="pill">
-                      {formatWeight(selectedRecipe.finishedUnitWeight)}
-                    </div>
-                  </label>
 
                   <NumberInput
                     label="Base Hydration"
@@ -1850,62 +1655,6 @@ export default function BakingPlanner() {
                     onChange={(v) => updateRecipeField("saltPct", Number(v))}
                     suffix="%"
                   />
-
-                  {isAdvancedMode ? (
-                    <>
-                      <label className="field">
-                        <span>Mixing Method</span>
-                        <select
-                          className="text-field"
-                          value={selectedRecipe.mixingMethod || "straight"}
-                          onChange={(e) =>
-                            updateRecipeField("mixingMethod", e.target.value)
-                          }
-                        >
-                          <option value="straight">Straight Mix</option>
-                          <option value="autolyse">Autolyse</option>
-                          <option value="fermentolyse">Fermentolyse</option>
-                          <option value="saltolyse">Saltolyse</option>
-                        </select>
-                      </label>
-
-                      <label className="field">
-                        <span>Use Bassinage</span>
-                        <select
-                          className="text-field"
-                          value={selectedRecipe.useBassinage ? "yes" : "no"}
-                          onChange={(e) =>
-                            updateRecipeField("useBassinage", e.target.value === "yes")
-                          }
-                        >
-                          <option value="no">No</option>
-                          <option value="yes">Yes</option>
-                        </select>
-                      </label>
-
-                      {selectedRecipe.useBassinage ? (
-                        <>
-                          <NumberInput
-                            label="Initial Hydration"
-                            value={selectedRecipe.initialHydrationPct}
-                            onChange={(v) =>
-                              updateRecipeField("initialHydrationPct", Number(v))
-                            }
-                            suffix="%"
-                          />
-
-                          <NumberInput
-                            label="Bassinage Water"
-                            value={selectedRecipe.bassinagePct}
-                            onChange={(v) =>
-                              updateRecipeField("bassinagePct", Number(v))
-                            }
-                            suffix="%"
-                          />
-                        </>
-                      ) : null}
-                    </>
-                  ) : null}
 
                   <NumberInput
                     label="Max Dough Per Mixer Batch"
@@ -2021,11 +1770,7 @@ export default function BakingPlanner() {
                   <h3>Process Timing</h3>
                   <div className="grid four">
                     <NumberInput
-                      label={
-                        isAdvancedMode && selectedRecipe.mixingMethod !== "straight"
-                          ? "Method Rest"
-                          : "Autolyse / Rest"
-                      }
+                      label="Autolyse"
                       value={selectedRecipe.process.autolyseMin}
                       onChange={(v) => updateRecipeProcess("autolyseMin", v)}
                       suffix="min"
@@ -2275,20 +2020,6 @@ export default function BakingPlanner() {
                         <span>Water</span>
                         <strong>{formatWeight(totals.bufferedWaterG)}</strong>
                       </div>
-                      {plans.some((plan) => plan.recipe.useBassinage) ? (
-                        <div className="line-item">
-                          <span>Bassinage Water</span>
-                          <strong>
-                            {formatWeight(
-                              plans.reduce(
-                                (sum, plan) => sum + (plan.bassinageWaterG || 0),
-                                0
-                              ) *
-                                (1 + settings.ingredientBufferPct / 100)
-                            )}
-                          </strong>
-                        </div>
-                      ) : null}
                       <div className="line-item">
                         <span>Mature Starter / Preferment</span>
                         <strong>{formatWeight(totals.bufferedStarterG)}</strong>
@@ -2435,32 +2166,6 @@ export default function BakingPlanner() {
                     and equipment. Recipe-specific oven capacity and dish type
                     are handled inside each recipe.
                   </p>
-                </div>
-
-                <div className="soft-panel">
-                  <div className="section-head">
-                    <div>
-                      <h3>Baking Planner Mode</h3>
-                      <p className="muted small">
-                        Basic keeps the module simple. Advanced unlocks professional
-                        mixing methods and bassinage fields.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid two">
-                    <label className="field">
-                      <span>Mode</span>
-                      <select
-                        className="text-field"
-                        value={settings.bakingPlannerMode || "basic"}
-                        onChange={(e) => setBakingPlannerMode(e.target.value)}
-                      >
-                        <option value="basic">Basic</option>
-                        <option value="advanced">Advanced / Professional</option>
-                      </select>
-                    </label>
-                  </div>
                 </div>
 
                 <div className="grid settingsGrid">
