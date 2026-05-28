@@ -13,6 +13,7 @@ import {
   X
 } from "lucide-react";
 import { useAuth } from "../AuthContext.jsx";
+import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import StatCard from "../components/StatCard.jsx";
 import {
   addListItem,
@@ -42,6 +43,7 @@ function makeId(prefix = "list") {
 
 export default function Lists() {
   const { user, loginWithGoogle } = useAuth();
+  const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } = useUnsavedChanges();
 
   const [lists, setLists] = useState([]);
   const [selectedList, setSelectedList] = useState(null);
@@ -56,6 +58,32 @@ export default function Lists() {
     category: "General",
     description: ""
   });
+
+  function markListsDirty() {
+    markUnsaved({
+      source: "Lists",
+      onSave: async () => {
+        const saved = await saveListsDraft();
+
+        if (!saved) {
+          throw new Error("List changes could not be saved.");
+        }
+      }
+    });
+  }
+
+  async function saveListsDraft() {
+    if (isNewListOpen) {
+      return handleCreateList();
+    }
+
+    if (selectedList && newItemText.trim()) {
+      return handleAddItem();
+    }
+
+    markSaved();
+    return true;
+  }
 
   useEffect(() => {
     if (!statusMessage) return;
@@ -116,19 +144,21 @@ export default function Lists() {
       category: "General",
       description: ""
     });
+
+    markSaved();
   }
 
   async function handleCreateList(event) {
-    event.preventDefault();
+    event?.preventDefault();
 
     if (!newList.name.trim()) {
       setStatusMessage("List name is required.");
-      return;
+      return false;
     }
 
     if (!user) {
       setStatusMessage("Sign in from the Farmers Hub sidebar to save lists.");
-      return;
+      return false;
     }
 
     const list = {
@@ -143,13 +173,22 @@ export default function Lists() {
 
       setStatusMessage("List created.");
 
-      closeNewListModal();
+      setIsNewListOpen(false);
+      setNewList({
+        name: "",
+        category: "General",
+        description: ""
+      });
 
       await loadLists();
       await openList(listId);
+      markSaved();
+
+      return true;
     } catch (error) {
       console.error(error);
       setStatusMessage("Could not create list.");
+      return false;
     }
   }
 
@@ -160,7 +199,6 @@ export default function Lists() {
       await deleteList(user.uid, listId);
 
       setStatusMessage("List deleted.");
-
       setSelectedList(null);
 
       await loadLists();
@@ -171,9 +209,9 @@ export default function Lists() {
   }
 
   async function handleAddItem(event) {
-    event.preventDefault();
+    event?.preventDefault();
 
-    if (!selectedList || !newItemText.trim() || !user) return;
+    if (!selectedList || !newItemText.trim() || !user) return false;
 
     const item = {
       id: makeId("item"),
@@ -191,9 +229,13 @@ export default function Lists() {
       setSelectedList(detail);
 
       await loadLists();
+      markSaved();
+
+      return true;
     } catch (error) {
       console.error(error);
       setStatusMessage("Could not add item.");
+      return false;
     }
   }
 
@@ -368,13 +410,21 @@ export default function Lists() {
           <form onSubmit={handleAddItem}>
             <input
               value={newItemText}
-              onChange={(event) => setNewItemText(event.target.value)}
+              onChange={(event) => {
+                markListsDirty();
+                setNewItemText(event.target.value);
+              }}
               placeholder="Add an item..."
             />
 
-            <button className="primaryButton compactPrimary" type="submit">
+            <button
+              className={`primaryButton compactPrimary ${
+                hasUnsavedChanges ? "dirtySaveButton" : ""
+              }`}
+              type="submit"
+            >
               <Plus size={15} />
-              Add Item
+              {hasUnsavedChanges ? "Save Item" : "Add Item"}
             </button>
           </form>
         </section>
@@ -563,12 +613,13 @@ export default function Lists() {
                 List Name *
                 <input
                   value={newList.name}
-                  onChange={(event) =>
+                  onChange={(event) => {
+                    markListsDirty();
                     setNewList((current) => ({
                       ...current,
                       name: event.target.value
-                    }))
-                  }
+                    }));
+                  }}
                   placeholder="e.g., Saturday Market Pack List"
                 />
               </label>
@@ -577,12 +628,13 @@ export default function Lists() {
                 Category
                 <select
                   value={newList.category}
-                  onChange={(event) =>
+                  onChange={(event) => {
+                    markListsDirty();
                     setNewList((current) => ({
                       ...current,
                       category: event.target.value
-                    }))
-                  }
+                    }));
+                  }}
                 >
                   {listCategories.map((category) => (
                     <option key={category}>{category}</option>
@@ -594,12 +646,13 @@ export default function Lists() {
                 Description
                 <textarea
                   value={newList.description}
-                  onChange={(event) =>
+                  onChange={(event) => {
+                    markListsDirty();
                     setNewList((current) => ({
                       ...current,
                       description: event.target.value
-                    }))
-                  }
+                    }));
+                  }}
                   placeholder="Optional notes about this list..."
                 />
               </label>
@@ -613,9 +666,14 @@ export default function Lists() {
                   Cancel
                 </button>
 
-                <button className="primaryButton compactPrimary" type="submit">
+                <button
+                  className={`primaryButton compactPrimary ${
+                    hasUnsavedChanges ? "dirtySaveButton" : ""
+                  }`}
+                  type="submit"
+                >
                   <Plus size={15} />
-                  Create List
+                  {hasUnsavedChanges ? "Save List" : "Create List"}
                 </button>
               </div>
             </form>
