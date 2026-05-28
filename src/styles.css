@@ -3786,3 +3786,52 @@ input[type="number"] {
   color: #1f1600 !important;
   box-shadow: 0 10px 24px rgba(245, 158, 11, 0.22) !important;
 }
+.unsavedPromptOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(17, 24, 39, 0.55);
+  backdrop-filter: blur(7px);
+}
+
+.unsavedPrompt {
+  width: min(620px, 100%);
+  background: #fff;
+  border-radius: 28px;
+  padding: 32px;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+}
+
+.unsavedPrompt h2 {
+  margin: 8px 0 10px;
+  font-size: clamp(28px, 4vw, 46px);
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+}
+
+.unsavedPrompt p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.unsavedPromptActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+
+.dangerButton {
+  color: #991b1b;
+  border-color: rgba(220, 38, 38, 0.28);
+  background: #fff5f5;
+}
+
+.dangerButton:hover {
+  background: #fee2e2;
+}
