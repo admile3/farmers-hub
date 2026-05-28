@@ -1,86 +1,133 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowUp,
+  AlertTriangle,
   CalendarDays,
-  ClipboardList,
-  PackageCheck,
+  Edit3,
+  ExternalLink,
+  FileText,
+  Filter,
   Plus,
-  Printer,
   Save,
-  Sprout,
-  Trash2
+  Search,
+  ShieldCheck,
+  Trash2,
+  Upload,
+  X
 } from "lucide-react";
 import { useAuth } from "../AuthContext.jsx";
 import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import StatCard from "../components/StatCard.jsx";
 import {
-  deleteMarketPrepPlan,
-  getMarketPrepPlans,
-  saveMarketPrepPlan
-} from "../services/marketPrepService.js";
+  deletePermitGrantItem,
+  getPermitGrantItems,
+  savePermitGrantItem
+} from "../services/permitGrantService.js";
 
-const marketCategories = [
-  "Produce",
-  "Red Meat",
-  "Poultry",
-  "Protein",
-  "Plant Starts",
-  "Bread",
-  "Spices",
-  "Condiments",
-  "Eggs",
-  "Dairy",
-  "Baked Goods",
-  "Prepared Foods",
-  "Flowers",
-  "Crafts",
+const itemTypes = [
+  "Permit",
+  "Grant",
+  "License",
+  "Certification",
+  "Registration",
+  "Insurance",
+  "Tax Filing",
+  "Market Application",
   "Other"
 ];
 
-const starterProducts = [
+const statusOptions = [
+  "Not Started",
+  "In Progress",
+  "Submitted",
+  "Approved",
+  "Denied",
+  "Renewal Needed",
+  "Complete"
+];
+
+const priorityOptions = ["Low", "Normal", "High", "Urgent"];
+
+const blankRecord = {
+  id: "",
+  name: "",
+  type: "Permit",
+  agency: "",
+  status: "Not Started",
+  priority: "Normal",
+  issueDate: "",
+  dueDate: "",
+  submittedDate: "",
+  approvedDate: "",
+  renewalDate: "",
+  reminderAmount: 30,
+  reminderUnit: "days",
+  fee: "",
+  link: "",
+  documentName: "",
+  documentUrl: "",
+  notes: ""
+};
+
+const starterItems = [
   {
-    id: "sample-produce",
-    name: "SAMPLE - Tomatoes",
-    category: "Produce",
-    unitLabel: "1 lb bag",
-    plannedUnits: 12,
-    unitAmount: 1,
-    amountUnit: "lb",
-    bufferPct: 10,
-    notes: "Example produce item."
+    id: "sample-home-processor",
+    name: "SAMPLE - Home-Based Processor",
+    type: "Permit",
+    agency: "Kentucky Food and Safety Branch",
+    status: "Approved",
+    priority: "High",
+    issueDate: "2025-07-16",
+    dueDate: "2026-03-31",
+    submittedDate: "",
+    approvedDate: "2025-07-16",
+    renewalDate: "2026-03-31",
+    reminderAmount: 30,
+    reminderUnit: "days",
+    fee: 50,
+    link: "",
+    documentName: "Sample Homebased Processor Permit.pdf",
+    documentUrl: "",
+    notes: "Example record. Replace with your own permit or renewal."
   },
   {
-    id: "sample-bread",
-    name: "SAMPLE - Sourdough Loaf",
-    category: "Bread",
-    unitLabel: "loaf",
-    plannedUnits: 18,
-    unitAmount: 1,
-    amountUnit: "loaf",
-    bufferPct: 0,
-    notes: "Example bread item."
+    id: "sample-insurance",
+    name: "SAMPLE - General Liability Insurance",
+    type: "Insurance",
+    agency: "FarmGuard Insurance",
+    status: "Renewal Needed",
+    priority: "Urgent",
+    issueDate: "2025-04-01",
+    dueDate: "2026-04-01",
+    submittedDate: "",
+    approvedDate: "",
+    renewalDate: "2026-04-01",
+    reminderAmount: 30,
+    reminderUnit: "days",
+    fee: 0,
+    link: "",
+    documentName: "",
+    documentUrl: "",
+    notes: "Example insurance renewal. Edit or delete anytime."
   },
   {
-    id: "sample-spice",
-    name: "SAMPLE - Seasoning Pouch",
-    category: "Spices",
-    unitLabel: "0.2 oz pouch",
-    plannedUnits: 30,
-    unitAmount: 0.2,
-    amountUnit: "oz",
-    bufferPct: 5,
-    notes: "Example spice item."
-  },
-  {
-    id: "sample-eggs",
-    name: "SAMPLE - Chicken Eggs",
-    category: "Eggs",
-    unitLabel: "dozen",
-    plannedUnits: 10,
-    unitAmount: 1,
-    amountUnit: "dozen",
-    bufferPct: 0,
-    notes: "Example egg item."
+    id: "sample-grant",
+    name: "SAMPLE - Local Food Innovation Grant",
+    type: "Grant",
+    agency: "County Economic Development",
+    status: "Submitted",
+    priority: "Normal",
+    issueDate: "",
+    dueDate: "2026-05-30",
+    submittedDate: "2026-05-01",
+    approvedDate: "",
+    renewalDate: "",
+    reminderAmount: 15,
+    reminderUnit: "days",
+    fee: 0,
+    link: "",
+    documentName: "",
+    documentUrl: "",
+    notes: "Example grant application. Edit or delete anytime."
   }
 ];
 
@@ -88,90 +135,90 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function round(value, digits = 2) {
-  const factor = Math.pow(10, digits);
-  return Math.round((Number(value) || 0) * factor) / factor;
-}
-
 function makeId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-function createBlankPlan() {
+function createSampleItems() {
+  return starterItems.map((item) =>
+    normalizeRecord({
+      ...item,
+      id: `${item.id}-${makeId()}`
+    })
+  );
+}
+
+function daysUntil(dateString) {
+  if (!dateString) return null;
+
+  const today = new Date(todayISO());
+  const date = new Date(dateString);
+  const diff = date.getTime() - today.getTime();
+
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+}
+
+function getRelevantDate(item) {
+  if (item.status === "Approved" && item.renewalDate) return item.renewalDate;
+  if (item.renewalDate) return item.renewalDate;
+  return item.dueDate || "";
+}
+
+function getDueStatus(item) {
+  const relevantDate = getRelevantDate(item);
+  const days = daysUntil(relevantDate);
+
+  if (days === null) return { label: "No Date", tone: "neutral", days: null };
+  if (days < 0) return { label: "Expired", tone: "danger", days };
+  if (days === 0) return { label: "Due Today", tone: "danger", days };
+  if (days <= 7) return { label: `Due in ${days}d`, tone: "danger", days };
+  if (days <= 30) return { label: `In ${days}d`, tone: "warning", days };
+  return { label: `In ${days}d`, tone: "good", days };
+}
+
+function statusClass(status) {
+  return String(status || "").toLowerCase().replaceAll(" ", "-");
+}
+
+function normalizeRecord(record) {
   return {
-    id: "",
-    marketName: "Farmers Market",
-    marketDate: todayISO(),
-    location: "",
-    weatherNotes: "",
-    products: []
+    ...blankRecord,
+    ...record,
+    fee: record.fee === "" ? "" : Number(record.fee) || 0,
+    reminderAmount: Number(record.reminderAmount) || 30
   };
 }
 
-function createSampleProducts() {
-  return starterProducts.map((product) => ({
-    ...product,
-    id: `${product.id}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    packed: false
-  }));
-}
-
-function getProductTotals(product) {
-  const plannedUnits = Number(product.plannedUnits) || 0;
-  const unitAmount = Number(product.unitAmount) || 0;
-  const bufferPct = Number(product.bufferPct) || 0;
-
-  const plannedAmount = plannedUnits * unitAmount;
-  const finalAmount = plannedAmount * (1 + bufferPct / 100);
-
-  return {
-    plannedUnits,
-    plannedAmount,
-    finalAmount
-  };
-}
-
-export default function MarketPrepPlanner() {
+export default function PermitGrantTracker() {
   const { user, loginWithGoogle } = useAuth();
+  const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } =
+    useUnsavedChanges();
 
-  const setupRef = useRef(null);
-  const forecastRef = useRef(null);
-  const packListRef = useRef(null);
-  const savedPlansRef = useRef(null);
-
-  const [planId, setPlanId] = useState("");
-  const [marketName, setMarketName] = useState("Farmers Market");
-  const [marketDate, setMarketDate] = useState(todayISO());
-  const [location, setLocation] = useState("");
-  const [weatherNotes, setWeatherNotes] = useState("");
-  const [products, setProducts] = useState([]);
-  const [savedPlans, setSavedPlans] = useState([]);
+  const [items, setItems] = useState([]);
   const [statusMessage, setStatusMessage] = useState("");
-  const [loadingPlans, setLoadingPlans] = useState(false);
+  const [loadingItems, setLoadingItems] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [showBackToTop, setShowBackToTop] = useState(false);
 
-  const [newProduct, setNewProduct] = useState({
-    name: "",
-    category: "Produce",
-    unitLabel: "",
-    plannedUnits: "",
-    unitAmount: "",
-    amountUnit: "",
-    bufferPct: 0,
-    notes: ""
-  });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(blankRecord);
 
-  useEffect(() => {
-    function handleScroll() {
-      setShowBackToTop(window.scrollY > 50);
-    }
+  const [searchTerm, setSearchTerm] = useState("");
+  const [typeFilter, setTypeFilter] = useState("All Types");
+  const [statusFilter, setStatusFilter] = useState("All Statuses");
+  const [recordFilter, setRecordFilter] = useState("All Records");
 
-    window.addEventListener("scroll", handleScroll);
-    handleScroll();
+  function markPermitGrantDirty() {
+    markUnsaved({
+      source: "Permit & Grant Tracker",
+      onSave: async () => {
+        const saved = await saveRecord(editingRecord);
 
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+        if (!saved) {
+          throw new Error("Permit or grant record could not be saved.");
+        }
+      }
+    });
+  }
 
   useEffect(() => {
     if (!statusMessage) return;
@@ -183,275 +230,257 @@ export default function MarketPrepPlanner() {
     return () => window.clearTimeout(timer);
   }, [statusMessage]);
 
-  function scrollToSection(ref) {
-    ref.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
-  }
-
-  function scrollToTop() {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
-  }
-
-  const totals = useMemo(() => {
-    return products.reduce(
-      (sum, product) => {
-        const productTotals = getProductTotals(product);
-
-        return {
-          productCount: sum.productCount + 1,
-          plannedUnits: sum.plannedUnits + productTotals.plannedUnits,
-          lineItemsWithBuffer:
-            sum.lineItemsWithBuffer + (Number(product.bufferPct) > 0 ? 1 : 0)
-        };
-      },
-      {
-        productCount: 0,
-        plannedUnits: 0,
-        lineItemsWithBuffer: 0
-      }
-    );
-  }, [products]);
-
-  const categorySummary = useMemo(() => {
-    return products.reduce((summary, product) => {
-      const category = product.category || "Other";
-      const productTotals = getProductTotals(product);
-
-      if (!summary[category]) {
-        summary[category] = {
-          units: 0,
-          items: 0
-        };
-      }
-
-      summary[category].units += productTotals.plannedUnits;
-      summary[category].items += 1;
-
-      return summary;
-    }, {});
-  }, [products]);
-
-  async function loadSavedPlans() {
+  async function loadItems() {
     if (!user) return;
 
-    setLoadingPlans(true);
+    setLoadingItems(true);
 
     try {
-      const plans = await getMarketPrepPlans(user.uid);
-      setSavedPlans(plans);
+      const savedItems = await getPermitGrantItems(user.uid);
+      setItems(Array.isArray(savedItems) ? savedItems.map(normalizeRecord) : []);
     } catch (error) {
       console.error(error);
-      setStatusMessage("Could not load saved market plans.");
+      setStatusMessage("Could not load permit and grant records.");
     } finally {
-      setLoadingPlans(false);
+      setLoadingItems(false);
     }
   }
 
   useEffect(() => {
     if (user) {
-      loadSavedPlans();
+      loadItems();
     } else {
-      setSavedPlans([]);
+      setItems([]);
     }
   }, [user]);
 
-  function hydratePlan(plan) {
-    setPlanId(plan.id || "");
-    setMarketName(plan.marketName || "Farmers Market");
-    setMarketDate(plan.marketDate || todayISO());
-    setLocation(plan.location || "");
-    setWeatherNotes(plan.weatherNotes || "");
-    setProducts(Array.isArray(plan.products) ? plan.products : []);
-    setStatusMessage("Loaded saved market plan.");
-    scrollToSection(setupRef);
+  const summary = useMemo(() => {
+    return items.reduce(
+      (sum, item) => {
+        const dueStatus = getDueStatus(item);
+        const isActive = ["Approved", "Complete"].includes(item.status);
+        const isMissingDocs = !item.documentName && !item.documentUrl;
+        const isGrant = item.type === "Grant";
+        const isUpcomingGrant =
+          isGrant &&
+          dueStatus.days !== null &&
+          dueStatus.days >= 0 &&
+          dueStatus.days <= 60;
+
+        return {
+          active: sum.active + (isActive ? 1 : 0),
+          expiringSoon:
+            sum.expiringSoon +
+            (dueStatus.days !== null && dueStatus.days >= 0 && dueStatus.days <= 30
+              ? 1
+              : 0),
+          expired: sum.expired + (dueStatus.days !== null && dueStatus.days < 0 ? 1 : 0),
+          missingDocs: sum.missingDocs + (isMissingDocs ? 1 : 0),
+          upcomingGrants: sum.upcomingGrants + (isUpcomingGrant ? 1 : 0)
+        };
+      },
+      {
+        active: 0,
+        expiringSoon: 0,
+        expired: 0,
+        missingDocs: 0,
+        upcomingGrants: 0
+      }
+    );
+  }, [items]);
+
+  const filteredItems = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+
+    return items.filter((item) => {
+      const dueStatus = getDueStatus(item);
+
+      const matchesSearch =
+        !query ||
+        item.name.toLowerCase().includes(query) ||
+        item.agency.toLowerCase().includes(query) ||
+        item.notes.toLowerCase().includes(query);
+
+      const matchesType = typeFilter === "All Types" || item.type === typeFilter;
+      const matchesStatus =
+        statusFilter === "All Statuses" || item.status === statusFilter;
+
+      const matchesRecord =
+        recordFilter === "All Records" ||
+        (recordFilter === "Expiring Soon" &&
+          dueStatus.days !== null &&
+          dueStatus.days >= 0 &&
+          dueStatus.days <= 30) ||
+        (recordFilter === "Expired" && dueStatus.days !== null && dueStatus.days < 0) ||
+        (recordFilter === "Missing Docs" && !item.documentName && !item.documentUrl) ||
+        (recordFilter === "Grants" && item.type === "Grant");
+
+      return matchesSearch && matchesType && matchesStatus && matchesRecord;
+    });
+  }, [items, searchTerm, typeFilter, statusFilter, recordFilter]);
+
+  function openNewRecord() {
+    setEditingRecord({
+      ...blankRecord,
+      id: makeId()
+    });
+    setIsModalOpen(true);
   }
 
-  function startNewPlan() {
-    const blank = createBlankPlan();
-    setPlanId(blank.id);
-    setMarketName(blank.marketName);
-    setMarketDate(blank.marketDate);
-    setLocation(blank.location);
-    setWeatherNotes(blank.weatherNotes);
-    setProducts(blank.products);
-    setStatusMessage("Started a new empty market plan.");
-    scrollToTop();
+  function openEditRecord(item) {
+    setEditingRecord(normalizeRecord(item));
+    setIsModalOpen(true);
   }
 
-  function loadSampleProducts() {
-    if (products.length > 0) {
-      const confirmed = window.confirm(
-        "This will add sample products to the current plan. Continue?"
-      );
+  function closeModal({ discardChanges = true } = {}) {
+    setIsModalOpen(false);
+    setEditingRecord(blankRecord);
 
-      if (!confirmed) return;
+    if (discardChanges) {
+      markSaved();
+    }
+  }
+
+  function updateEditingRecord(field, value) {
+    markPermitGrantDirty();
+
+    setEditingRecord((current) => ({
+      ...current,
+      [field]: value
+    }));
+  }
+
+  function handleDocumentSelection(event) {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    markPermitGrantDirty();
+
+    setEditingRecord((current) => ({
+      ...current,
+      documentName: file.name,
+      documentUrl: ""
+    }));
+  }
+
+  async function saveRecord(record = editingRecord) {
+    if (!record.name.trim()) {
+      setStatusMessage("Record name is required.");
+      return false;
     }
 
-    setProducts((current) => [...current, ...createSampleProducts()]);
-    setStatusMessage("Sample products added. You can edit or delete them anytime.");
-    scrollToSection(packListRef);
-  }
+    const cleanRecord = normalizeRecord({
+      ...record,
+      name: record.name.trim(),
+      agency: record.agency.trim(),
+      link: record.link.trim(),
+      notes: record.notes.trim()
+    });
 
-  async function savePlan() {
     if (!user) {
-      setStatusMessage("Sign in from the Farmers Hub sidebar to save market plans.");
-      return;
+      setItems((current) => {
+        const exists = current.some((item) => item.id === cleanRecord.id);
+        return exists
+          ? current.map((item) => (item.id === cleanRecord.id ? cleanRecord : item))
+          : [...current, cleanRecord];
+      });
+      setStatusMessage("Record saved locally.");
+      closeModal({ discardChanges: false });
+      markSaved();
+      return true;
     }
 
     setSaving(true);
 
-    const plan = {
-      id: planId,
-      marketName,
-      marketDate,
-      location,
-      weatherNotes,
-      products,
-      totals
-    };
-
     try {
-      const savedId = await saveMarketPrepPlan(user.uid, plan);
-      setPlanId(savedId);
-      setStatusMessage("Market prep plan saved.");
-      await loadSavedPlans();
+      const savedId = await savePermitGrantItem(user.uid, cleanRecord);
+      const savedRecord = { ...cleanRecord, id: savedId };
+
+      setItems((current) => {
+        const exists = current.some((item) => item.id === savedRecord.id);
+        return exists
+          ? current.map((item) => (item.id === savedRecord.id ? savedRecord : item))
+          : [...current, savedRecord];
+      });
+
+      setStatusMessage("Record saved.");
+      closeModal({ discardChanges: false });
+      await loadItems();
+      markSaved();
+      return true;
     } catch (error) {
       console.error(error);
-      setStatusMessage("Could not save market prep plan.");
+      setStatusMessage("Could not save record.");
+      return false;
     } finally {
       setSaving(false);
     }
   }
 
-  async function removeSavedPlan(id) {
-    if (!user) return;
+  async function saveSampleRecord(record) {
+    if (!user) {
+      setItems((current) => [...current, record]);
+      return;
+    }
+
+    await savePermitGrantItem(user.uid, record);
+  }
+
+  async function loadSampleRecords() {
+    if (items.length > 0) {
+      const confirmed = window.confirm(
+        "This will add sample permit, insurance, and grant records. Continue?"
+      );
+
+      if (!confirmed) return;
+    }
+
+    const sampleRecords = createSampleItems();
+
+    setSaving(true);
 
     try {
-      await deleteMarketPrepPlan(user.uid, id);
-
-      if (planId === id) {
-        startNewPlan();
+      if (user) {
+        await Promise.all(sampleRecords.map((record) => saveSampleRecord(record)));
+        await loadItems();
+      } else {
+        setItems((current) => [...current, ...sampleRecords]);
       }
 
-      setStatusMessage("Saved plan deleted.");
-      await loadSavedPlans();
+      setStatusMessage("Sample records added. You can edit or delete them anytime.");
     } catch (error) {
       console.error(error);
-      setStatusMessage("Could not delete saved plan.");
+      setStatusMessage("Could not add sample records.");
+    } finally {
+      setSaving(false);
     }
   }
 
-  function updateProduct(id, field, value) {
-    setProducts((current) =>
-      current.map((product) =>
-        product.id === id ? { ...product, [field]: value } : product
-      )
-    );
-  }
-
-  function togglePacked(id) {
-    setProducts((current) =>
-      current.map((product) =>
-        product.id === id ? { ...product, packed: !product.packed } : product
-      )
-    );
-  }
-
-  function removeProduct(id) {
-    setProducts((current) => current.filter((product) => product.id !== id));
-  }
-
-  function addProduct(event) {
-    event.preventDefault();
-
-    if (!newProduct.name.trim()) {
-      setStatusMessage("Product name is required.");
+  async function removeItem(id) {
+    if (!user) {
+      setItems((current) => current.filter((item) => item.id !== id));
+      setStatusMessage("Record deleted locally.");
       return;
     }
 
-    if (!newProduct.unitLabel.trim()) {
-      setStatusMessage("Unit label is required.");
-      return;
+    try {
+      await deletePermitGrantItem(user.uid, id);
+      setStatusMessage("Record deleted.");
+      await loadItems();
+    } catch (error) {
+      console.error(error);
+      setStatusMessage("Could not delete record.");
     }
-
-    setProducts((current) => [
-      ...current,
-      {
-        id: makeId(),
-        name: newProduct.name.trim(),
-        category: newProduct.category,
-        unitLabel: newProduct.unitLabel.trim(),
-        plannedUnits: Number(newProduct.plannedUnits) || 0,
-        unitAmount: Number(newProduct.unitAmount) || 0,
-        amountUnit: newProduct.amountUnit.trim(),
-        bufferPct: Number(newProduct.bufferPct) || 0,
-        notes: newProduct.notes.trim(),
-        packed: false
-      }
-    ]);
-
-    setNewProduct({
-      name: "",
-      category: "Produce",
-      unitLabel: "",
-      plannedUnits: "",
-      unitAmount: "",
-      amountUnit: "",
-      bufferPct: 0,
-      notes: ""
-    });
-
-    setStatusMessage("Product added to market plan.");
-    scrollToSection(packListRef);
   }
-
-  function printPlan() {
-    window.print();
-  }
-
-  const sectionCards = [
-    {
-      title: "Market Setup",
-      description: "Set date, location, weather notes, and market context.",
-      icon: CalendarDays,
-      ref: setupRef
-    },
-    {
-      title: "Product Forecast",
-      description: "Plan any vendor product using custom units and categories.",
-      icon: Sprout,
-      ref: forecastRef
-    },
-    {
-      title: "Pack List",
-      description: "Calculate planned units and prep targets by product.",
-      icon: PackageCheck,
-      ref: packListRef
-    },
-    {
-      title: "Saved Plans",
-      description: "Load, update, print, and reuse market prep plans.",
-      icon: ClipboardList,
-      ref: savedPlansRef
-    }
-  ];
 
   if (!user) {
     return (
-      <div className="modulePage marketPrepPage compactSpicePage">
-        <section className="moduleHero compactHero">
+      <div className="permitGrantModule">
+        <section className="permitGrantHero">
           <div>
-            <p className="eyebrow">Market Prep Planner</p>
-            <h2>Sign in to save market prep plans.</h2>
-            <p>
-              Build generalized product forecasts and pack lists locally, then sign in
-              to save market plans to your Farmers Hub account.
-            </p>
+            <h2>Permits & Grants</h2>
+            <p>Sign in to save permits, grants, licenses, insurance, and renewals.</p>
           </div>
 
           <button className="primaryButton" onClick={loginWithGoogle}>
@@ -463,19 +492,7 @@ export default function MarketPrepPlanner() {
   }
 
   return (
-    <div className="modulePage marketPrepPage compactSpicePage">
-      <section className="moduleHero compactHero noActionHero">
-        <div>
-          <p className="eyebrow">Market Prep Planner</p>
-          <h2>Plan packing, prep quantities, and inventory before market day.</h2>
-          <p>
-            Build a market plan by location and date, define your own unit labels,
-            estimate product quantities, add buffers, save plans, and print a working
-            prep sheet.
-          </p>
-        </div>
-      </section>
-
+    <div className="permitGrantModule">
       {statusMessage ? (
         <div className="floatingStatus success">
           <span>ⓘ</span>
@@ -486,534 +503,446 @@ export default function MarketPrepPlanner() {
         </div>
       ) : null}
 
-      <section className="toolGrid compactToolGrid">
-        {sectionCards.map((card) => {
-          const Icon = card.icon;
-
-          return (
-            <button
-              className="toolCard compactToolCard clickableToolCard"
-              key={card.title}
-              type="button"
-              onClick={() => scrollToSection(card.ref)}
-            >
-              <Icon size={22} />
-              <h3>{card.title}</h3>
-              <p>{card.description}</p>
-            </button>
-          );
-        })}
-      </section>
-
-      <section className="spiceWorkspace compactWorkspace">
-        <div className="workspacePanel compactPanel scrollAnchor" ref={setupRef}>
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Setup</p>
-              <h3>Market Details</h3>
-            </div>
-
-            <div className="formActions compactActions">
-              <button
-                className="secondaryButton compactButton"
-                type="button"
-                onClick={startNewPlan}
-              >
-                <Plus size={15} />
-                New Plan
-              </button>
-
-              <button
-                className="secondaryButton compactButton"
-                type="button"
-                onClick={loadSampleProducts}
-              >
-                <Sprout size={15} />
-                Load Sample Products
-              </button>
-
-              <button
-                className="secondaryButton compactButton"
-                type="button"
-                onClick={printPlan}
-              >
-                <Printer size={15} />
-                Print
-              </button>
-
-              <button
-                className="primaryButton compactPrimary"
-                type="button"
-                onClick={savePlan}
-                disabled={saving}
-              >
-                <Save size={15} />
-                {saving ? "Saving..." : "Save"}
-              </button>
-            </div>
-          </div>
-
-          <div className="formGrid compactFormGrid">
-            <label>
-              Market Name
-              <input
-                value={marketName}
-                onChange={(event) => setMarketName(event.target.value)}
-                placeholder="e.g., Downtown Farmers Market"
-              />
-            </label>
-
-            <label>
-              Market Date
-              <input
-                type="date"
-                value={marketDate}
-                onChange={(event) => setMarketDate(event.target.value)}
-              />
-            </label>
-
-            <label>
-              Location
-              <input
-                value={location}
-                onChange={(event) => setLocation(event.target.value)}
-                placeholder="e.g., Pavilion, Main Street, South Lot"
-              />
-            </label>
-
-            <label>
-              Weather / Demand Notes
-              <input
-                value={weatherNotes}
-                onChange={(event) => setWeatherNotes(event.target.value)}
-                placeholder="e.g., Hot day, holiday weekend, rain possible"
-              />
-            </label>
-          </div>
-
-          <div className="hubStatGrid marketPrepStatsGrid">
-            <StatCard
-              icon={PackageCheck}
-              label="Products"
-              value={totals.productCount}
-              sub="Line items in this plan"
-              accent="market"
-            />
-
-            <StatCard
-              icon={ClipboardList}
-              label="Planned Units"
-              value={totals.plannedUnits}
-              sub="Total units before buffers"
-              accent="pricing"
-            />
-
-            <StatCard
-              icon={Sprout}
-              label="Buffered Items"
-              value={totals.lineItemsWithBuffer}
-              sub="Products with extra prep added"
-              accent="sourdough"
-            />
-          </div>
-
-          <div className="placeholderBox compactPlaceholder">
-            <strong>{marketName}</strong>
-            {location ? (
-              <>
-                {" "}
-                at <strong>{location}</strong>
-              </>
-            ) : null}{" "}
-            on <strong>{marketDate}</strong>
-            {weatherNotes ? ` • ${weatherNotes}` : ""}
-          </div>
+      <section className="permitGrantHero">
+        <div>
+          <h2>Permits & Grants</h2>
+          <p>Track permits, licenses, grants, insurance, and renewal deadlines.</p>
         </div>
 
-        <div className="workspacePanel compactPanel scrollAnchor" ref={savedPlansRef}>
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Saved</p>
-              <h3>Saved Market Plans</h3>
-            </div>
-          </div>
+        <div className="formActions compactActions">
+          <button
+            className="secondaryButton compactButton"
+            type="button"
+            onClick={loadSampleRecords}
+            disabled={saving}
+          >
+            <FileText size={15} />
+            Load Sample Records
+          </button>
 
-          <div className="savedList compactSavedList">
-            {loadingPlans ? (
-              <div className="placeholderBox compactPlaceholder">
-                Loading saved plans...
-              </div>
-            ) : savedPlans.length ? (
-              savedPlans.map((plan) => (
-                <div className="savedItem compactSavedItem" key={plan.id}>
-                  <div>
-                    <h4>{plan.marketName || "Market Plan"}</h4>
-                    <p>
-                      {plan.marketDate || "No date"} • {plan.location || "No location"}
-                    </p>
-                  </div>
-
-                  <div className="itemActions">
-                    <button type="button" onClick={() => hydratePlan(plan)}>
-                      Load
-                    </button>
-                    <button type="button" onClick={() => removeSavedPlan(plan.id)}>
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="placeholderBox compactPlaceholder">
-                No saved market plans yet.
-              </div>
-            )}
-          </div>
+          <button className="permitAddButton" type="button" onClick={openNewRecord}>
+            <Plus size={18} />
+            Add Record
+          </button>
         </div>
       </section>
 
-      <section className="spiceWorkspace compactWorkspace">
-        <div className="workspacePanel compactPanel scrollAnchor" ref={forecastRef}>
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Add Product</p>
-              <h3>Product Forecast</h3>
-            </div>
-          </div>
+      <section className="hubStatGrid">
+        <StatCard
+          icon={ShieldCheck}
+          label="Active"
+          value={summary.active}
+          sub="Currently active"
+          accent="market"
+        />
 
-          <form className="formGrid compactFormGrid" onSubmit={addProduct}>
-            <label>
-              Product / Item
-              <input
-                value={newProduct.name}
-                onChange={(event) =>
-                  setNewProduct((current) => ({ ...current, name: event.target.value }))
-                }
-                placeholder="e.g., Tomatoes, Eggs, Loaf, Starter Tray"
-              />
-            </label>
+        <StatCard
+          icon={CalendarDays}
+          label="Expiring Soon"
+          value={summary.expiringSoon}
+          sub="In reminder window"
+          accent="sourdough"
+        />
 
-            <label>
-              Category
-              <select
-                value={newProduct.category}
-                onChange={(event) =>
-                  setNewProduct((current) => ({
-                    ...current,
-                    category: event.target.value
-                  }))
-                }
-              >
-                {marketCategories.map((category) => (
-                  <option key={category}>{category}</option>
-                ))}
-              </select>
-            </label>
+        <StatCard
+          icon={AlertTriangle}
+          label="Expired"
+          value={summary.expired}
+          sub="Overdue records"
+          accent="spice"
+        />
 
-            <label>
-              Unit Label
-              <input
-                value={newProduct.unitLabel}
-                onChange={(event) =>
-                  setNewProduct((current) => ({
-                    ...current,
-                    unitLabel: event.target.value
-                  }))
-                }
-                placeholder="e.g., 1 lb bag, dozen, loaf, 4-pack, 0.2 oz pouch"
-              />
-            </label>
+        <StatCard
+          icon={Upload}
+          label="Missing Docs"
+          value={summary.missingDocs}
+          sub="Need upload"
+          accent="pricing"
+        />
 
-            <label>
-              Planned Units
-              <input
-                type="number"
-                value={newProduct.plannedUnits}
-                onChange={(event) =>
-                  setNewProduct((current) => ({
-                    ...current,
-                    plannedUnits: event.target.value
-                  }))
-                }
-                placeholder="e.g., 24"
-              />
-            </label>
-
-            <label>
-              Amount Per Unit
-              <input
-                type="number"
-                step="0.0001"
-                value={newProduct.unitAmount}
-                onChange={(event) =>
-                  setNewProduct((current) => ({
-                    ...current,
-                    unitAmount: event.target.value
-                  }))
-                }
-                placeholder="e.g., 1, 0.2, 12"
-              />
-            </label>
-
-            <label>
-              Amount Unit
-              <input
-                value={newProduct.amountUnit}
-                onChange={(event) =>
-                  setNewProduct((current) => ({
-                    ...current,
-                    amountUnit: event.target.value
-                  }))
-                }
-                placeholder="e.g., lb, oz, dozen, each, tray"
-              />
-            </label>
-
-            <label>
-              Buffer %
-              <input
-                type="number"
-                value={newProduct.bufferPct}
-                onChange={(event) =>
-                  setNewProduct((current) => ({
-                    ...current,
-                    bufferPct: event.target.value
-                  }))
-                }
-                placeholder="e.g., 10"
-              />
-            </label>
-
-            <label>
-              Notes
-              <input
-                value={newProduct.notes}
-                onChange={(event) =>
-                  setNewProduct((current) => ({ ...current, notes: event.target.value }))
-                }
-                placeholder="e.g., Best seller, sample item, keep cold"
-              />
-            </label>
-
-            <div className="formActions fullSpan compactActions">
-              <button className="primaryButton compactPrimary" type="submit">
-                <Plus size={15} />
-                Add Product
-              </button>
-            </div>
-          </form>
-        </div>
-
-        <div className="workspacePanel compactPanel marketPrepPrintSummary">
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Summary</p>
-              <h3>Category Summary</h3>
-            </div>
-          </div>
-
-          <div className="savedList compactSavedList">
-            {Object.keys(categorySummary).length ? (
-              Object.entries(categorySummary).map(([category, summary]) => (
-                <div className="savedItem compactSavedItem" key={category}>
-                  <div>
-                    <h4>{category}</h4>
-                    <p>
-                      {summary.items} items • {summary.units} planned units
-                    </p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="placeholderBox compactPlaceholder">
-                Add products or load sample products to see category totals.
-              </div>
-            )}
-          </div>
-        </div>
+        <StatCard
+          icon={FileText}
+          label="Upcoming Grants"
+          value={summary.upcomingGrants}
+          sub="Deadlines approaching"
+          accent="grant"
+        />
       </section>
 
-      <section className="workspacePanel compactPanel scrollAnchor marketPrepPrintPackList" ref={packListRef}>
-        <div className="workspaceHeader compactPanelHeader">
-          <div>
-            <p className="eyebrow">Pack List</p>
-            <h3>Market Pack + Prep Plan</h3>
-          </div>
-
-          <div className="formActions compactActions marketPrepNoPrint">
-            <button
-              className="secondaryButton compactButton"
-              type="button"
-              onClick={loadSampleProducts}
-            >
-              <Sprout size={15} />
-              Load Samples
-            </button>
-
-            <button
-              className="secondaryButton compactButton"
-              type="button"
-              onClick={printPlan}
-            >
-              <Printer size={15} />
-              Print
-            </button>
-
-            <button
-              className="primaryButton compactPrimary"
-              type="button"
-              onClick={savePlan}
-              disabled={saving}
-            >
-              <Save size={15} />
-              {saving ? "Saving..." : "Save Changes"}
-            </button>
-          </div>
+      <section className="permitFilterBar">
+        <div className="permitSearch">
+          <Search size={18} />
+          <input
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Search by name, agency, or notes..."
+          />
         </div>
 
-        <div className="marketPrepPrintHeader">
-          <h2>{marketName}</h2>
-          <p>
-            {marketDate}
-            {location ? ` • ${location}` : ""}
-            {weatherNotes ? ` • ${weatherNotes}` : ""}
-          </p>
-        </div>
+        <label>
+          <Filter size={16} />
+          <select
+            value={typeFilter}
+            onChange={(event) => setTypeFilter(event.target.value)}
+          >
+            <option>All Types</option>
+            {itemTypes.map((type) => (
+              <option key={type}>{type}</option>
+            ))}
+          </select>
+        </label>
 
-        <div className="batchTable compactBatchTable marketPrepCompactTable">
-          <div className="batchTableHeader marketPrepCompactHeader">
-            <span>Done</span>
-            <span>Product</span>
-            <span>Category</span>
-            <span>Unit</span>
-            <span>Qty</span>
-            <span>Amt / Unit</span>
-            <span>Total</span>
-            <span>Target</span>
-            <span>Notes</span>
-            <span className="marketPrepNoPrint"></span>
+        <label>
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+          >
+            <option>All Statuses</option>
+            {statusOptions.map((status) => (
+              <option key={status}>{status}</option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          <select
+            value={recordFilter}
+            onChange={(event) => setRecordFilter(event.target.value)}
+          >
+            <option>All Records</option>
+            <option>Expiring Soon</option>
+            <option>Expired</option>
+            <option>Missing Docs</option>
+            <option>Grants</option>
+          </select>
+        </label>
+      </section>
+
+      <section className="permitTablePanel">
+        <div className="permitTable">
+          <div className="permitTableHeader">
+            <span>Name</span>
+            <span>Type</span>
+            <span>Organization</span>
+            <span>Status</span>
+            <span>Priority</span>
+            <span>Issue</span>
+            <span>Due / Renewal</span>
+            <span>Reminder</span>
+            <span>Document</span>
+            <span>Actions</span>
           </div>
 
-          {products.length ? (
-            products.map((product) => {
-              const productTotals = getProductTotals(product);
+          {loadingItems ? (
+            <div className="permitEmptyState">Loading records...</div>
+          ) : filteredItems.length ? (
+            filteredItems.map((item) => {
+              const dueStatus = getDueStatus(item);
 
               return (
-                <div className="batchTableRow marketPrepCompactRow" key={product.id}>
-                  <span className="marketPrepCheckCell">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(product.packed)}
-                      onChange={() => togglePacked(product.id)}
-                    />
+                <div className="permitTableRow" key={item.id}>
+                  <span className="permitName">{item.name}</span>
+
+                  <span>
+                    <span className="permitTypePill">{item.type}</span>
+                  </span>
+
+                  <span className="permitMuted">{item.agency || "None listed"}</span>
+
+                  <span>
+                    <span className={`permitStatusPill ${statusClass(item.status)}`}>
+                      {item.status}
+                    </span>
                   </span>
 
                   <span>
-                    <input
-                      value={product.name}
-                      onChange={(event) =>
-                        updateProduct(product.id, "name", event.target.value)
-                      }
-                    />
+                    <span className={`permitPriorityPill ${item.priority.toLowerCase()}`}>
+                      {item.priority}
+                    </span>
+                  </span>
+
+                  <span className="permitMuted">{item.issueDate || "—"}</span>
+
+                  <span className="permitMuted">{getRelevantDate(item) || "—"}</span>
+
+                  <span>
+                    <span className={`permitDeadlinePill ${dueStatus.tone}`}>
+                      {dueStatus.tone === "danger" ? (
+                        <AlertTriangle size={13} />
+                      ) : (
+                        <CalendarDays size={13} />
+                      )}
+                      {dueStatus.label}
+                    </span>
                   </span>
 
                   <span>
-                    <select
-                      value={product.category}
-                      onChange={(event) =>
-                        updateProduct(product.id, "category", event.target.value)
-                      }
-                    >
-                      {marketCategories.map((category) => (
-                        <option key={category}>{category}</option>
-                      ))}
-                    </select>
+                    {item.documentName || item.documentUrl ? (
+                      <span className="permitDocument">
+                        <FileText size={14} />
+                        {item.documentUrl ? (
+                          <a href={item.documentUrl} target="_blank" rel="noreferrer">
+                            {item.documentName || "Open Document"}
+                          </a>
+                        ) : (
+                          <span>{item.documentName}</span>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="permitMissingDoc">
+                        <Upload size={14} />
+                        Missing
+                      </span>
+                    )}
                   </span>
 
-                  <span>
-                    <input
-                      value={product.unitLabel}
-                      onChange={(event) =>
-                        updateProduct(product.id, "unitLabel", event.target.value)
-                      }
-                    />
-                  </span>
-
-                  <span>
-                    <input
-                      type="number"
-                      value={product.plannedUnits}
-                      onChange={(event) =>
-                        updateProduct(product.id, "plannedUnits", event.target.value)
-                      }
-                    />
-                  </span>
-
-                  <span>
-                    <div className="amountUnitInline">
-                      <input
-                        type="number"
-                        step="0.0001"
-                        value={product.unitAmount}
-                        onChange={(event) =>
-                          updateProduct(product.id, "unitAmount", event.target.value)
-                        }
-                      />
-                      <input
-                        value={product.amountUnit}
-                        onChange={(event) =>
-                          updateProduct(product.id, "amountUnit", event.target.value)
-                        }
-                      />
-                    </div>
-                  </span>
-
-                  <span className="marketPrepCalculated">
-                    {round(productTotals.plannedAmount)} {product.amountUnit}
-                  </span>
-
-                  <span className="marketPrepCalculated">
-                    {round(productTotals.finalAmount)} {product.amountUnit}
-                    {Number(product.bufferPct) > 0 ? (
-                      <small>{product.bufferPct}% buffer</small>
+                  <span className="permitActions">
+                    {item.link ? (
+                      <a href={item.link} target="_blank" rel="noreferrer">
+                        <ExternalLink size={16} />
+                      </a>
                     ) : null}
-                  </span>
 
-                  <span>
-                    <input
-                      value={product.notes}
-                      onChange={(event) =>
-                        updateProduct(product.id, "notes", event.target.value)
-                      }
-                    />
-                  </span>
+                    <button type="button" onClick={() => openEditRecord(item)}>
+                      <Edit3 size={16} />
+                    </button>
 
-                  <span className="marketPrepNoPrint">
-                    <button
-                      className="iconButton danger"
-                      type="button"
-                      onClick={() => removeProduct(product.id)}
-                    >
-                      <Trash2 size={15} />
+                    <button type="button" onClick={() => removeItem(item.id)}>
+                      <Trash2 size={16} />
                     </button>
                   </span>
                 </div>
               );
             })
           ) : (
-            <div className="placeholderBox compactPlaceholder">
-              No products in this market plan yet. Add a product above, or use
-              Load Samples to add editable sample products.
+            <div className="permitEmptyState">
+              No records yet. Add your first permit, grant, license, insurance,
+              or renewal, or load sample records to explore the tracker.
             </div>
           )}
         </div>
       </section>
 
-      {showBackToTop ? (
-        <button className="backToTopButton" type="button" onClick={scrollToTop}>
-          <ArrowUp size={18} />
-          Top
-        </button>
+      {isModalOpen ? (
+        <div className="permitModalOverlay" role="dialog" aria-modal="true">
+          <div className="permitModal">
+            <div className="permitModalHeader">
+              <h3>
+                {items.some((item) => item.id === editingRecord.id)
+                  ? "Edit Permit / Grant / Document"
+                  : "Add Permit / Grant / Document"}
+              </h3>
+
+              <button type="button" onClick={closeModal}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <form
+              className="permitModalForm"
+              onSubmit={(event) => {
+                event.preventDefault();
+                saveRecord();
+              }}
+            >
+              <label className="permitFull">
+                Name *
+                <input
+                  value={editingRecord.name}
+                  onChange={(event) => updateEditingRecord("name", event.target.value)}
+                  placeholder="e.g., Cottage Food License"
+                />
+              </label>
+
+              <label>
+                Type *
+                <select
+                  value={editingRecord.type}
+                  onChange={(event) => updateEditingRecord("type", event.target.value)}
+                >
+                  {itemTypes.map((type) => (
+                    <option key={type}>{type}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Status *
+                <select
+                  value={editingRecord.status}
+                  onChange={(event) =>
+                    updateEditingRecord("status", event.target.value)
+                  }
+                >
+                  {statusOptions.map((status) => (
+                    <option key={status}>{status}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Priority
+                <select
+                  value={editingRecord.priority}
+                  onChange={(event) =>
+                    updateEditingRecord("priority", event.target.value)
+                  }
+                >
+                  {priorityOptions.map((priority) => (
+                    <option key={priority}>{priority}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Fee
+                <input
+                  type="number"
+                  step="0.01"
+                  value={editingRecord.fee}
+                  onChange={(event) => updateEditingRecord("fee", event.target.value)}
+                  placeholder="e.g., 25"
+                />
+              </label>
+
+              <label className="permitFull">
+                Issuing Organization
+                <input
+                  value={editingRecord.agency}
+                  onChange={(event) => updateEditingRecord("agency", event.target.value)}
+                  placeholder="e.g., State Department of Agriculture"
+                />
+              </label>
+
+              <label>
+                Issue Date
+                <input
+                  type="date"
+                  value={editingRecord.issueDate}
+                  onChange={(event) =>
+                    updateEditingRecord("issueDate", event.target.value)
+                  }
+                />
+              </label>
+
+              <label>
+                Expiration / Deadline Date
+                <input
+                  type="date"
+                  value={editingRecord.dueDate}
+                  onChange={(event) => updateEditingRecord("dueDate", event.target.value)}
+                />
+              </label>
+
+              <label>
+                Renewal Date
+                <input
+                  type="date"
+                  value={editingRecord.renewalDate}
+                  onChange={(event) =>
+                    updateEditingRecord("renewalDate", event.target.value)
+                  }
+                />
+              </label>
+
+              <label>
+                Submitted Date
+                <input
+                  type="date"
+                  value={editingRecord.submittedDate}
+                  onChange={(event) =>
+                    updateEditingRecord("submittedDate", event.target.value)
+                  }
+                />
+              </label>
+
+              <label>
+                Approved Date
+                <input
+                  type="date"
+                  value={editingRecord.approvedDate}
+                  onChange={(event) =>
+                    updateEditingRecord("approvedDate", event.target.value)
+                  }
+                />
+              </label>
+
+              <label>
+                Reminder Amount
+                <input
+                  type="number"
+                  value={editingRecord.reminderAmount}
+                  onChange={(event) =>
+                    updateEditingRecord("reminderAmount", event.target.value)
+                  }
+                />
+              </label>
+
+              <label>
+                Reminder Unit
+                <select
+                  value={editingRecord.reminderUnit}
+                  onChange={(event) =>
+                    updateEditingRecord("reminderUnit", event.target.value)
+                  }
+                >
+                  <option>days</option>
+                  <option>weeks</option>
+                  <option>months</option>
+                </select>
+              </label>
+
+              <label className="permitFull">
+                Link
+                <input
+                  value={editingRecord.link}
+                  onChange={(event) => updateEditingRecord("link", event.target.value)}
+                  placeholder="Application, portal, or reference URL"
+                />
+              </label>
+
+              <label className="permitFull">
+                Notes
+                <textarea
+                  value={editingRecord.notes}
+                  onChange={(event) => updateEditingRecord("notes", event.target.value)}
+                  placeholder="Additional notes or details..."
+                />
+              </label>
+
+              <label className="permitFull">
+                Document Upload
+                <input type="file" onChange={handleDocumentSelection} />
+                {editingRecord.documentName ? (
+                  <span className="permitSelectedFile">
+                    Selected: {editingRecord.documentName}
+                  </span>
+                ) : null}
+              </label>
+
+              <div className="permitModalActions permitFull">
+                <button
+                  className="secondaryButton compactButton"
+                  type="button"
+                  onClick={closeModal}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  className={`primaryButton compactPrimary ${
+                    hasUnsavedChanges ? "dirtySaveButton" : ""
+                  }`}
+                  type="submit"
+                  disabled={saving}
+                >
+                  <Save size={15} />
+                  {saving ? "Saving..." : hasUnsavedChanges ? "Save Changes" : "Save Record"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       ) : null}
     </div>
   );
