@@ -292,6 +292,80 @@ function normalizePantryItem(item = {}) {
   };
 }
 
+function normalizeIngredientName(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function findPantryMatch(ingredientName, pantryItems) {
+  const target = normalizeIngredientName(ingredientName);
+  if (!target) return null;
+
+  const normalizedPantry = pantryItems.map((item) => ({
+    item,
+    name: normalizeIngredientName(item.name)
+  }));
+
+  const exactMatch = normalizedPantry.find(({ name }) => name === target);
+  if (exactMatch) return exactMatch.item;
+
+  const containedMatch = normalizedPantry.find(({ name }) => {
+    if (!name) return false;
+    return name.includes(target) || target.includes(name);
+  });
+
+  return containedMatch?.item || null;
+}
+
+function formatSmartWeight(value, label = "") {
+  const grams = Number(value) || 0;
+  let base = formatGrams(grams);
+
+  if (grams >= 453.59237) {
+    base = `${formatGrams(grams)}/${(grams / 453.59237).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}lb`;
+  } else if (grams > GRAMS_PER_OUNCE) {
+    base = `${formatGrams(grams)}/${formatOunces(grams)}oz`;
+  }
+
+  return label ? `${base} ${label}` : base;
+}
+
+function buildIngredientPullRow(name, grams, pantryItems) {
+  const pantryItem = findPantryMatch(name, pantryItems);
+  const amount = Number(grams) || 0;
+  const estimatedCost = pantryItem?.costPerGram ? amount * pantryItem.costPerGram : 0;
+  const packageCount = pantryItem?.packageGrams ? amount / pantryItem.packageGrams : 0;
+
+  return {
+    name,
+    grams: amount,
+    pantryItem,
+    estimatedCost,
+    packageCount
+  };
+}
+
+function formatPackagePull(row) {
+  if (!row?.pantryItem?.packageGrams || !row.packageCount) return "";
+
+  const item = row.pantryItem;
+  const packageSize = formatNumber(item.packageSize, 2);
+  const packageCount = row.packageCount.toLocaleString("en-US", {
+    minimumFractionDigits: row.packageCount < 1 ? 2 : 1,
+    maximumFractionDigits: 2
+  });
+
+  return `Pull ${packageCount} × ${packageSize}${item.packageUnit} package${row.packageCount === 1 ? "" : "s"}`;
+}
+
+
 function loadFromStorage(key, fallback) {
   try {
     const saved = localStorage.getItem(key);
@@ -1255,6 +1329,57 @@ export default function BakingPlanner() {
   const starterWaterLabel = shouldUseStarterName
     ? `Water to Feed ${trimmedStarterName}`
     : "Water to Feed";
+
+  const ingredientPullRows = useMemo(() => {
+    const rows = [];
+    const ingredientBuffer = 1 + settings.ingredientBufferPct / 100;
+
+    Object.entries(totals.bufferedFlourMap).forEach(([name, grams]) => {
+      rows.push(buildIngredientPullRow(name, grams, pantryItems));
+    });
+
+    rows.push(buildIngredientPullRow("Water", totals.bufferedWaterG, pantryItems));
+
+    const bassinageWaterG = plans.reduce(
+      (sum, plan) => sum + (plan.bassinageWaterG || 0),
+      0
+    ) * ingredientBuffer;
+
+    if (bassinageWaterG > 0) {
+      rows.push(buildIngredientPullRow("Bassinage Water", bassinageWaterG, pantryItems));
+    }
+
+    rows.push(
+      buildIngredientPullRow(
+        matureStarterPullLabel,
+        totals.bufferedStarterG,
+        pantryItems
+      )
+    );
+
+    rows.push(buildIngredientPullRow("Salt", totals.bufferedSaltG, pantryItems));
+
+    Object.entries(totals.otherMap).forEach(([name, grams]) => {
+      rows.push(buildIngredientPullRow(name, grams * ingredientBuffer, pantryItems));
+    });
+
+    return rows.filter((row) => row.grams > 0);
+  }, [
+    totals.bufferedFlourMap,
+    totals.bufferedWaterG,
+    totals.bufferedStarterG,
+    totals.bufferedSaltG,
+    totals.otherMap,
+    plans,
+    settings.ingredientBufferPct,
+    pantryItems,
+    matureStarterPullLabel
+  ]);
+
+  const ingredientPullTotalCost = ingredientPullRows.reduce(
+    (sum, row) => sum + (row.estimatedCost || 0),
+    0
+  );
 
   function updateSettingField(field, value) {
     markBakingDirty();
@@ -2871,50 +2996,56 @@ export default function BakingPlanner() {
 
                 <div className="grid two">
                   <div className="soft-panel">
-                    <h3>Ingredient Pull List</h3>
+                    <div className="section-head">
+                      <div>
+                        <h3>Ingredient Pull List</h3>
+                        <p className="muted small">
+                          Pantry matches add package pull estimates and ingredient cost.
+                        </p>
+                      </div>
+                      <span className="pill">
+                        Estimated cost: {formatMoney(ingredientPullTotalCost, 2)}
+                      </span>
+                    </div>
+
                     <div>
-                      {Object.entries(totals.bufferedFlourMap).map(
-                        ([name, grams]) => (
-                          <div key={name} className="line-item">
-                            <span>{name}</span>
-                            <strong>{formatWeight(grams)}</strong>
+                      {ingredientPullRows.length ? (
+                        ingredientPullRows.map((row) => (
+                          <div key={row.name} className="line-item">
+                            <div>
+                              <strong>{row.name}</strong>
+                              {row.pantryItem ? (
+                                <p className="muted tiny">
+                                  Pantry: {row.pantryItem.name}
+                                  {row.pantryItem.source ? ` • ${row.pantryItem.source}` : ""}
+                                  {row.pantryItem.packageSize
+                                    ? ` • ${formatNumber(row.pantryItem.packageSize, 2)}${row.pantryItem.packageUnit} package`
+                                    : ""}
+                                </p>
+                              ) : (
+                                <p className="muted tiny">
+                                  No pantry match yet. Add or rename a pantry item to estimate package pull and cost.
+                                </p>
+                              )}
+                            </div>
+                            <div style={{ textAlign: "right" }}>
+                              <strong>{formatSmartWeight(row.grams)}</strong>
+                              {row.pantryItem ? (
+                                <p className="muted tiny">
+                                  {formatPackagePull(row)}
+                                  {row.estimatedCost
+                                    ? ` • ${formatMoney(row.estimatedCost, 2)}`
+                                    : ""}
+                                </p>
+                              ) : null}
+                            </div>
                           </div>
-                        )
+                        ))
+                      ) : (
+                        <p className="notice good-box">
+                          Add products to the bake plan to generate an ingredient pull list.
+                        </p>
                       )}
-                      <div className="line-item">
-                        <span>Water</span>
-                        <strong>{formatWeight(totals.bufferedWaterG)}</strong>
-                      </div>
-                      {plans.some((plan) => plan.recipe.useBassinage) ? (
-                        <div className="line-item">
-                          <span>Bassinage Water</span>
-                          <strong>
-                            {formatWeight(
-                              plans.reduce(
-                                (sum, plan) => sum + (plan.bassinageWaterG || 0),
-                                0
-                              ) *
-                                (1 + settings.ingredientBufferPct / 100)
-                            )}
-                          </strong>
-                        </div>
-                      ) : null}
-                      <div className="line-item">
-                        <span>{matureStarterPullLabel}</span>
-                        <strong>{formatWeight(totals.bufferedStarterG)}</strong>
-                      </div>
-                      <div className="line-item">
-                        <span>Salt</span>
-                        <strong>{formatWeight(totals.bufferedSaltG)}</strong>
-                      </div>
-                      {Object.entries(totals.otherMap).map(([name, grams]) => (
-                        <div key={name} className="line-item">
-                          <span>{name}</span>
-                          <strong>
-                            {formatWeight(grams * (1 + settings.ingredientBufferPct / 100))}
-                          </strong>
-                        </div>
-                      ))}
                     </div>
                   </div>
 
