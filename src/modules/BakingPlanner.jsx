@@ -1396,7 +1396,7 @@ export default function BakingPlanner() {
 
   return (
     <div className="bakingPlanner" onChangeCapture={markBakingDirty}>
-      {!settings.bakingPlannerMode ? (
+      {!cloudLoading && !settings.bakingPlannerMode ? (
         <div className="bakingModeOverlay" role="dialog" aria-modal="true">
           <div className="bakingModeModal">
             <p className="eyebrow">Baking Planner Setup</p>
