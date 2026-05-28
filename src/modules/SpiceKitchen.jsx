@@ -18,6 +18,7 @@ import {
   X
 } from "lucide-react";
 import { useAuth } from "../AuthContext.jsx";
+import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import StatCard from "../components/StatCard.jsx";
 import {
   createSpiceIngredient,
@@ -101,6 +102,7 @@ function gramsToOunces(grams) {
 
 export default function SpiceKitchen() {
   const { user, loginWithGoogle } = useAuth();
+  const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } = useUnsavedChanges();
 
   const builderRef = useRef(null);
   const calculatorRef = useRef(null);
@@ -126,6 +128,61 @@ export default function SpiceKitchen() {
   const [statusType, setStatusType] = useState("info");
   const [loading, setLoading] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
+
+  function markSpiceDirty() {
+    markUnsaved({
+      source: "Spice Kitchen",
+      onSave: savePendingSpiceChanges
+    });
+  }
+
+  function formHasValues(form) {
+    if (!form) return false;
+
+    return Object.values(form).some((value) => {
+      if (Array.isArray(value)) return value.length > 0;
+      return String(value || "").trim() !== "";
+    });
+  }
+
+  async function savePendingSpiceChanges() {
+    if (!user) return;
+
+    if (formHasValues(quickIngredient) && quickAddOpen) {
+      await quickAddIngredient();
+      return;
+    }
+
+    if (editingIngredientId || formHasValues(ingredientForm)) {
+      await saveIngredient();
+      return;
+    }
+
+    if (editingRecipeId || formHasValues(recipeForm)) {
+      await saveRecipe();
+      return;
+    }
+
+    markSaved();
+  }
+
+  function clearIngredientDraft() {
+    setIngredientForm(emptyIngredient);
+    setEditingIngredientId(null);
+    markSaved();
+  }
+
+  function clearRecipeDraft() {
+    setRecipeForm(emptyRecipe);
+    setEditingRecipeId(null);
+    markSaved();
+  }
+
+  function clearQuickIngredientDraft() {
+    setQuickIngredient(emptyIngredient);
+    setQuickAddOpen(false);
+    markSaved();
+  }
 
   function showStatus(message, type = "info") {
     setStatusMessage(message);
@@ -281,15 +338,17 @@ export default function SpiceKitchen() {
   }, [ingredients, recipes, batchRows]);
 
   function updateIngredientField(field, value) {
+    markSpiceDirty();
     setIngredientForm((current) => ({ ...current, [field]: value }));
   }
 
   function updateRecipeField(field, value) {
+    markSpiceDirty();
     setRecipeForm((current) => ({ ...current, [field]: value }));
   }
 
   async function saveIngredient(event) {
-    event.preventDefault();
+    event?.preventDefault?.();
     if (!user) return;
 
     const cleanIngredient = {
@@ -317,6 +376,7 @@ export default function SpiceKitchen() {
 
       setIngredientForm(emptyIngredient);
       setEditingIngredientId(null);
+      markSaved();
       await loadData();
     } catch (error) {
       console.error(error);
@@ -352,6 +412,7 @@ export default function SpiceKitchen() {
   }
 
   function addRecipeLine() {
+    markSpiceDirty();
     setRecipeForm((current) => ({
       ...current,
       ingredients: [...current.ingredients, createBlankRecipeLine()]
@@ -359,6 +420,7 @@ export default function SpiceKitchen() {
   }
 
   function updateRecipeLine(index, field, value) {
+    markSpiceDirty();
     setRecipeForm((current) => {
       const nextIngredients = [...current.ingredients];
       const nextLine = { ...nextIngredients[index], [field]: value };
@@ -391,6 +453,7 @@ export default function SpiceKitchen() {
   }
 
   function removeRecipeLine(index) {
+    markSpiceDirty();
     setRecipeForm((current) => ({
       ...current,
       ingredients: current.ingredients.filter((_, lineIndex) => lineIndex !== index)
@@ -398,7 +461,7 @@ export default function SpiceKitchen() {
   }
 
   async function quickAddIngredient(event) {
-    event.preventDefault();
+    event?.preventDefault?.();
     if (!user) return;
 
     const cleanIngredient = {
@@ -434,6 +497,7 @@ export default function SpiceKitchen() {
 
       setQuickIngredient(emptyIngredient);
       setQuickAddOpen(false);
+      markSaved();
       showStatus("Ingredient added to pantry and recipe.", "success");
     } catch (error) {
       console.error(error);
@@ -442,7 +506,7 @@ export default function SpiceKitchen() {
   }
 
   async function saveRecipe(event) {
-    event.preventDefault();
+    event?.preventDefault?.();
     if (!user) return;
 
     const cleanRecipe = {
@@ -479,6 +543,7 @@ export default function SpiceKitchen() {
 
       setRecipeForm(emptyRecipe);
       setEditingRecipeId(null);
+      markSaved();
       await loadData();
       scrollToSection(libraryRef);
     } catch (error) {
@@ -654,7 +719,10 @@ export default function SpiceKitchen() {
 
             <button
               className="secondaryButton compactButton"
-              onClick={() => setQuickAddOpen((current) => !current)}
+              onClick={() => {
+                markSpiceDirty();
+                setQuickAddOpen((current) => !current);
+              }}
               type="button"
             >
               <Plus size={15} />
@@ -676,12 +744,13 @@ export default function SpiceKitchen() {
                   Ingredient Name
                   <input
                     value={quickIngredient.name}
-                    onChange={(event) =>
+                    onChange={(event) => {
+                      markSpiceDirty();
                       setQuickIngredient((current) => ({
                         ...current,
                         name: event.target.value
-                      }))
-                    }
+                      }));
+                    }}
                     placeholder="e.g., Smoked paprika"
                   />
                 </label>
@@ -690,12 +759,13 @@ export default function SpiceKitchen() {
                   Category
                   <select
                     value={quickIngredient.category}
-                    onChange={(event) =>
+                    onChange={(event) => {
+                      markSpiceDirty();
                       setQuickIngredient((current) => ({
                         ...current,
                         category: event.target.value
-                      }))
-                    }
+                      }));
+                    }}
                   >
                     {ingredientCategories.map((category) => (
                       <option key={category}>{category}</option>
@@ -709,12 +779,13 @@ export default function SpiceKitchen() {
                     type="number"
                     step="0.0001"
                     value={quickIngredient.cost}
-                    onChange={(event) =>
+                    onChange={(event) => {
+                      markSpiceDirty();
                       setQuickIngredient((current) => ({
                         ...current,
                         cost: event.target.value
-                      }))
-                    }
+                      }));
+                    }}
                     placeholder="e.g., 2.50"
                   />
                 </label>
@@ -723,12 +794,13 @@ export default function SpiceKitchen() {
                   Per
                   <select
                     value={quickIngredient.costUnit}
-                    onChange={(event) =>
+                    onChange={(event) => {
+                      markSpiceDirty();
                       setQuickIngredient((current) => ({
                         ...current,
                         costUnit: event.target.value
-                      }))
-                    }
+                      }));
+                    }}
                   >
                     <option value="oz">oz</option>
                     <option value="g">g</option>
@@ -737,7 +809,7 @@ export default function SpiceKitchen() {
                 </label>
               </div>
 
-              <button className="primaryButton compactPrimary" type="submit">
+              <button className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`} type="submit">
                 Add to Pantry and Recipe
               </button>
             </form>
@@ -839,18 +911,24 @@ export default function SpiceKitchen() {
             </div>
 
             <div className="formActions compactActions">
-              <button className="primaryButton compactPrimary" type="submit">
+              <button
+                className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`}
+                type="submit"
+              >
                 <Save size={15} />
-                {editingRecipeId ? "Update Recipe" : "Save Recipe"}
+                {editingRecipeId
+                  ? hasUnsavedChanges
+                    ? "Update Recipe Changes"
+                    : "Update Recipe"
+                  : hasUnsavedChanges
+                    ? "Save Recipe Changes"
+                    : "Save Recipe"}
               </button>
 
               <button
                 className="secondaryButton compactButton"
                 type="button"
-                onClick={() => {
-                  setRecipeForm(emptyRecipe);
-                  setEditingRecipeId(null);
-                }}
+                onClick={clearRecipeDraft}
               >
                 Clear
               </button>
@@ -1060,18 +1138,24 @@ export default function SpiceKitchen() {
             </label>
 
             <div className="formActions fullSpan compactActions">
-              <button className="primaryButton compactPrimary" type="submit">
+              <button
+                className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`}
+                type="submit"
+              >
                 <Save size={15} />
-                {editingIngredientId ? "Update Ingredient" : "Save Ingredient"}
+                {editingIngredientId
+                  ? hasUnsavedChanges
+                    ? "Update Ingredient Changes"
+                    : "Update Ingredient"
+                  : hasUnsavedChanges
+                    ? "Save Ingredient Changes"
+                    : "Save Ingredient"}
               </button>
 
               <button
                 className="secondaryButton compactButton"
                 type="button"
-                onClick={() => {
-                  setIngredientForm(emptyIngredient);
-                  setEditingIngredientId(null);
-                }}
+                onClick={clearIngredientDraft}
               >
                 Clear
               </button>
