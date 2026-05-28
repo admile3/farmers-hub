@@ -11,6 +11,7 @@ import {
   Trash2
 } from "lucide-react";
 import { useAuth } from "../AuthContext.jsx";
+import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import StatCard from "../components/StatCard.jsx";
 import {
   deleteMarketPrepPlan,
@@ -132,6 +133,7 @@ function getProductTotals(product) {
 
 export default function MarketPrepPlanner() {
   const { user, loginWithGoogle } = useAuth();
+  const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } = useUnsavedChanges();
 
   const setupRef = useRef(null);
   const forecastRef = useRef(null);
@@ -160,6 +162,13 @@ export default function MarketPrepPlanner() {
     bufferPct: 0,
     notes: ""
   });
+
+  function markMarketPrepDirty() {
+    markUnsaved({
+      source: "Market Prep Planner",
+      onSave: savePlan
+    });
+  }
 
   useEffect(() => {
     function handleScroll() {
@@ -260,6 +269,7 @@ export default function MarketPrepPlanner() {
   }, [user]);
 
   function hydratePlan(plan) {
+    markSaved();
     setPlanId(plan.id || "");
     setMarketName(plan.marketName || "Farmers Market");
     setMarketDate(plan.marketDate || todayISO());
@@ -271,6 +281,7 @@ export default function MarketPrepPlanner() {
   }
 
   function startNewPlan() {
+    markMarketPrepDirty();
     const blank = createBlankPlan();
     setPlanId(blank.id);
     setMarketName(blank.marketName);
@@ -283,6 +294,7 @@ export default function MarketPrepPlanner() {
   }
 
   function loadSampleProducts() {
+    markMarketPrepDirty();
     if (products.length > 0) {
       const confirmed = window.confirm(
         "This will add sample products to the current plan. Continue?"
@@ -317,6 +329,7 @@ export default function MarketPrepPlanner() {
     try {
       const savedId = await saveMarketPrepPlan(user.uid, plan);
       setPlanId(savedId);
+      markSaved();
       setStatusMessage("Market prep plan saved.");
       await loadSavedPlans();
     } catch (error) {
@@ -332,6 +345,7 @@ export default function MarketPrepPlanner() {
 
     try {
       await deleteMarketPrepPlan(user.uid, id);
+      markMarketPrepDirty();
 
       if (planId === id) {
         startNewPlan();
@@ -346,6 +360,7 @@ export default function MarketPrepPlanner() {
   }
 
   function updateProduct(id, field, value) {
+    markMarketPrepDirty();
     setProducts((current) =>
       current.map((product) =>
         product.id === id ? { ...product, [field]: value } : product
@@ -354,6 +369,7 @@ export default function MarketPrepPlanner() {
   }
 
   function togglePacked(id) {
+    markMarketPrepDirty();
     setProducts((current) =>
       current.map((product) =>
         product.id === id ? { ...product, packed: !product.packed } : product
@@ -362,10 +378,12 @@ export default function MarketPrepPlanner() {
   }
 
   function removeProduct(id) {
+    markMarketPrepDirty();
     setProducts((current) => current.filter((product) => product.id !== id));
   }
 
   function addProduct(event) {
+    markMarketPrepDirty();
     event.preventDefault();
 
     if (!newProduct.name.trim()) {
@@ -442,7 +460,7 @@ export default function MarketPrepPlanner() {
 
   if (!user) {
     return (
-      <div className="modulePage marketPrepPage compactSpicePage">
+      <div className="modulePage marketPrepPage compactSpicePage" onChangeCapture={markMarketPrepDirty}>
         <section className="moduleHero compactHero">
           <div>
             <p className="eyebrow">Market Prep Planner</p>
@@ -462,7 +480,7 @@ export default function MarketPrepPlanner() {
   }
 
   return (
-    <div className="modulePage marketPrepPage compactSpicePage">
+    <div className="modulePage marketPrepPage compactSpicePage" onChangeCapture={markMarketPrepDirty}>
       <section className="moduleHero compactHero noActionHero">
         <div>
           <p className="eyebrow">Market Prep Planner</p>
@@ -541,7 +559,7 @@ export default function MarketPrepPlanner() {
               </button>
 
               <button
-                className="primaryButton compactPrimary"
+                className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`}
                 type="button"
                 onClick={savePlan}
                 disabled={saving}
@@ -859,7 +877,7 @@ export default function MarketPrepPlanner() {
             </button>
 
             <button
-              className="primaryButton compactPrimary"
+              className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`}
               type="button"
               onClick={savePlan}
               disabled={saving}
