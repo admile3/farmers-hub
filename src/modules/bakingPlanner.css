@@ -40,6 +40,7 @@
 .bakingPlanner .hero-copy {
   flex: 1 1 auto;
   min-width: 0;
+  max-width: calc(100% - 420px);
 }
 
 .bakingPlanner .hero-actions {
@@ -92,12 +93,12 @@
   line-height: 1;
   letter-spacing: -0.055em;
   color: #121820;
-  max-width: 720px;
+  max-width: none;
 }
 
 .bakingPlanner .hero p {
   margin: 10px 0 0;
-  max-width: 660px;
+  max-width: none;
   color: #4b5563;
   line-height: 1.45;
 }
