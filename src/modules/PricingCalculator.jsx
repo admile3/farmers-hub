@@ -764,50 +764,76 @@ export default function PricingCalculator() {
 
         <div className="batchTable compactBatchTable pricingComparisonTable">
           <div className="pricingComparisonHeader">
-            <span>Product</span><span>Source</span><span>Category</span><span>Retail</span><span>Wholesale</span><span>Cost / Unit</span><span>Margin</span><span>Status</span><span>Updated</span><span>Notes</span><span></span>
+            <span>Product</span><span>Category</span><span>Retail</span><span>Wholesale</span><span>Cost</span><span>Margin</span><span>Actions</span>
           </div>
 
           {filteredProducts.length ? (
             filteredProducts.map((product) => {
               const calc = calculateProduct(product);
               return (
-                <div className="pricingComparisonRow" key={product.id}>
-                  <span>
+                <div className="pricingComparisonRow pricingDirectoryCompactRow" key={product.id}>
+                  <span className="pricingProductCell">
                     <button className="savedItemLink" type="button" onClick={() => loadProduct(product)}>{product.name || "Untitled Product"}</button>
-                    {product.sku ? <small>{product.sku}</small> : null}
-                    {product.generatedVariants?.length ? (
-                      <small>{product.generatedVariants.length} size variant{product.generatedVariants.length === 1 ? "" : "s"}</small>
-                    ) : null}
+                    <small>
+                      {productSourceLabel(product)}
+                      {product.sku ? ` • ${product.sku}` : ""}
+                      {product.generatedVariants?.length ? ` • ${product.generatedVariants.length} size variant${product.generatedVariants.length === 1 ? "" : "s"}` : ""}
+                    </small>
                   </span>
-                  <span>{productSourceLabel(product)}</span>
                   <span>{product.category || "Other"}</span>
                   <span className="pricingMetric">{money(product.retailPrice)}</span>
                   <span className="pricingMetric">{money(product.wholesalePrice)}</span>
                   <span className="pricingMetric">{money(calc.costPerUnit)}</span>
                   <span className="pricingMetric pricingPositive">{percent(calc.retailMargin)}<small>{money(calc.retailProfitPerUnit)} / unit</small></span>
-                  <span>{product.status || "Active"}</span>
-                  <span>{formatShortDate(product.updatedAt)}</span>
-                  <span>{product.notes || product.description || ""}</span>
-                  <span>
-                    {product.generatedVariants?.length ? (
-                      <button className="iconButton" type="button" onClick={() => toggleProductExpanded(product.id)} aria-label="Toggle variants">
-                        {expandedProductIds[product.id] ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-                      </button>
-                    ) : product.isGeneratedProduct ? (
-                      <span className="pricingGeneratedBadge">Linked</span>
-                    ) : (
+                  <span className="pricingDirectoryActions">
+                    {!product.isGeneratedProduct ? (
                       <button className="iconButton danger" type="button" onClick={() => removeProduct(product.id)} aria-label="Delete product"><Trash2 size={15} /></button>
-                    )}
+                    ) : null}
+                    <button className="iconButton" type="button" onClick={() => toggleProductExpanded(product.id)} aria-label="Toggle product details">
+                      {expandedProductIds[product.id] ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                    </button>
                   </span>
-                  {expandedProductIds[product.id] && product.generatedVariants?.length ? (
-                    <div className="pricingVariantList">
-                      {product.generatedVariants.map((variant) => (
-                        <div className="pricingVariantRow" key={variant.id}>
-                          <span>{variant.name}</span>
-                          <span>{formatPackageSize(variant.size, variant.unit)}</span>
-                          <span>{money(variant.ingredientCost)}</span>
+
+                  {expandedProductIds[product.id] ? (
+                    <div className="pricingExpandedDetails">
+                      <div>
+                        <strong>Source</strong>
+                        <span>{productSourceLabel(product)}</span>
+                      </div>
+                      <div>
+                        <strong>Status</strong>
+                        <span>{product.status || "Active"}</span>
+                      </div>
+                      <div>
+                        <strong>Updated</strong>
+                        <span>{formatShortDate(product.updatedAt)}</span>
+                      </div>
+                      <div>
+                        <strong>Unit</strong>
+                        <span>{product.unitLabel || "unit"}</span>
+                      </div>
+                      <div className="pricingExpandedWide">
+                        <strong>Notes</strong>
+                        <span>{product.notes || product.description || "No notes saved."}</span>
+                      </div>
+                      {product.isGeneratedProduct ? (
+                        <div className="pricingExpandedWide">
+                          <strong>Linked Item</strong>
+                          <span>This product is managed in {productSourceLabel(product)}. Saving edits here creates a manual product copy.</span>
                         </div>
-                      ))}
+                      ) : null}
+                      {product.generatedVariants?.length ? (
+                        <div className="pricingExpandedWide pricingVariantList">
+                          <strong>Variant Sizes</strong>
+                          {product.generatedVariants.map((variant) => (
+                            <div className="pricingVariantRow" key={variant.id}>
+                              <span>{variant.name}</span>
+                              <span>{formatPackageSize(variant.size, variant.unit)}</span>
+                              <span>{money(variant.ingredientCost)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
                 </div>
