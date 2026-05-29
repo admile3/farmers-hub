@@ -3904,31 +3904,24 @@ input[type="number"] {
   outline-offset: 2px;
   border-radius: 4px;
 }
+
 /* =========================================================
-   Signup modal polish
-   - Cleaner password visibility button
-   - Wider, shorter welcome modal
-   - Rounded internal scroll area
-   - Removes visual need for the footer copy/link now removed in App.jsx
+   Signup modal polish only
+   Keeps existing module/stat-card/layout styling intact
    ========================================================= */
-.pricingModalOverlay {
-  padding: 18px;
-  align-items: center;
-}
 
 .pricingModal.pricingModalCompact {
-  width: min(1220px, calc(100vw - 36px));
-  max-height: calc(100vh - 36px);
+  width: min(1180px, calc(100vw - 48px));
+  max-height: calc(100vh - 40px);
   padding: 0;
   overflow: hidden;
-  border-radius: 30px;
+  border-radius: 28px;
 }
 
 .pricingModalScroll {
-  max-height: calc(100vh - 36px);
+  max-height: calc(100vh - 40px);
   overflow-y: auto;
-  padding: 20px 28px 24px;
-  border-radius: inherit;
+  padding: 22px 30px 24px;
   scrollbar-gutter: stable;
 }
 
@@ -3942,63 +3935,53 @@ input[type="number"] {
 }
 
 .pricingModalScroll::-webkit-scrollbar-thumb {
-  background: rgba(75, 85, 99, 0.35);
+  background: rgba(75, 85, 99, 0.42);
   border-radius: 999px;
-  border: 2px solid #ffffff;
+  border: 3px solid #ffffff;
 }
 
 .pricingModalScroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(75, 85, 99, 0.52);
+  background: rgba(75, 85, 99, 0.58);
 }
 
 .pricingModalCompact .modalCloseButton {
   z-index: 3;
 }
 
-.compactSignupHeader {
+.pricingModalCompact .compactSignupHeader {
+  max-width: 760px;
   margin-bottom: 14px;
 }
 
-.compactSignupHeader h2 {
-  font-size: clamp(2rem, 3vw, 3.25rem);
-  margin: 6px 0 8px;
+.pricingModalCompact .compactSignupHeader h2 {
+  font-size: clamp(2rem, 3.4vw, 3.85rem);
+  margin: 4px 0 8px;
 }
 
-.compactSignupHeader p {
-  max-width: 760px;
-  margin: 0 auto;
+.pricingModalCompact .compactSignupHeader p {
   line-height: 1.42;
 }
 
 .pricingModalCompact .pricingFeatureGrid,
 .pricingModalCompact .compactFeatureGrid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  max-width: none;
-  margin: 12px 0 14px;
+  max-width: 860px;
+  margin: 12px auto 14px;
   gap: 10px;
 }
 
-.pricingModalCompact .pricingFeatureGrid div {
-  padding: 12px 13px;
-  border-radius: 14px;
-}
-
-.pricingModalCompact .pricingFeatureGrid strong {
-  margin-bottom: 4px;
-}
-
-.pricingModalCompact .pricingFeatureGrid span {
-  font-size: 0.82rem;
-  line-height: 1.3;
+.pricingModalCompact .pricingFeatureGrid div,
+.pricingModalCompact .compactFeatureGrid div {
+  padding: 11px 14px;
 }
 
 .pricingModalCompact .pricingPlanGrid {
-  margin-top: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+  margin-top: 12px;
 }
 
 .pricingModalCompact .pricingPlanGrid .workspacePanel {
-  min-height: 185px;
+  min-height: 0;
   padding: 18px 20px;
 }
 
