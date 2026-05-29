@@ -664,11 +664,20 @@ export default function MarketPrepPlanner() {
               savedPlans.map((plan) => (
                 <div className="savedItem compactSavedItem" key={plan.id}>
                   <div>
-                    <h4>{plan.marketName || "Market Plan"}</h4>
-                    <p>
-                      {plan.marketDate || "No date"} • {plan.location || "No location"}
-                    </p>
-                  </div>
+  <h4>
+    <button
+      type="button"
+      className="savedItemLink"
+      onClick={() => hydratePlan(plan)}
+    >
+      {plan.marketName || "Market Plan"}
+    </button>
+  </h4>
+
+  <p>
+    {plan.marketDate || "No date"} • {plan.location || "No location"}
+  </p>
+</div>
 
                   <div className="itemActions">
                     <button type="button" onClick={() => hydratePlan(plan)}>
