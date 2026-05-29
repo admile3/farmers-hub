@@ -837,24 +837,41 @@ label {
 
 .statusBanner button,
 .floatingStatus button {
+  margin-left: 16px;
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   background: transparent;
-  color: inherit;
+  border: none;
   cursor: pointer;
-  display: grid;
-  place-items: center;
 }
 
 .floatingStatus {
   position: fixed;
-  top: 28px;
+  top: 24px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 9999;
-  width: min(560px, calc(100vw - 32px));
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 12px;
-  box-shadow: var(--shadow-strong);
+  z-index: 5000;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  min-width: 420px;
+  max-width: 640px;
+  width: auto;
+
+  padding: 14px 18px;
+  border-radius: 16px;
+
+  background: #eef7ee;
+  border: 1px solid #c9e3c9;
+  color: #2f6b2f;
+
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
 }
 
 .floatingStatus.error {
