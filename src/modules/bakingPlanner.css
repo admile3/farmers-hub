@@ -1169,3 +1169,38 @@
     white-space: normal;
   }
 }
+/* =========================================================
+   Baking Planner Pantry-Linked Recipe Ingredients
+   Append this to bakingPlanner.css
+   ========================================================= */
+
+.bakingPlanner .bakingRecipeIngredientsPanel {
+  border-color: rgba(223, 160, 76, 0.22);
+}
+
+.bakingPlanner .bakingRecipeIngredientsPanel > .section-head {
+  align-items: flex-start;
+}
+
+.bakingPlanner .bakingQuickIngredientPanel {
+  background: #fffaf2;
+  border-color: rgba(223, 160, 76, 0.28);
+}
+
+.bakingPlanner .bakingIngredientRow {
+  grid-template-columns: minmax(260px, 1fr) minmax(120px, 0.35fr) auto;
+}
+
+@media (max-width: 900px) {
+  .bakingPlanner .bakingIngredientRow {
+    grid-template-columns: 1fr;
+  }
+
+  .bakingPlanner .bakingRecipeIngredientsPanel > .section-head .button-row {
+    width: 100%;
+  }
+
+  .bakingPlanner .bakingRecipeIngredientsPanel > .section-head .btn {
+    width: 100%;
+  }
+}
