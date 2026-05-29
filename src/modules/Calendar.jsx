@@ -552,6 +552,12 @@ export default function Calendar() {
     setIsEventFormOpen(true);
   }
 
+  function openCalendarEventFromName(event, domEvent) {
+    domEvent?.stopPropagation?.();
+    setSelectedDate(event.date || selectedDate);
+    openEditEvent(event);
+  }
+
   async function saveEvent(event) {
     event.preventDefault();
 
@@ -756,12 +762,16 @@ export default function Calendar() {
 
                   <div className="calendarDayEvents">
                     {dayEvents.slice(0, 3).map((event) => (
-                      <span
+                      <button
                         key={event.id}
-                        className={`calendarEventDot ${event.accent || "calendar"}`}
+                        type="button"
+                        className={`calendarEventDot clickableName ${event.accent || "calendar"}`}
+                        onClick={(clickEvent) =>
+                          openCalendarEventFromName(event, clickEvent)
+                        }
                       >
                         {event.title}
-                      </span>
+                      </button>
                     ))}
 
                     {dayEvents.length > 3 ? (
@@ -804,7 +814,7 @@ export default function Calendar() {
                     <span className={`calendarAgendaColor ${event.accent || "calendar"}`} />
 
                     <div>
-                      <strong>{event.title}</strong>
+                      <strong className="clickableNameText">{event.title}</strong>
                       <p>
                         {event.startTime
                           ? `${event.startTime}${event.endTime ? ` - ${event.endTime}` : ""}`
@@ -839,7 +849,7 @@ export default function Calendar() {
                     <span className={`calendarAgendaColor ${event.accent || "calendar"}`} />
 
                     <div>
-                      <strong>{event.title}</strong>
+                      <strong className="clickableNameText">{event.title}</strong>
                       <p>
                         {formatDisplayDate(event.date)} • {formatDue(event.days)}
                       </p>
