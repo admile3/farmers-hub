@@ -863,3 +863,89 @@
     break-inside: avoid;
   }
 }
+.bakingPlanner .pullListWrap table {
+  min-width: 820px;
+}
+
+.bakingPlanner .pullListTable th,
+.bakingPlanner .pullListTable td {
+  padding: 9px 10px;
+  vertical-align: top;
+}
+
+.bakingPlanner .pullIngredientButton {
+  border: 0;
+  background: transparent;
+  color: #121820;
+  font-weight: 900;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.bakingPlanner .pullIngredientButton:hover {
+  color: #2563eb;
+}
+
+.bakingPlanner .pullIngredientButton.disabled {
+  cursor: default;
+  text-decoration: none;
+  color: #121820;
+}
+
+.bakingPlanner .pullAmountCell,
+.bakingPlanner .pullPackageCell {
+  white-space: nowrap;
+}
+
+.bakingPlanner .pantryEditOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(10px);
+}
+
+.bakingPlanner .pantryEditModal {
+  width: min(920px, 100%);
+  max-height: 88vh;
+  overflow: auto;
+  border-radius: 28px;
+  background: #fffaf2;
+  border: 1px solid rgba(120, 79, 35, 0.16);
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.28);
+  padding: 24px;
+}
+
+.bakingPlanner .iconButton {
+  border: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.08);
+  color: #121820;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.bakingPlanner .pantryEditActions {
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+@media print {
+  .bakingPlanner .pantryEditOverlay {
+    display: none;
+  }
+
+  .bakingPlanner .pullListTable th,
+  .bakingPlanner .pullListTable td {
+    padding: 5px 7px;
+  }
+}
