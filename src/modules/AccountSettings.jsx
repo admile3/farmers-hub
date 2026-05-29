@@ -1,7 +1,22 @@
-import { useEffect, useMemo, useState } from "react";
-import { Download, Save, Shield, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Download,
+  FileJson,
+  Import,
+  Save,
+  Shield,
+  ShieldAlert,
+  Trash2,
+  Upload,
+  X
+} from "lucide-react";
 import { useAuth } from "../AuthContext.jsx";
 import { updateAccountProfile } from "../services/accountService.js";
+import {
+  downloadBackupFile,
+  exportHubData,
+  importHubData
+} from "../services/hubBackupService.js";
 
 const defaultSettings = {
   dashboardDensity: "comfortable"
@@ -22,11 +37,18 @@ export default function AccountSettings() {
     logout
   } = useAuth();
 
+  const fileInputRef = useRef(null);
+
   const [saving, setSaving] = useState(false);
   const [billingLoading, setBillingLoading] = useState(false);
+  const [backupWorking, setBackupWorking] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [settings, setSettings] = useState(defaultSettings);
   const [savedSnapshot, setSavedSnapshot] = useState("");
+  const [statusMessage, setStatusMessage] = useState("");
+  const [statusType, setStatusType] = useState("success");
+  const [importFileName, setImportFileName] = useState("");
+  const [importData, setImportData] = useState(null);
 
   const currentSnapshot = useMemo(
     () =>
@@ -55,6 +77,16 @@ export default function AccountSettings() {
       })
     );
   }, [accountProfile, user]);
+
+  useEffect(() => {
+    if (!statusMessage) return undefined;
+
+    const timer = window.setTimeout(() => {
+      setStatusMessage("");
+    }, 3000);
+
+    return () => window.clearTimeout(timer);
+  }, [statusMessage]);
 
   useEffect(() => {
     function handleBeforeUnload(event) {
@@ -95,11 +127,20 @@ export default function AccountSettings() {
     return () => document.removeEventListener("click", handleClick, true);
   }, [hasUnsavedChanges]);
 
+  function showStatus(message, type = "success") {
+    setStatusMessage(message);
+    setStatusType(type);
+  }
+
   function updateSetting(field, value) {
     setSettings((current) => ({
       ...current,
       [field]: value
     }));
+  }
+
+  function getCount(collectionName) {
+    return importData?.data?.[collectionName]?.length || 0;
   }
 
   async function saveSettings() {
@@ -122,44 +163,102 @@ export default function AccountSettings() {
         })
       );
 
-      alert("Account settings saved.");
+      showStatus("Account settings saved.");
     } catch (error) {
       console.error(error);
-      alert("Could not save account settings.");
+      showStatus("Could not save account settings.", "error");
     } finally {
       setSaving(false);
     }
   }
 
-  function exportAccountData() {
-    const data = {
-      exportedAt: new Date().toISOString(),
-      user: {
-        uid: user?.uid || "",
-        email: user?.email || "",
-        displayName: displayName || ""
-      },
-      accountProfile,
-      settings
+  async function handleExportHubData() {
+    if (!user) {
+      showStatus("Sign in before exporting your Hub data.", "error");
+      return;
+    }
+
+    setBackupWorking(true);
+
+    try {
+      const backup = await exportHubData(user.uid, user.email || "");
+      downloadBackupFile(backup);
+      showStatus("Farmers Hub backup exported.");
+    } catch (error) {
+      console.error(error);
+      showStatus("Could not export Farmers Hub data.", "error");
+    } finally {
+      setBackupWorking(false);
+    }
+  }
+
+  function handleImportFile(event) {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+
+        if (!parsed?.data || parsed?.app !== "Farmers Hub") {
+          showStatus("That file does not look like a Farmers Hub backup.", "error");
+          return;
+        }
+
+        setImportFileName(file.name);
+        setImportData(parsed);
+        showStatus("Backup file loaded. Review it, then click Import Backup.");
+      } catch (error) {
+        console.error(error);
+        showStatus("Could not read that backup file.", "error");
+      }
     };
 
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json"
-    });
+    reader.readAsText(file);
+  }
 
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
+  async function handleImportHubData() {
+    if (!user) {
+      showStatus("Sign in before importing Hub data.", "error");
+      return;
+    }
 
-    link.href = url;
-    link.download = "farmers-hub-account-backup.json";
-    link.click();
+    if (!importData) {
+      showStatus("Choose a Farmers Hub backup file first.", "error");
+      return;
+    }
 
-    URL.revokeObjectURL(url);
+    const confirmed = window.confirm(
+      "Import this backup into the currently signed-in account? Matching saved item IDs will be updated, and new items will be added."
+    );
+
+    if (!confirmed) return;
+
+    setBackupWorking(true);
+
+    try {
+      await importHubData(user.uid, importData);
+      showStatus("Backup imported successfully.");
+      setImportData(null);
+      setImportFileName("");
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (error) {
+      console.error(error);
+      showStatus("Could not import Farmers Hub backup.", "error");
+    } finally {
+      setBackupWorking(false);
+    }
   }
 
   async function openBillingPortal() {
     if (!user?.email) {
-      alert("Please sign in before managing billing.");
+      showStatus("Please sign in before managing billing.", "error");
       return;
     }
 
@@ -180,14 +279,14 @@ export default function AccountSettings() {
 
       if (!response.ok || !data.url) {
         console.error(data);
-        alert("Could not open billing portal.");
+        showStatus("Could not open billing portal.", "error");
         return;
       }
 
       window.location.href = data.url;
     } catch (error) {
       console.error(error);
-      alert("Could not open billing portal.");
+      showStatus("Could not open billing portal.", "error");
     } finally {
       setBillingLoading(false);
     }
@@ -206,16 +305,26 @@ export default function AccountSettings() {
         deletionRequested: true
       });
 
-      alert("Your account has been marked for deletion.");
+      showStatus("Your account has been marked for deletion.");
       await logout();
     } catch (error) {
       console.error(error);
-      alert("Could not request account deletion.");
+      showStatus("Could not request account deletion.", "error");
     }
   }
 
   return (
     <div className="modulePage accountSettingsPage">
+      {statusMessage ? (
+        <div className={`floatingStatus ${statusType}`}>
+          <span>ⓘ</span>
+          <span>{statusMessage}</span>
+          <button type="button" onClick={() => setStatusMessage("")}>
+            <X size={16} />
+          </button>
+        </div>
+      ) : null}
+
       <section className="accountSettingsHeroPanel">
         <div>
           <p className="eyebrow">Account Settings</p>
@@ -339,23 +448,148 @@ export default function AccountSettings() {
           </button>
         </div>
 
-        <div className="workspacePanel">
+        <div className="workspacePanel accountSettingsWide">
           <div className="workspaceHeader compactPanelHeader">
             <div>
-              <p className="eyebrow">Data</p>
-              <h3>Backup</h3>
+              <p className="eyebrow">Backup</p>
+              <h3>Import / Export</h3>
             </div>
             <Download size={22} />
           </div>
 
           <p className="importExportText">
-            Download a backup of your account profile and account-level settings.
+            Export a full Farmers Hub backup or import a previous backup into this
+            signed-in account.
           </p>
 
-          <button className="secondaryButton" type="button" onClick={exportAccountData}>
-            <Download size={16} />
-            Export Account Data
-          </button>
+          <section className="importExportGrid">
+            <div className="soft-panel">
+              <div className="workspaceHeader compactPanelHeader">
+                <div>
+                  <p className="eyebrow">Export</p>
+                  <h3>Download Backup</h3>
+                </div>
+
+                <Download size={22} />
+              </div>
+
+              <p className="importExportText">
+                This creates a JSON backup of your saved Hub data for the currently
+                signed-in account.
+              </p>
+
+              <button
+                className="primaryButton compactPrimary"
+                type="button"
+                onClick={handleExportHubData}
+                disabled={backupWorking}
+              >
+                <Download size={15} />
+                {backupWorking ? "Working..." : "Export Hub Data"}
+              </button>
+            </div>
+
+            <div className="soft-panel">
+              <div className="workspaceHeader compactPanelHeader">
+                <div>
+                  <p className="eyebrow">Import</p>
+                  <h3>Upload Backup</h3>
+                </div>
+
+                <Upload size={22} />
+              </div>
+
+              <p className="importExportText">
+                Choose a Farmers Hub backup file. Importing will add new records and
+                update records with matching IDs.
+              </p>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/json,.json"
+                onChange={handleImportFile}
+              />
+
+              {importFileName ? (
+                <div className="importFileNotice">
+                  <FileJson size={18} />
+                  <span>{importFileName}</span>
+                </div>
+              ) : null}
+
+              <button
+                className="primaryButton compactPrimary"
+                type="button"
+                onClick={handleImportHubData}
+                disabled={backupWorking || !importData}
+              >
+                <Import size={15} />
+                {backupWorking ? "Working..." : "Import Backup"}
+              </button>
+            </div>
+          </section>
+
+          {importData ? (
+            <section className="workspacePanel compactPanel importReviewPanel">
+              <div className="workspaceHeader compactPanelHeader">
+                <div>
+                  <p className="eyebrow">Review</p>
+                  <h3>Backup Contents</h3>
+                </div>
+
+                <ShieldAlert size={22} />
+              </div>
+
+              <div className="backupSummaryGrid">
+                <div>
+                  <span>Spice Ingredients</span>
+                  <strong>{getCount("spiceIngredients")}</strong>
+                </div>
+
+                <div>
+                  <span>Spice Recipes</span>
+                  <strong>{getCount("spiceRecipes")}</strong>
+                </div>
+
+                <div>
+                  <span>Market Prep Plans</span>
+                  <strong>{getCount("marketPrepPlans")}</strong>
+                </div>
+
+                <div>
+                  <span>Products</span>
+                  <strong>{getCount("products")}</strong>
+                </div>
+
+                <div>
+                  <span>Pricing Sheets</span>
+                  <strong>{getCount("pricingCalculations")}</strong>
+                </div>
+
+                <div>
+                  <span>Permit / Grant Records</span>
+                  <strong>{getCount("permitGrantItems")}</strong>
+                </div>
+
+                <div>
+                  <span>Lists</span>
+                  <strong>{getCount("lists")}</strong>
+                </div>
+
+                <div>
+                  <span>Customers</span>
+                  <strong>{getCount("customers")}</strong>
+                </div>
+              </div>
+
+              <p className="importExportText">
+                Exported from: <strong>{importData.exportedFrom || "Unknown"}</strong>
+                <br />
+                Exported at: <strong>{importData.exportedAt || "Unknown"}</strong>
+              </p>
+            </section>
+          ) : null}
         </div>
 
         <div className="workspacePanel dangerSettingsPanel">
