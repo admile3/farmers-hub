@@ -306,6 +306,7 @@ export default function SpiceKitchen() {
       }
 
       return {
+        ingredientId: item.ingredientId || ingredient?.id || "",
         name: item.ingredientName || ingredient?.name || "Unknown ingredient",
         parts: toNumber(item.parts),
         grams,
@@ -395,6 +396,14 @@ export default function SpiceKitchen() {
       notes: ingredient.notes || ""
     });
     scrollToSection(pantryRef);
+  }
+
+  function editIngredientById(ingredientId) {
+    const ingredient = ingredients.find((item) => item.id === ingredientId);
+
+    if (ingredient) {
+      editIngredient(ingredient);
+    }
   }
 
   async function removeIngredient(ingredientId) {
@@ -561,6 +570,14 @@ export default function SpiceKitchen() {
       ingredients: recipe.ingredients || []
     });
     scrollToSection(builderRef);
+  }
+
+  function editRecipeById(recipeId) {
+    const recipe = recipes.find((item) => item.id === recipeId);
+
+    if (recipe) {
+      editRecipe(recipe);
+    }
   }
 
   async function removeRecipe(recipeId) {
@@ -1032,8 +1049,20 @@ export default function SpiceKitchen() {
                 </div>
 
                 {batchRows.map((row) => (
-                  <div className="batchTableRow" key={row.name}>
-                    <span>{row.name}</span>
+                  <div className="batchTableRow" key={`${row.ingredientId || row.name}-${row.name}`}>
+                    <span>
+                      {row.ingredientId ? (
+                        <button
+                          type="button"
+                          className="savedItemLink"
+                          onClick={() => editIngredientById(row.ingredientId)}
+                        >
+                          {row.name}
+                        </button>
+                      ) : (
+                        row.name
+                      )}
+                    </span>
                     <span>{formatParts(row.parts)}</span>
                     <span>{round(row.grams)}</span>
                     <span>{round(row.ounces)}</span>
@@ -1174,15 +1203,17 @@ export default function SpiceKitchen() {
                     className={isExpanded ? "savedItemBlock expanded" : "savedItemBlock"}
                     key={ingredient.id}
                   >
-                    <button
-                      className="savedItem compactSavedItem expandableSavedItem"
-                      type="button"
-                      onClick={() =>
-                        setExpandedIngredientId(isExpanded ? null : ingredient.id)
-                      }
-                    >
+                    <div className="savedItem compactSavedItem expandableSavedItem">
                       <div>
-                        <h4>{ingredient.name}</h4>
+                        <h4>
+                          <button
+                            type="button"
+                            className="savedItemLink"
+                            onClick={() => editIngredient(ingredient)}
+                          >
+                            {ingredient.name}
+                          </button>
+                        </h4>
                         <p>
                           {ingredient.category}
                           {ingredient.supplier ? ` • ${ingredient.supplier}` : ""}
@@ -1193,35 +1224,30 @@ export default function SpiceKitchen() {
                       </div>
 
                       <div className="itemActions">
-                        <span className="expandIcon">
+                        <button
+                          type="button"
+                          className="iconButton"
+                          aria-label={isExpanded ? "Collapse ingredient details" : "Expand ingredient details"}
+                          onClick={() =>
+                            setExpandedIngredientId(isExpanded ? null : ingredient.id)
+                          }
+                        >
                           {isExpanded ? (
                             <ChevronUp size={14} />
                           ) : (
                             <ChevronDown size={14} />
                           )}
-                        </span>
+                        </button>
 
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            editIngredient(ingredient);
-                          }}
-                        >
+                        <button type="button" onClick={() => editIngredient(ingredient)}>
                           <Edit3 size={14} />
                         </button>
 
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            removeIngredient(ingredient.id);
-                          }}
-                        >
+                        <button type="button" onClick={() => removeIngredient(ingredient.id)}>
                           <Trash2 size={14} />
                         </button>
                       </div>
-                    </button>
+                    </div>
 
                     {isExpanded ? (
                       <div className="spiceDetailPanel">
@@ -1282,50 +1308,47 @@ export default function SpiceKitchen() {
                     className={isExpanded ? "savedItemBlock expanded" : "savedItemBlock"}
                     key={recipe.id}
                   >
-                    <button
-                      className="savedItem recipeItem compactSavedItem expandableSavedItem"
-                      type="button"
-                      onClick={() =>
-                        setExpandedRecipeId(isExpanded ? null : recipe.id)
-                      }
-                    >
+                    <div className="savedItem recipeItem compactSavedItem expandableSavedItem">
                       <div>
-                        <h4>{recipe.name}</h4>
+                        <h4>
+                          <button
+                            type="button"
+                            className="savedItemLink"
+                            onClick={() => editRecipe(recipe)}
+                          >
+                            {recipe.name}
+                          </button>
+                        </h4>
                         <p>
                           {recipe.category} • {recipe.ingredients?.length || 0} ingredients
                         </p>
                       </div>
 
                       <div className="itemActions">
-                        <span className="expandIcon">
+                        <button
+                          type="button"
+                          className="iconButton"
+                          aria-label={isExpanded ? "Collapse recipe details" : "Expand recipe details"}
+                          onClick={() =>
+                            setExpandedRecipeId(isExpanded ? null : recipe.id)
+                          }
+                        >
                           {isExpanded ? (
                             <ChevronUp size={14} />
                           ) : (
                             <ChevronDown size={14} />
                           )}
-                        </span>
+                        </button>
 
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            editRecipe(recipe);
-                          }}
-                        >
+                        <button type="button" onClick={() => editRecipe(recipe)}>
                           <Edit3 size={14} />
                         </button>
 
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            removeRecipe(recipe.id);
-                          }}
-                        >
+                        <button type="button" onClick={() => removeRecipe(recipe.id)}>
                           <Trash2 size={14} />
                         </button>
                       </div>
-                    </button>
+                    </div>
 
                     {isExpanded ? (
                       <div className="spiceDetailPanel recipeDetailPanel">
@@ -1353,7 +1376,19 @@ export default function SpiceKitchen() {
                                 className="recipePartsRow"
                                 key={`${line.ingredientId}-${index}`}
                               >
-                                <span>{getIngredientName(line)}</span>
+                                <span>
+                                  {line.ingredientId ? (
+                                    <button
+                                      type="button"
+                                      className="savedItemLink"
+                                      onClick={() => editIngredientById(line.ingredientId)}
+                                    >
+                                      {getIngredientName(line)}
+                                    </button>
+                                  ) : (
+                                    getIngredientName(line)
+                                  )}
+                                </span>
                                 <span>{formatParts(line.parts)} parts</span>
                               </div>
                             ))
