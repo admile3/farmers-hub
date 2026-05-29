@@ -1101,11 +1101,6 @@ export default function SpiceKitchen() {
                     </button>
                   </div>
 
-                  <div className="costPreviewCard">
-                    <strong>Formula Cost</strong>
-                    <span>${round(recipeCostSummary.costPerOunce, 4)} per finished oz</span>
-                  </div>
-
                   {recipeForm.productPackages.length ? (
                     <>
                       <div className="productPackageRow productPackageHeader">
@@ -1121,7 +1116,7 @@ export default function SpiceKitchen() {
                           recipeCostSummary.productPackages[index]?.ingredientCost || 0;
 
                         return (
-                          <div className="productPackageRow" key={`${item.name}-${index}`}>
+                          <div className="productPackageRow" key={`product-package-${index}`}>
                             <input
                               value={item.name}
                               onChange={(event) =>
@@ -1151,7 +1146,7 @@ export default function SpiceKitchen() {
                               <option value="lb">lb</option>
                             </select>
 
-                            <span>${round(costPreview, 4)}</span>
+                            <span>${round(costPreview, 2)}</span>
 
                             <button
                               className="iconButton danger"
@@ -1635,7 +1630,7 @@ export default function SpiceKitchen() {
 
                         <div>
                           <strong>Formula Cost</strong>
-                          <span>${round(formulaCostPerOunce, 4)} per finished oz</span>
+                          <span>${round(formulaCostPerOunce, 2)} per finished oz</span>
                         </div>
 
                         <div>
@@ -1663,7 +1658,7 @@ export default function SpiceKitchen() {
                                   <span>{item.name}</span>
                                   <span>
                                     {item.size} {item.unit} • $
-                                    {round(item.ingredientCost, 4)} ingredient cost
+                                    {round(item.ingredientCost, 2)} ingredient cost
                                   </span>
                                 </div>
                               ))
