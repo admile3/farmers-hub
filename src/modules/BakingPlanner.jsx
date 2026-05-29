@@ -393,6 +393,46 @@ function formatSmartWeight(value, label = "") {
   return label ? `${base} ${label}` : base;
 }
 
+
+function formatPullWeight(value) {
+  const grams = Number(value) || 0;
+  const roundedGrams = Math.round(grams).toLocaleString("en-US");
+
+  if (grams >= 453.59237) {
+    const pounds = (grams / 453.59237).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+
+    return `${pounds} lb (${roundedGrams} g)`;
+  }
+
+  if (grams >= GRAMS_PER_OUNCE) {
+    const ounces = (grams / GRAMS_PER_OUNCE).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+
+    return `${ounces} oz (${roundedGrams} g)`;
+  }
+
+  return `${roundedGrams} g`;
+}
+
+function formatCompactPackagePull(row) {
+  if (row?.isNonCosted) return "N/A";
+  if (!row?.pantryItem?.packageGrams || !row.packageCount) return "No match";
+
+  const item = row.pantryItem;
+  const packageSize = formatNumber(item.packageSize, 2);
+  const packageCount = row.packageCount.toLocaleString("en-US", {
+    minimumFractionDigits: row.packageCount < 1 ? 2 : 1,
+    maximumFractionDigits: 2
+  });
+
+  return `${packageCount} × ${packageSize}${item.packageUnit}`;
+}
+
 function buildIngredientPullRow(name, grams, pantryItems, options = {}) {
   const isNonCosted = Boolean(options.isNonCosted);
   const pantryItem = isNonCosted ? null : findPantryMatch(name, pantryItems);
@@ -3383,58 +3423,77 @@ export default function BakingPlanner() {
                       </span>
                     </div>
 
-                    <div>
-                      {ingredientPullRows.length ? (
-                        ingredientPullRows.map((row) => (
-                          <div key={row.name} className="line-item">
-                            <div>
-                              <strong>{row.name}</strong>
-                              {row.pantryItem ? (
-                                <p className="muted tiny">
-                                  Pantry: {row.pantryItem.name}
-                                  {row.pantryItem.source ? ` • ${row.pantryItem.source}` : ""}
-                                  {row.pantryItem.packageSize
-                                    ? ` • ${formatNumber(row.pantryItem.packageSize, 2)}${row.pantryItem.packageUnit} package`
-                                    : ""}
-                                </p>
-                              ) : row.isNonCosted ? (
-                                <p className="muted tiny">
-                                  No pantry item needed.
-                                </p>
-                              ) : (
-                                <p className="muted tiny">
-                                  No pantry match yet. Add or rename a pantry item to estimate package pull and cost.
-                                </p>
-                              )}
-                            </div>
-                            <div style={{ textAlign: "right" }}>
-                              <strong>{formatSmartWeight(row.grams)}</strong>
-                              {row.pantryItem ? (
-                                <>
-                                  <p className="muted tiny">
-                                    {formatPackagePull(row)}
-                                    {row.estimatedCost
-                                      ? ` • ${formatMoney(row.estimatedCost, 2)}`
-                                      : ""}
-                                  </p>
-                                  {row.pantryItem.trackInventory ? (
-                                    <p className={getInventoryStatus(row).className}>
-                                      {getInventoryStatus(row).label}
-                                    </p>
-                                  ) : null}
-                                </>
-                              ) : row.isNonCosted ? (
-                                <p className="muted tiny">Not costed</p>
-                              ) : null}
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="notice good-box">
-                          Add products to the bake plan to generate an ingredient pull list.
-                        </p>
-                      )}
-                    </div>
+                    {ingredientPullRows.length ? (
+                      <div className="table-wrap">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Ingredient</th>
+                              <th>Amount</th>
+                              <th>Pantry Match</th>
+                              <th>Package Pull</th>
+                              <th>Inventory</th>
+                              <th>Cost</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {ingredientPullRows.map((row, index) => {
+                              const inventory = row.pantryItem
+                                ? getInventoryStatus(row)
+                                : null;
+
+                              return (
+                                <tr key={row.name} className={index % 2 ? "" : "alt"}>
+                                  <td>
+                                    <strong>{row.name}</strong>
+                                  </td>
+                                  <td>{formatPullWeight(row.grams)}</td>
+                                  <td>
+                                    {row.pantryItem ? (
+                                      <>
+                                        <strong>{row.pantryItem.name}</strong>
+                                        <br />
+                                        <span className="muted tiny">
+                                          {row.pantryItem.source || "No source"}
+                                          {row.pantryItem.packageSize
+                                            ? ` • ${formatNumber(row.pantryItem.packageSize, 2)}${row.pantryItem.packageUnit}`
+                                            : ""}
+                                        </span>
+                                      </>
+                                    ) : row.isNonCosted ? (
+                                      <span className="muted tiny">No pantry item needed</span>
+                                    ) : (
+                                      <span className="warning-text tiny">Missing pantry match</span>
+                                    )}
+                                  </td>
+                                  <td>{formatCompactPackagePull(row)}</td>
+                                  <td>
+                                    {row.pantryItem?.trackInventory ? (
+                                      <span className={inventory.className}>{inventory.label}</span>
+                                    ) : row.pantryItem ? (
+                                      <span className="muted tiny">Not tracked</span>
+                                    ) : (
+                                      <span className="muted tiny">N/A</span>
+                                    )}
+                                  </td>
+                                  <td>
+                                    {row.isNonCosted
+                                      ? "Not costed"
+                                      : row.estimatedCost
+                                        ? formatMoney(row.estimatedCost, 2)
+                                        : "No cost"}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p className="notice good-box">
+                        Add products to the bake plan to generate an ingredient pull list.
+                      </p>
+                    )}
                   </div>
 
                   <div className="soft-panel">
