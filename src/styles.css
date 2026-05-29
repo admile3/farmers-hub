@@ -5574,3 +5574,44 @@ input[type="number"] {
     text-align: left;
   }
 }
+/* =========================================================
+   Spice Kitchen Product Directory Refinements
+   Append this below the previous Spice Kitchen product directory CSS.
+   ========================================================= */
+
+.spicePage .productDirectoryPanel .helperText {
+  max-width: none;
+  width: 100%;
+  display: block;
+}
+
+.spicePage .productPackageBuilder {
+  gap: 12px;
+}
+
+.spicePage .costPreviewCard {
+  display: none;
+}
+
+.spicePage .productPackageRow {
+  grid-template-columns:
+    minmax(220px, 1.55fr)
+    minmax(90px, 0.45fr)
+    minmax(90px, 0.45fr)
+    minmax(130px, 0.6fr)
+    40px;
+}
+
+.spicePage .productPackageRow > span:nth-child(4) {
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .spicePage .productPackageRow {
+    grid-template-columns: minmax(0, 1fr) 92px 84px;
+  }
+
+  .spicePage .productPackageRow > span:nth-child(4) {
+    white-space: normal;
+  }
+}
