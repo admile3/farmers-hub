@@ -828,3 +828,38 @@
     font-size: 9px;
   }
 }
+.bakingPlanner .line-item {
+  padding: 8px 10px;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.bakingPlanner .line-item strong {
+  font-size: 0.88rem;
+  line-height: 1.2;
+}
+
+.bakingPlanner .line-item .tiny,
+.bakingPlanner .line-item p {
+  margin: 2px 0 0;
+  line-height: 1.25;
+}
+
+.bakingPlanner .line-item > div:last-child {
+  min-width: 135px;
+}
+
+.bakingPlanner .line-item + .line-item {
+  margin-top: 6px;
+}
+
+.bakingPlanner .line-item .warning-text {
+  font-weight: 800;
+}
+
+@media print {
+  .bakingPlanner .line-item {
+    padding: 5px 8px;
+    break-inside: avoid;
+  }
+}
