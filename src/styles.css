@@ -5154,3 +5154,191 @@ input[type="number"] {
     width: 100%;
   }
 }
+
+
+/* =========================================================
+   Products & Pricing module polish
+   Scoped to .pricingPage so the rest of Farmers Hub stays unchanged.
+   ========================================================= */
+
+.pricingPage .moneyInputWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.pricingPage .moneyInputWrap .moneyPrefix {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text);
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.pricingPage .moneyInputWrap input {
+  padding-left: 30px;
+}
+
+.pricingPage .customersFilterPanel {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(190px, 220px) minmax(170px, 200px);
+  gap: 12px;
+  align-items: end;
+  margin: 12px 0;
+}
+
+.pricingPage .pricingComparisonTable {
+  border-radius: 14px;
+  overflow-x: auto;
+}
+
+.pricingPage .pricingComparisonHeader,
+.pricingPage .pricingComparisonRow {
+  grid-template-columns:
+    minmax(230px, 1.4fr)
+    minmax(140px, 0.75fr)
+    minmax(92px, 0.5fr)
+    minmax(100px, 0.55fr)
+    minmax(105px, 0.55fr)
+    minmax(130px, 0.7fr)
+    minmax(105px, 0.55fr)
+    minmax(125px, 0.65fr)
+    minmax(220px, 1fr)
+    44px;
+  min-width: 1280px;
+  gap: 10px;
+  align-items: center;
+}
+
+.pricingPage .pricingComparisonHeader {
+  padding: 11px 14px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.pricingPage .pricingComparisonRow {
+  padding: 12px 14px;
+  color: var(--muted);
+}
+
+.pricingPage .pricingComparisonRow > span {
+  min-width: 0;
+}
+
+.pricingPage .pricingComparisonRow > span:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.pricingPage .pricingComparisonRow .savedItemLink {
+  width: fit-content;
+  max-width: 100%;
+  color: var(--text);
+  font-weight: 900;
+  line-height: 1.18;
+}
+
+.pricingPage .pricingComparisonRow small {
+  color: var(--muted-soft);
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+
+.pricingPage .pricingComparisonRow > span:nth-child(9) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pricingPage .pricingMetric {
+  font-variant-numeric: tabular-nums;
+}
+
+.pricingPage .pricingPositive {
+  color: var(--green-dark);
+}
+
+.pricingPage .pricingPositive small {
+  color: var(--muted);
+}
+
+.pricingPage .spiceWorkspace.compactWorkspace {
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.9fr);
+  align-items: start;
+}
+
+.pricingPage .workspaceHeader .formActions label {
+  min-width: 240px;
+}
+
+.pricingPage .grid.four {
+  margin-top: 14px;
+}
+
+.pricingPage .grid.four .workspacePanel {
+  padding: 14px 16px;
+}
+
+.pricingPage .grid.four .workspacePanel h3 {
+  margin: 4px 0 6px;
+  font-size: 1.45rem;
+  letter-spacing: -0.02em;
+}
+
+.pricingPage .grid.four .workspacePanel .importExportText {
+  margin: 0;
+  font-size: 0.84rem;
+}
+
+.pricingPage .formGrid.compactFormGrid {
+  align-items: end;
+}
+
+.pricingPage .formGrid.compactFormGrid label {
+  min-width: 0;
+}
+
+.pricingPage .toolCard.clickableToolCard p {
+  max-width: none;
+}
+
+.pricingPage .placeholderBox.compactPlaceholder {
+  line-height: 1.45;
+}
+
+@media (max-width: 1200px) {
+  .pricingPage .spiceWorkspace.compactWorkspace {
+    grid-template-columns: 1fr;
+  }
+
+  .pricingPage .customersFilterPanel {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pricingPage .customersFilterPanel .customersSearchBox {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 800px) {
+  .pricingPage .customersFilterPanel,
+  .pricingPage .grid.four {
+    grid-template-columns: 1fr;
+  }
+
+  .pricingPage .workspaceHeader .formActions label {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .pricingPage .moneyInputWrap input {
+    padding-left: 28px;
+  }
+}
