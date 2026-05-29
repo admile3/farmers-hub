@@ -1206,6 +1206,7 @@ export default function BakingPlanner() {
     loadFromStorage("bakingPlannerPantryItems", []).map(normalizePantryItem)
   );
   const [pantryDraft, setPantryDraft] = useState(blankPantryItem);
+  const [activePantryEditId, setActivePantryEditId] = useState("");
   const [selectedRecipeId, setSelectedRecipeId] = useState(
     recipes[0]?.id || ""
   );
@@ -1427,6 +1428,9 @@ export default function BakingPlanner() {
 
   const selectedRecipe =
     recipes.find((r) => r.id === selectedRecipeId) || recipes[0] || null;
+
+  const activePantryEditItem =
+    pantryItems.find((item) => item.id === activePantryEditId) || null;
 
   const availableRecipesForCycle = useMemo(() => {
     const usedIds = new Set(productionItems.map((item) => item.recipeId));
@@ -2002,6 +2006,25 @@ export default function BakingPlanner() {
   function deletePantryItem(itemId) {
     markBakingDirty();
     setPantryItems((previous) => previous.filter((item) => item.id !== itemId));
+
+    if (activePantryEditId === itemId) {
+      setActivePantryEditId("");
+    }
+  }
+
+  function openPantryEditorFromPull(row) {
+    if (row?.pantryItem?.id) {
+      setActivePantryEditId(row.pantryItem.id);
+      return;
+    }
+
+    if (!row?.isNonCosted) {
+      setActiveTab("pantry");
+      setPantryDraft((previous) => ({
+        ...previous,
+        name: row?.name || ""
+      }));
+    }
   }
 
   const tabButton = (id, label, Icon) => (
@@ -2057,6 +2080,178 @@ export default function BakingPlanner() {
                   initial hydration, and bassinage water fields.
                 </small>
               </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {activePantryEditItem ? (
+        <div className="pantryEditOverlay" role="dialog" aria-modal="true">
+          <div className="pantryEditModal">
+            <div className="section-head">
+              <div>
+                <p className="eyebrow">Pantry Item</p>
+                <h2>Edit {activePantryEditItem.name}</h2>
+                <p className="muted small">
+                  Changes here update the Pantry and the Ingredient Pull List.
+                </p>
+              </div>
+              <button
+                className="iconButton"
+                type="button"
+                onClick={() => setActivePantryEditId("")}
+                aria-label="Close pantry editor"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="grid two">
+              <TextInput
+                label="Ingredient Name"
+                value={activePantryEditItem.name}
+                onChange={(value) =>
+                  updatePantryItem(activePantryEditItem.id, "name", value)
+                }
+              />
+
+              <label className="field">
+                <span>Category</span>
+                <select
+                  className="text-field"
+                  value={activePantryEditItem.category}
+                  onChange={(event) =>
+                    updatePantryItem(activePantryEditItem.id, "category", event.target.value)
+                  }
+                >
+                  {pantryCategories.map((category) => (
+                    <option key={category}>{category}</option>
+                  ))}
+                </select>
+              </label>
+
+              <TextInput
+                label="Source / Vendor"
+                value={activePantryEditItem.source}
+                onChange={(value) =>
+                  updatePantryItem(activePantryEditItem.id, "source", value)
+                }
+                placeholder="Restaurant Depot, Azure, Costco"
+              />
+
+              <NumberInput
+                label="Package Size"
+                value={activePantryEditItem.packageSize}
+                onChange={(value) =>
+                  updatePantryItem(activePantryEditItem.id, "packageSize", Number(value))
+                }
+                min={0}
+              />
+
+              <label className="field">
+                <span>Package Unit</span>
+                <select
+                  className="text-field"
+                  value={activePantryEditItem.packageUnit}
+                  onChange={(event) =>
+                    updatePantryItem(activePantryEditItem.id, "packageUnit", event.target.value)
+                  }
+                >
+                  {pantryUnits.map((unit) => (
+                    <option key={unit} value={unit}>
+                      {unit}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <NumberInput
+                label="Package Cost"
+                value={activePantryEditItem.packageCost}
+                onChange={(value) =>
+                  updatePantryItem(activePantryEditItem.id, "packageCost", Number(value))
+                }
+                min={0}
+                step="0.01"
+                suffix="$"
+              />
+
+              <label className="field">
+                <span>Track Inventory</span>
+                <select
+                  className="text-field"
+                  value={activePantryEditItem.trackInventory ? "yes" : "no"}
+                  onChange={(event) =>
+                    updatePantryItem(
+                      activePantryEditItem.id,
+                      "trackInventory",
+                      event.target.value === "yes"
+                    )
+                  }
+                >
+                  <option value="no">No</option>
+                  <option value="yes">Yes</option>
+                </select>
+              </label>
+
+              <NumberInput
+                label="Quantity On Hand"
+                value={activePantryEditItem.quantityOnHand}
+                onChange={(value) =>
+                  updatePantryItem(activePantryEditItem.id, "quantityOnHand", Number(value))
+                }
+                min={0}
+              />
+
+              <label className="field">
+                <span>On Hand Unit</span>
+                <select
+                  className="text-field"
+                  value={activePantryEditItem.onHandUnit}
+                  onChange={(event) =>
+                    updatePantryItem(activePantryEditItem.id, "onHandUnit", event.target.value)
+                  }
+                >
+                  {pantryUnits.map((unit) => (
+                    <option key={unit} value={unit}>
+                      {unit}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <NumberInput
+                label="Low Stock Alert"
+                value={activePantryEditItem.lowStockThreshold}
+                onChange={(value) =>
+                  updatePantryItem(activePantryEditItem.id, "lowStockThreshold", Number(value))
+                }
+                min={0}
+              />
+
+              <label className="field span-two">
+                <span>Notes</span>
+                <textarea
+                  className="text-field"
+                  value={activePantryEditItem.notes}
+                  onChange={(event) =>
+                    updatePantryItem(activePantryEditItem.id, "notes", event.target.value)
+                  }
+                />
+              </label>
+            </div>
+
+            <div className="button-row pantryEditActions">
+              <Button variant="outline" onClick={() => setActivePantryEditId("")}>
+                Close
+              </Button>
+              <Button
+                className={hasUnsavedChanges ? "dirtySaveButton" : ""}
+                onClick={savePlannerData}
+                disabled={cloudLoading}
+              >
+                <Save size={16} /> {cloudLoading ? "Saving..." : "Save Changes"}
+              </Button>
             </div>
           </div>
         </div>
@@ -3424,8 +3619,8 @@ export default function BakingPlanner() {
                     </div>
 
                     {ingredientPullRows.length ? (
-                      <div className="table-wrap">
-                        <table>
+                      <div className="table-wrap pullListWrap">
+                        <table className="pullListTable">
                           <thead>
                             <tr>
                               <th>Ingredient</th>
@@ -3445,9 +3640,23 @@ export default function BakingPlanner() {
                               return (
                                 <tr key={row.name} className={index % 2 ? "" : "alt"}>
                                   <td>
-                                    <strong>{row.name}</strong>
+                                    <button
+                                      className={row.pantryItem || !row.isNonCosted ? "pullIngredientButton" : "pullIngredientButton disabled"}
+                                      type="button"
+                                      onClick={() => openPantryEditorFromPull(row)}
+                                      disabled={row.isNonCosted && !row.pantryItem}
+                                      title={
+                                        row.pantryItem
+                                          ? "Edit this pantry item"
+                                          : row.isNonCosted
+                                            ? "No pantry item needed"
+                                            : "Create or match a pantry item"
+                                      }
+                                    >
+                                      {row.name}
+                                    </button>
                                   </td>
-                                  <td>{formatPullWeight(row.grams)}</td>
+                                  <td className="pullAmountCell">{formatPullWeight(row.grams)}</td>
                                   <td>
                                     {row.pantryItem ? (
                                       <>
@@ -3466,7 +3675,7 @@ export default function BakingPlanner() {
                                       <span className="warning-text tiny">Missing pantry match</span>
                                     )}
                                   </td>
-                                  <td>{formatCompactPackagePull(row)}</td>
+                                  <td className="pullPackageCell">{formatCompactPackagePull(row)}</td>
                                   <td>
                                     {row.pantryItem?.trackInventory ? (
                                       <span className={inventory.className}>{inventory.label}</span>
