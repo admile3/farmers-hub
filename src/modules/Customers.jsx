@@ -40,6 +40,9 @@ const CUSTOMER_STATUSES = ["Lead", "Active", "Follow-up", "Inactive"];
 
 const CONTACT_METHODS = ["Email", "Phone", "Text", "In person", "Social media", "Other"];
 
+const CUSTOMER_TABLE_COLUMNS =
+  "minmax(210px, 1.25fr) minmax(210px, 1fr) minmax(110px, 0.55fr) minmax(190px, 1fr) minmax(130px, 0.7fr) minmax(190px, 1fr) 96px";
+
 function blankCustomer() {
   return {
     id: "",
@@ -60,6 +63,10 @@ function blankCustomer() {
 
 function normalize(value) {
   return String(value || "").toLowerCase().trim();
+}
+
+function slugify(value) {
+  return normalize(value).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
 function formatDate(value) {
@@ -111,7 +118,6 @@ export default function Customers() {
   const [queryText, setQueryText] = useState("");
   const [typeFilter, setTypeFilter] = useState("All types");
   const [statusFilter, setStatusFilter] = useState("All statuses");
-  const [activeCustomer, setActiveCustomer] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(blankCustomer());
   const [saving, setSaving] = useState(false);
@@ -119,6 +125,16 @@ export default function Customers() {
   useEffect(() => {
     loadCustomers();
   }, [user]);
+
+  useEffect(() => {
+    if (!statusMessage) return undefined;
+
+    const timer = window.setTimeout(() => {
+      setStatusMessage("");
+    }, 3200);
+
+    return () => window.clearTimeout(timer);
+  }, [statusMessage]);
 
   useEffect(() => {
     const customerId = searchParams.get("customer");
@@ -144,20 +160,17 @@ export default function Customers() {
   }
 
   function openNewCustomer() {
-    setActiveCustomer(null);
     setForm(blankCustomer());
     setModalOpen(true);
     setSearchParams({});
   }
 
   function openCustomer(customer) {
-    setActiveCustomer(customer);
     setForm({ ...blankCustomer(), ...customer });
     setModalOpen(true);
   }
 
   function closeModal() {
-    setActiveCustomer(null);
     setForm(blankCustomer());
     setModalOpen(false);
     setSearchParams({});
@@ -177,9 +190,9 @@ export default function Customers() {
     setSaving(true);
     try {
       await saveCustomer(user.uid, form);
-      setStatusMessage("Customer saved.");
       await loadCustomers();
       closeModal();
+      setStatusMessage("Customer saved.");
     } catch (error) {
       console.error("Could not save customer:", error);
       setStatusMessage("Could not save customer.");
@@ -196,9 +209,9 @@ export default function Customers() {
 
     try {
       await deleteCustomer(user.uid, customer.id);
-      setStatusMessage("Customer deleted.");
       await loadCustomers();
       closeModal();
+      setStatusMessage("Customer deleted.");
     } catch (error) {
       console.error("Could not delete customer:", error);
       setStatusMessage("Could not delete customer.");
@@ -235,11 +248,10 @@ export default function Customers() {
 
   const stats = useMemo(() => {
     const activeCount = customers.filter((customer) => customer.status === "Active").length;
-    const followUps = customers.filter((customer) =>
-      isUpcomingFollowUp(customer.followUpDate)
-    ).length;
-    const pastDue = customers.filter((customer) =>
-      isPastDueFollowUp(customer.followUpDate)
+    const followUps = customers.filter(
+      (customer) =>
+        isUpcomingFollowUp(customer.followUpDate) ||
+        isPastDueFollowUp(customer.followUpDate)
     ).length;
     const wholesaleCount = customers.filter((customer) =>
       ["Wholesale buyer", "Restaurant / food service", "Retail shop"].includes(
@@ -250,18 +262,16 @@ export default function Customers() {
     return {
       activeCount,
       followUps,
-      pastDue,
       wholesaleCount
     };
   }, [customers]);
 
-
   return (
     <div className="customersModule modulePage">
       {statusMessage ? (
-        <div className="statusBanner">
+        <div className="floatingStatus" role="status">
           <span>{statusMessage}</span>
-          <button type="button" onClick={() => setStatusMessage("")}> 
+          <button type="button" onClick={() => setStatusMessage("")}>
             <X size={16} />
           </button>
         </div>
@@ -302,7 +312,7 @@ export default function Customers() {
           icon={CalendarClock}
           label="Follow-ups"
           value={loading ? "..." : stats.followUps}
-          sub="next 14 days"
+          sub="due or next 14 days"
           accent="sourdough"
         />
         <StatCard
@@ -361,7 +371,7 @@ export default function Customers() {
         </div>
 
         <div className="customersTable">
-          <div className="customersTableHeader">
+          <div className="customersTableHeader" style={{ gridTemplateColumns: CUSTOMER_TABLE_COLUMNS }}>
             <span>Name</span>
             <span>Type</span>
             <span>Status</span>
@@ -373,7 +383,11 @@ export default function Customers() {
 
           {filteredCustomers.length ? (
             filteredCustomers.map((customer) => (
-              <div className="customersTableRow" key={customer.id}>
+              <div
+                className="customersTableRow"
+                key={customer.id}
+                style={{ gridTemplateColumns: CUSTOMER_TABLE_COLUMNS }}
+              >
                 <button
                   className="clickableName customerNameButton"
                   type="button"
@@ -383,11 +397,18 @@ export default function Customers() {
                   {customer.businessName ? <small>{customer.businessName}</small> : null}
                 </button>
 
-                <span className="customerTypePill">{customer.customerType || "Other"}</span>
-                <span className={`customerStatusPill ${normalize(customer.status).replaceAll(" ", "-")}`}>
+                <span className="customerTypeCell" title={customer.customerType || "Other"}>
+                  <span className="customerTypePill">{customer.customerType || "Other"}</span>
+                </span>
+
+                <span className={`customerStatusPill ${slugify(customer.status)}`}>
                   {customer.status || "Lead"}
                 </span>
-                <span className="customerMuted">{customer.productInterests || "No interests listed"}</span>
+
+                <span className="customerMuted" title={customer.productInterests || ""}>
+                  {customer.productInterests || "No interests listed"}
+                </span>
+
                 <span
                   className={`customerFollowUp ${
                     isPastDueFollowUp(customer.followUpDate)
@@ -399,9 +420,11 @@ export default function Customers() {
                 >
                   {formatDate(customer.followUpDate)}
                 </span>
-                <span className="customerMuted">
+
+                <span className="customerMuted" title={customer.email || customer.phone || ""}>
                   {customer.email || customer.phone || "No contact info"}
                 </span>
+
                 <div className="customerActions">
                   <button type="button" onClick={() => openCustomer(customer)} aria-label="Edit customer">
                     <Pencil size={16} />
