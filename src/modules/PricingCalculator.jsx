@@ -175,8 +175,8 @@ function MoneyInput({ label, value, onChange, placeholder = "0.00" }) {
   return (
     <label>
       {label}
-      <div className="inlineFields amountUnitInline">
-        <input value="$" readOnly aria-label={`${label} currency`} />
+      <div className="moneyInputWrap">
+        <span className="moneyPrefix" aria-hidden="true">$</span>
         <input
           type="number"
           step="0.01"
@@ -621,11 +621,11 @@ export default function PricingCalculator() {
 
         <div className="formGrid compactFormGrid">
           <MoneyInput label="Batch Ingredient / Material Cost" value={form.batchIngredientCost} onChange={(value) => updateField("batchIngredientCost", value)} placeholder="32.00" />
-          <NumberInput label="Units Produced" value={form.batchUnits} onChange={(value) => updateField("batchUnits", value)} placeholder="24" step="1" />
+          <NumberInput label="Units Produced Per Batch" value={form.batchUnits} onChange={(value) => updateField("batchUnits", value)} placeholder="24" step="1" />
           <MoneyInput label="Packaging Cost / Unit" value={form.packagingCostPerUnit} onChange={(value) => updateField("packagingCostPerUnit", value)} placeholder="0.35" />
-          <NumberInput label="Labor Hours" value={form.laborHours} onChange={(value) => updateField("laborHours", value)} placeholder="1.5" step="0.01" />
+          <NumberInput label="Labor Hours Per Batch" value={form.laborHours} onChange={(value) => updateField("laborHours", value)} placeholder="1.5" step="0.01" />
           <MoneyInput label="Labor Rate / Hour" value={form.laborRate} onChange={(value) => updateField("laborRate", value)} placeholder="18.00" />
-          <MoneyInput label="Overhead / Fees" value={form.overheadCost} onChange={(value) => updateField("overheadCost", value)} placeholder="6.00" />
+          <MoneyInput label="Overhead / Fees Per Batch" value={form.overheadCost} onChange={(value) => updateField("overheadCost", value)} placeholder="6.00" />
           <MoneyInput label="Retail Price" value={form.retailPrice} onChange={(value) => updateField("retailPrice", value)} placeholder="8.00" />
           <MoneyInput label="Wholesale Price" value={form.wholesalePrice} onChange={(value) => updateField("wholesalePrice", value)} placeholder="5.00" />
         </div>
