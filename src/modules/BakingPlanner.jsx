@@ -673,6 +673,20 @@ function normalizeRecipe(recipe) {
     ...recipe,
     preBakeUnitWeight,
     finishedUnitWeight,
+    listInProductDirectory: Boolean(recipe.listInProductDirectory),
+    productDirectory: {
+      productName: recipe.productDirectory?.productName || recipe.name || "",
+      sellingUnit: recipe.productDirectory?.sellingUnit || recipe.unitsLabel || "unit",
+      unitsPerBatch:
+        recipe.productDirectory?.unitsPerBatch !== undefined
+          ? Number(recipe.productDirectory.unitsPerBatch) || 0
+          : Number(recipe.ovenCapacityUnits) || 1,
+      laborHoursPerBatch:
+        recipe.productDirectory?.laborHoursPerBatch !== undefined
+          ? Number(recipe.productDirectory.laborHoursPerBatch) || 0
+          : 0,
+      notes: recipe.productDirectory?.notes || ""
+    },
     mixingMethod:
       recipe.mixingMethod ||
       (Number(recipe.process?.autolyseMin) > 0 ? "autolyse" : "straight"),
@@ -1741,6 +1755,54 @@ export default function BakingPlanner() {
     );
   }
 
+  function updateRecipeProductDirectoryField(field, value) {
+    markBakingDirty();
+    if (!selectedRecipe) return;
+
+    setRecipes((prev) =>
+      prev.map((recipe) =>
+        recipe.id === selectedRecipe.id
+          ? {
+              ...recipe,
+              productDirectory: {
+                ...(recipe.productDirectory || {}),
+                [field]: value
+              }
+            }
+          : recipe
+      )
+    );
+  }
+
+  function toggleRecipeProductDirectory(value) {
+    markBakingDirty();
+    if (!selectedRecipe) return;
+
+    setRecipes((prev) =>
+      prev.map((recipe) => {
+        if (recipe.id !== selectedRecipe.id) return recipe;
+
+        return {
+          ...recipe,
+          listInProductDirectory: value,
+          productDirectory: {
+            productName: recipe.productDirectory?.productName || recipe.name || "",
+            sellingUnit: recipe.productDirectory?.sellingUnit || recipe.unitsLabel || "unit",
+            unitsPerBatch:
+              recipe.productDirectory?.unitsPerBatch !== undefined
+                ? Number(recipe.productDirectory.unitsPerBatch) || 0
+                : Number(recipe.ovenCapacityUnits) || 1,
+            laborHoursPerBatch:
+              recipe.productDirectory?.laborHoursPerBatch !== undefined
+                ? Number(recipe.productDirectory.laborHoursPerBatch) || 0
+                : 0,
+            notes: recipe.productDirectory?.notes || ""
+          }
+        };
+      })
+    );
+  }
+
   function updateRecipeProcess(field, value) {
     markBakingDirty();
     setRecipes((prev) =>
@@ -2553,7 +2615,12 @@ export default function BakingPlanner() {
                       type="button"
                     >
                       <p>{recipe.name}</p>
-                      <span>{recipe.category}</span>
+                      <span>
+                        {recipe.category}
+                        {recipe.listInProductDirectory
+                          ? " • Listed in Product Directory"
+                          : ""}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -2792,6 +2859,130 @@ export default function BakingPlanner() {
                       </div>
                     </div>
                   ) : null}
+                </div>
+
+                <div className="soft-panel bakingProductDirectoryPanel">
+                  <div className="section-head">
+                    <div>
+                      <h3>Product Directory</h3>
+                      <p className="muted small">
+                        List this saved recipe in Products & Pricing when it is ready to sell.
+                        Ingredient cost comes from the recipe formula and Pantry matches.
+                      </p>
+                    </div>
+
+                    <label className="bakingProductDirectoryToggle">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(selectedRecipe.listInProductDirectory)}
+                        onChange={(event) =>
+                          toggleRecipeProductDirectory(event.target.checked)
+                        }
+                      />
+                      <span>List in Product Directory</span>
+                    </label>
+                  </div>
+
+                  {selectedRecipe.listInProductDirectory ? (
+                    <div className="grid two">
+                      <TextInput
+                        label="Product Directory Name"
+                        value={
+                          selectedRecipe.productDirectory?.productName ||
+                          selectedRecipe.name ||
+                          ""
+                        }
+                        onChange={(value) =>
+                          updateRecipeProductDirectoryField("productName", value)
+                        }
+                        placeholder="e.g., Country Sourdough Loaf"
+                      />
+
+                      <TextInput
+                        label="Selling Unit"
+                        value={
+                          selectedRecipe.productDirectory?.sellingUnit ||
+                          selectedRecipe.unitsLabel ||
+                          "unit"
+                        }
+                        onChange={(value) =>
+                          updateRecipeProductDirectoryField("sellingUnit", value)
+                        }
+                        placeholder="loaf, each, dozen, 6-pack"
+                      />
+
+                      <NumberInput
+                        label="Units Per Batch"
+                        value={
+                          selectedRecipe.productDirectory?.unitsPerBatch ??
+                          selectedRecipe.ovenCapacityUnits ??
+                          1
+                        }
+                        onChange={(value) =>
+                          updateRecipeProductDirectoryField(
+                            "unitsPerBatch",
+                            Number(value)
+                          )
+                        }
+                        min={0}
+                      />
+
+                      <NumberInput
+                        label="Labor Hours Per Batch"
+                        value={selectedRecipe.productDirectory?.laborHoursPerBatch ?? 0}
+                        onChange={(value) =>
+                          updateRecipeProductDirectoryField(
+                            "laborHoursPerBatch",
+                            Number(value)
+                          )
+                        }
+                        min={0}
+                        step="0.25"
+                      />
+
+                      <label className="field span-two">
+                        <span>Product Notes</span>
+                        <textarea
+                          className="text-field"
+                          value={selectedRecipe.productDirectory?.notes || ""}
+                          onChange={(event) =>
+                            updateRecipeProductDirectoryField(
+                              "notes",
+                              event.target.value
+                            )
+                          }
+                          placeholder="Optional pricing, packaging, or sales notes for this product."
+                        />
+                      </label>
+
+                      <div className="pill">
+                        <strong>
+                          {selectedRecipeCostPreview
+                            ? formatMoney(selectedRecipeCostPreview.totalCost, 2)
+                            : "No pantry cost"}
+                        </strong>
+                        <br />
+                        <span className="muted tiny">Ingredient cost per selling unit</span>
+                      </div>
+
+                      <div className="pill">
+                        <strong>
+                          {selectedRecipe.productDirectory?.unitsPerBatch ||
+                            selectedRecipe.ovenCapacityUnits ||
+                            1}{" "}
+                          {selectedRecipe.productDirectory?.sellingUnit ||
+                            selectedRecipe.unitsLabel ||
+                            "units"}
+                        </strong>
+                        <br />
+                        <span className="muted tiny">Default batch yield for Products & Pricing</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="notice good-box">
+                      This recipe stays in the Recipe Library only and will not appear in the Product Directory.
+                    </p>
+                  )}
                 </div>
 
                 <div className="soft-panel">
