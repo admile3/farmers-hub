@@ -3883,3 +3883,24 @@ input[type="number"] {
   outline-offset: 2px;
   border-radius: 4px;
 }
+.clickableName {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.clickableName:hover {
+  text-decoration: underline;
+}
+
+.clickableName:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
