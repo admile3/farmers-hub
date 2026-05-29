@@ -67,6 +67,8 @@ const emptyRecipe = {
   name: "",
   category: "House Blend",
   notes: "",
+  listInProductDirectory: false,
+  productPackages: [],
   ingredients: []
 };
 
@@ -75,6 +77,14 @@ function createBlankRecipeLine() {
     ingredientId: "",
     ingredientName: "",
     parts: ""
+  };
+}
+
+function createBlankProductPackage() {
+  return {
+    name: "",
+    size: "",
+    unit: "oz"
   };
 }
 
@@ -98,6 +108,28 @@ function ouncesToGrams(ounces) {
 
 function gramsToOunces(grams) {
   return grams / 28.3495;
+}
+
+function getIngredientCostPerOunce(ingredient) {
+  if (!ingredient?.cost) return 0;
+
+  const cost = toNumber(ingredient.cost);
+
+  if (ingredient.costUnit === "oz") return cost;
+  if (ingredient.costUnit === "g") return cost * 28.3495;
+  if (ingredient.costUnit === "lb") return cost / 16;
+
+  return 0;
+}
+
+function convertPackageSizeToOunces(size, unit) {
+  const amount = toNumber(size);
+
+  if (unit === "oz") return amount;
+  if (unit === "g") return gramsToOunces(amount);
+  if (unit === "lb") return amount * 16;
+
+  return amount;
 }
 
 export default function SpiceKitchen() {
@@ -141,6 +173,7 @@ export default function SpiceKitchen() {
 
     return Object.values(form).some((value) => {
       if (Array.isArray(value)) return value.length > 0;
+      if (typeof value === "boolean") return value;
       return String(value || "").trim() !== "";
     });
   }
@@ -175,12 +208,6 @@ export default function SpiceKitchen() {
   function clearRecipeDraft() {
     setRecipeForm(emptyRecipe);
     setEditingRecipeId(null);
-    markSaved();
-  }
-
-  function clearQuickIngredientDraft() {
-    setQuickIngredient(emptyIngredient);
-    setQuickAddOpen(false);
     markSaved();
   }
 
@@ -272,6 +299,48 @@ export default function SpiceKitchen() {
     return recipes.find((recipe) => recipe.id === selectedRecipeId) || null;
   }, [recipes, selectedRecipeId]);
 
+  const recipeCostSummary = useMemo(() => {
+    const validLines = recipeForm.ingredients.filter(
+      (item) => item.ingredientId && toNumber(item.parts) > 0
+    );
+
+    const totalParts = validLines.reduce(
+      (sum, item) => sum + toNumber(item.parts),
+      0
+    );
+
+    if (!totalParts) {
+      return {
+        costPerOunce: 0,
+        productPackages: []
+      };
+    }
+
+    const costPerOunce = validLines.reduce((sum, item) => {
+      const ingredient = ingredients.find((saved) => saved.id === item.ingredientId);
+      const share = toNumber(item.parts) / totalParts;
+      const ingredientCostPerOunce = getIngredientCostPerOunce(ingredient);
+
+      return sum + share * ingredientCostPerOunce;
+    }, 0);
+
+    const productPackages = recipeForm.productPackages.map((item) => {
+      const packageOunces = convertPackageSizeToOunces(item.size, item.unit);
+      const ingredientCost = packageOunces * costPerOunce;
+
+      return {
+        ...item,
+        packageOunces,
+        ingredientCost
+      };
+    });
+
+    return {
+      costPerOunce,
+      productPackages
+    };
+  }, [recipeForm.ingredients, recipeForm.productPackages, ingredients]);
+
   const batchRows = useMemo(() => {
     if (!selectedRecipe || !selectedRecipe.ingredients?.length) return [];
 
@@ -294,16 +363,7 @@ export default function SpiceKitchen() {
       const ingredient = ingredients.find((saved) => saved.id === item.ingredientId);
       const grams = (toNumber(item.parts) / totalParts) * adjustedTargetGrams;
       const ounces = gramsToOunces(grams);
-
-      let estimatedCost = 0;
-
-      if (ingredient?.cost) {
-        const cost = toNumber(ingredient.cost);
-
-        if (ingredient.costUnit === "oz") estimatedCost = ounces * cost;
-        if (ingredient.costUnit === "g") estimatedCost = grams * cost;
-        if (ingredient.costUnit === "lb") estimatedCost = (ounces / 16) * cost;
-      }
+      const estimatedCost = ounces * getIngredientCostPerOunce(ingredient);
 
       return {
         ingredientId: item.ingredientId || ingredient?.id || "",
@@ -330,11 +390,16 @@ export default function SpiceKitchen() {
       0
     );
 
+    const productReadyCount = recipes.filter(
+      (recipe) => recipe.listInProductDirectory
+    ).length;
+
     return {
       ingredients: ingredients.length,
       recipes: recipes.length,
       recipeIngredientCount,
-      selectedBatchRows: batchRows.length
+      selectedBatchRows: batchRows.length,
+      productReadyCount
     };
   }, [ingredients, recipes, batchRows]);
 
@@ -441,19 +506,6 @@ export default function SpiceKitchen() {
 
       nextIngredients[index] = nextLine;
 
-      const isPartsField = field === "parts";
-      const hasPartsValue = String(value).trim() !== "";
-      const isLastLine = index === nextIngredients.length - 1;
-      const lastLine = nextIngredients[nextIngredients.length - 1];
-      const lastLineHasAnyValue =
-        lastLine?.ingredientId ||
-        lastLine?.ingredientName ||
-        String(lastLine?.parts || "").trim();
-
-      if (isPartsField && hasPartsValue && isLastLine && lastLineHasAnyValue) {
-        nextIngredients.push(createBlankRecipeLine());
-      }
-
       return {
         ...current,
         ingredients: nextIngredients
@@ -466,6 +518,40 @@ export default function SpiceKitchen() {
     setRecipeForm((current) => ({
       ...current,
       ingredients: current.ingredients.filter((_, lineIndex) => lineIndex !== index)
+    }));
+  }
+
+  function addProductPackage() {
+    markSpiceDirty();
+    setRecipeForm((current) => ({
+      ...current,
+      productPackages: [...(current.productPackages || []), createBlankProductPackage()]
+    }));
+  }
+
+  function updateProductPackage(index, field, value) {
+    markSpiceDirty();
+    setRecipeForm((current) => {
+      const nextPackages = [...(current.productPackages || [])];
+      nextPackages[index] = {
+        ...nextPackages[index],
+        [field]: value
+      };
+
+      return {
+        ...current,
+        productPackages: nextPackages
+      };
+    });
+  }
+
+  function removeProductPackage(index) {
+    markSpiceDirty();
+    setRecipeForm((current) => ({
+      ...current,
+      productPackages: (current.productPackages || []).filter(
+        (_, packageIndex) => packageIndex !== index
+      )
     }));
   }
 
@@ -522,6 +608,21 @@ export default function SpiceKitchen() {
       name: recipeForm.name.trim(),
       category: recipeForm.category,
       notes: recipeForm.notes.trim(),
+      listInProductDirectory: Boolean(recipeForm.listInProductDirectory),
+      formulaCostPerOunce: recipeCostSummary.costPerOunce,
+      productPackages: (recipeForm.productPackages || [])
+        .filter((item) => item.name.trim() && toNumber(item.size) > 0)
+        .map((item) => {
+          const packageOunces = convertPackageSizeToOunces(item.size, item.unit);
+
+          return {
+            name: item.name.trim(),
+            size: toNumber(item.size),
+            unit: item.unit,
+            packageOunces,
+            ingredientCost: packageOunces * recipeCostSummary.costPerOunce
+          };
+        }),
       ingredients: recipeForm.ingredients
         .filter((item) => item.ingredientId && toNumber(item.parts) > 0)
         .map((item) => ({
@@ -538,6 +639,11 @@ export default function SpiceKitchen() {
 
     if (!cleanRecipe.ingredients.length) {
       showStatus("Add at least one ingredient with parts greater than 0.", "error");
+      return;
+    }
+
+    if (cleanRecipe.listInProductDirectory && !cleanRecipe.productPackages.length) {
+      showStatus("Add at least one product package size before listing this recipe.", "error");
       return;
     }
 
@@ -567,6 +673,8 @@ export default function SpiceKitchen() {
       name: recipe.name || "",
       category: recipe.category || "House Blend",
       notes: recipe.notes || "",
+      listInProductDirectory: Boolean(recipe.listInProductDirectory),
+      productPackages: recipe.productPackages || [],
       ingredients: recipe.ingredients || []
     });
     scrollToSection(builderRef);
@@ -598,6 +706,30 @@ export default function SpiceKitchen() {
   function getIngredientName(line) {
     const ingredient = ingredients.find((item) => item.id === line.ingredientId);
     return line.ingredientName || ingredient?.name || "Unknown ingredient";
+  }
+
+  function getRecipeFormulaCostPerOunce(recipe) {
+    if (typeof recipe.formulaCostPerOunce === "number") {
+      return recipe.formulaCostPerOunce;
+    }
+
+    const validLines = (recipe.ingredients || []).filter(
+      (item) => item.ingredientId && toNumber(item.parts) > 0
+    );
+
+    const totalParts = validLines.reduce(
+      (sum, item) => sum + toNumber(item.parts),
+      0
+    );
+
+    if (!totalParts) return 0;
+
+    return validLines.reduce((sum, item) => {
+      const ingredient = ingredients.find((saved) => saved.id === item.ingredientId);
+      const share = toNumber(item.parts) / totalParts;
+
+      return sum + share * getIngredientCostPerOunce(ingredient);
+    }, 0);
   }
 
   const sectionCards = [
@@ -691,11 +823,11 @@ export default function SpiceKitchen() {
         />
 
         <StatCard
-          icon={Beaker}
-          label="Recipe Lines"
-          value={spiceSummary.recipeIngredientCount}
-          sub="Total saved ingredient lines"
-          accent="market"
+          icon={DollarSign}
+          label="Product Ready"
+          value={spiceSummary.productReadyCount}
+          sub="Listed for Product Directory"
+          accent="pricing"
         />
 
         <StatCard
@@ -703,7 +835,7 @@ export default function SpiceKitchen() {
           label="Active Batch"
           value={spiceSummary.selectedBatchRows}
           sub="Ingredients in current calculation"
-          accent="pricing"
+          accent="market"
         />
       </section>
 
@@ -826,7 +958,12 @@ export default function SpiceKitchen() {
                 </label>
               </div>
 
-              <button className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`} type="submit">
+              <button
+                className={`primaryButton compactPrimary ${
+                  hasUnsavedChanges ? "dirtySaveButton" : ""
+                }`}
+                type="submit"
+              >
                 Add to Pantry and Recipe
               </button>
             </form>
@@ -879,10 +1016,18 @@ export default function SpiceKitchen() {
               </div>
 
               {recipeForm.ingredients.length ? (
-                recipeForm.ingredients.map((line, index) => (
-                  <div className="recipeLine compactRecipeLine" key={`${line.ingredientId}-${index}`}>
-                    <label>
-                      Ingredient
+                <>
+                  <div className="recipeLine compactRecipeLine recipeLineColumnHeader">
+                    <span>Ingredient</span>
+                    <span>Parts</span>
+                    <span>Action</span>
+                  </div>
+
+                  {recipeForm.ingredients.map((line, index) => (
+                    <div
+                      className="recipeLine compactRecipeLine"
+                      key={`${line.ingredientId}-${index}`}
+                    >
                       <select
                         value={line.ingredientId}
                         onChange={(event) =>
@@ -896,10 +1041,7 @@ export default function SpiceKitchen() {
                           </option>
                         ))}
                       </select>
-                    </label>
 
-                    <label>
-                      Parts
                       <input
                         type="number"
                         step="0.0001"
@@ -909,17 +1051,17 @@ export default function SpiceKitchen() {
                         }
                         placeholder="e.g., 1"
                       />
-                    </label>
 
-                    <button
-                      className="iconButton danger"
-                      type="button"
-                      onClick={() => removeRecipeLine(index)}
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                ))
+                      <button
+                        className="iconButton danger"
+                        type="button"
+                        onClick={() => removeRecipeLine(index)}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  ))}
+                </>
               ) : (
                 <div className="placeholderBox compactPlaceholder">
                   Add ingredients from your pantry, or use Quick Add Ingredient.
@@ -927,9 +1069,115 @@ export default function SpiceKitchen() {
               )}
             </div>
 
+            <div className="productDirectoryPanel">
+              <label className="checkboxLine">
+                <input
+                  type="checkbox"
+                  checked={recipeForm.listInProductDirectory}
+                  onChange={(event) =>
+                    updateRecipeField("listInProductDirectory", event.target.checked)
+                  }
+                />
+                <span>List in Product Directory</span>
+              </label>
+
+              <p className="helperText">
+                When checked, this recipe can be pulled into Products & Pricing as a
+                sellable product. Ingredient cost is calculated from the recipe parts,
+                not from batch size.
+              </p>
+
+              {recipeForm.listInProductDirectory ? (
+                <div className="productPackageBuilder">
+                  <div className="recipeLineHeader">
+                    <h4>Product Package Sizes</h4>
+                    <button
+                      className="secondaryButton compactButton"
+                      type="button"
+                      onClick={addProductPackage}
+                    >
+                      <Plus size={15} />
+                      Add Package
+                    </button>
+                  </div>
+
+                  <div className="costPreviewCard">
+                    <strong>Formula Cost</strong>
+                    <span>${round(recipeCostSummary.costPerOunce, 4)} per finished oz</span>
+                  </div>
+
+                  {recipeForm.productPackages.length ? (
+                    <>
+                      <div className="productPackageRow productPackageHeader">
+                        <span>Package Name</span>
+                        <span>Size</span>
+                        <span>Unit</span>
+                        <span>Ingredient Cost</span>
+                        <span>Action</span>
+                      </div>
+
+                      {recipeForm.productPackages.map((item, index) => {
+                        const costPreview =
+                          recipeCostSummary.productPackages[index]?.ingredientCost || 0;
+
+                        return (
+                          <div className="productPackageRow" key={`${item.name}-${index}`}>
+                            <input
+                              value={item.name}
+                              onChange={(event) =>
+                                updateProductPackage(index, "name", event.target.value)
+                              }
+                              placeholder="e.g., 1 oz pouch"
+                            />
+
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={item.size}
+                              onChange={(event) =>
+                                updateProductPackage(index, "size", event.target.value)
+                              }
+                              placeholder="e.g., 1"
+                            />
+
+                            <select
+                              value={item.unit}
+                              onChange={(event) =>
+                                updateProductPackage(index, "unit", event.target.value)
+                              }
+                            >
+                              <option value="oz">oz</option>
+                              <option value="g">g</option>
+                              <option value="lb">lb</option>
+                            </select>
+
+                            <span>${round(costPreview, 4)}</span>
+
+                            <button
+                              className="iconButton danger"
+                              type="button"
+                              onClick={() => removeProductPackage(index)}
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </>
+                  ) : (
+                    <div className="placeholderBox compactPlaceholder">
+                      Add package sizes like 1 oz pouch, 0.2 oz sample, or 4 oz bulk bag.
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </div>
+
             <div className="formActions compactActions">
               <button
-                className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`}
+                className={`primaryButton compactPrimary ${
+                  hasUnsavedChanges ? "dirtySaveButton" : ""
+                }`}
                 type="submit"
               >
                 <Save size={15} />
@@ -1049,7 +1297,10 @@ export default function SpiceKitchen() {
                 </div>
 
                 {batchRows.map((row) => (
-                  <div className="batchTableRow" key={`${row.ingredientId || row.name}-${row.name}`}>
+                  <div
+                    className="batchTableRow"
+                    key={`${row.ingredientId || row.name}-${row.name}`}
+                  >
                     <span>
                       {row.ingredientId ? (
                         <button
@@ -1168,7 +1419,9 @@ export default function SpiceKitchen() {
 
             <div className="formActions fullSpan compactActions">
               <button
-                className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`}
+                className={`primaryButton compactPrimary ${
+                  hasUnsavedChanges ? "dirtySaveButton" : ""
+                }`}
                 type="submit"
               >
                 <Save size={15} />
@@ -1227,7 +1480,11 @@ export default function SpiceKitchen() {
                         <button
                           type="button"
                           className="iconButton"
-                          aria-label={isExpanded ? "Collapse ingredient details" : "Expand ingredient details"}
+                          aria-label={
+                            isExpanded
+                              ? "Collapse ingredient details"
+                              : "Expand ingredient details"
+                          }
                           onClick={() =>
                             setExpandedIngredientId(isExpanded ? null : ingredient.id)
                           }
@@ -1243,7 +1500,10 @@ export default function SpiceKitchen() {
                           <Edit3 size={14} />
                         </button>
 
-                        <button type="button" onClick={() => removeIngredient(ingredient.id)}>
+                        <button
+                          type="button"
+                          onClick={() => removeIngredient(ingredient.id)}
+                        >
                           <Trash2 size={14} />
                         </button>
                       </div>
@@ -1287,7 +1547,10 @@ export default function SpiceKitchen() {
           </div>
         </div>
 
-        <div className="workspacePanel compactPanel scrollAnchor spiceLibraryPanel" ref={libraryRef}>
+        <div
+          className="workspacePanel compactPanel scrollAnchor spiceLibraryPanel"
+          ref={libraryRef}
+        >
           <div className="workspaceHeader compactPanelHeader">
             <div>
               <p className="eyebrow">Saved Recipes</p>
@@ -1302,6 +1565,7 @@ export default function SpiceKitchen() {
                 const sortedRecipeIngredients = [...(recipe.ingredients || [])].sort(
                   (a, b) => toNumber(b.parts) - toNumber(a.parts)
                 );
+                const formulaCostPerOunce = getRecipeFormulaCostPerOunce(recipe);
 
                 return (
                   <div
@@ -1321,6 +1585,9 @@ export default function SpiceKitchen() {
                         </h4>
                         <p>
                           {recipe.category} • {recipe.ingredients?.length || 0} ingredients
+                          {recipe.listInProductDirectory
+                            ? " • Listed in Product Directory"
+                            : ""}
                         </p>
                       </div>
 
@@ -1328,7 +1595,11 @@ export default function SpiceKitchen() {
                         <button
                           type="button"
                           className="iconButton"
-                          aria-label={isExpanded ? "Collapse recipe details" : "Expand recipe details"}
+                          aria-label={
+                            isExpanded
+                              ? "Collapse recipe details"
+                              : "Expand recipe details"
+                          }
                           onClick={() =>
                             setExpandedRecipeId(isExpanded ? null : recipe.id)
                           }
@@ -1362,10 +1633,45 @@ export default function SpiceKitchen() {
                           <span>{recipe.ingredients?.length || 0}</span>
                         </div>
 
+                        <div>
+                          <strong>Formula Cost</strong>
+                          <span>${round(formulaCostPerOunce, 4)} per finished oz</span>
+                        </div>
+
+                        <div>
+                          <strong>Product Directory</strong>
+                          <span>
+                            {recipe.listInProductDirectory ? "Listed" : "Not listed"}
+                          </span>
+                        </div>
+
                         <div className="fullSpan">
                           <strong>Recipe Notes</strong>
                           <span>{recipe.notes || "No notes saved."}</span>
                         </div>
+
+                        {recipe.listInProductDirectory ? (
+                          <div className="fullSpan recipePartsList">
+                            <strong>Product Package Sizes</strong>
+
+                            {recipe.productPackages?.length ? (
+                              recipe.productPackages.map((item, index) => (
+                                <div
+                                  className="recipePartsRow"
+                                  key={`${item.name}-${index}`}
+                                >
+                                  <span>{item.name}</span>
+                                  <span>
+                                    {item.size} {item.unit} • $
+                                    {round(item.ingredientCost, 4)} ingredient cost
+                                  </span>
+                                </div>
+                              ))
+                            ) : (
+                              <span>No product packages saved.</span>
+                            )}
+                          </div>
+                        ) : null}
 
                         <div className="fullSpan recipePartsList">
                           <strong>Ingredients by Parts</strong>
