@@ -4546,3 +4546,220 @@ input[type="number"] {
   outline: 3px solid rgba(52, 117, 62, 0.25);
   outline-offset: 2px;
 }
+
+/* =========================================================
+   Signup / login popup polish only
+   This section is intentionally scoped to the pricing/signup modal.
+   It does not change Hub stat cards, module grids, workspace layouts,
+   dashboard layout, calendar layout, or print layouts.
+   ========================================================= */
+
+.pricingModalOverlay {
+  padding: 18px;
+  align-items: center;
+}
+
+.pricingModal.pricingModalCompact {
+  width: min(1220px, calc(100vw - 36px));
+  max-height: calc(100vh - 36px);
+  padding: 0;
+  overflow: hidden;
+  border-radius: 30px;
+}
+
+.pricingModalScroll {
+  max-height: calc(100vh - 36px);
+  overflow-y: auto;
+  padding: 20px 28px 24px;
+  border-radius: inherit;
+  scrollbar-gutter: stable;
+}
+
+.pricingModalScroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.pricingModalScroll::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 18px 0;
+}
+
+.pricingModalScroll::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.35);
+  border-radius: 999px;
+  border: 2px solid #ffffff;
+}
+
+.pricingModalScroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(75, 85, 99, 0.52);
+}
+
+.pricingModalCompact .modalCloseButton {
+  z-index: 3;
+}
+
+.compactSignupHeader {
+  margin-bottom: 14px;
+}
+
+.compactSignupHeader h2 {
+  font-size: clamp(2rem, 3vw, 3.25rem);
+  margin: 6px 0 8px;
+}
+
+.compactSignupHeader p {
+  max-width: 760px;
+  margin: 0 auto;
+  line-height: 1.42;
+}
+
+.pricingModalCompact .pricingFeatureGrid,
+.pricingModalCompact .compactFeatureGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  max-width: none;
+  margin: 12px 0 14px;
+  gap: 10px;
+}
+
+.pricingModalCompact .pricingFeatureGrid div {
+  padding: 12px 13px;
+  border-radius: 14px;
+}
+
+.pricingModalCompact .pricingFeatureGrid strong {
+  margin-bottom: 4px;
+}
+
+.pricingModalCompact .pricingFeatureGrid span {
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+
+.pricingModalCompact .pricingPlanGrid {
+  margin-top: 0;
+  gap: 12px;
+}
+
+.pricingModalCompact .pricingPlanGrid .workspacePanel {
+  min-height: 185px;
+  padding: 18px 20px;
+}
+
+.pricingModalCompact .pricingPlanGrid h3 {
+  font-size: 1.7rem;
+  margin: 6px 0 8px;
+}
+
+.pricingModalCompact .pricingPlanGrid .importExportText {
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.trialSignupBox {
+  max-width: 760px;
+  margin: 14px auto 0;
+  padding: 18px 20px;
+}
+
+.trialSignupBox h3 {
+  margin: 4px 0 6px;
+  font-size: 1.25rem;
+}
+
+.trialSignupBox .importExportText {
+  margin-bottom: 12px;
+}
+
+.trialEmailForm {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+  margin-top: 12px;
+}
+
+.trialEmailForm .authErrorText,
+.trialEmailForm .fullButton {
+  grid-column: 1 / -1;
+}
+
+.passwordInputWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.passwordInputWrap input {
+  padding-right: 94px;
+}
+
+.passwordVisibilityButton {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  min-height: 30px;
+  width: auto;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fbfaf6;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 9px;
+  font-size: 0.78rem;
+  font-weight: 850;
+  cursor: pointer;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.passwordVisibilityButton:hover {
+  background: #f1f8f2;
+  border-color: rgba(52, 117, 62, 0.3);
+  color: var(--green-dark);
+  transform: translateY(-50%) translateY(-1px);
+}
+
+.passwordVisibilityButton:focus-visible {
+  outline: 3px solid rgba(52, 117, 62, 0.18);
+  outline-offset: 2px;
+}
+
+.pricingModalCompact .pricingModalFooter {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  .pricingModalCompact .pricingFeatureGrid,
+  .pricingModalCompact .compactFeatureGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 800px) {
+  .pricingModalOverlay {
+    padding: 10px;
+  }
+
+  .pricingModal.pricingModalCompact {
+    width: calc(100vw - 20px);
+    max-height: calc(100vh - 20px);
+    border-radius: 22px;
+  }
+
+  .pricingModalScroll {
+    max-height: calc(100vh - 20px);
+    padding: 20px 16px;
+  }
+
+  .pricingModalCompact .pricingFeatureGrid,
+  .pricingModalCompact .compactFeatureGrid,
+  .trialEmailForm {
+    grid-template-columns: 1fr;
+  }
+}
