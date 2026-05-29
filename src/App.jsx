@@ -92,9 +92,9 @@ const modules = [
   },
   {
     key: "pricing",
-    title: "Pricing Calculator",
+    title: "Products & Pricing",
     description:
-      "Calculate retail pricing, wholesale pricing, margins, batch costs, and profitability.",
+      "Manage your product list, retail prices, wholesale prices, costs, margins, and profitability.",
     path: "/pricing",
     icon: Calculator,
     accent: "pricing"
@@ -694,7 +694,7 @@ function WelcomePricingModal({ onClose }) {
 
             <div>
               <strong>Price with confidence</strong>
-              <span>Calculate costs, margins, retail prices, wholesale prices, and profitability.</span>
+              <span>Manage products, costs, margins, retail prices, wholesale prices, and profitability.</span>
             </div>
 
             <div>
@@ -1309,7 +1309,7 @@ function Dashboard() {
 
           <p className="heroText">
             Track your vendor tools, upcoming deadlines, saved workflows, recipes,
-            pricing, prep plans, and business activity from one clean dashboard.
+            products, pricing, prep plans, and business activity from one clean dashboard.
           </p>
         </div>
 
@@ -1569,4 +1569,3 @@ export default function App() {
     </>
   );
 }
-
