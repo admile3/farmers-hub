@@ -1220,6 +1220,8 @@ export default function BakingPlanner() {
     loadFromStorage("bakingPlannerPantryItems", []).map(normalizePantryItem)
   );
   const [pantryDraft, setPantryDraft] = useState(blankPantryItem);
+  const [quickRecipeIngredient, setQuickRecipeIngredient] = useState(blankPantryItem);
+  const [showQuickRecipeIngredient, setShowQuickRecipeIngredient] = useState(false);
   const [activePantryEditId, setActivePantryEditId] = useState("");
   const [selectedRecipeId, setSelectedRecipeId] = useState(
     recipes[0]?.id || ""
@@ -1445,6 +1447,13 @@ export default function BakingPlanner() {
 
   const activePantryEditItem =
     pantryItems.find((item) => item.id === activePantryEditId) || null;
+
+  function getRecipeIngredientPantryId(ingredient) {
+    if (ingredient?.pantryItemId) return ingredient.pantryItemId;
+
+    const match = findPantryMatch(ingredient?.name, pantryItems);
+    return match?.id || "";
+  }
 
   const availableRecipesForCycle = useMemo(() => {
     const usedIds = new Set(productionItems.map((item) => item.recipeId));
@@ -1874,18 +1883,30 @@ export default function BakingPlanner() {
 
   function updateOtherIngredient(index, field, value) {
     markBakingDirty();
+    if (!selectedRecipe) return;
+
     setRecipes((prev) =>
       prev.map((recipe) => {
         if (recipe.id !== selectedRecipe.id) return recipe;
 
-        const otherIngredients = recipe.otherIngredients.map((item, itemIndex) =>
-          itemIndex === index
-            ? {
-                ...item,
-                [field]: field === "pct" ? Number(value) : value
-              }
-            : item
-        );
+        const otherIngredients = recipe.otherIngredients.map((item, itemIndex) => {
+          if (itemIndex !== index) return item;
+
+          if (field === "pantryItemId") {
+            const pantryItem = pantryItems.find((saved) => saved.id === value);
+
+            return {
+              ...item,
+              pantryItemId: value,
+              name: pantryItem?.name || item.name || ""
+            };
+          }
+
+          return {
+            ...item,
+            [field]: field === "pct" ? Number(value) : value
+          };
+        });
 
         return { ...recipe, otherIngredients };
       })
@@ -1894,6 +1915,10 @@ export default function BakingPlanner() {
 
   function addOtherIngredient() {
     markBakingDirty();
+    if (!selectedRecipe) return;
+
+    const firstPantryItem = pantryItems[0] || null;
+
     setRecipes((prev) =>
       prev.map((recipe) =>
         recipe.id === selectedRecipe.id
@@ -1901,12 +1926,64 @@ export default function BakingPlanner() {
               ...recipe,
               otherIngredients: [
                 ...recipe.otherIngredients,
-                { name: "New Ingredient", pct: 1 }
+                {
+                  pantryItemId: firstPantryItem?.id || "",
+                  name: firstPantryItem?.name || "",
+                  pct: 1
+                }
               ]
             }
           : recipe
       )
     );
+  }
+
+  function updateQuickRecipeIngredient(field, value) {
+    setQuickRecipeIngredient((previous) => ({
+      ...previous,
+      [field]: value
+    }));
+  }
+
+  function quickAddRecipeIngredient() {
+    const cleanName = String(quickRecipeIngredient.name || "").trim();
+
+    if (!cleanName || !selectedRecipe) return;
+
+    markBakingDirty();
+
+    const item = normalizePantryItem({
+      ...quickRecipeIngredient,
+      id: makeId("pantry"),
+      name: cleanName,
+      source: String(quickRecipeIngredient.source || "").trim(),
+      notes: String(quickRecipeIngredient.notes || "").trim()
+    });
+
+    setPantryItems((previous) =>
+      [...previous, item].sort((a, b) => a.name.localeCompare(b.name))
+    );
+
+    setRecipes((prev) =>
+      prev.map((recipe) =>
+        recipe.id === selectedRecipe.id
+          ? {
+              ...recipe,
+              otherIngredients: [
+                ...recipe.otherIngredients,
+                {
+                  pantryItemId: item.id,
+                  name: item.name,
+                  pct: 1
+                }
+              ]
+            }
+          : recipe
+      )
+    );
+
+    setQuickRecipeIngredient(blankPantryItem);
+    setShowQuickRecipeIngredient(false);
   }
 
   function deleteOtherIngredient(index) {
@@ -3023,20 +3100,142 @@ export default function BakingPlanner() {
                   </div>
                 </div>
 
-                <div className="soft-panel">
+                <div className="soft-panel bakingRecipeIngredientsPanel">
                   <div className="section-head">
                     <div>
                       <h3>Added Ingredients</h3>
                       <p className="muted small">
-                        Add ingredients as baker’s percentages based on total
-                        flour weight. Examples: chocolate chips, olive oil,
-                        honey, butter, milk powder, herbs, seeds.
+                        Add ingredients as baker’s percentages based on total flour weight.
+                        Choose from Pantry so costing and pull lists stay connected.
                       </p>
                     </div>
-                    <Button onClick={addOtherIngredient}>
-                      <Plus size={16} /> Add Ingredient
-                    </Button>
+
+                    <div className="button-row">
+                      <Button onClick={addOtherIngredient} disabled={!pantryItems.length}>
+                        <Plus size={16} /> Add Pantry Ingredient
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          setShowQuickRecipeIngredient((current) => !current)
+                        }
+                      >
+                        <Plus size={16} /> Quick Add
+                      </Button>
+                    </div>
                   </div>
+
+                  {!pantryItems.length ? (
+                    <p className="notice warning-box">
+                      Add pantry items first, or use Quick Add to create a pantry item while building this recipe.
+                    </p>
+                  ) : null}
+
+                  {showQuickRecipeIngredient ? (
+                    <div className="soft-panel bakingQuickIngredientPanel">
+                      <div className="section-head">
+                        <div>
+                          <h3>Quick Add Pantry Ingredient</h3>
+                          <p className="muted small">
+                            This creates a Pantry item and immediately adds it to this recipe.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid three">
+                        <TextInput
+                          label="Ingredient Name"
+                          value={quickRecipeIngredient.name}
+                          onChange={(value) =>
+                            updateQuickRecipeIngredient("name", value)
+                          }
+                          placeholder="Chocolate chips, olive oil, sesame seeds"
+                        />
+
+                        <label className="field">
+                          <span>Category</span>
+                          <select
+                            className="text-field"
+                            value={quickRecipeIngredient.category}
+                            onChange={(event) =>
+                              updateQuickRecipeIngredient(
+                                "category",
+                                event.target.value
+                              )
+                            }
+                          >
+                            {pantryCategories.map((category) => (
+                              <option key={category}>{category}</option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <TextInput
+                          label="Source / Vendor"
+                          value={quickRecipeIngredient.source}
+                          onChange={(value) =>
+                            updateQuickRecipeIngredient("source", value)
+                          }
+                          placeholder="Restaurant Depot, Costco, Azure"
+                        />
+
+                        <NumberInput
+                          label="Package Size"
+                          value={quickRecipeIngredient.packageSize}
+                          onChange={(value) =>
+                            updateQuickRecipeIngredient("packageSize", Number(value))
+                          }
+                          min={0}
+                        />
+
+                        <label className="field">
+                          <span>Package Unit</span>
+                          <select
+                            className="text-field"
+                            value={quickRecipeIngredient.packageUnit}
+                            onChange={(event) =>
+                              updateQuickRecipeIngredient(
+                                "packageUnit",
+                                event.target.value
+                              )
+                            }
+                          >
+                            {pantryUnits.map((unit) => (
+                              <option key={unit} value={unit}>
+                                {unit}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <NumberInput
+                          label="Package Cost"
+                          value={quickRecipeIngredient.packageCost}
+                          onChange={(value) =>
+                            updateQuickRecipeIngredient("packageCost", Number(value))
+                          }
+                          min={0}
+                          step="0.01"
+                          suffix="$"
+                        />
+                      </div>
+
+                      <div className="button-row" style={{ marginTop: "14px" }}>
+                        <Button onClick={quickAddRecipeIngredient}>
+                          <Plus size={16} /> Add to Pantry and Recipe
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setQuickRecipeIngredient(blankPantryItem);
+                            setShowQuickRecipeIngredient(false);
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null}
 
                   <div className="stack">
                     {selectedRecipe.otherIngredients.length === 0 && (
@@ -3048,15 +3247,30 @@ export default function BakingPlanner() {
                     {selectedRecipe.otherIngredients.map((ingredient, index) => (
                       <div
                         key={`ingredient-${index}`}
-                        className="recipe-row editable-row"
+                        className="recipe-row editable-row bakingIngredientRow"
                       >
-                        <TextInput
-                          label="Ingredient Name"
-                          value={ingredient.name}
-                          onChange={(v) =>
-                            updateOtherIngredient(index, "name", v)
-                          }
-                        />
+                        <label className="field">
+                          <span>Pantry Ingredient</span>
+                          <select
+                            className="text-field"
+                            value={getRecipeIngredientPantryId(ingredient)}
+                            onChange={(event) =>
+                              updateOtherIngredient(
+                                index,
+                                "pantryItemId",
+                                event.target.value
+                              )
+                            }
+                          >
+                            <option value="">Select pantry ingredient...</option>
+                            {pantryItems.map((item) => (
+                              <option key={item.id} value={item.id}>
+                                {item.name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
                         <NumberInput
                           label="Percent"
                           value={ingredient.pct}
@@ -3065,6 +3279,7 @@ export default function BakingPlanner() {
                           }
                           suffix="%"
                         />
+
                         <Button
                           variant="outline"
                           onClick={() => deleteOtherIngredient(index)}
