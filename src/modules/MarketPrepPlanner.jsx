@@ -690,7 +690,15 @@ export default function MarketPrepPlanner() {
               savedPlans.map((plan) => (
                 <div className="savedItem compactSavedItem" key={plan.id}>
                   <div>
-                    <h4>{plan.marketName || "Market Plan"}</h4>
+                    <h4>
+                      <button
+                        type="button"
+                        className="savedItemLink"
+                        onClick={() => hydratePlan(plan)}
+                      >
+                        {plan.marketName || "Market Plan"}
+                      </button>
+                    </h4>
                     <p>
                       {plan.marketDate || "No date"} • {plan.location || "No location"}
                     </p>
@@ -1050,6 +1058,109 @@ export default function MarketPrepPlanner() {
             </div>
           )}
         </div>
+      </section>
+
+      <section className="marketPrepPrintSheet" aria-hidden="true">
+        <header className="marketPrepPrintSheetHeader">
+          <p className="eyebrow">Market Prep Plan</p>
+          <h1>{marketName || "Farmers Market"}</h1>
+          <p>
+            {marketDate || "No date selected"}
+            {location ? ` • ${location}` : ""}
+            {weatherNotes ? ` • ${weatherNotes}` : ""}
+          </p>
+        </header>
+
+        <section className="marketPrepPrintSection">
+          <h2>Market Details</h2>
+          <div className="marketPrepPrintDetailsGrid">
+            <div>
+              <span>Market</span>
+              <strong>{marketName || "Farmers Market"}</strong>
+            </div>
+            <div>
+              <span>Date</span>
+              <strong>{marketDate || "No date selected"}</strong>
+            </div>
+            <div>
+              <span>Location</span>
+              <strong>{location || "No location listed"}</strong>
+            </div>
+            <div>
+              <span>Weather / Demand Notes</span>
+              <strong>{weatherNotes || "No notes listed"}</strong>
+            </div>
+          </div>
+        </section>
+
+        <section className="marketPrepPrintSection">
+          <h2>Category Summary</h2>
+          {Object.keys(categorySummary).length ? (
+            <div className="marketPrepPrintSummaryGrid">
+              {Object.entries(categorySummary).map(([category, summary]) => (
+                <div key={category}>
+                  <strong>{category}</strong>
+                  <span>
+                    {summary.items} items • {summary.units} planned units
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="marketPrepPrintEmpty">No category totals yet.</p>
+          )}
+        </section>
+
+        <section className="marketPrepPrintSection">
+          <h2>Pack List</h2>
+          {products.length ? (
+            <table className="marketPrepPrintTable">
+              <thead>
+                <tr>
+                  <th>Done</th>
+                  <th>Product</th>
+                  <th>Category</th>
+                  <th>Unit</th>
+                  <th>Qty</th>
+                  <th>Amount / Unit</th>
+                  <th>Total</th>
+                  <th>Target</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.map((product) => {
+                  const productTotals = getProductTotals(product);
+
+                  return (
+                    <tr key={product.id}>
+                      <td>□</td>
+                      <td>{product.name}</td>
+                      <td>{product.category}</td>
+                      <td>{product.unitLabel}</td>
+                      <td>{productTotals.plannedUnits}</td>
+                      <td>
+                        {product.unitAmount} {product.amountUnit}
+                      </td>
+                      <td>
+                        {round(productTotals.plannedAmount)} {product.amountUnit}
+                      </td>
+                      <td>
+                        {round(productTotals.finalAmount)} {product.amountUnit}
+                        {Number(product.bufferPct) > 0
+                          ? ` (${product.bufferPct}% buffer)`
+                          : ""}
+                      </td>
+                      <td>{product.notes}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          ) : (
+            <p className="marketPrepPrintEmpty">No products in this market plan yet.</p>
+          )}
+        </section>
       </section>
 
       {showBackToTop ? (
