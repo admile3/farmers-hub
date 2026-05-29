@@ -444,7 +444,13 @@ export default function Lists() {
                   {item.checked ? <CheckCircle2 size={20} /> : null}
                 </button>
 
-                <span>{item.text}</span>
+                <button
+                  className="clickableName listItemNameButton"
+                  type="button"
+                  onClick={() => handleToggleItem(item)}
+                >
+                  {item.text}
+                </button>
 
                 <button
                   className="listDeleteButton"
