@@ -26,6 +26,7 @@ import {
   Settings,
   Sprout,
   Upload,
+  Users,
   Wheat,
   X
 } from "lucide-react";
@@ -38,6 +39,7 @@ import PricingCalculator from "./modules/PricingCalculator.jsx";
 import PermitGrantTracker from "./modules/PermitGrantTracker.jsx";
 import Lists from "./modules/Lists.jsx";
 import Calendar from "./modules/Calendar.jsx";
+import Customers from "./modules/Customers.jsx";
 import ImportExport from "./modules/ImportExport.jsx";
 import AccountSettings from "./modules/AccountSettings.jsx";
 import Onboarding from "./modules/Onboarding.jsx";
@@ -48,6 +50,7 @@ import StatCard from "./components/StatCard.jsx";
 import { getSpiceRecipes } from "./services/spiceKitchenService.js";
 import { getPermitGrantItems } from "./services/permitGrantService.js";
 import { getLists } from "./services/listsService.js";
+import { getCustomers } from "./services/customerService.js";
 
 const modules = [
   {
@@ -76,6 +79,16 @@ const modules = [
     path: "/market-prep",
     icon: ClipboardList,
     accent: "market"
+  },
+
+  {
+    key: "customers",
+    title: "Customers",
+    description:
+      "Track market regulars, wholesale buyers, custom order clients, contact notes, interests, and follow-ups.",
+    path: "/customers",
+    icon: Users,
+    accent: "customers"
   },
   {
     key: "pricing",
@@ -1097,6 +1110,7 @@ function Dashboard() {
     bakingRecipes: [],
     permitItems: [],
     lists: [],
+    customers: [],
     loading: false
   });
 
@@ -1111,6 +1125,7 @@ function Dashboard() {
           bakingRecipes: [],
           permitItems: [],
           lists: [],
+          customers: [],
           loading: false
         });
         return;
@@ -1119,11 +1134,12 @@ function Dashboard() {
       setDashboardData((current) => ({ ...current, loading: true }));
 
       try {
-        const [spiceRecipes, permitItems, lists, bakingSnapshot] =
+        const [spiceRecipes, permitItems, lists, customers, bakingSnapshot] =
           await Promise.all([
             getSpiceRecipes(user.uid),
             getPermitGrantItems(user.uid),
             getLists(user.uid),
+            getCustomers(user.uid),
             getDoc(doc(db, "users", user.uid, "bakingPlanner", "main"))
           ]);
 
@@ -1137,6 +1153,7 @@ function Dashboard() {
           bakingRecipes,
           permitItems: Array.isArray(permitItems) ? permitItems : [],
           lists: Array.isArray(lists) ? lists : [],
+          customers: Array.isArray(customers) ? customers : [],
           loading: false
         });
       } catch (error) {
@@ -1254,12 +1271,28 @@ function Dashboard() {
       }
     });
 
+    dashboardData.customers.forEach((customer) => {
+      const date = toDate(customer.updatedAt || customer.createdAt);
+
+      if (date) {
+        activity.push({
+          title: `Updated customer: ${customer.name || "Customer"}`,
+          source: "Customers",
+          time: formatActivityTime(date),
+          timestamp: date.getTime(),
+          accent: "customers",
+          path: `/customers?customer=${encodeURIComponent(customer.id || "")}`
+        });
+      }
+    });
+
     return activity.sort((a, b) => b.timestamp - a.timestamp).slice(0, 3);
   }, [
     dashboardData.spiceRecipes,
     dashboardData.bakingRecipes,
     dashboardData.permitItems,
-    dashboardData.lists
+    dashboardData.lists,
+    dashboardData.customers
   ]);
 
   return (
@@ -1300,11 +1333,11 @@ function Dashboard() {
 
       <section className="dashboardOverviewGrid">
         <StatCard
-          icon={PackageCheck}
-          label="Active Modules"
-          value={`${modules.length} / ${modules.length}`}
-          sub="All workspaces ready"
-          accent="pricing"
+          icon={Users}
+          label="Customers"
+          value={dashboardData.loading ? "..." : dashboardData.customers.length}
+          sub="saved contacts"
+          accent="customers"
         />
 
         <StatCard
@@ -1528,6 +1561,7 @@ export default function App() {
         <Route path="/permit-grants" element={<AccessGate><PermitGrantTracker /></AccessGate>} />
         <Route path="/lists" element={<AccessGate><Lists /></AccessGate>} />
         <Route path="/calendar" element={<AccessGate><Calendar /></AccessGate>} />
+        <Route path="/customers" element={<AccessGate><Customers /></AccessGate>} />
         <Route path="/import-export" element={<AccessGate><ImportExport /></AccessGate>} />
 
         <Route path="*" element={<NotFound />} />
