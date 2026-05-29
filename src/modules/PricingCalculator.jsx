@@ -622,8 +622,17 @@ export default function PricingCalculator() {
               savedCalculations.map((calculation) => (
                 <div className="savedItem compactSavedItem" key={calculation.id}>
                   <div>
-                    <h4>{calculation.name || "Pricing Sheet"}</h4>
-                    <p>
+  <h4>
+    <button
+      type="button"
+      className="savedItemLink"
+      onClick={() => hydrateCalculation(calculation)}
+    >
+      {calculation.name || "Pricing Sheet"}
+    </button>
+  </h4>
+
+  <p>
                       {calculation.items?.length || 0} products
                       {calculation.totals?.retailBatchProfit !== undefined
                         ? ` • ${money(calculation.totals.retailBatchProfit)} retail batch profit`
