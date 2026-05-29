@@ -5615,3 +5615,105 @@ input[type="number"] {
     white-space: normal;
   }
 }
+/* =========================================================
+   Products & Pricing Linked Module Product Styles
+   Append this to src/styles.css
+   ========================================================= */
+
+.pricingPage .pricingComparisonHeader,
+.pricingPage .pricingComparisonRow {
+  grid-template-columns:
+    minmax(170px, 1.35fr)
+    minmax(90px, 0.7fr)
+    minmax(90px, 0.75fr)
+    minmax(70px, 0.55fr)
+    minmax(78px, 0.6fr)
+    minmax(84px, 0.65fr)
+    minmax(92px, 0.7fr)
+    minmax(72px, 0.55fr)
+    minmax(82px, 0.65fr)
+    minmax(130px, 1fr)
+    42px;
+}
+
+.pricingPage .pricingComparisonRow {
+  align-items: start;
+}
+
+.pricingPage .pricingComparisonRow > span {
+  min-width: 0;
+}
+
+.pricingPage .pricingGeneratedBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(93, 126, 94, 0.12);
+  color: #3f6f43;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pricingPage .pricingVariantList {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 14px;
+  background: #fffaf7;
+  border: 1px solid rgba(199, 99, 67, 0.15);
+}
+
+.pricingPage .pricingVariantRow {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(100px, 0.6fr) minmax(110px, 0.5fr);
+  gap: 10px;
+  align-items: center;
+  color: var(--text);
+  font-size: 0.84rem;
+}
+
+.pricingPage .pricingVariantRow span:first-child {
+  font-weight: 900;
+}
+
+.pricingPage .pricingVariantRow span:last-child {
+  text-align: right;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.pricingPage .linkedProductNotice {
+  margin-bottom: 12px;
+}
+
+@media (max-width: 1100px) {
+  .pricingPage .pricingComparisonHeader {
+    display: none;
+  }
+
+  .pricingPage .pricingComparisonRow {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .pricingPage .pricingComparisonRow > span {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .pricingPage .pricingVariantRow {
+    grid-template-columns: 1fr;
+  }
+
+  .pricingPage .pricingVariantRow span:last-child {
+    text-align: left;
+  }
+}
