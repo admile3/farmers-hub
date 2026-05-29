@@ -5717,3 +5717,109 @@ input[type="number"] {
     text-align: left;
   }
 }
+/* =========================================================
+   Products & Pricing Compact Directory Layout
+   Append this below the previous Products & Pricing linked directory CSS.
+   ========================================================= */
+
+.pricingPage .pricingComparisonHeader,
+.pricingPage .pricingComparisonRow.pricingDirectoryCompactRow {
+  grid-template-columns:
+    minmax(240px, 1.6fr)
+    minmax(110px, 0.75fr)
+    minmax(90px, 0.6fr)
+    minmax(100px, 0.65fr)
+    minmax(90px, 0.6fr)
+    minmax(110px, 0.75fr)
+    minmax(86px, 0.45fr);
+}
+
+.pricingPage .pricingDirectoryCompactRow {
+  align-items: center;
+}
+
+.pricingPage .pricingProductCell {
+  display: grid;
+  gap: 2px;
+}
+
+.pricingPage .pricingProductCell small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.pricingPage .pricingDirectoryActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.pricingPage .pricingExpandedDetails {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(130px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+  padding: 13px;
+  border: 1px solid rgba(93, 126, 94, 0.16);
+  border-radius: 16px;
+  background: #fbfaf5;
+}
+
+.pricingPage .pricingExpandedDetails > div {
+  display: grid;
+  gap: 3px;
+}
+
+.pricingPage .pricingExpandedDetails strong {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.pricingPage .pricingExpandedDetails span {
+  color: var(--text);
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.pricingPage .pricingExpandedWide {
+  grid-column: 1 / -1;
+}
+
+.pricingPage .pricingExpandedDetails .pricingVariantList {
+  margin-top: 0;
+  background: #ffffff;
+}
+
+@media (max-width: 1100px) {
+  .pricingPage .pricingComparisonHeader {
+    display: none;
+  }
+
+  .pricingPage .pricingComparisonRow.pricingDirectoryCompactRow {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .pricingPage .pricingComparisonRow.pricingDirectoryCompactRow > span {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .pricingPage .pricingProductCell {
+    display: grid !important;
+  }
+
+  .pricingPage .pricingDirectoryActions {
+    justify-content: flex-start;
+  }
+
+  .pricingPage .pricingExpandedDetails {
+    grid-template-columns: 1fr;
+  }
+}
