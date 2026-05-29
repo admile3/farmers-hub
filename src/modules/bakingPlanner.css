@@ -1,3337 +1,911 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
-import {
-  Plus,
-  Trash2,
-  Printer,
-  Wheat,
-  Thermometer,
-  Droplets,
-  Mountain,
-  Clock,
-  AlertTriangle,
-  CheckCircle2,
-  Scale,
-  ChefHat,
-  Settings,
-  BookOpen,
-  ClipboardList,
-  FlaskConical,
-  Save,
-  Copy,
-  Cloud,
-  Package
-} from "lucide-react";
-import "./bakingPlanner.css";
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
-import { db } from "../firebase";
-import { useAuth } from "../AuthContext.jsx";
-import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
-import StatCard from "../components/StatCard.jsx";
-
-function Card({ children, className = "" }) {
-  return <div className={`card ${className}`}>{children}</div>;
+.bakingPlanner {
+  color: #121820;
 }
 
-function CardContent({ children, className = "" }) {
-  return <div className={className}>{children}</div>;
+.bakingPlanner * {
+  box-sizing: border-box;
 }
 
-function Button({ children, onClick, className = "", variant, size, disabled }) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`btn ${variant || ""} ${size || ""} ${className}`}
-      type="button"
-    >
-      {children}
-    </button>
-  );
+.bakingPlanner button,
+.bakingPlanner input,
+.bakingPlanner select,
+.bakingPlanner textarea {
+  font: inherit;
 }
 
-const initialRecipes = [
-  {
-    id: "rustic-loaf",
-    name: "Rustic Sourdough Loaf",
-    category: "Loaf",
-    unitsLabel: "loaves",
-    vesselType: "Banneton / Dutch Oven",
-    finishedUnitWeight: 680,
-    bakeLossPct: 12,
-    batchMaxDoughG: 7200,
-    ovenCapacityUnits: 8,
-    flourTypes: [
-      { name: "Bread Flour", pct: 85 },
-      { name: "Whole Wheat Flour", pct: 15 }
-    ],
-    hydrationPct: 78,
-    starterPct: 22,
-    starterHydrationPct: 100,
-    saltPct: 2.1,
-    otherIngredients: [],
-    process: {
-      autolyseMin: 30,
-      mixMin: 12,
-      bulkMin: 300,
-      foldCount: 4,
-      foldIntervalMin: 30,
-      foldDurationMin: 5,
-      divideAndPreshapeMin: 12,
-      benchRestMin: 20,
-      finalShapeMin: 18,
-      finalProofMin: 180,
-      bakeTempF: 475,
-      bakeMin: 42,
-      coolMin: 120
-    }
-  },
-  {
-    id: "ciabatta",
-    name: "Ciabatta",
-    category: "High Hydration",
-    unitsLabel: "pieces",
-    vesselType: "Sheet Pan",
-    finishedUnitWeight: 280,
-    bakeLossPct: 14,
-    batchMaxDoughG: 6500,
-    ovenCapacityUnits: 30,
-    flourTypes: [{ name: "Bread Flour", pct: 100 }],
-    hydrationPct: 88,
-    starterPct: 18,
-    starterHydrationPct: 100,
-    saltPct: 2.2,
-    otherIngredients: [{ name: "Olive Oil", pct: 2 }],
-    process: {
-      autolyseMin: 20,
-      mixMin: 10,
-      bulkMin: 240,
-      foldCount: 4,
-      foldIntervalMin: 25,
-      foldDurationMin: 5,
-      divideAndPreshapeMin: 0,
-      benchRestMin: 0,
-      finalShapeMin: 12,
-      finalProofMin: 60,
-      bakeTempF: 460,
-      bakeMin: 24,
-      coolMin: 60
-    }
-  },
-  {
-    id: "baguette",
-    name: "Baguette",
-    category: "Baguette",
-    unitsLabel: "baguettes",
-    vesselType: "Baguette Tray / Stone",
-    finishedUnitWeight: 300,
-    bakeLossPct: 13,
-    batchMaxDoughG: 6000,
-    ovenCapacityUnits: 18,
-    flourTypes: [{ name: "Bread Flour", pct: 100 }],
-    hydrationPct: 72,
-    starterPct: 20,
-    starterHydrationPct: 100,
-    saltPct: 2,
-    otherIngredients: [],
-    process: {
-      autolyseMin: 25,
-      mixMin: 10,
-      bulkMin: 210,
-      foldCount: 3,
-      foldIntervalMin: 30,
-      foldDurationMin: 5,
-      divideAndPreshapeMin: 10,
-      benchRestMin: 20,
-      finalShapeMin: 20,
-      finalProofMin: 75,
-      bakeTempF: 480,
-      bakeMin: 22,
-      coolMin: 45
-    }
-  },
-  {
-    id: "sandwich-loaf",
-    name: "Sandwich Loaf",
-    category: "Pan Loaf",
-    unitsLabel: "loaves",
-    vesselType: "Sandwich Loaf Pan",
-    finishedUnitWeight: 720,
-    bakeLossPct: 10,
-    batchMaxDoughG: 7800,
-    ovenCapacityUnits: 12,
-    flourTypes: [{ name: "Bread Flour", pct: 100 }],
-    hydrationPct: 68,
-    starterPct: 18,
-    starterHydrationPct: 100,
-    saltPct: 2,
-    otherIngredients: [
-      { name: "Honey / Sugar", pct: 5 },
-      { name: "Butter / Oil", pct: 6 },
-      { name: "Milk Powder", pct: 3 }
-    ],
-    process: {
-      autolyseMin: 0,
-      mixMin: 14,
-      bulkMin: 240,
-      foldCount: 2,
-      foldIntervalMin: 35,
-      foldDurationMin: 5,
-      divideAndPreshapeMin: 8,
-      benchRestMin: 15,
-      finalShapeMin: 12,
-      finalProofMin: 150,
-      bakeTempF: 385,
-      bakeMin: 38,
-      coolMin: 120
-    }
-  }
-];
-
-const defaultSettings = {
-  altitudeFt: 980,
-  baselineTempF: 72,
-  baselineHumidityPct: 55,
-  starterHydrationPct: 100,
-  levainBufferPct: 10,
-  ingredientBufferPct: 3,
-  mixerCapacityG: 7000,
-  proofingCapacityUnits: 24,
-  defaultStartTime: "06:00",
-  bakingPlannerMode: "",
-  starterName: "",
-  useStarterNameInLabels: false,
-  starterFeedingPreset: "1:2:2",
-  starterSeedParts: 1,
-  starterFlourParts: 2,
-  starterWaterParts: 2
-};
-
-const starterFeedingPresets = {
-  "1:1:1": { seed: 1, flour: 1, water: 1 },
-  "1:2:2": { seed: 1, flour: 2, water: 2 },
-  "1:3:3": { seed: 1, flour: 3, water: 3 },
-  "1:5:5": { seed: 1, flour: 5, water: 5 }
-};
-
-const pantryCategories = [
-  "Flour",
-  "Grain",
-  "Starter",
-  "Sweetener",
-  "Fat",
-  "Salt",
-  "Dairy",
-  "Add-In",
-  "Seed",
-  "Spice",
-  "Packaging",
-  "Other"
-];
-
-const pantryUnits = ["g", "kg", "oz", "lb"];
-
-const blankPantryItem = {
-  id: "",
-  name: "",
-  category: "Flour",
-  source: "",
-  packageSize: "",
-  packageUnit: "lb",
-  packageCost: "",
-  notes: ""
-};
-
-const unitToGrams = {
-  g: 1,
-  kg: 1000,
-  oz: 28.349523125,
-  lb: 453.59237
-};
-
-function makeId(prefix = "item") {
-  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+.bakingPlanner button {
+  border: 0;
 }
 
-function convertToGrams(size, unit) {
-  return (Number(size) || 0) * (unitToGrams[unit] || 1);
+.bakingPlanner .page {
+  display: block;
 }
 
-function formatMoney(value, digits = 4) {
-  const number = Number(value) || 0;
-
-  return number.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: number > 0 && number < 1 ? digits : 2,
-    maximumFractionDigits: number > 0 && number < 1 ? digits : 2
-  });
+.bakingPlanner .hero {
+  margin-bottom: 14px;
 }
 
-function normalizePantryItem(item = {}) {
-  const packageSize = item.packageSize === "" ? "" : Number(item.packageSize) || 0;
-  const packageCost = item.packageCost === "" ? "" : Number(item.packageCost) || 0;
-  const packageUnit = pantryUnits.includes(item.packageUnit) ? item.packageUnit : "lb";
-  const packageGrams = convertToGrams(packageSize, packageUnit);
-  const costPerGram =
-    packageGrams > 0 && Number(packageCost) > 0
-      ? Number(packageCost) / packageGrams
-      : 0;
-
-  return {
-    ...blankPantryItem,
-    ...item,
-    id: item.id || makeId("pantry"),
-    packageSize,
-    packageUnit,
-    packageCost,
-    packageGrams,
-    costPerGram,
-    costPerOunce: costPerGram * 28.349523125,
-    costPerPound: costPerGram * 453.59237
-  };
+.bakingPlanner .hero-inner {
+  background: #ffffff;
+  border: 1px solid rgba(22, 27, 34, 0.08);
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(22, 27, 34, 0.06);
+  padding: 22px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 22px;
 }
 
-function normalizeIngredientName(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+.bakingPlanner .hero-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: calc(100% - 420px);
 }
 
-function findPantryMatch(ingredientName, pantryItems) {
-  const target = normalizeIngredientName(ingredientName);
-  if (!target) return null;
-
-  const normalizedPantry = pantryItems.map((item) => ({
-    item,
-    name: normalizeIngredientName(item.name)
-  }));
-
-  const exactMatch = normalizedPantry.find(({ name }) => name === target);
-  if (exactMatch) return exactMatch.item;
-
-  const containedMatch = normalizedPantry.find(({ name }) => {
-    if (!name) return false;
-    return name.includes(target) || target.includes(name);
-  });
-
-  return containedMatch?.item || null;
+.bakingPlanner .hero-actions {
+  align-items: stretch;
+  flex: 0 0 auto;
 }
 
-function formatSmartWeight(value, label = "") {
-  const grams = Number(value) || 0;
-  let base = formatGrams(grams);
-
-  if (grams >= 453.59237) {
-    base = `${formatGrams(grams)}/${(grams / 453.59237).toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    })}lb`;
-  } else if (grams > GRAMS_PER_OUNCE) {
-    base = `${formatGrams(grams)}/${formatOunces(grams)}oz`;
-  }
-
-  return label ? `${base} ${label}` : base;
+.bakingPlanner .hero-settings-card {
+  background: #fbfaf6;
+  border: 1px solid rgba(22, 27, 34, 0.08);
+  border-radius: 16px;
+  min-width: 120px;
+  padding: 18px;
+  color: #121820;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
 
-function buildIngredientPullRow(name, grams, pantryItems) {
-  const pantryItem = findPantryMatch(name, pantryItems);
-  const amount = Number(grams) || 0;
-  const estimatedCost = pantryItem?.costPerGram ? amount * pantryItem.costPerGram : 0;
-  const packageCount = pantryItem?.packageGrams ? amount / pantryItem.packageGrams : 0;
-
-  return {
-    name,
-    grams: amount,
-    pantryItem,
-    estimatedCost,
-    packageCount
-  };
+.bakingPlanner .hero-settings-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px rgba(22, 27, 34, 0.08);
 }
 
-function formatPackagePull(row) {
-  if (!row?.pantryItem?.packageGrams || !row.packageCount) return "";
-
-  const item = row.pantryItem;
-  const packageSize = formatNumber(item.packageSize, 2);
-  const packageCount = row.packageCount.toLocaleString("en-US", {
-    minimumFractionDigits: row.packageCount < 1 ? 2 : 1,
-    maximumFractionDigits: 2
-  });
-
-  return `Pull ${packageCount} × ${packageSize}${item.packageUnit} package${row.packageCount === 1 ? "" : "s"}`;
+.bakingPlanner .hero-settings-card.active {
+  background: #f7ecd9;
+  border-color: rgba(223, 160, 76, 0.5);
+  color: #9a641f;
 }
 
-
-function loadFromStorage(key, fallback) {
-  try {
-    const saved = localStorage.getItem(key);
-    return saved ? JSON.parse(saved) : fallback;
-  } catch {
-    return fallback;
-  }
+.bakingPlanner .hero-settings-card p,
+.bakingPlanner .hero-stats p {
+  margin: 0 0 6px;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.1;
 }
 
-function saveToStorage(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
+.bakingPlanner .hero-settings-card strong {
+  font-size: 1.25rem;
+  color: inherit;
 }
 
-function round(value, digits = 0) {
-  const factor = Math.pow(10, digits);
-  return Math.round((Number(value) || 0) * factor) / factor;
+.bakingPlanner .hero h1 {
+  margin: 0;
+  font-size: clamp(2rem, 3.1vw, 3.2rem);
+  line-height: 1;
+  letter-spacing: -0.055em;
+  color: #121820;
+  max-width: none;
 }
 
-function formatNumber(value, digits = 2) {
-  const rounded = round(value, digits);
-  return Number.isInteger(rounded) ? String(rounded) : String(rounded);
+.bakingPlanner .hero p {
+  margin: 10px 0 0;
+  max-width: none;
+  color: #4b5563;
+  line-height: 1.45;
 }
 
-const GRAMS_PER_OUNCE = 28.349523125;
-
-function formatGrams(value) {
-  return `${Math.round(Number(value) || 0).toLocaleString("en-US")}g`;
+.bakingPlanner .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #c77e27 !important;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
 }
 
-function formatOunces(value) {
-  return ((Number(value) || 0) / GRAMS_PER_OUNCE).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
+.bakingPlanner .hero-stats {
+  display: flex;
+  gap: 12px;
 }
 
-function formatWeight(value, label = "") {
-  const grams = Number(value) || 0;
-  const base =
-    grams > GRAMS_PER_OUNCE
-      ? `${formatGrams(grams)}/${formatOunces(grams)}oz`
-      : formatGrams(grams);
-
-  return label ? `${base} ${label}` : base;
+.bakingPlanner .hero-stats div {
+  background: #fbfaf6;
+  border: 1px solid rgba(22, 27, 34, 0.08);
+  border-radius: 16px;
+  min-width: 120px;
+  padding: 18px;
 }
 
-function minutesToLabel(minutes) {
-  const h = Math.floor(minutes / 60);
-  const m = Math.round(minutes % 60);
-  if (h <= 0) return `${m} min`;
-  if (m === 0) return `${h} hr`;
-  return `${h} hr ${m} min`;
+.bakingPlanner .hero-stats strong {
+  font-size: 2rem;
+  color: #121820;
 }
 
-function timeToMinutes(time) {
-  const [h, m] = time.split(":").map(Number);
-  return h * 60 + m;
+.bakingPlanner .tabs {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
 }
 
-function minutesToClock(totalMinutes) {
-  const dayMin = ((Math.round(totalMinutes) % 1440) + 1440) % 1440;
-  const hour24 = Math.floor(dayMin / 60);
-  const minute = dayMin % 60;
-  const ampm = hour24 >= 12 ? "PM" : "AM";
-  let hour12 = hour24 % 12;
-  if (hour12 === 0) hour12 = 12;
-  return `${hour12}:${String(minute).padStart(2, "0")} ${ampm}`;
+.bakingPlanner .tabs::before {
+  display: none;
 }
 
-function addMinutesToTime(time, minutes) {
-  return minutesToClock(timeToMinutes(time) + Math.round(minutes));
+.bakingPlanner .tab {
+  min-height: 74px;
+  border-radius: 16px;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid rgba(22, 27, 34, 0.08);
+  box-shadow: 0 12px 30px rgba(22, 27, 34, 0.05);
+  color: #121820;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 900;
+  text-align: left;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
-function getTodayISODate() {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+.bakingPlanner .tab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px rgba(22, 27, 34, 0.08);
 }
 
-function formatDisplayDate(dateString) {
-  if (!dateString) return "";
-  const [year, month, day] = dateString.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
-
-  return date.toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric"
-  });
+.bakingPlanner .tab.active {
+  background: #f7ecd9;
+  border-color: rgba(223, 160, 76, 0.5);
+  color: #9a641f;
 }
 
-function resourceLabel(resource) {
-  if (!resource) return "";
-  return resource.charAt(0).toUpperCase() + resource.slice(1);
+.bakingPlanner .layout {
+  display: grid;
+  gap: 18px;
+  align-items: start;
 }
 
-function tempFermentationFactor(tempF, baselineF) {
-  const diff = tempF - baselineF;
-  const factor = 1 - diff * 0.035;
-  return Math.min(1.35, Math.max(0.62, factor));
+.bakingPlanner .two-col {
+  grid-template-columns: minmax(0, 1fr) 340px;
 }
 
-function humidityHydrationAdjustment(humidityPct, baselineHumidityPct) {
-  const diff = humidityPct - baselineHumidityPct;
-  if (diff <= -20) return 1.5;
-  if (diff <= -10) return 0.8;
-  if (diff >= 20) return -1.0;
-  if (diff >= 10) return -0.5;
-  return 0;
+.bakingPlanner .recipe-layout {
+  grid-template-columns: 320px minmax(0, 1fr);
 }
 
-function altitudeBakeAdjustment(altitudeFt) {
-  if (altitudeFt < 1500) return { tempF: 0, timePct: 0, hydrationPct: 0 };
-  if (altitudeFt < 3000) return { tempF: 5, timePct: 3, hydrationPct: 0.5 };
-  if (altitudeFt < 5000) return { tempF: 10, timePct: 6, hydrationPct: 1 };
-  return { tempF: 15, timePct: 10, hydrationPct: 1.5 };
+.bakingPlanner .stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
-function normalizeRecipe(recipe) {
-  const bakeLossPct = Number(recipe.bakeLossPct) || 0;
-  const preBakeUnitWeight =
-    Number(recipe.preBakeUnitWeight) ||
-    (Number(recipe.finishedUnitWeight)
-      ? Number(recipe.finishedUnitWeight) / (1 - bakeLossPct / 100)
-      : 500);
-  const finishedUnitWeight =
-    Number(recipe.finishedUnitWeight) ||
-    preBakeUnitWeight * (1 - bakeLossPct / 100);
-  const bassinagePct = Number(recipe.bassinagePct) || 0;
-  const hydrationPct = Number(recipe.hydrationPct) || 0;
-  const initialHydrationPct =
-    recipe.initialHydrationPct !== undefined
-      ? Number(recipe.initialHydrationPct) || 0
-      : Math.max(0, hydrationPct - bassinagePct);
-
-  return {
-    ...recipe,
-    preBakeUnitWeight,
-    finishedUnitWeight,
-    mixingMethod:
-      recipe.mixingMethod ||
-      (Number(recipe.process?.autolyseMin) > 0 ? "autolyse" : "straight"),
-    useBassinage: Boolean(recipe.useBassinage),
-    initialHydrationPct,
-    bassinagePct,
-    flourTypes: recipe.flourTypes || [{ name: "Bread Flour", pct: 100 }],
-    otherIngredients: recipe.otherIngredients || [],
-    process: {
-      autolyseMin: 0,
-      mixMin: 0,
-      bulkMin: 0,
-      foldCount: 0,
-      foldIntervalMin: 30,
-      foldDurationMin: 5,
-      divideAndPreshapeMin: 12,
-      benchRestMin: 0,
-      finalShapeMin: 10,
-      finalProofMin: 0,
-      bakeTempF: 400,
-      bakeMin: 30,
-      coolMin: 60,
-      ...(recipe.process || {})
-    }
-  };
+.bakingPlanner .card,
+.bakingPlanner .soft-panel,
+.bakingPlanner .pill,
+.bakingPlanner .table-wrap,
+.bakingPlanner .progress-wrap,
+.bakingPlanner .recipe-row,
+.bakingPlanner .recipe-select {
+  border: 1px solid rgba(22, 27, 34, 0.08);
 }
 
-function calculateRecipePlan(rawRecipe, quantity, env, settings) {
-  const recipe = normalizeRecipe(rawRecipe);
-  const qty = Number(quantity) || 0;
-  const doughWeight = qty * recipe.preBakeUnitWeight;
-  const desiredBakedWeight = doughWeight * (1 - recipe.bakeLossPct / 100);
-
-  const finalHydrationPct = recipe.useBassinage
-    ? Number(recipe.initialHydrationPct || 0) + Number(recipe.bassinagePct || 0)
-    : Number(recipe.hydrationPct) || 0;
-
-  const humidityAdj = humidityHydrationAdjustment(
-    env.humidityPct,
-    settings.baselineHumidityPct
-  );
-  const altitudeAdj = altitudeBakeAdjustment(settings.altitudeFt);
-  const adjustedHydrationPct =
-    finalHydrationPct + humidityAdj + altitudeAdj.hydrationPct;
-
-  const adjustedInitialHydrationPct = recipe.useBassinage
-    ? Number(recipe.initialHydrationPct || 0) + humidityAdj + altitudeAdj.hydrationPct
-    : adjustedHydrationPct;
-  const adjustedBassinagePct = recipe.useBassinage
-    ? Number(recipe.bassinagePct || 0)
-    : 0;
-
-  const otherPct = recipe.otherIngredients.reduce(
-    (sum, item) => sum + Number(item.pct || 0),
-    0
-  );
-
-  const formulaTotalPct =
-    100 + adjustedHydrationPct + recipe.starterPct + recipe.saltPct + otherPct;
-
-  const baseFlourG = doughWeight / (formulaTotalPct / 100);
-  const starterG = (baseFlourG * recipe.starterPct) / 100;
-  const waterG = (baseFlourG * adjustedHydrationPct) / 100;
-  const initialWaterG = (baseFlourG * adjustedInitialHydrationPct) / 100;
-  const bassinageWaterG = (baseFlourG * adjustedBassinagePct) / 100;
-  const saltG = (baseFlourG * recipe.saltPct) / 100;
-
-  const flourBreakdown = recipe.flourTypes.map((f) => ({
-    name: f.name,
-    grams: (baseFlourG * f.pct) / 100,
-    pct: f.pct
-  }));
-
-  const otherBreakdown = recipe.otherIngredients.map((item) => ({
-    name: item.name,
-    grams: (baseFlourG * item.pct) / 100,
-    pct: item.pct
-  }));
-
-  const fermentationFactor = tempFermentationFactor(
-    env.tempF,
-    settings.baselineTempF
-  );
-
-  const bulkMin = recipe.process.bulkMin * fermentationFactor;
-  const finalProofMin = recipe.process.finalProofMin * fermentationFactor;
-  const bakeMin = recipe.process.bakeMin * (1 + altitudeAdj.timePct / 100);
-  const bakeTempF = recipe.process.bakeTempF + altitudeAdj.tempF;
-
-  const batchesByMixer = Math.ceil(
-    doughWeight / Math.min(recipe.batchMaxDoughG, settings.mixerCapacityG)
-  );
-
-  const recipeOvenCapacity = Math.max(1, Number(recipe.ovenCapacityUnits) || 1);
-  const ovenLoads = Math.ceil(qty / recipeOvenCapacity);
-
-  const totalProcessMin =
-    recipe.process.autolyseMin +
-    recipe.process.mixMin +
-    bulkMin +
-    recipe.process.divideAndPreshapeMin +
-    recipe.process.benchRestMin +
-    recipe.process.finalShapeMin +
-    finalProofMin +
-    bakeMin * ovenLoads +
-    recipe.process.coolMin;
-
-  return {
-    recipe,
-    quantity: qty,
-    desiredBakedWeight,
-    doughWeight,
-    baseFlourG,
-    starterG,
-    waterG,
-    initialWaterG,
-    bassinageWaterG,
-    saltG,
-    flourBreakdown,
-    otherBreakdown,
-    adjustedHydrationPct,
-    humidityAdj,
-    altitudeAdj,
-    fermentationFactor,
-    bulkMin,
-    finalProofMin,
-    bakeMin,
-    bakeTempF,
-    batchesByMixer,
-    ovenLoads,
-    recipeOvenCapacity,
-    totalProcessMin
-  };
+.bakingPlanner .card {
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(22, 27, 34, 0.06);
 }
 
-function buildProductionSchedule(plans, settings) {
-  const startMin = timeToMinutes(settings.defaultStartTime || "06:00");
-
-  let bakerAvailableAt = startMin;
-  let mixerAvailableAt = startMin;
-  let ovenAvailableAt = startMin;
-
-  const schedule = [];
-  const productStates = new Map();
-
-  const sortedPlans = [...plans].sort((a, b) => {
-    const aAutolyse = Number(a.recipe.process.autolyseMin) || 0;
-    const bAutolyse = Number(b.recipe.process.autolyseMin) || 0;
-
-    if (bAutolyse !== aAutolyse) return bAutolyse - aAutolyse;
-
-    const aLead = a.bulkMin + a.finalProofMin;
-    const bLead = b.bulkMin + b.finalProofMin;
-
-    return bLead - aLead;
-  });
-
-  const pushTask = ({ plan, name, resource, start, duration, note = "" }) => {
-    const task = {
-      product: plan.recipe.name,
-      qty: plan.quantity,
-      name,
-      resource,
-      start,
-      end: start + duration,
-      duration,
-      note
-    };
-
-    schedule.push(task);
-    return task;
-  };
-
-  const scheduleBakerTask = ({ plan, name, earliestStart, duration, note = "" }) => {
-    const start = Math.max(earliestStart, bakerAvailableAt);
-    const task = pushTask({
-      plan,
-      name,
-      resource: "baker",
-      start,
-      duration,
-      note
-    });
-
-    bakerAvailableAt = task.end;
-    return task;
-  };
-
-  const scheduleMixerTask = ({ plan, name, earliestStart, duration, note = "" }) => {
-    const start = Math.max(earliestStart, bakerAvailableAt, mixerAvailableAt);
-    const task = pushTask({
-      plan,
-      name,
-      resource: "mixer",
-      start,
-      duration,
-      note
-    });
-
-    bakerAvailableAt = task.end;
-    mixerAvailableAt = task.end;
-    return task;
-  };
-
-  const scheduleOvenTask = ({ plan, name, earliestStart, duration, note = "" }) => {
-    const start = Math.max(earliestStart, bakerAvailableAt, ovenAvailableAt);
-    const task = pushTask({
-      plan,
-      name,
-      resource: "oven",
-      start,
-      duration,
-      note
-    });
-
-    ovenAvailableAt = task.end;
-    bakerAvailableAt = start + Math.min(duration, 8);
-    return task;
-  };
-
-  const schedulePassiveTask = ({ plan, name, start, duration, note = "" }) => {
-    return pushTask({
-      plan,
-      name,
-      resource: "passive",
-      start,
-      duration,
-      note
-    });
-  };
-
-  sortedPlans.forEach((plan) => {
-    const mixingMethod = plan.recipe.mixingMethod || "straight";
-    const autolyseMin =
-      mixingMethod === "straight" ? 0 : Number(plan.recipe.process.autolyseMin) || 0;
-    const methodLabels = {
-      autolyse: "Start autolyse",
-      fermentolyse: "Start fermentolyse",
-      saltolyse: "Start saltolyse",
-      straight: "Straight mix"
-    };
-    let autolyseStart = startMin;
-    let autolyseEnd = startMin;
-
-    if (autolyseMin > 0) {
-      const autolyseTask = scheduleBakerTask({
-        plan,
-        name: methodLabels[mixingMethod] || "Start method rest",
-        earliestStart: startMin,
-        duration: autolyseMin,
-        note: ""
-      });
-
-      autolyseStart = autolyseTask.start;
-      autolyseEnd = autolyseTask.end;
-    }
-
-    productStates.set(plan.recipe.id, {
-      plan,
-      autolyseStart,
-      autolyseEnd,
-      mixEnd: null,
-      bulkStart: null,
-      bulkEnd: null,
-      readyForShapeAt: null,
-      readyForBakeAt: null,
-      bakedAt: null
-    });
-  });
-
-  const mixQueue = Array.from(productStates.values()).sort((a, b) => {
-    if (a.autolyseEnd !== b.autolyseEnd) return a.autolyseEnd - b.autolyseEnd;
-    return b.plan.bulkMin - a.plan.bulkMin;
-  });
-
-  mixQueue.forEach((state) => {
-    const plan = state.plan;
-    const process = plan.recipe.process;
-
-    const mixTask = scheduleMixerTask({
-      plan,
-      name: "Mix dough",
-      earliestStart: state.autolyseEnd,
-      duration: Number(process.mixMin) || 0,
-      note: formatWeight(plan.doughWeight, "dough")
-    });
-
-    state.mixEnd = mixTask.end;
-    state.bulkStart = mixTask.end;
-    state.bulkEnd = state.bulkStart + plan.bulkMin;
-
-    schedulePassiveTask({
-      plan,
-      name: "Bulk fermentation",
-      start: state.bulkStart,
-      duration: plan.bulkMin,
-      note: ""
-    });
-
-    state.readyForShapeAt = state.bulkEnd;
-  });
-
-  const foldTasks = [];
-
-  Array.from(productStates.values()).forEach((state) => {
-    const plan = state.plan;
-    const process = plan.recipe.process;
-    const foldCount = Number(process.foldCount) || 0;
-    const foldInterval = Number(process.foldIntervalMin) || 30;
-    const foldDuration = Number(process.foldDurationMin) || 5;
-
-    for (let i = 1; i <= foldCount; i++) {
-      const targetStart = state.bulkStart + i * foldInterval;
-
-      foldTasks.push({
-        plan,
-        name: `Fold ${i}`,
-        earliestStart: targetStart,
-        duration: foldDuration
-      });
-    }
-  });
-
-  foldTasks
-    .sort((a, b) => {
-      if (a.earliestStart !== b.earliestStart) {
-        return a.earliestStart - b.earliestStart;
-      }
-
-      return a.plan.recipe.name.localeCompare(b.plan.recipe.name);
-    })
-    .forEach((fold) => {
-      scheduleBakerTask({
-        plan: fold.plan,
-        name: fold.name,
-        earliestStart: fold.earliestStart,
-        duration: fold.duration,
-        note: ""
-      });
-    });
-
-  const shapingQueue = Array.from(productStates.values()).sort(
-    (a, b) => a.readyForShapeAt - b.readyForShapeAt
-  );
-
-  shapingQueue.forEach((state) => {
-    const plan = state.plan;
-    const process = plan.recipe.process;
-
-    let current = state.readyForShapeAt;
-
-    const divideAndPreshapeMin = Number(process.divideAndPreshapeMin) || 0;
-
-    if (divideAndPreshapeMin > 0) {
-      const divideTask = scheduleBakerTask({
-        plan,
-        name: "Divide and pre-shape",
-        earliestStart: current,
-        duration: divideAndPreshapeMin,
-        note: ""
-      });
-
-      current = divideTask.end;
-    }
-
-    const benchRestMin = Number(process.benchRestMin) || 0;
-
-    if (benchRestMin > 0) {
-      schedulePassiveTask({
-        plan,
-        name: "Bench rest",
-        start: current,
-        duration: benchRestMin,
-        note: ""
-      });
-
-      current += benchRestMin;
-    }
-
-    const finalShapeMin = Number(process.finalShapeMin) || 0;
-
-    if (finalShapeMin > 0) {
-      const shapeTask = scheduleBakerTask({
-        plan,
-        name: "Final shape",
-        earliestStart: current,
-        duration: finalShapeMin,
-        note: ""
-      });
-
-      current = shapeTask.end;
-    }
-
-    schedulePassiveTask({
-      plan,
-      name: "Final proof",
-      start: current,
-      duration: plan.finalProofMin,
-      note: ""
-    });
-
-    state.readyForBakeAt = current + plan.finalProofMin;
-  });
-
-  const bakeQueue = Array.from(productStates.values()).sort(
-    (a, b) => a.readyForBakeAt - b.readyForBakeAt
-  );
-
-  bakeQueue.forEach((state) => {
-    const plan = state.plan;
-    let current = state.readyForBakeAt;
-
-    for (let load = 1; load <= plan.ovenLoads; load++) {
-      const bakeTask = scheduleOvenTask({
-        plan,
-        name: plan.ovenLoads > 1 ? `Bake load ${load}` : "Bake",
-        earliestStart: current,
-        duration: plan.bakeMin,
-        note: `${Math.round(plan.bakeTempF)}°F`
-      });
-
-      current = bakeTask.end;
-    }
-
-    state.bakedAt = current;
-
-    schedulePassiveTask({
-      plan,
-      name: "Cool",
-      start: current,
-      duration: Number(plan.recipe.process.coolMin) || 0,
-      note: ""
-    });
-  });
-
-  return schedule.sort((a, b) => {
-    if (a.start !== b.start) return a.start - b.start;
-
-    const resourceOrder = {
-      baker: 1,
-      mixer: 2,
-      passive: 3,
-      oven: 4
-    };
-
-    return (resourceOrder[a.resource] || 99) - (resourceOrder[b.resource] || 99);
-  });
+.bakingPlanner .panel {
+  padding: 24px;
 }
 
-function ProgressBar({ label, value, max, suffix = "", warningAt = 90 }) {
-  const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
-  const isWarn = pct >= warningAt;
-
-  return (
-    <div className="progress-wrap">
-      <div className="progress-head">
-        <span>{label}</span>
-        <span className={isWarn ? "warning-text" : "muted"}>
-          {round(value)} / {round(max)}
-          {suffix}
-        </span>
-      </div>
-      <div className="progress-track">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.7 }}
-          className={isWarn ? "progress-fill warning" : "progress-fill"}
-        />
-      </div>
-    </div>
-  );
+.bakingPlanner .section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 22px;
 }
 
-function NumberInput({ label, value, onChange, suffix, min = 0, step = "any" }) {
-  return (
-    <label className="field">
-      <span>{label}</span>
-      <div className="input-wrap">
-        <input
-          type="number"
-          min={min}
-          step={step}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-        />
-        {suffix && <span className="suffix">{suffix}</span>}
-      </div>
-    </label>
-  );
+.bakingPlanner .section-head h2,
+.bakingPlanner .panel h2 {
+  margin: 0;
+  font-size: 1.45rem;
+  color: #121820;
+  letter-spacing: -0.03em;
 }
 
-function TextInput({ label, value, onChange, placeholder = "" }) {
-  return (
-    <label className="field">
-      <span>{label}</span>
-      <input
-        className="text-field"
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-      />
-    </label>
-  );
+.bakingPlanner .section-head p,
+.bakingPlanner .panel p {
+  color: #4b5563;
+  line-height: 1.5;
 }
 
-export default function BakingPlanner() {
-  const { user } = useAuth();
-  const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } = useUnsavedChanges();
+.bakingPlanner .saved-status {
+  margin-top: 8px !important;
+  color: #34753e !important;
+  font-weight: 800;
+  font-size: 0.85rem !important;
+}
 
-  const [activeTab, setActiveTab] = useState("planner");
-  const [cloudLoading, setCloudLoading] = useState(false);
-  const [cloudStatus, setCloudStatus] = useState("Local only");
+.bakingPlanner .production-date-display {
+  color: #c77e27 !important;
+  font-weight: 900;
+}
 
-  const [recipes, setRecipes] = useState(() =>
-    loadFromStorage("bakingPlannerRecipes", []).map(normalizeRecipe)
-  );
-  const [settings, setSettings] = useState(() =>
-    loadFromStorage("bakingPlannerSettings", defaultSettings)
-  );
-  const [env, setEnv] = useState(() =>
-    loadFromStorage("bakingPlannerEnv", { tempF: 74, humidityPct: 52 })
-  );
-  const [productionDate, setProductionDate] = useState(() =>
-    loadFromStorage("bakingPlannerProductionDate", "")
-  );
-  const [productionItems, setProductionItems] = useState(() =>
-    loadFromStorage("bakingPlannerProductionItems", [])
-  );
-  const [pantryItems, setPantryItems] = useState(() =>
-    loadFromStorage("bakingPlannerPantryItems", []).map(normalizePantryItem)
-  );
-  const [pantryDraft, setPantryDraft] = useState(blankPantryItem);
-  const [selectedRecipeId, setSelectedRecipeId] = useState(
-    recipes[0]?.id || ""
-  );
-  const [lastSavedAt, setLastSavedAt] = useState("");
+.bakingPlanner .production-actions,
+.bakingPlanner .button-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 
-  function markBakingDirty() {
-    markUnsaved({
-      source: "Baking Planner",
-      onSave: savePlannerData
-    });
+.bakingPlanner .btn {
+  border-radius: 999px;
+  padding: 12px 18px;
+  background: #34753e;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.bakingPlanner .btn:hover {
+  transform: translateY(-1px);
+  background: #285d31;
+}
+
+.bakingPlanner .btn.outline {
+  background: #ffffff;
+  color: #121820;
+  border: 1px solid rgba(22, 27, 34, 0.12);
+}
+
+.bakingPlanner .btn.dirtySaveButton,
+.bakingPlanner .btn.unsavedSaveButton {
+  background: #b45309;
+  color: #ffffff;
+  border: 1px solid #b45309;
+  box-shadow: 0 10px 24px rgba(180, 83, 9, 0.22);
+}
+
+.bakingPlanner .btn.dirtySaveButton:hover,
+.bakingPlanner .btn.unsavedSaveButton:hover {
+  background: #92400e;
+  border-color: #92400e;
+}
+
+.bakingPlanner .recipe-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px;
+  gap: 18px;
+  align-items: center;
+  background: #fbfaf6;
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.bakingPlanner .editable-row {
+  grid-template-columns: minmax(260px, 1fr) 180px auto;
+}
+
+.bakingPlanner .recipe-title {
+  font-size: 1.1rem;
+  font-weight: 900;
+  margin: 0 0 6px;
+}
+
+.bakingPlanner .muted {
+  color: #64748b;
+}
+
+.bakingPlanner .small {
+  font-size: 0.85rem;
+}
+
+.bakingPlanner .tiny {
+  font-size: 0.78rem;
+}
+
+.bakingPlanner .field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bakingPlanner .field span {
+  color: #344054;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.bakingPlanner .input-wrap {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid rgba(22, 27, 34, 0.12);
+  background: #ffffff;
+}
+
+.bakingPlanner .input-wrap input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 12px 14px;
+  outline: none;
+  border-radius: 0;
+}
+
+.bakingPlanner .text-field,
+.bakingPlanner .field > input,
+.bakingPlanner .field > select,
+.bakingPlanner .field > textarea {
+  width: 100%;
+  border: 1px solid rgba(22, 27, 34, 0.12);
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 12px 14px;
+  outline: none;
+}
+
+.bakingPlanner .text-field:focus,
+.bakingPlanner .field > input:focus,
+.bakingPlanner .field > select:focus,
+.bakingPlanner .field > textarea:focus,
+.bakingPlanner .input-wrap:focus-within {
+  border-color: rgba(223, 160, 76, 0.7);
+  box-shadow: 0 0 0 3px rgba(223, 160, 76, 0.16);
+}
+
+.bakingPlanner .suffix {
+  padding: 12px 14px;
+  border-left: 1px solid rgba(22, 27, 34, 0.1);
+  background: #fbfaf6;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.bakingPlanner .grid {
+  display: grid;
+  gap: 16px;
+}
+
+.bakingPlanner .two {
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+}
+
+.bakingPlanner .three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.bakingPlanner .four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.bakingPlanner .span-two {
+  grid-column: span 2;
+}
+
+.bakingPlanner .hubStatGrid,
+.bakingPlanner .production-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 18px;
+}
+
+.bakingPlanner .stat-card-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px;
+}
+
+.bakingPlanner .icon-badge {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: #dfa04c;
+  color: #ffffff;
+  flex: 0 0 auto;
+}
+
+.bakingPlanner .icon-badge svg,
+.bakingPlanner svg {
+  display: inline-block;
+}
+
+.bakingPlanner .stat-value {
+  margin: 4px 0;
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #121820;
+  letter-spacing: -0.04em;
+}
+
+.bakingPlanner .progress-wrap {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.bakingPlanner .progress-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.bakingPlanner .progress-track {
+  width: 100%;
+  height: 10px;
+  background: #edf0ea;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.bakingPlanner .progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: #34753e;
+}
+
+.bakingPlanner .progress-fill.warning {
+  background: #dfa04c;
+}
+
+.bakingPlanner .warning-text {
+  color: #b45309;
+}
+
+.bakingPlanner .notice {
+  border-radius: 14px;
+  padding: 16px;
+  line-height: 1.5;
+}
+
+.bakingPlanner .warning-box {
+  background: #fff8eb;
+  border: 1px solid rgba(245, 158, 11, 0.18);
+  color: #92400e;
+}
+
+.bakingPlanner .good-box {
+  background: #ecfdf3;
+  border: 1px solid rgba(34, 197, 94, 0.16);
+  color: #166534;
+}
+
+.bakingPlanner .inline-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.bakingPlanner .amber {
+  color: #dfa04c;
+}
+
+.bakingPlanner .green {
+  color: #34753e;
+}
+
+.bakingPlanner .table-wrap {
+  overflow: auto;
+  border-radius: 16px;
+  background: #ffffff;
+  margin-top: 16px;
+}
+
+.bakingPlanner table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.bakingPlanner thead {
+  background: #fbfaf6;
+  color: #344054;
+}
+
+.bakingPlanner th,
+.bakingPlanner td {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 0.82rem;
+}
+
+.bakingPlanner th {
+  color: #64748b;
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(22, 27, 34, 0.08);
+}
+
+.bakingPlanner td {
+  color: #121820;
+}
+
+.bakingPlanner tbody tr {
+  border-top: 1px solid rgba(22, 27, 34, 0.08);
+}
+
+.bakingPlanner tbody tr.alt {
+  background: #fbfaf6;
+}
+
+.bakingPlanner .soft-panel {
+  background: #fbfaf6;
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.bakingPlanner .line-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 10px;
+  gap: 12px;
+  align-items: flex-start;
+  border-bottom: 1px solid rgba(22, 27, 34, 0.08);
+}
+
+.bakingPlanner .line-item strong {
+  font-size: 0.88rem;
+  line-height: 1.2;
+}
+
+.bakingPlanner .line-item .tiny,
+.bakingPlanner .line-item p {
+  margin: 2px 0 0;
+  line-height: 1.25;
+}
+
+.bakingPlanner .line-item > div:last-child {
+  min-width: 135px;
+}
+
+.bakingPlanner .line-item + .line-item {
+  margin-top: 6px;
+}
+
+.bakingPlanner .line-item .warning-text {
+  font-weight: 800;
+}
+
+.bakingPlanner .pill {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.bakingPlanner .recipe-select {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.bakingPlanner .recipe-select.active {
+  background: #f7ecd9;
+  color: #9a641f;
+  border-color: rgba(223, 160, 76, 0.5);
+}
+
+.bakingPlanner .recipe-select p {
+  margin: 0 0 6px;
+  font-weight: 900;
+}
+
+.bakingPlanner .recipe-select span {
+  font-size: 0.82rem;
+  opacity: 0.8;
+}
+
+.bakingPlanner .starterLayout {
+  grid-template-columns: minmax(280px, 420px) minmax(0, 1fr);
+  align-items: start;
+  gap: 18px;
+}
+
+.bakingPlanner .starterSettingsCard {
+  max-width: 420px;
+}
+
+.bakingPlanner .starterSettingsCard .stack,
+.bakingPlanner .starterSettingsCard .field {
+  max-width: 100%;
+}
+
+.bakingPlanner .starterStatsGrid {
+  grid-template-columns: repeat(4, minmax(190px, 1fr));
+  gap: 18px;
+}
+
+.bakingPlanner .starterStatsGrid .hubStatCard {
+  min-width: 0;
+}
+
+.bakingPlanner .starterStatsGrid .hubStatText strong {
+  font-size: clamp(1.25rem, 1.05vw, 1.75rem);
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.bakingPlanner .grid.settingsGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+.bakingPlanner .settingsGrid .field {
+  min-width: 0;
+}
+
+.bakingPlanner .settingsGrid .input-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.bakingPlanner .settingsGrid .suffix {
+  min-width: 68px;
+  white-space: nowrap;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding-inline: 14px;
+}
+
+.bakingPlanner .bakingModeOverlay,
+.bakingPlanner .pantryEditOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(10px);
+}
+
+.bakingPlanner .bakingModeModal,
+.bakingPlanner .pantryEditModal {
+  width: min(920px, 100%);
+  max-height: 88vh;
+  overflow: auto;
+  background: #fffaf2;
+  border-radius: 24px;
+  box-shadow: 0 24px 80px rgba(18, 24, 32, 0.25);
+  border: 1px solid rgba(120, 79, 35, 0.16);
+  padding: 28px;
+  display: grid;
+  gap: 14px;
+}
+
+.bakingPlanner .bakingModeModal h2 {
+  margin: 0;
+}
+
+.bakingPlanner .bakingModeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.bakingPlanner .bakingModeCard {
+  border: 1px solid rgba(18, 24, 32, 0.12);
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 18px;
+  text-align: left;
+  display: grid;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.bakingPlanner .bakingModeCard.featured {
+  border-color: rgba(52, 117, 62, 0.45);
+  background: #f1f8f2;
+}
+
+.bakingPlanner .bakingModeCard strong {
+  font-size: 1.05rem;
+  color: #121820;
+}
+
+.bakingPlanner .bakingModeCard span,
+.bakingPlanner .bakingModeCard small {
+  color: #5f6b7a;
+  line-height: 1.45;
+}
+
+.bakingPlanner .pullListWrap table,
+.bakingPlanner .pullListTable {
+  min-width: 820px;
+}
+
+.bakingPlanner .pullListTable th,
+.bakingPlanner .pullListTable td {
+  padding: 9px 10px;
+  vertical-align: top;
+}
+
+.bakingPlanner .pullIngredientButton {
+  border: 0;
+  background: transparent;
+  color: #121820;
+  font-weight: 900;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.bakingPlanner .pullIngredientButton:hover {
+  color: #2563eb;
+}
+
+.bakingPlanner .pullIngredientButton.disabled {
+  cursor: default;
+  text-decoration: none;
+  color: #121820;
+}
+
+.bakingPlanner .pullAmountCell,
+.bakingPlanner .pullPackageCell {
+  white-space: nowrap;
+}
+
+.bakingPlanner .iconButton {
+  border: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.08);
+  color: #121820;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.bakingPlanner .pantryEditActions {
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+@media (max-width: 1500px) {
+  .bakingPlanner .starterLayout {
+    grid-template-columns: 1fr;
   }
 
-  useEffect(() => {
-    async function loadCloudData() {
-      if (!user) {
-        setCloudStatus("Local only");
-        return;
-      }
-
-      setCloudLoading(true);
-      setCloudStatus("Loading cloud data...");
-
-      try {
-        const ref = doc(db, "users", user.uid, "bakingPlanner", "main");
-        const snapshot = await getDoc(ref);
-
-        if (snapshot.exists()) {
-          const data = snapshot.data();
-
-          if (Array.isArray(data.recipes)) {
-            const cloudRecipes = data.recipes.map(normalizeRecipe);
-            setRecipes(cloudRecipes);
-            setSelectedRecipeId(cloudRecipes[0]?.id || "");
-          } else {
-            setRecipes([]);
-            setSelectedRecipeId("");
-          }
-
-          if (data.settings) setSettings({ ...defaultSettings, ...data.settings });
-          if (data.env) setEnv(data.env);
-          setProductionDate(data.productionDate || "");
-          if (Array.isArray(data.productionItems)) {
-            setProductionItems(data.productionItems);
-          } else {
-            setProductionItems([]);
-          }
-
-          if (Array.isArray(data.pantryItems)) {
-            setPantryItems(data.pantryItems.map(normalizePantryItem));
-          } else {
-            setPantryItems([]);
-          }
-
-          setCloudStatus("Cloud data loaded");
-        } else {
-          setRecipes([]);
-          setSelectedRecipeId("");
-          setProductionItems([]);
-          setPantryItems([]);
-          setCloudStatus("No cloud save yet");
-        }
-      } catch (error) {
-        console.error(error);
-        setCloudStatus("Cloud load failed");
-      } finally {
-        setCloudLoading(false);
-      }
-    }
-
-    loadCloudData();
-  }, [user]);
-
-  const productionRecipes = useMemo(() => {
-    return productionItems
-      .map((item) => {
-        const recipe = recipes.find((r) => r.id === item.recipeId);
-        if (!recipe) return null;
-        return { recipe, quantity: Number(item.quantity) || 0 };
-      })
-      .filter(Boolean);
-  }, [productionItems, recipes]);
-
-  const plans = useMemo(() => {
-    return productionRecipes
-      .map(({ recipe, quantity }) =>
-        calculateRecipePlan(recipe, quantity, env, settings)
-      )
-      .filter((plan) => plan.quantity > 0);
-  }, [productionRecipes, env, settings]);
-
-  const productionSchedule = useMemo(() => {
-    return buildProductionSchedule(plans, settings);
-  }, [plans, settings]);
-
-  const totals = useMemo(() => {
-    const flourMap = {};
-    const otherMap = {};
-    let doughWeight = 0;
-    let starterG = 0;
-    let waterG = 0;
-    let saltG = 0;
-    let units = 0;
-    let maxProcess = 0;
-
-    plans.forEach((plan) => {
-      doughWeight += plan.doughWeight;
-      starterG += plan.starterG;
-      waterG += plan.waterG;
-      saltG += plan.saltG;
-      units += plan.quantity;
-      maxProcess = Math.max(maxProcess, plan.totalProcessMin);
-
-      plan.flourBreakdown.forEach((f) => {
-        flourMap[f.name] = (flourMap[f.name] || 0) + f.grams;
-      });
-
-      plan.otherBreakdown.forEach((item) => {
-        otherMap[item.name] = (otherMap[item.name] || 0) + item.grams;
-      });
-    });
-
-    const ingredientBuffer = 1 + settings.ingredientBufferPct / 100;
-
-    return {
-      doughWeight,
-      starterG,
-      waterG,
-      saltG,
-      units,
-      maxProcess,
-      flourMap,
-      otherMap,
-      bufferedStarterG: starterG * (1 + settings.levainBufferPct / 100),
-      bufferedFlourMap: Object.fromEntries(
-        Object.entries(flourMap).map(([k, v]) => [k, v * ingredientBuffer])
-      ),
-      bufferedWaterG: waterG * ingredientBuffer,
-      bufferedSaltG: saltG * ingredientBuffer
-    };
-  }, [plans, settings]);
-
-  const levain = useMemo(() => {
-    const totalLevain = totals.bufferedStarterG;
-    const preset = starterFeedingPresets[settings.starterFeedingPreset];
-    const seedParts = Math.max(0, Number(preset?.seed ?? settings.starterSeedParts) || 0);
-    const flourParts = Math.max(0, Number(preset?.flour ?? settings.starterFlourParts) || 0);
-    const waterParts = Math.max(0, Number(preset?.water ?? settings.starterWaterParts) || 0);
-    const totalParts = seedParts + flourParts + waterParts;
-
-    if (totalParts <= 0 || totalLevain <= 0) {
-      return {
-        totalLevain,
-        flour: 0,
-        water: 0,
-        seedStarter: 0,
-        seedParts,
-        flourParts,
-        waterParts,
-        ratioLabel: `${seedParts}:${flourParts}:${waterParts}`
-      };
-    }
-
-    const seedStarter = (totalLevain * seedParts) / totalParts;
-    const flour = (totalLevain * flourParts) / totalParts;
-    const water = (totalLevain * waterParts) / totalParts;
-
-    return {
-      totalLevain,
-      flour,
-      water,
-      seedStarter,
-      seedParts,
-      flourParts,
-      waterParts,
-      ratioLabel: `${seedParts}:${flourParts}:${waterParts}`
-    };
-  }, [
-    totals.bufferedStarterG,
-    settings.starterFeedingPreset,
-    settings.starterSeedParts,
-    settings.starterFlourParts,
-    settings.starterWaterParts
-  ]);
-
-  const warnings = useMemo(() => {
-    const list = [];
-    const totalOvenLoads = plans.reduce((sum, p) => sum + p.ovenLoads, 0);
-    const maxUnitsAtOnce = plans.reduce((sum, p) => sum + p.quantity, 0);
-    const maxBatch = plans.some((p) => p.batchesByMixer > 1);
-
-    if (maxBatch) {
-      list.push(
-        "One or more products exceed mixer or recipe batch capacity and need split batches."
-      );
-    }
-
-    if (maxUnitsAtOnce > settings.proofingCapacityUnits) {
-      list.push(
-        "Planned unit count exceeds saved proofing capacity. Stagger production or add proofing space."
-      );
-    }
-
-    if (totalOvenLoads > 6) {
-      list.push(
-        "Oven schedule may be long. Consider staggering mix times or reducing same-day variety count."
-      );
-    }
-
-    if (env.tempF >= settings.baselineTempF + 6) {
-      list.push("Room is warm compared with baseline. Watch bulk fermentation closely.");
-    }
-
-    if (env.tempF <= settings.baselineTempF - 6) {
-      list.push("Room is cool compared with baseline. Expect slower fermentation.");
-    }
-
-    return list;
-  }, [plans, settings, env]);
-
-  const selectedRecipe =
-    recipes.find((r) => r.id === selectedRecipeId) || recipes[0] || null;
-
-  const availableRecipesForCycle = useMemo(() => {
-    const usedIds = new Set(productionItems.map((item) => item.recipeId));
-    return recipes.filter((recipe) => !usedIds.has(recipe.id));
-  }, [recipes, productionItems]);
-
-  function setBakingPlannerMode(mode) {
-    markBakingDirty();
-    setSettings((previous) => {
-      const next = {
-        ...previous,
-        bakingPlannerMode: mode
-      };
-
-      saveToStorage("bakingPlannerSettings", next);
-      return next;
-    });
+  .bakingPlanner .starterStatsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
-  const isAdvancedMode = settings.bakingPlannerMode === "advanced";
-  const trimmedStarterName = String(settings.starterName || "").trim();
-  const shouldUseStarterName = Boolean(
-    trimmedStarterName && settings.useStarterNameInLabels
-  );
-  const starterDisplayName = shouldUseStarterName
-    ? trimmedStarterName
-    : "Preferment";
-  const starterRecipeLabel = shouldUseStarterName
-    ? trimmedStarterName
-    : "Starter / Levain";
-  const starterNeededLabel = shouldUseStarterName
-    ? `${trimmedStarterName} Needed`
-    : "Preferment Needed";
-  const starterBufferSub = shouldUseStarterName
-    ? `includes ${settings.levainBufferPct}% ${trimmedStarterName} buffer`
-    : `includes ${settings.levainBufferPct}% preferment buffer`;
-  const starterBuilderTitle = shouldUseStarterName
-    ? `${trimmedStarterName} Builder`
-    : "Starter / Preferment Builder";
-  const starterBuilderDescription = shouldUseStarterName
-    ? `This uses the total ${trimmedStarterName} required across the active bake plan and adds your saved buffer.`
-    : "This uses the total starter or preferment required across the active bake plan and adds your saved buffer.";
-  const starterHydrationLabel = shouldUseStarterName
-    ? `${trimmedStarterName} Hydration`
-    : "Starter Hydration";
-  const starterBufferLabel = shouldUseStarterName
-    ? `${trimmedStarterName} Buffer`
-    : "Preferment Buffer";
-  const matureStarterPullLabel = shouldUseStarterName
-    ? `Mature ${trimmedStarterName}`
-    : "Mature Starter / Preferment";
-  const starterSeedLabel = shouldUseStarterName
-    ? `Seed ${trimmedStarterName} Estimate`
-    : "Seed Starter / Preferment Estimate";
-  const starterFlourSub = shouldUseStarterName
-    ? `for ${trimmedStarterName} at ${settings.starterHydrationPct}% hydration`
-    : `${settings.starterHydrationPct}% hydration`;
-  const starterWaterSub = shouldUseStarterName
-    ? `for ${trimmedStarterName}`
-    : "for preferment build";
-  const starterFeedRatioLabel = `Feeding ratio ${levain.ratioLabel || "1:2:2"}`;
-  const starterFlourLabel = shouldUseStarterName
-    ? `Flour to Feed ${trimmedStarterName}`
-    : "Flour to Feed";
-  const starterWaterLabel = shouldUseStarterName
-    ? `Water to Feed ${trimmedStarterName}`
-    : "Water to Feed";
-
-  const ingredientPullRows = useMemo(() => {
-    const rows = [];
-    const ingredientBuffer = 1 + settings.ingredientBufferPct / 100;
-
-    Object.entries(totals.bufferedFlourMap).forEach(([name, grams]) => {
-      rows.push(buildIngredientPullRow(name, grams, pantryItems));
-    });
-
-    rows.push(buildIngredientPullRow("Water", totals.bufferedWaterG, pantryItems));
-
-    const bassinageWaterG = plans.reduce(
-      (sum, plan) => sum + (plan.bassinageWaterG || 0),
-      0
-    ) * ingredientBuffer;
-
-    if (bassinageWaterG > 0) {
-      rows.push(buildIngredientPullRow("Bassinage Water", bassinageWaterG, pantryItems));
-    }
-
-    rows.push(
-      buildIngredientPullRow(
-        matureStarterPullLabel,
-        totals.bufferedStarterG,
-        pantryItems
-      )
-    );
-
-    rows.push(buildIngredientPullRow("Salt", totals.bufferedSaltG, pantryItems));
-
-    Object.entries(totals.otherMap).forEach(([name, grams]) => {
-      rows.push(buildIngredientPullRow(name, grams * ingredientBuffer, pantryItems));
-    });
-
-    return rows.filter((row) => row.grams > 0);
-  }, [
-    totals.bufferedFlourMap,
-    totals.bufferedWaterG,
-    totals.bufferedStarterG,
-    totals.bufferedSaltG,
-    totals.otherMap,
-    plans,
-    settings.ingredientBufferPct,
-    pantryItems,
-    matureStarterPullLabel
-  ]);
-
-  const ingredientPullTotalCost = ingredientPullRows.reduce(
-    (sum, row) => sum + (row.estimatedCost || 0),
-    0
-  );
-
-  function updateSettingField(field, value) {
-    markBakingDirty();
-    setSettings((previous) => ({
-      ...previous,
-      [field]: value
-    }));
-  }
-
-  function updateStarterFeedingPreset(value) {
-    markBakingDirty();
-    const preset = starterFeedingPresets[value];
-
-    setSettings((previous) => ({
-      ...previous,
-      starterFeedingPreset: value,
-      starterSeedParts: preset ? preset.seed : previous.starterSeedParts,
-      starterFlourParts: preset ? preset.flour : previous.starterFlourParts,
-      starterWaterParts: preset ? preset.water : previous.starterWaterParts
-    }));
-  }
-
-  async function savePlannerData() {
-    const normalizedRecipes = recipes.map(normalizeRecipe);
-
-    saveToStorage("bakingPlannerRecipes", normalizedRecipes);
-    saveToStorage("bakingPlannerSettings", settings);
-    saveToStorage("bakingPlannerEnv", env);
-    saveToStorage("bakingPlannerProductionDate", productionItems.length ? productionDate : "");
-    saveToStorage("bakingPlannerProductionItems", productionItems);
-    saveToStorage("bakingPlannerPantryItems", pantryItems.map(normalizePantryItem));
-
-    const savedTime = new Date().toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit"
-    });
-
-    setLastSavedAt(savedTime);
-
-    if (!user) {
-      setCloudStatus("Saved locally");
-      markSaved();
-      return;
-    }
-
-    setCloudLoading(true);
-    setCloudStatus("Saving to cloud...");
-
-    try {
-      const ref = doc(db, "users", user.uid, "bakingPlanner", "main");
-
-      await setDoc(
-        ref,
-        {
-          recipes: normalizedRecipes,
-          settings,
-          env,
-          productionDate: productionItems.length ? productionDate : "",
-          productionItems,
-          pantryItems: pantryItems.map(normalizePantryItem),
-          updatedAt: serverTimestamp()
-        },
-        { merge: true }
-      );
-
-      setCloudStatus(`Cloud saved at ${savedTime}`);
-      markSaved();
-    } catch (error) {
-      console.error(error);
-      setCloudStatus("Cloud save failed");
-    } finally {
-      setCloudLoading(false);
-    }
-  }
-
-  function updateRecipeField(field, value) {
-    markBakingDirty();
-    if (!selectedRecipe) return;
-
-    setRecipes((prev) =>
-      prev.map((r) => {
-        if (r.id !== selectedRecipe.id) return r;
-
-        const next = { ...r, [field]: value };
-
-        if (field === "preBakeUnitWeight" || field === "bakeLossPct") {
-          const preBake =
-            field === "preBakeUnitWeight"
-              ? Number(value) || 0
-              : Number(next.preBakeUnitWeight) || 0;
-          const bakeLoss =
-            field === "bakeLossPct"
-              ? Number(value) || 0
-              : Number(next.bakeLossPct) || 0;
-
-          next.finishedUnitWeight = preBake * (1 - bakeLoss / 100);
-        }
-
-        if (field === "initialHydrationPct" || field === "bassinagePct") {
-          const initial =
-            field === "initialHydrationPct"
-              ? Number(value) || 0
-              : Number(next.initialHydrationPct) || 0;
-          const bassinage =
-            field === "bassinagePct"
-              ? Number(value) || 0
-              : Number(next.bassinagePct) || 0;
-
-          next.hydrationPct = initial + bassinage;
-        }
-
-        if (field === "hydrationPct") {
-          next.initialHydrationPct = Number(value) || 0;
-          next.bassinagePct = 0;
-          next.useBassinage = false;
-        }
-
-        return next;
-      })
-    );
-  }
-
-  function updateRecipeProcess(field, value) {
-    markBakingDirty();
-    setRecipes((prev) =>
-      prev.map((r) =>
-        r.id === selectedRecipe.id
-          ? {
-              ...r,
-              process: {
-                ...normalizeRecipe(r).process,
-                [field]: Number(value) || 0
-              }
-            }
-          : r
-      )
-    );
-  }
-
-  function updateFlourType(index, field, value) {
-    markBakingDirty();
-    setRecipes((prev) =>
-      prev.map((recipe) => {
-        if (recipe.id !== selectedRecipe.id) return recipe;
-
-        const flourTypes = recipe.flourTypes.map((item, itemIndex) =>
-          itemIndex === index
-            ? {
-                ...item,
-                [field]: field === "pct" ? Number(value) : value
-              }
-            : item
-        );
-
-        return { ...recipe, flourTypes };
-      })
-    );
-  }
-
-  function addFlourType() {
-    markBakingDirty();
-    setRecipes((prev) =>
-      prev.map((recipe) =>
-        recipe.id === selectedRecipe.id
-          ? {
-              ...recipe,
-              flourTypes: [...recipe.flourTypes, { name: "New Flour", pct: 0 }]
-            }
-          : recipe
-      )
-    );
-  }
-
-  function deleteFlourType(index) {
-    markBakingDirty();
-    setRecipes((prev) =>
-      prev.map((recipe) => {
-        if (recipe.id !== selectedRecipe.id) return recipe;
-
-        const flourTypes = recipe.flourTypes.filter((_, itemIndex) => itemIndex !== index);
-
-        return {
-          ...recipe,
-          flourTypes: flourTypes.length
-            ? flourTypes
-            : [{ name: "Bread Flour", pct: 100 }]
-        };
-      })
-    );
-  }
-
-  function updateOtherIngredient(index, field, value) {
-    markBakingDirty();
-    setRecipes((prev) =>
-      prev.map((recipe) => {
-        if (recipe.id !== selectedRecipe.id) return recipe;
-
-        const otherIngredients = recipe.otherIngredients.map((item, itemIndex) =>
-          itemIndex === index
-            ? {
-                ...item,
-                [field]: field === "pct" ? Number(value) : value
-              }
-            : item
-        );
-
-        return { ...recipe, otherIngredients };
-      })
-    );
-  }
-
-  function addOtherIngredient() {
-    markBakingDirty();
-    setRecipes((prev) =>
-      prev.map((recipe) =>
-        recipe.id === selectedRecipe.id
-          ? {
-              ...recipe,
-              otherIngredients: [
-                ...recipe.otherIngredients,
-                { name: "New Ingredient", pct: 1 }
-              ]
-            }
-          : recipe
-      )
-    );
-  }
-
-  function deleteOtherIngredient(index) {
-    markBakingDirty();
-    setRecipes((prev) =>
-      prev.map((recipe) =>
-        recipe.id === selectedRecipe.id
-          ? {
-              ...recipe,
-              otherIngredients: recipe.otherIngredients.filter(
-                (_, itemIndex) => itemIndex !== index
-              )
-            }
-          : recipe
-      )
-    );
-  }
-
-  function addRecipeToCycle(recipeId) {
-    markBakingDirty();
-    if (!recipeId) return;
-
-    setProductionItems((prev) => {
-      if (prev.some((item) => item.recipeId === recipeId)) return prev;
-      return [...prev, { recipeId, quantity: 0 }];
-    });
-  }
-
-  function updateCycleQuantity(recipeId, quantity) {
-    markBakingDirty();
-    setProductionItems((prev) =>
-      prev.map((item) =>
-        item.recipeId === recipeId
-          ? { ...item, quantity: Number(quantity) }
-          : item
-      )
-    );
-  }
-
-  function removeRecipeFromCycle(recipeId) {
-    markBakingDirty();
-    setProductionItems((prev) => prev.filter((item) => item.recipeId !== recipeId));
-  }
-
-  function clearCycle() {
-    markBakingDirty();
-    setProductionItems([]);
-  }
-
-  function addRecipe() {
-    markBakingDirty();
-    const id = `recipe-${Date.now()}`;
-
-    const base = normalizeRecipe({
-      id,
-      name: "New Recipe",
-      category: "Custom",
-      unitsLabel: "units",
-      vesselType: "Tray / Pan",
-      preBakeUnitWeight: 560,
-      finishedUnitWeight: 504,
-      bakeLossPct: 10,
-      mixingMethod: "straight",
-      useBassinage: false,
-      initialHydrationPct: 70,
-      bassinagePct: 0,
-      batchMaxDoughG: settings.mixerCapacityG || 7000,
-      ovenCapacityUnits: 12,
-      flourTypes: [{ name: "Bread Flour", pct: 100 }],
-      hydrationPct: 70,
-      starterPct: 20,
-      starterHydrationPct: settings.starterHydrationPct || 100,
-      saltPct: 2,
-      otherIngredients: [],
-      process: {
-        autolyseMin: 0,
-        mixMin: 10,
-        bulkMin: 240,
-        foldCount: 2,
-        foldIntervalMin: 30,
-        foldDurationMin: 5,
-        divideAndPreshapeMin: 10,
-        benchRestMin: 20,
-        finalShapeMin: 10,
-        finalProofMin: 90,
-        bakeTempF: 425,
-        bakeMin: 30,
-        coolMin: 60
-      }
-    });
-
-    setRecipes((prev) => [...prev, base]);
-    setSelectedRecipeId(id);
-    setActiveTab("recipes");
-  }
-
-  function duplicateRecipe() {
-    markBakingDirty();
-    const id = `${selectedRecipe.id}-copy-${Date.now()}`;
-    setRecipes((prev) => [
-      ...prev,
-      normalizeRecipe({ ...selectedRecipe, id, name: `${selectedRecipe.name} Copy` })
-    ]);
-    setSelectedRecipeId(id);
-  }
-
-  function deleteRecipe(id) {
-    markBakingDirty();
-    const remainingRecipes = recipes.filter((r) => r.id !== id);
-
-    setRecipes(remainingRecipes);
-    setProductionItems((prev) => prev.filter((item) => item.recipeId !== id));
-    setSelectedRecipeId(remainingRecipes[0]?.id || "");
-  }
-
-  function updatePantryDraft(field, value) {
-    setPantryDraft((previous) => ({
-      ...previous,
-      [field]: value
-    }));
-  }
-
-  function addPantryItem() {
-    const cleanName = String(pantryDraft.name || "").trim();
-
-    if (!cleanName) return;
-
-    markBakingDirty();
-
-    const item = normalizePantryItem({
-      ...pantryDraft,
-      id: makeId("pantry"),
-      name: cleanName,
-      source: String(pantryDraft.source || "").trim(),
-      notes: String(pantryDraft.notes || "").trim()
-    });
-
-    setPantryItems((previous) =>
-      [...previous, item].sort((a, b) => a.name.localeCompare(b.name))
-    );
-    setPantryDraft(blankPantryItem);
-  }
-
-  function updatePantryItem(itemId, field, value) {
-    markBakingDirty();
-
-    setPantryItems((previous) =>
-      previous.map((item) =>
-        item.id === itemId
-          ? normalizePantryItem({
-              ...item,
-              [field]: value
-            })
-          : item
-      )
-    );
-  }
-
-  function deletePantryItem(itemId) {
-    markBakingDirty();
-    setPantryItems((previous) => previous.filter((item) => item.id !== itemId));
-  }
-
-  const tabButton = (id, label, Icon) => (
-    <button
-      onClick={() => setActiveTab(id)}
-      className={activeTab === id ? "tab active" : "tab"}
-      type="button"
-    >
-      <Icon size={18} /> {label}
-    </button>
-  );
-
-  return (
-    <div className="bakingPlanner" onChangeCapture={markBakingDirty}>
-      {!cloudLoading && !settings.bakingPlannerMode ? (
-        <div className="bakingModeOverlay" role="dialog" aria-modal="true">
-          <div className="bakingModeModal">
-            <p className="eyebrow">Baking Planner Setup</p>
-            <h2>Choose your baking workflow.</h2>
-            <p>
-              Pick the setup that matches how you bake. You can change this later
-              in Settings.
-            </p>
-
-            <div className="bakingModeGrid">
-              <button
-                type="button"
-                className="bakingModeCard"
-                onClick={() => setBakingPlannerMode("basic")}
-              >
-                <strong>Basic</strong>
-                <span>
-                  Best for small operations, simple loaves, cookies, muffins, and
-                  straightforward production planning.
-                </span>
-                <small>
-                  Shows core recipe, dough weight, hydration, starter, salt, timing,
-                  and bake-day planning fields.
-                </small>
-              </button>
-
-              <button
-                type="button"
-                className="bakingModeCard featured"
-                onClick={() => setBakingPlannerMode("advanced")}
-              >
-                <strong>Advanced / Professional</strong>
-                <span>
-                  Best for bakers who use detailed fermentation and mixing methods.
-                </span>
-                <small>
-                  Adds straight mix, autolyse, fermentolyse, saltolyse, bassinage,
-                  initial hydration, and bassinage water fields.
-                </small>
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      <div className="page">
-        <header className="hero">
-          <div className="hero-inner">
-            <div className="hero-copy">
-              <div className="eyebrow">
-                <Wheat size={16} /> Baking Planner
-              </div>
-              <h1>Plan consistent baking days with fewer surprises.</h1>
-              <p>
-                Scale baking recipes by pre-baked dough weight, adjust for temperature,
-                humidity, and altitude, then generate a practical production
-                sheet for your bake day.
-              </p>
-              <div className="button-row" style={{ marginTop: "14px" }}>
-                <Button
-                  variant="outline"
-                  className={hasUnsavedChanges ? "dirtySaveButton" : ""}
-                  onClick={savePlannerData}
-                  disabled={cloudLoading}
-                >
-                  <Cloud size={16} /> {cloudLoading ? "Syncing..." : hasUnsavedChanges ? "Save Changes" : "Save / Sync"}
-                </Button>
-                <span className="pill">
-                  {user?.displayName || user?.email || "Local user"} • {cloudStatus}
-                </span>
-              </div>
-            </div>
-            <div className="hero-stats hero-actions">
-              <div>
-                <p>Products</p>
-                <strong>{recipes.length}</strong>
-              </div>
-              <div>
-                <p>Planned Units</p>
-                <strong>{round(totals.units)}</strong>
-              </div>
-              <button
-                className={activeTab === "settings" ? "hero-settings-card active" : "hero-settings-card"}
-                type="button"
-                onClick={() => setActiveTab("settings")}
-              >
-                <Settings size={18} />
-                <span>
-                  <p>Settings</p>
-                  <strong>Open</strong>
-                </span>
-              </button>
-            </div>
-          </div>
-        </header>
-
-        <nav className="tabs">
-          {tabButton("planner", "Bake Plan", ClipboardList)}
-          {tabButton("recipes", "Recipes", BookOpen)}
-          {tabButton("starter", "Starter", FlaskConical)}
-          {tabButton("pantry", "Pantry", Package)}
-          {tabButton("sheet", "Production Sheet", Printer)}
-        </nav>
-
-        {activeTab === "planner" && (
-          <div className="layout two-col">
-            <div className="stack">
-              <Card>
-                <CardContent className="panel">
-                  <div className="section-head">
-                    <div>
-                      <h2>Production Quantities</h2>
-                      <p>
-                        Add only the recipes you want for this specific bake
-                        cycle. This does not change your saved Recipe Library.
-                      </p>
-                    </div>
-                    <div className="button-row">
-                      <Button onClick={() => addRecipeToCycle(availableRecipesForCycle[0]?.id)}>
-                        <Plus size={16} /> Add Product
-                      </Button>
-                      <Button variant="outline" onClick={clearCycle}>
-                        <Trash2 size={16} /> Clear Cycle
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="soft-panel">
-                    <div className="grid two">
-                      <label className="field">
-                        <span>Add Recipe to This Bake Cycle</span>
-                        <select
-                          className="text-field"
-                          value=""
-                          onChange={(e) => addRecipeToCycle(e.target.value)}
-                        >
-                          <option value="">Select a recipe...</option>
-                          {availableRecipesForCycle.map((recipe) => (
-                            <option key={recipe.id} value={recipe.id}>
-                              {recipe.name}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-
-                      <div className="field">
-                        <span>Cycle Status</span>
-                        <div className="pill">
-                          {productionItems.length === 0
-                            ? "No products added to this bake cycle yet."
-                            : `${productionItems.length} product${
-                                productionItems.length === 1 ? "" : "s"
-                              } in this bake cycle.`}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="stack">
-                    {productionItems.length === 0 && (
-                      <div className="soft-panel">
-                        <h3>No Products Added Yet</h3>
-                        <p className="muted small">
-                          Use the dropdown above to add recipes from your Recipe
-                          Library into this specific bake cycle.
-                        </p>
-                      </div>
-                    )}
-
-                    {productionItems.map((item) => {
-                      const recipe = recipes.find((r) => r.id === item.recipeId);
-                      if (!recipe) return null;
-
-                      return (
-                        <div key={item.recipeId} className="recipe-row editable-row">
-                          <div>
-                            <p className="recipe-title">{recipe.name}</p>
-                            <p className="muted small">
-                              {formatNumber(recipe.preBakeUnitWeight, 2)}g dough weight •{" "}
-                              {recipe.hydrationPct}% final hydration •{" "}
-                              {recipe.starterPct}% {shouldUseStarterName ? trimmedStarterName : "starter"} • {recipe.vesselType}
-                            </p>
-                          </div>
-
-                          <NumberInput
-                            label={`Qty (${recipe.unitsLabel})`}
-                            value={item.quantity}
-                            onChange={(v) => updateCycleQuantity(recipe.id, v)}
-                          />
-
-                          <Button
-                            variant="outline"
-                            onClick={() => removeRecipeFromCycle(recipe.id)}
-                          >
-                            <Trash2 size={16} /> Remove
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="panel">
-                  <h2>Current Bake Conditions</h2>
-                  <div className="grid two">
-                    <NumberInput
-                      label="Room Temperature"
-                      value={env.tempF}
-                      onChange={(v) =>
-                        setEnv((p) => ({ ...p, tempF: Number(v) }))
-                      }
-                      suffix="°F"
-                    />
-                    <NumberInput
-                      label="Room Humidity"
-                      value={env.humidityPct}
-                      onChange={(v) =>
-                        setEnv((p) => ({ ...p, humidityPct: Number(v) }))
-                      }
-                      suffix="%"
-                    />
-                  </div>
-
-                  <div className="grid three">
-                    <ProgressBar
-                      label="Fermentation Speed"
-                      value={round(100 / (plans[0]?.fermentationFactor || 1))}
-                      max={160}
-                      suffix="%"
-                      warningAt={120}
-                    />
-                    <ProgressBar
-                      label="Proofing Capacity"
-                      value={totals.units}
-                      max={settings.proofingCapacityUnits}
-                      suffix=" units"
-                      warningAt={90}
-                    />
-                    <ProgressBar
-                      label="Mixer Load"
-                      value={Math.max(
-                        ...plans.map((p) =>
-                          Math.min(p.doughWeight, settings.mixerCapacityG)
-                        ),
-                        0
-                      )}
-                      max={settings.mixerCapacityG}
-                      suffix="g"
-                      warningAt={90}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <aside className="stack">
-              <StatCard
-                icon={Scale}
-                label="Total Dough"
-                value={`${round(totals.doughWeight / 1000, 1)} kg`}
-                sub="before bake loss"
-                accent="sourdough"
-              />
-              <StatCard
-                icon={Wheat}
-                label={starterNeededLabel}
-                value={formatWeight(totals.bufferedStarterG)}
-                sub={starterBufferSub}
-                accent="market"
-              />
-              <StatCard
-                icon={Clock}
-                label="Longest Product Window"
-                value={minutesToLabel(totals.maxProcess)}
-                sub={`starting near ${addMinutesToTime(settings.defaultStartTime, 0)}`}
-                accent="pricing"
-              />
-              <StatCard
-                icon={Mountain}
-                label="Altitude Setting"
-                value={`${settings.altitudeFt} ft`}
-                sub="saved as a permanent variable"
-                accent="grant"
-              />
-
-              <Card>
-                <CardContent className="panel">
-                  <div className="inline-head">
-                    {warnings.length ? (
-                      <AlertTriangle size={20} className="amber" />
-                    ) : (
-                      <CheckCircle2 size={20} className="green" />
-                    )}
-                    <h3>Plan Check</h3>
-                  </div>
-
-                  {warnings.length ? (
-                    <div className="stack">
-                      {warnings.map((w, idx) => (
-                        <p key={idx} className="notice warning-box">
-                          {w}
-                        </p>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="notice good-box">
-                      No major production conflicts found.
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </aside>
-          </div>
-        )}
-
-        {activeTab === "recipes" && (
-          <div className="layout recipe-layout">
-            <Card>
-              <CardContent className="panel">
-                <div className="section-head">
-                  <h2>Recipe Library</h2>
-                  <Button onClick={addRecipe}>
-                    <Plus size={16} />
-                  </Button>
-                </div>
-
-                <div className="stack">
-                  {recipes.map((recipe) => (
-                    <button
-                      key={recipe.id}
-                      onClick={() => setSelectedRecipeId(recipe.id)}
-                      className={
-                        selectedRecipeId === recipe.id
-                          ? "recipe-select active"
-                          : "recipe-select"
-                      }
-                      type="button"
-                    >
-                      <p>{recipe.name}</p>
-                      <span>{recipe.category}</span>
-                    </button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {selectedRecipe ? (
-              <Card>
-                <CardContent className="panel">
-                  <div className="section-head">
-                    <div>
-                      <h2>Edit Recipe</h2>
-                    <p>
-                      Build the full recipe formula, including flour types,
-                      added ingredients, dish type, yield, timing, and oven
-                      capacity.
-                    </p>
-                    {lastSavedAt && (
-                      <p className="saved-status">Saved at {lastSavedAt}</p>
-                    )}
-                  </div>
-                  <div className="button-row">
-                    <Button
-                      className={hasUnsavedChanges ? "dirtySaveButton" : ""}
-                      onClick={savePlannerData}
-                    >
-                      <Save size={16} /> {hasUnsavedChanges ? "Save Changes" : "Save"}
-                    </Button>
-                    <Button variant="outline" onClick={duplicateRecipe}>
-                      <Copy size={16} /> Duplicate
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => deleteRecipe(selectedRecipe.id)}
-                    >
-                      <Trash2 size={16} /> Delete
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="grid two">
-                  <label className="field span-two">
-                    <span>Product Name</span>
-                    <input
-                      className="text-field"
-                      value={selectedRecipe.name}
-                      onChange={(e) =>
-                        updateRecipeField("name", e.target.value)
-                      }
-                    />
-                  </label>
-
-                  <TextInput
-                    label="Category"
-                    value={selectedRecipe.category}
-                    onChange={(v) => updateRecipeField("category", v)}
-                    placeholder="Loaf, Cookie, Muffin, Pastry, etc."
-                  />
-
-                  <TextInput
-                    label="Unit Label"
-                    value={selectedRecipe.unitsLabel}
-                    onChange={(v) => updateRecipeField("unitsLabel", v)}
-                    placeholder="loaves, cookies, pieces, trays"
-                  />
-
-                  <TextInput
-                    label="Dish / Vessel Type"
-                    value={selectedRecipe.vesselType || ""}
-                    onChange={(v) => updateRecipeField("vesselType", v)}
-                    placeholder="Loaf pan, sheet pan, banneton, muffin tin"
-                  />
-
-                  <NumberInput
-                    label="Pre-Baked Unit Dough Weight"
-                    value={formatNumber(selectedRecipe.preBakeUnitWeight, 2)}
-                    onChange={(v) =>
-                      updateRecipeField("preBakeUnitWeight", Number(v))
-                    }
-                    suffix="g"
-                  />
-
-                  <NumberInput
-                    label="Bake Loss"
-                    value={selectedRecipe.bakeLossPct}
-                    onChange={(v) =>
-                      updateRecipeField("bakeLossPct", Number(v))
-                    }
-                    suffix="%"
-                  />
-
-                  <label className="field">
-                    <span>Estimated Finished Unit Weight</span>
-                    <div className="pill">
-                      {formatWeight(selectedRecipe.finishedUnitWeight)}
-                    </div>
-                  </label>
-
-                  <NumberInput
-                    label="Base Hydration"
-                    value={selectedRecipe.hydrationPct}
-                    onChange={(v) =>
-                      updateRecipeField("hydrationPct", Number(v))
-                    }
-                    suffix="%"
-                  />
-
-                  <NumberInput
-                    label={starterRecipeLabel}
-                    value={selectedRecipe.starterPct}
-                    onChange={(v) =>
-                      updateRecipeField("starterPct", Number(v))
-                    }
-                    suffix="%"
-                  />
-
-                  <NumberInput
-                    label="Salt"
-                    value={selectedRecipe.saltPct}
-                    onChange={(v) => updateRecipeField("saltPct", Number(v))}
-                    suffix="%"
-                  />
-
-                  {isAdvancedMode ? (
-                    <>
-                      <label className="field">
-                        <span>Mixing Method</span>
-                        <select
-                          className="text-field"
-                          value={selectedRecipe.mixingMethod || "straight"}
-                          onChange={(e) =>
-                            updateRecipeField("mixingMethod", e.target.value)
-                          }
-                        >
-                          <option value="straight">Straight Mix</option>
-                          <option value="autolyse">Autolyse</option>
-                          <option value="fermentolyse">Fermentolyse</option>
-                          <option value="saltolyse">Saltolyse</option>
-                        </select>
-                      </label>
-
-                      <label className="field">
-                        <span>Use Bassinage</span>
-                        <select
-                          className="text-field"
-                          value={selectedRecipe.useBassinage ? "yes" : "no"}
-                          onChange={(e) =>
-                            updateRecipeField("useBassinage", e.target.value === "yes")
-                          }
-                        >
-                          <option value="no">No</option>
-                          <option value="yes">Yes</option>
-                        </select>
-                      </label>
-
-                      {selectedRecipe.useBassinage ? (
-                        <>
-                          <NumberInput
-                            label="Initial Hydration"
-                            value={selectedRecipe.initialHydrationPct}
-                            onChange={(v) =>
-                              updateRecipeField("initialHydrationPct", Number(v))
-                            }
-                            suffix="%"
-                          />
-
-                          <NumberInput
-                            label="Bassinage Water"
-                            value={selectedRecipe.bassinagePct}
-                            onChange={(v) =>
-                              updateRecipeField("bassinagePct", Number(v))
-                            }
-                            suffix="%"
-                          />
-                        </>
-                      ) : null}
-                    </>
-                  ) : null}
-
-                  <NumberInput
-                    label="Max Dough Per Mixer Batch"
-                    value={selectedRecipe.batchMaxDoughG}
-                    onChange={(v) =>
-                      updateRecipeField("batchMaxDoughG", Number(v))
-                    }
-                    suffix="g"
-                  />
-
-                  <NumberInput
-                    label="Oven Capacity Per Load"
-                    value={selectedRecipe.ovenCapacityUnits}
-                    onChange={(v) =>
-                      updateRecipeField("ovenCapacityUnits", Number(v))
-                    }
-                    suffix={selectedRecipe.unitsLabel}
-                  />
-                </div>
-
-                <div className="soft-panel">
-                  <div className="section-head">
-                    <div>
-                      <h3>Flour Formula</h3>
-                      <p className="muted small">
-                        These percentages should usually total 100%.
-                      </p>
-                    </div>
-                    <Button onClick={addFlourType}>
-                      <Plus size={16} /> Add Flour
-                    </Button>
-                  </div>
-
-                  <div className="stack">
-                    {selectedRecipe.flourTypes.map((flour, index) => (
-                      <div key={`flour-${index}`} className="recipe-row editable-row">
-                        <TextInput
-                          label="Flour Name"
-                          value={flour.name}
-                          onChange={(v) => updateFlourType(index, "name", v)}
-                        />
-                        <NumberInput
-                          label="Percent"
-                          value={flour.pct}
-                          onChange={(v) => updateFlourType(index, "pct", v)}
-                          suffix="%"
-                        />
-                        <Button
-                          variant="outline"
-                          onClick={() => deleteFlourType(index)}
-                        >
-                          <Trash2 size={16} /> Remove
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="soft-panel">
-                  <div className="section-head">
-                    <div>
-                      <h3>Added Ingredients</h3>
-                      <p className="muted small">
-                        Add ingredients as baker’s percentages based on total
-                        flour weight. Examples: chocolate chips, olive oil,
-                        honey, butter, milk powder, herbs, seeds.
-                      </p>
-                    </div>
-                    <Button onClick={addOtherIngredient}>
-                      <Plus size={16} /> Add Ingredient
-                    </Button>
-                  </div>
-
-                  <div className="stack">
-                    {selectedRecipe.otherIngredients.length === 0 && (
-                      <p className="muted small">
-                        No added ingredients yet.
-                      </p>
-                    )}
-
-                    {selectedRecipe.otherIngredients.map((ingredient, index) => (
-                      <div
-                        key={`ingredient-${index}`}
-                        className="recipe-row editable-row"
-                      >
-                        <TextInput
-                          label="Ingredient Name"
-                          value={ingredient.name}
-                          onChange={(v) =>
-                            updateOtherIngredient(index, "name", v)
-                          }
-                        />
-                        <NumberInput
-                          label="Percent"
-                          value={ingredient.pct}
-                          onChange={(v) =>
-                            updateOtherIngredient(index, "pct", v)
-                          }
-                          suffix="%"
-                        />
-                        <Button
-                          variant="outline"
-                          onClick={() => deleteOtherIngredient(index)}
-                        >
-                          <Trash2 size={16} /> Remove
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h3>Process Timing</h3>
-                  <div className="grid four">
-                    <NumberInput
-                      label={
-                        isAdvancedMode && selectedRecipe.mixingMethod !== "straight"
-                          ? "Method Rest"
-                          : "Autolyse / Rest"
-                      }
-                      value={selectedRecipe.process.autolyseMin}
-                      onChange={(v) => updateRecipeProcess("autolyseMin", v)}
-                      suffix="min"
-                    />
-                    <NumberInput
-                      label="Mix"
-                      value={selectedRecipe.process.mixMin}
-                      onChange={(v) => updateRecipeProcess("mixMin", v)}
-                      suffix="min"
-                    />
-                    <NumberInput
-                      label="Bulk"
-                      value={selectedRecipe.process.bulkMin}
-                      onChange={(v) => updateRecipeProcess("bulkMin", v)}
-                      suffix="min"
-                    />
-                    <NumberInput
-                      label="Fold Count"
-                      value={selectedRecipe.process.foldCount}
-                      onChange={(v) => updateRecipeProcess("foldCount", v)}
-                      suffix="folds"
-                    />
-                    <NumberInput
-                      label="Fold Interval"
-                      value={selectedRecipe.process.foldIntervalMin}
-                      onChange={(v) =>
-                        updateRecipeProcess("foldIntervalMin", v)
-                      }
-                      suffix="min"
-                    />
-                    <NumberInput
-                      label="Fold Duration"
-                      value={selectedRecipe.process.foldDurationMin}
-                      onChange={(v) =>
-                        updateRecipeProcess("foldDurationMin", v)
-                      }
-                      suffix="min"
-                    />
-                    <NumberInput
-                      label="Divide / Pre-shape"
-                      value={selectedRecipe.process.divideAndPreshapeMin}
-                      onChange={(v) =>
-                        updateRecipeProcess("divideAndPreshapeMin", v)
-                      }
-                      suffix="min"
-                    />
-                    <NumberInput
-                      label="Bench Rest"
-                      value={selectedRecipe.process.benchRestMin}
-                      onChange={(v) => updateRecipeProcess("benchRestMin", v)}
-                      suffix="min"
-                    />
-                    <NumberInput
-                      label="Final Shape"
-                      value={selectedRecipe.process.finalShapeMin}
-                      onChange={(v) => updateRecipeProcess("finalShapeMin", v)}
-                      suffix="min"
-                    />
-                    <NumberInput
-                      label="Final Proof"
-                      value={selectedRecipe.process.finalProofMin}
-                      onChange={(v) => updateRecipeProcess("finalProofMin", v)}
-                      suffix="min"
-                    />
-                    <NumberInput
-                      label="Bake Temp"
-                      value={selectedRecipe.process.bakeTempF}
-                      onChange={(v) => updateRecipeProcess("bakeTempF", v)}
-                      suffix="°F"
-                    />
-                    <NumberInput
-                      label="Bake Time"
-                      value={selectedRecipe.process.bakeMin}
-                      onChange={(v) => updateRecipeProcess("bakeMin", v)}
-                      suffix="min"
-                    />
-                    <NumberInput
-                      label="Cool Time"
-                      value={selectedRecipe.process.coolMin}
-                      onChange={(v) => updateRecipeProcess("coolMin", v)}
-                      suffix="min"
-                    />
-                  </div>
-                </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="panel">
-                  <h2>No recipes yet</h2>
-                  <p className="muted small">
-                    Create your first recipe from scratch, or later choose to import sample recipes.
-                  </p>
-
-                  <Button onClick={addRecipe}>
-                    <Plus size={16} /> Create Recipe
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
-
-        {activeTab === "starter" && (
-          <div className="layout starterLayout">
-            <Card className="starterSettingsCard">
-              <CardContent className="panel">
-                <h2>{starterBuilderTitle}</h2>
-                <p>{starterBuilderDescription}</p>
-
-                <div className="stack">
-                  <TextInput
-                    label="Starter Name"
-                    value={settings.starterName || ""}
-                    onChange={(v) =>
-                      updateSettingField("starterName", v)
-                    }
-                    placeholder="Optional, e.g. Doughlene, Bertha, Bready Mercury"
-                  />
-
-                  <label className="field">
-                    <span>Use Starter Name in Labels</span>
-                    <select
-                      className="text-field"
-                      value={settings.useStarterNameInLabels ? "yes" : "no"}
-                      onChange={(e) =>
-                        updateSettingField("useStarterNameInLabels", e.target.value === "yes")
-                      }
-                    >
-                      <option value="no">No, keep standard labels</option>
-                      <option value="yes">Yes, use the starter name</option>
-                    </select>
-                  </label>
-
-                  <NumberInput
-                    label={starterHydrationLabel}
-                    value={settings.starterHydrationPct}
-                    onChange={(v) =>
-                      updateSettingField("starterHydrationPct", Number(v))
-                    }
-                    suffix="%"
-                  />
-                  <NumberInput
-                    label={starterBufferLabel}
-                    value={settings.levainBufferPct}
-                    onChange={(v) =>
-                      updateSettingField("levainBufferPct", Number(v))
-                    }
-                    suffix="%"
-                  />
-
-                  <label className="field">
-                    <span>Feeding Ratio</span>
-                    <select
-                      className="text-field"
-                      value={settings.starterFeedingPreset || "custom"}
-                      onChange={(e) => updateStarterFeedingPreset(e.target.value)}
-                    >
-                      <option value="1:1:1">1:1:1</option>
-                      <option value="1:2:2">1:2:2</option>
-                      <option value="1:3:3">1:3:3</option>
-                      <option value="1:5:5">1:5:5</option>
-                      <option value="custom">Custom</option>
-                    </select>
-                  </label>
-
-                  <div className="grid three">
-                    <NumberInput
-                      label="Seed Parts"
-                      value={settings.starterSeedParts}
-                      onChange={(v) => {
-                        updateSettingField("starterFeedingPreset", "custom");
-                        updateSettingField("starterSeedParts", Number(v));
-                      }}
-                      min={0}
-                    />
-                    <NumberInput
-                      label="Flour Parts"
-                      value={settings.starterFlourParts}
-                      onChange={(v) => {
-                        updateSettingField("starterFeedingPreset", "custom");
-                        updateSettingField("starterFlourParts", Number(v));
-                      }}
-                      min={0}
-                    />
-                    <NumberInput
-                      label="Water Parts"
-                      value={settings.starterWaterParts}
-                      onChange={(v) => {
-                        updateSettingField("starterFeedingPreset", "custom");
-                        updateSettingField("starterWaterParts", Number(v));
-                      }}
-                      min={0}
-                    />
-                  </div>
-
-                  <p className="pill">
-                    Current feed: <strong>{levain.ratioLabel}</strong> seed : flour : water
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="hubStatGrid starterStatsGrid">
-              <StatCard
-                icon={FlaskConical}
-                label={`Total Mature ${starterDisplayName}`}
-                value={formatWeight(levain.totalLevain)}
-                sub="including buffer"
-                accent="sourdough"
-              />
-              <StatCard
-                icon={Wheat}
-                label={starterFlourLabel}
-                value={formatWeight(levain.flour)}
-                sub={starterFeedRatioLabel}
-                accent="market"
-              />
-              <StatCard
-                icon={Droplets}
-                label={starterWaterLabel}
-                value={formatWeight(levain.water)}
-                sub={starterFeedRatioLabel}
-                accent="pricing"
-              />
-              <StatCard
-                icon={ChefHat}
-                label={starterSeedLabel}
-                value={formatWeight(levain.seedStarter)}
-                sub={starterFeedRatioLabel}
-                accent="grant"
-              />
-            </div>
-          </div>
-        )}
-
-        {activeTab === "pantry" && (
-          <div className="layout">
-            <Card>
-              <CardContent className="panel">
-                <div className="section-head">
-                  <div>
-                    <h2>Pantry</h2>
-                    <p>
-                      Save ingredient package sizes, sources, and costs. This will
-                      become the foundation for package pull estimates and batch costing.
-                    </p>
-                  </div>
-
-                  <Button
-                    className={hasUnsavedChanges ? "dirtySaveButton" : ""}
-                    onClick={savePlannerData}
-                    disabled={cloudLoading}
-                  >
-                    <Save size={16} /> {hasUnsavedChanges ? "Save Changes" : "Save"}
-                  </Button>
-                </div>
-
-                <div className="soft-panel">
-                  <h3>Add Pantry Item</h3>
-                  <div className="grid three">
-                    <TextInput
-                      label="Ingredient Name"
-                      value={pantryDraft.name}
-                      onChange={(value) => updatePantryDraft("name", value)}
-                      placeholder="Bread Flour"
-                    />
-
-                    <label className="field">
-                      <span>Category</span>
-                      <select
-                        className="text-field"
-                        value={pantryDraft.category}
-                        onChange={(event) =>
-                          updatePantryDraft("category", event.target.value)
-                        }
-                      >
-                        {pantryCategories.map((category) => (
-                          <option key={category}>{category}</option>
-                        ))}
-                      </select>
-                    </label>
-
-                    <TextInput
-                      label="Source / Vendor"
-                      value={pantryDraft.source}
-                      onChange={(value) => updatePantryDraft("source", value)}
-                      placeholder="Restaurant Depot, Azure, Costco"
-                    />
-
-                    <NumberInput
-                      label="Package Size"
-                      value={pantryDraft.packageSize}
-                      onChange={(value) =>
-                        updatePantryDraft("packageSize", Number(value))
-                      }
-                      min={0}
-                    />
-
-                    <label className="field">
-                      <span>Package Unit</span>
-                      <select
-                        className="text-field"
-                        value={pantryDraft.packageUnit}
-                        onChange={(event) =>
-                          updatePantryDraft("packageUnit", event.target.value)
-                        }
-                      >
-                        {pantryUnits.map((unit) => (
-                          <option key={unit} value={unit}>
-                            {unit}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-
-                    <NumberInput
-                      label="Package Cost"
-                      value={pantryDraft.packageCost}
-                      onChange={(value) =>
-                        updatePantryDraft("packageCost", Number(value))
-                      }
-                      min={0}
-                      step="0.01"
-                      suffix="$"
-                    />
-
-                    <label className="field span-two">
-                      <span>Notes</span>
-                      <textarea
-                        className="text-field"
-                        value={pantryDraft.notes}
-                        onChange={(event) =>
-                          updatePantryDraft("notes", event.target.value)
-                        }
-                        placeholder="Optional SKU, brand, protein %, storage note, or preferred use."
-                      />
-                    </label>
-
-                    <div className="field">
-                      <span>Calculated Cost</span>
-                      <div className="pill">
-                        {(() => {
-                          const preview = normalizePantryItem(pantryDraft);
-                          return preview.costPerGram
-                            ? `${formatMoney(preview.costPerPound, 2)} / lb`
-                            : "Enter size and cost";
-                        })()}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="button-row" style={{ marginTop: "16px" }}>
-                    <Button onClick={addPantryItem}>
-                      <Plus size={16} /> Add to Pantry
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="soft-panel">
-                  <div className="section-head">
-                    <div>
-                      <h3>Saved Pantry Items</h3>
-                      <p className="muted small">
-                        Edit package sizes, units, source, and costs here. Cost
-                        per gram, ounce, and pound updates automatically.
-                      </p>
-                    </div>
-                    <span className="pill">
-                      {pantryItems.length} item{pantryItems.length === 1 ? "" : "s"}
-                    </span>
-                  </div>
-
-                  {pantryItems.length ? (
-                    <div className="table-wrap">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>Ingredient</th>
-                            <th>Category</th>
-                            <th>Source</th>
-                            <th>Package</th>
-                            <th>Cost</th>
-                            <th>Cost / g</th>
-                            <th>Cost / oz</th>
-                            <th>Cost / lb</th>
-                            <th>Notes</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {pantryItems.map((item, index) => (
-                            <tr key={item.id} className={index % 2 ? "" : "alt"}>
-                              <td>
-                                <input
-                                  className="text-field"
-                                  value={item.name}
-                                  onChange={(event) =>
-                                    updatePantryItem(item.id, "name", event.target.value)
-                                  }
-                                />
-                              </td>
-                              <td>
-                                <select
-                                  className="text-field"
-                                  value={item.category}
-                                  onChange={(event) =>
-                                    updatePantryItem(item.id, "category", event.target.value)
-                                  }
-                                >
-                                  {pantryCategories.map((category) => (
-                                    <option key={category}>{category}</option>
-                                  ))}
-                                </select>
-                              </td>
-                              <td>
-                                <input
-                                  className="text-field"
-                                  value={item.source}
-                                  onChange={(event) =>
-                                    updatePantryItem(item.id, "source", event.target.value)
-                                  }
-                                />
-                              </td>
-                              <td>
-                                <div className="grid two">
-                                  <input
-                                    className="text-field"
-                                    type="number"
-                                    min="0"
-                                    step="any"
-                                    value={item.packageSize}
-                                    onChange={(event) =>
-                                      updatePantryItem(
-                                        item.id,
-                                        "packageSize",
-                                        Number(event.target.value)
-                                      )
-                                    }
-                                  />
-                                  <select
-                                    className="text-field"
-                                    value={item.packageUnit}
-                                    onChange={(event) =>
-                                      updatePantryItem(
-                                        item.id,
-                                        "packageUnit",
-                                        event.target.value
-                                      )
-                                    }
-                                  >
-                                    {pantryUnits.map((unit) => (
-                                      <option key={unit} value={unit}>
-                                        {unit}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </div>
-                              </td>
-                              <td>
-                                <input
-                                  className="text-field"
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  value={item.packageCost}
-                                  onChange={(event) =>
-                                    updatePantryItem(
-                                      item.id,
-                                      "packageCost",
-                                      Number(event.target.value)
-                                    )
-                                  }
-                                />
-                              </td>
-                              <td>{formatMoney(item.costPerGram, 4)}</td>
-                              <td>{formatMoney(item.costPerOunce, 4)}</td>
-                              <td>{formatMoney(item.costPerPound, 2)}</td>
-                              <td>
-                                <textarea
-                                  className="text-field"
-                                  value={item.notes}
-                                  onChange={(event) =>
-                                    updatePantryItem(item.id, "notes", event.target.value)
-                                  }
-                                />
-                              </td>
-                              <td>
-                                <Button
-                                  variant="outline"
-                                  onClick={() => deletePantryItem(item.id)}
-                                >
-                                  <Trash2 size={16} /> Delete
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <p className="notice good-box">
-                      No pantry items yet. Add flour, salt, sugar, butter, seeds,
-                      packaging, or other recurring baking supplies above.
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {activeTab === "sheet" && (
-          <div className="layout">
-            <Card>
-              <CardContent className="panel">
-                <div className="section-head production-sheet-head">
-                  <div>
-                    <h2>Bake Day Production Sheet</h2>
-                    <p className="production-date-display">
-                      {formatDisplayDate(productionDate)}
-                    </p>
-                    <p>
-                      Generated from current recipes, quantities, conditions, and
-                      settings.
-                    </p>
-                  </div>
-
-                  <div className="production-actions">
-                    <label className="field production-date-field">
-                      <span>Production Date</span>
-                      <input
-                        className="text-field"
-                        type="date"
-                        value={productionDate}
-                        onChange={(e) => setProductionDate(e.target.value)}
-                      />
-                    </label>
-
-                    <Button onClick={() => window.print()}>
-                      <Printer size={16} /> Print
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="hubStatGrid production-stats-grid">
-                  <StatCard
-                    icon={Scale}
-                    label="Total Dough"
-                    value={`${round(totals.doughWeight / 1000, 2)} kg`}
-                    accent="sourdough"
-                  />
-                  <StatCard
-                    icon={ChefHat}
-                    label="Finished Units"
-                    value={round(totals.units)}
-                    accent="market"
-                  />
-                  <StatCard
-                    icon={Thermometer}
-                    label="Room Temp"
-                    value={`${env.tempF}°F`}
-                    accent="spice"
-                  />
-                  <StatCard
-                    icon={Droplets}
-                    label="Humidity"
-                    value={`${env.humidityPct}%`}
-                    accent="pricing"
-                  />
-                </div>
-
-                <div className="grid two">
-                  <div className="soft-panel">
-                    <div className="section-head">
-                      <div>
-                        <h3>Ingredient Pull List</h3>
-                        <p className="muted small">
-                          Pantry matches add package pull estimates and ingredient cost.
-                        </p>
-                      </div>
-                      <span className="pill">
-                        Estimated cost: {formatMoney(ingredientPullTotalCost, 2)}
-                      </span>
-                    </div>
-
-                    <div>
-                      {ingredientPullRows.length ? (
-                        ingredientPullRows.map((row) => (
-                          <div key={row.name} className="line-item">
-                            <div>
-                              <strong>{row.name}</strong>
-                              {row.pantryItem ? (
-                                <p className="muted tiny">
-                                  Pantry: {row.pantryItem.name}
-                                  {row.pantryItem.source ? ` • ${row.pantryItem.source}` : ""}
-                                  {row.pantryItem.packageSize
-                                    ? ` • ${formatNumber(row.pantryItem.packageSize, 2)}${row.pantryItem.packageUnit} package`
-                                    : ""}
-                                </p>
-                              ) : (
-                                <p className="muted tiny">
-                                  No pantry match yet. Add or rename a pantry item to estimate package pull and cost.
-                                </p>
-                              )}
-                            </div>
-                            <div style={{ textAlign: "right" }}>
-                              <strong>{formatSmartWeight(row.grams)}</strong>
-                              {row.pantryItem ? (
-                                <p className="muted tiny">
-                                  {formatPackagePull(row)}
-                                  {row.estimatedCost
-                                    ? ` • ${formatMoney(row.estimatedCost, 2)}`
-                                    : ""}
-                                </p>
-                              ) : null}
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="notice good-box">
-                          Add products to the bake plan to generate an ingredient pull list.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="soft-panel">
-                    <h3>Environmental Adjustments</h3>
-                    <p className="pill">
-                      Fermentation timing factor:{" "}
-                      <strong>
-                        {round((plans[0]?.fermentationFactor || 1) * 100)}%
-                      </strong>{" "}
-                      of baseline.
-                    </p>
-                    <p className="pill">
-                      Humidity hydration adjustment:{" "}
-                      <strong>
-                        {plans[0]?.humidityAdj > 0 ? "+" : ""}
-                        {round(plans[0]?.humidityAdj || 0, 1)}%
-                      </strong>
-                      .
-                    </p>
-                    <p className="pill">
-                      Altitude adjustment:{" "}
-                      <strong>+{plans[0]?.altitudeAdj.tempF || 0}°F bake temp</strong>
-                      ,{" "}
-                      <strong>+{plans[0]?.altitudeAdj.timePct || 0}% bake time</strong>
-                      .
-                    </p>
-                  </div>
-                </div>
-
-                <div className="soft-panel">
-                  <h3>Resource-Aware Production Timeline</h3>
-                  <p className="muted small">
-                    This schedule prioritizes shared phases: all autolyse steps
-                    first, all mixing next, then folding, shaping, proofing, and
-                    baking while preventing mixer, oven, and hands-on baker
-                    conflicts.
-                  </p>
-                </div>
-
-                <div className="table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Start</th>
-                        <th>End</th>
-                        <th>Product</th>
-                        <th>Task</th>
-                        <th>Resource</th>
-                        <th>Duration</th>
-                        <th>Note</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {productionSchedule.map((task, idx) => (
-                        <tr
-                          key={`${task.product}-${task.name}-${idx}`}
-                          className={idx % 2 ? "" : "alt"}
-                        >
-                          <td>{minutesToClock(task.start)}</td>
-                          <td>{minutesToClock(task.end)}</td>
-                          <td>
-                            <strong>{task.product}</strong>
-                          </td>
-                          <td>{task.name}</td>
-                          <td>{resourceLabel(task.resource)}</td>
-                          <td>{minutesToLabel(task.duration)}</td>
-                          <td className="tiny">{task.note}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Product</th>
-                        <th>Qty</th>
-                        <th>Total Dough</th>
-                        <th>Mixer Batches</th>
-                        <th>Dish / Vessel</th>
-                        <th>Oven Capacity</th>
-                        <th>Oven Loads</th>
-                        <th>Bulk</th>
-                        <th>Proof</th>
-                        <th>Bake</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {plans.map((plan, idx) => (
-                        <tr key={plan.recipe.id} className={idx % 2 ? "" : "alt"}>
-                          <td>
-                            <strong>{plan.recipe.name}</strong>
-                          </td>
-                          <td>{plan.quantity}</td>
-                          <td>{formatWeight(plan.doughWeight)}</td>
-                          <td>{plan.batchesByMixer}</td>
-                          <td>{plan.recipe.vesselType || ""}</td>
-                          <td>
-                            {plan.recipeOvenCapacity} {plan.recipe.unitsLabel}
-                          </td>
-                          <td>{plan.ovenLoads}</td>
-                          <td>{minutesToLabel(plan.bulkMin)}</td>
-                          <td>{minutesToLabel(plan.finalProofMin)}</td>
-                          <td>
-                            {round(plan.bakeTempF)}°F / {minutesToLabel(plan.bakeMin)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {activeTab === "settings" && (
-          <div className="layout">
-            <Card>
-              <CardContent className="panel">
-                <div>
-                  <h2>Permanent Settings</h2>
-                  <p>
-                    These stay saved as assumptions for your regular bake location
-                    and equipment. Recipe-specific oven capacity and dish type
-                    are handled inside each recipe.
-                  </p>
-                </div>
-
-                <div className="soft-panel">
-                  <div className="section-head">
-                    <div>
-                      <h3>Baking Planner Mode</h3>
-                      <p className="muted small">
-                        Basic keeps the module simple. Advanced unlocks professional
-                        mixing methods and bassinage fields.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid two">
-                    <label className="field">
-                      <span>Mode</span>
-                      <select
-                        className="text-field"
-                        value={settings.bakingPlannerMode || "basic"}
-                        onChange={(e) => setBakingPlannerMode(e.target.value)}
-                      >
-                        <option value="basic">Basic</option>
-                        <option value="advanced">Advanced / Professional</option>
-                      </select>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="grid settingsGrid">
-                  <NumberInput
-                    label="Altitude"
-                    value={settings.altitudeFt}
-                    onChange={(v) =>
-                      setSettings((p) => ({ ...p, altitudeFt: Number(v) }))
-                    }
-                    suffix="ft"
-                  />
-                  <NumberInput
-                    label="Baseline Temperature"
-                    value={settings.baselineTempF}
-                    onChange={(v) =>
-                      setSettings((p) => ({ ...p, baselineTempF: Number(v) }))
-                    }
-                    suffix="°F"
-                  />
-                  <NumberInput
-                    label="Baseline Humidity"
-                    value={settings.baselineHumidityPct}
-                    onChange={(v) =>
-                      setSettings((p) => ({
-                        ...p,
-                        baselineHumidityPct: Number(v)
-                      }))
-                    }
-                    suffix="%"
-                  />
-                  <NumberInput
-                    label="Mixer Capacity"
-                    value={settings.mixerCapacityG}
-                    onChange={(v) =>
-                      setSettings((p) => ({ ...p, mixerCapacityG: Number(v) }))
-                    }
-                    suffix="g dough"
-                  />
-                  <NumberInput
-                    label="Proofing Capacity"
-                    value={settings.proofingCapacityUnits}
-                    onChange={(v) =>
-                      setSettings((p) => ({
-                        ...p,
-                        proofingCapacityUnits: Number(v)
-                      }))
-                    }
-                    suffix="units"
-                  />
-                  <NumberInput
-                    label="Ingredient Buffer"
-                    value={settings.ingredientBufferPct}
-                    onChange={(v) =>
-                      setSettings((p) => ({
-                        ...p,
-                        ingredientBufferPct: Number(v)
-                      }))
-                    }
-                    suffix="%"
-                  />
-                  <label className="field">
-                    <span>Default Start Time</span>
-                    <input
-                      className="text-field"
-                      type="time"
-                      value={settings.defaultStartTime}
-                      onChange={(e) =>
-                        setSettings((p) => ({
-                          ...p,
-                          defaultStartTime: e.target.value
-                        }))
-                      }
-                    />
-                  </label>
-                </div>
-
-                <div className="soft-panel">
-                  <div className="inline-head">
-                    <Save size={16} />
-                    <strong>Cloud Sync Active</strong>
-                  </div>
-                  {user
-                    ? "Signed in data can now be saved to Firestore and opened from another device after signing into the same Google account."
-                    : "Sign in with Google to save recipes, settings, and bake cycles to the cloud."}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-      </div>
-    </div>
-  );
 }
 
+@media (max-width: 1250px) {
+  .bakingPlanner .two-col,
+  .bakingPlanner .recipe-layout,
+  .bakingPlanner .three,
+  .bakingPlanner .four {
+    grid-template-columns: 1fr;
+  }
 
-/* -------------------------------------------------------------------------- */
-/* Baking Planner print refinement                                             */
-/* -------------------------------------------------------------------------- */
+  .bakingPlanner .two {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+
+  .bakingPlanner .editable-row {
+    grid-template-columns: 1fr;
+  }
+
+  .bakingPlanner .tabs {
+    grid-template-columns: repeat(5, minmax(120px, 1fr));
+  }
+
+  .bakingPlanner .grid.settingsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1050px) {
+  .bakingPlanner .tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 800px) {
+  .bakingPlanner .hero-inner {
+    padding: 26px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .bakingPlanner .hero-copy {
+    max-width: none;
+  }
+
+  .bakingPlanner .hero-stats {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .bakingPlanner .tabs,
+  .bakingPlanner .two,
+  .bakingPlanner .three,
+  .bakingPlanner .four,
+  .bakingPlanner .grid.settingsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .bakingPlanner .section-head,
+  .bakingPlanner .production-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bakingPlanner .span-two {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 760px) {
+  .bakingPlanner .bakingModeGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .bakingPlanner .starterStatsGrid {
+    grid-template-columns: 1fr;
+  }
+}
 
 @media print {
   @page {
-    size: letter portrait;
+    size: letter;
     margin: 0.35in;
-  }
-
-  html,
-  body {
-    background: #ffffff !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
   }
 
   .bakingPlanner {
     color: #121820 !important;
-    font-size: 10px !important;
-  }
-
-  .bakingPlanner *,
-  .bakingPlanner *::before,
-  .bakingPlanner *::after {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
   .bakingPlanner .tabs,
+  .bakingPlanner .hero-settings-card,
   .bakingPlanner .btn,
   .bakingPlanner .production-date-field,
-  .bakingPlanner .hero-settings-card,
-  .bakingPlanner .bakingModeOverlay,
-  .bakingPlanner .pantryEditOverlay {
+  .bakingPlanner .pantryEditOverlay,
+  .bakingPlanner .bakingModeOverlay {
     display: none !important;
   }
 
@@ -3340,242 +914,166 @@ export default function BakingPlanner() {
   }
 
   .bakingPlanner .hero {
-    margin: 0 0 10px !important;
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
+    margin-bottom: 10px !important;
+    break-inside: avoid;
   }
 
   .bakingPlanner .hero-inner {
+    padding: 14px 18px !important;
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) auto !important;
     align-items: center !important;
-    gap: 14px !important;
-    padding: 14px 16px !important;
+    gap: 16px !important;
     border-radius: 14px !important;
     box-shadow: none !important;
-    background: #ffffff !important;
   }
 
   .bakingPlanner .hero-copy {
     max-width: none !important;
-    width: 100% !important;
   }
 
   .bakingPlanner .hero h1 {
-    max-width: none !important;
     font-size: 24px !important;
-    line-height: 0.98 !important;
-    letter-spacing: -0.045em !important;
-    margin: 0 !important;
+    line-height: 1.03 !important;
+    max-width: 100% !important;
   }
 
   .bakingPlanner .hero p {
-    max-width: none !important;
+    max-width: 100% !important;
     font-size: 10px !important;
     line-height: 1.25 !important;
-    margin: 6px 0 0 !important;
-  }
-
-  .bakingPlanner .eyebrow {
-    font-size: 8px !important;
-    margin-bottom: 6px !important;
-    gap: 5px !important;
-  }
-
-  .bakingPlanner .hero .button-row {
-    margin-top: 8px !important;
-  }
-
-  .bakingPlanner .hero .pill {
-    padding: 6px 9px !important;
-    font-size: 9px !important;
-    line-height: 1.2 !important;
+    margin-top: 6px !important;
   }
 
   .bakingPlanner .hero-stats {
-    display: flex !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, 82px) !important;
     gap: 8px !important;
-    align-items: stretch !important;
   }
 
-  .bakingPlanner .hero-stats > div {
-    min-width: 86px !important;
-    padding: 10px 12px !important;
-    border-radius: 12px !important;
-    background: #fbfaf6 !important;
+  .bakingPlanner .hero-stats div {
+    min-width: 0 !important;
+    padding: 9px 10px !important;
+    border-radius: 10px !important;
   }
 
   .bakingPlanner .hero-stats p {
     font-size: 7px !important;
-    line-height: 1.05 !important;
-    margin: 0 0 4px !important;
+    margin-bottom: 4px !important;
   }
 
   .bakingPlanner .hero-stats strong {
-    font-size: 19px !important;
-    line-height: 1 !important;
-  }
-
-  .bakingPlanner .layout,
-  .bakingPlanner .grid,
-  .bakingPlanner .two,
-  .bakingPlanner .three,
-  .bakingPlanner .four {
-    gap: 10px !important;
-  }
-
-  .bakingPlanner .layout {
-    display: block !important;
+    font-size: 18px !important;
   }
 
   .bakingPlanner .card,
   .bakingPlanner .soft-panel,
   .bakingPlanner .pill,
   .bakingPlanner .table-wrap,
-  .bakingPlanner .progress-wrap {
+  .bakingPlanner .progress-wrap,
+  .bakingPlanner .recipe-row,
+  .bakingPlanner .recipe-select {
     box-shadow: none !important;
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
+    border-color: rgba(22, 27, 34, 0.14) !important;
   }
 
-  .bakingPlanner .card {
-    border-radius: 14px !important;
-    margin-bottom: 10px !important;
+  .bakingPlanner .layout {
+    display: block !important;
   }
 
   .bakingPlanner .panel {
     padding: 14px !important;
   }
 
-  .bakingPlanner .soft-panel {
-    padding: 12px !important;
-    border-radius: 12px !important;
-    margin-bottom: 10px !important;
-  }
-
   .bakingPlanner .section-head {
     display: flex !important;
     flex-direction: row !important;
-    justify-content: space-between !important;
     align-items: flex-start !important;
-    gap: 12px !important;
-    margin-bottom: 10px !important;
+    margin-bottom: 12px !important;
+    gap: 10px !important;
   }
 
   .bakingPlanner .section-head h2,
   .bakingPlanner .panel h2 {
-    font-size: 17px !important;
-    line-height: 1.1 !important;
+    font-size: 18px !important;
   }
 
   .bakingPlanner .section-head h3,
   .bakingPlanner .panel h3 {
     font-size: 13px !important;
-    line-height: 1.15 !important;
-    margin: 0 0 6px !important;
+    margin-top: 0 !important;
   }
 
   .bakingPlanner .section-head p,
-  .bakingPlanner .panel p {
+  .bakingPlanner .panel p,
+  .bakingPlanner .muted,
+  .bakingPlanner .small,
+  .bakingPlanner .tiny {
     font-size: 9px !important;
-    line-height: 1.25 !important;
-    margin-top: 5px !important;
-  }
-
-  .bakingPlanner .production-sheet-head {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
+    line-height: 1.3 !important;
   }
 
   .bakingPlanner .production-stats-grid,
-  .bakingPlanner .hubStatGrid.production-stats-grid {
+  .bakingPlanner .hubStatGrid {
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     gap: 8px !important;
-    margin: 10px 0 !important;
+    margin-bottom: 10px !important;
   }
 
-  .bakingPlanner .hubStatCard,
-  .bakingPlanner .stat-card,
   .bakingPlanner .stat-card-content {
-    min-height: 0 !important;
-    border-radius: 12px !important;
-    box-shadow: none !important;
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  .bakingPlanner .stat-card-content,
-  .bakingPlanner .hubStatCard {
-    display: flex !important;
-    align-items: center !important;
-    gap: 9px !important;
     padding: 9px 10px !important;
+    gap: 8px !important;
+    align-items: center !important;
   }
 
-  .bakingPlanner .icon-badge,
-  .bakingPlanner .hubStatIcon,
-  .bakingPlanner .hubStatIconBadge {
+  .bakingPlanner .icon-badge {
+    display: grid !important;
     width: 30px !important;
     height: 30px !important;
-    min-width: 30px !important;
-    border-radius: 9px !important;
-    display: grid !important;
-    place-items: center !important;
-    background: #dfa04c !important;
+    border-radius: 8px !important;
     color: #ffffff !important;
-    opacity: 1 !important;
-    visibility: visible !important;
   }
 
-  .bakingPlanner .icon-badge svg,
-  .bakingPlanner .hubStatIcon svg,
-  .bakingPlanner .hubStatIconBadge svg,
-  .bakingPlanner .hubStatCard svg,
-  .bakingPlanner .stat-card-content svg {
+  .bakingPlanner .icon-badge svg {
     display: block !important;
     width: 15px !important;
     height: 15px !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    color: currentColor !important;
     stroke: currentColor !important;
   }
 
   .bakingPlanner .stat-value,
-  .bakingPlanner .hubStatText strong,
-  .bakingPlanner .hubStatValue {
-    font-size: 16px !important;
-    line-height: 1 !important;
-    margin: 2px 0 !important;
-    letter-spacing: -0.03em !important;
+  .bakingPlanner .hubStatText strong {
+    font-size: 15px !important;
+    line-height: 1.05 !important;
   }
 
-  .bakingPlanner .hubStatText span,
-  .bakingPlanner .hubStatText p,
-  .bakingPlanner .hubStatLabel,
-  .bakingPlanner .hubStatSub {
-    font-size: 8px !important;
-    line-height: 1.15 !important;
-    margin: 0 !important;
+  .bakingPlanner .soft-panel {
+    padding: 12px !important;
+    border-radius: 12px !important;
+    break-inside: avoid;
+    margin-bottom: 10px !important;
   }
 
   .bakingPlanner .grid.two {
     display: grid !important;
-    grid-template-columns: minmax(0, 1fr) 150px !important;
+    grid-template-columns: minmax(0, 1fr) 155px !important;
+    gap: 8px !important;
     align-items: start !important;
   }
 
-  .bakingPlanner .grid.three {
+  .bakingPlanner .grid.three,
+  .bakingPlanner .grid.four {
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
   }
 
   .bakingPlanner .pill {
-    padding: 7px 9px !important;
-    border-radius: 10px !important;
+    padding: 7px 8px !important;
+    border-radius: 9px !important;
     font-size: 9px !important;
-    line-height: 1.2 !important;
+    line-height: 1.25 !important;
   }
 
   .bakingPlanner .table-wrap {
@@ -3585,10 +1083,9 @@ export default function BakingPlanner() {
   }
 
   .bakingPlanner table,
-  .bakingPlanner .pullListWrap table,
   .bakingPlanner .pullListTable {
-    width: 100% !important;
     min-width: 0 !important;
+    width: 100% !important;
     table-layout: fixed !important;
   }
 
@@ -3598,21 +1095,19 @@ export default function BakingPlanner() {
   .bakingPlanner .pullListTable td {
     padding: 4px 5px !important;
     font-size: 7px !important;
-    line-height: 1.18 !important;
-    vertical-align: top !important;
+    line-height: 1.2 !important;
+    word-break: normal !important;
     overflow-wrap: anywhere !important;
   }
 
   .bakingPlanner th {
-    font-size: 6.5px !important;
-    letter-spacing: 0.05em !important;
+    font-size: 6px !important;
+    letter-spacing: 0.04em !important;
   }
 
   .bakingPlanner .pullIngredientButton {
-    font-size: 7.2px !important;
-    line-height: 1.15 !important;
+    font-size: 7px !important;
     text-decoration: none !important;
-    color: #121820 !important;
   }
 
   .bakingPlanner .pullAmountCell,
@@ -3620,40 +1115,14 @@ export default function BakingPlanner() {
     white-space: normal !important;
   }
 
-  .bakingPlanner .muted,
-  .bakingPlanner .small,
-  .bakingPlanner .tiny,
-  .bakingPlanner .warning-text {
-    font-size: 7px !important;
-    line-height: 1.18 !important;
+  .bakingPlanner .line-item {
+    padding: 5px 8px !important;
+    break-inside: avoid;
   }
 
   .bakingPlanner .notice {
-    padding: 8px 9px !important;
+    padding: 8px !important;
     border-radius: 10px !important;
-    font-size: 8px !important;
-    line-height: 1.25 !important;
-  }
-
-  .bakingPlanner .production-actions {
-    display: none !important;
-  }
-
-  .bakingPlanner .environmentalAdjustments,
-  .bakingPlanner .soft-panel:has(.pill) {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  .bakingPlanner .line-item {
-    padding: 4px 6px !important;
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  .bakingPlanner input,
-  .bakingPlanner select,
-  .bakingPlanner textarea {
-    border: 1px solid rgba(22, 27, 34, 0.16) !important;
+    font-size: 9px !important;
   }
 }
