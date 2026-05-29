@@ -5342,3 +5342,235 @@ input[type="number"] {
     padding-left: 28px;
   }
 }
+/* =========================================================
+   Spice Kitchen Product Directory + Package Size Styles
+   Append this section to the bottom of src/styles.css
+   ========================================================= */
+
+.spicePage .recipeLineColumnHeader {
+  margin-top: 10px;
+  min-height: 0;
+  padding: 0 2px 2px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  align-items: center;
+}
+
+.spicePage .recipeLineColumnHeader span {
+  line-height: 1.1;
+}
+
+.spicePage .recipeLineColumnHeader span:last-child {
+  text-align: center;
+}
+
+.spicePage .compactRecipeLine > select,
+.spicePage .compactRecipeLine > input {
+  min-height: 38px;
+}
+
+.spicePage .productDirectoryPanel {
+  margin-top: 16px;
+  border: 1px solid rgba(199, 99, 67, 0.18);
+  border-radius: 16px;
+  background: #fffaf7;
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.spicePage .checkboxLine {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 900;
+  color: var(--text);
+}
+
+.spicePage .checkboxLine input {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  flex: 0 0 auto;
+  accent-color: var(--spice);
+  cursor: pointer;
+}
+
+.spicePage .checkboxLine span {
+  line-height: 1.2;
+}
+
+.spicePage .helperText {
+  margin: -2px 0 0;
+  max-width: 760px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.spicePage .productPackageBuilder {
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(199, 99, 67, 0.16);
+}
+
+.spicePage .costPreviewCard {
+  width: fit-content;
+  min-width: 240px;
+  border: 1px solid rgba(199, 99, 67, 0.2);
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 11px 13px;
+  display: grid;
+  gap: 3px;
+}
+
+.spicePage .costPreviewCard strong {
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.spicePage .costPreviewCard span {
+  color: var(--spice);
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.spicePage .productPackageRow {
+  display: grid;
+  grid-template-columns:
+    minmax(160px, 1.35fr)
+    minmax(84px, 0.55fr)
+    minmax(82px, 0.45fr)
+    minmax(120px, 0.7fr)
+    40px;
+  gap: 9px;
+  align-items: center;
+}
+
+.spicePage .productPackageHeader {
+  padding: 0 2px 2px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.spicePage .productPackageRow input,
+.spicePage .productPackageRow select {
+  min-height: 38px;
+}
+
+.spicePage .productPackageRow > span:nth-child(4) {
+  color: var(--text);
+  font-size: 0.86rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.spicePage .productPackageHeader > span:nth-child(4) {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.spicePage .productPackageHeader > span:last-child {
+  text-align: center;
+}
+
+.spicePage .productPackageRow .iconButton {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+}
+
+.spicePage .recipeDetailPanel .recipePartsList strong {
+  margin-bottom: 2px;
+}
+
+.spicePage .recipeDetailPanel .recipePartsRow span:last-child {
+  text-align: right;
+}
+
+@media (max-width: 900px) {
+  .spicePage .productPackageRow {
+    grid-template-columns: minmax(0, 1fr) 92px 84px;
+  }
+
+  .spicePage .productPackageHeader {
+    display: none;
+  }
+
+  .spicePage .productPackageRow > span:nth-child(4) {
+    grid-column: 1 / 3;
+  }
+
+  .spicePage .productPackageRow .iconButton {
+    grid-column: 3;
+    grid-row: 2;
+    width: 100%;
+  }
+}
+
+@media (max-width: 700px) {
+  .spicePage .recipeLineColumnHeader {
+    display: none;
+  }
+
+  .spicePage .productDirectoryPanel {
+    padding: 13px;
+  }
+
+  .spicePage .checkboxLine {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .spicePage .costPreviewCard {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .spicePage .productPackageRow {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 10px 0;
+    border-top: 1px solid rgba(199, 99, 67, 0.14);
+  }
+
+  .spicePage .productPackageRow:first-of-type {
+    border-top: 0;
+  }
+
+  .spicePage .productPackageRow > span:nth-child(4),
+  .spicePage .productPackageRow .iconButton {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .spicePage .productPackageRow .iconButton {
+    width: 100%;
+  }
+
+  .spicePage .recipeDetailPanel .recipePartsRow {
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .spicePage .recipeDetailPanel .recipePartsRow span:last-child {
+    text-align: left;
+  }
+}
