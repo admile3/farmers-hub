@@ -494,7 +494,7 @@ export default function MarketPrepPlanner() {
       </section>
 
       {statusMessage ? (
-        <div className="floatingStatus success">
+        <div className="floatingStatus success marketPrepNoPrint">
           <span>ⓘ</span>
           <span>{statusMessage}</span>
           <button type="button" onClick={() => setStatusMessage("")}>
@@ -503,7 +503,7 @@ export default function MarketPrepPlanner() {
         </div>
       ) : null}
 
-      <section className="toolGrid compactToolGrid">
+      <section className="toolGrid compactToolGrid marketPrepNoPrint">
         {sectionCards.map((card) => {
           const Icon = card.icon;
 
@@ -523,14 +523,14 @@ export default function MarketPrepPlanner() {
       </section>
 
       <section className="spiceWorkspace compactWorkspace">
-        <div className="workspacePanel compactPanel scrollAnchor" ref={setupRef}>
+        <div className="workspacePanel compactPanel scrollAnchor marketPrepPrintDetails" ref={setupRef}>
           <div className="workspaceHeader compactPanelHeader">
             <div>
               <p className="eyebrow">Setup</p>
               <h3>Market Details</h3>
             </div>
 
-            <div className="formActions compactActions">
+            <div className="formActions compactActions marketPrepNoPrint">
               <button
                 className="secondaryButton compactButton"
                 type="button"
@@ -570,7 +570,7 @@ export default function MarketPrepPlanner() {
             </div>
           </div>
 
-          <div className="formGrid compactFormGrid">
+          <div className="formGrid compactFormGrid marketPrepNoPrint">
             <label>
               Market Name
               <input
@@ -608,7 +608,7 @@ export default function MarketPrepPlanner() {
             </label>
           </div>
 
-          <div className="hubStatGrid marketPrepStatsGrid">
+          <div className="hubStatGrid marketPrepStatsGrid marketPrepNoPrint">
             <StatCard
               icon={PackageCheck}
               label="Products"
@@ -634,7 +634,7 @@ export default function MarketPrepPlanner() {
             />
           </div>
 
-          <div className="placeholderBox compactPlaceholder">
+          <div className="placeholderBox compactPlaceholder marketPrepNoPrint">
             <strong>{marketName}</strong>
             {location ? (
               <>
@@ -645,9 +645,35 @@ export default function MarketPrepPlanner() {
             on <strong>{marketDate}</strong>
             {weatherNotes ? ` • ${weatherNotes}` : ""}
           </div>
+
+          <div className="marketPrepPrintOnly marketPrepPrintDetailsCard">
+            <div>
+              <span>Market</span>
+              <strong>{marketName || "Farmers Market"}</strong>
+            </div>
+
+            <div>
+              <span>Date</span>
+              <strong>{marketDate || "No date selected"}</strong>
+            </div>
+
+            {location ? (
+              <div>
+                <span>Location</span>
+                <strong>{location}</strong>
+              </div>
+            ) : null}
+
+            {weatherNotes ? (
+              <div>
+                <span>Weather / Demand Notes</span>
+                <strong>{weatherNotes}</strong>
+              </div>
+            ) : null}
+          </div>
         </div>
 
-        <div className="workspacePanel compactPanel scrollAnchor" ref={savedPlansRef}>
+        <div className="workspacePanel compactPanel scrollAnchor marketPrepNoPrint" ref={savedPlansRef}>
           <div className="workspaceHeader compactPanelHeader">
             <div>
               <p className="eyebrow">Saved</p>
@@ -664,20 +690,11 @@ export default function MarketPrepPlanner() {
               savedPlans.map((plan) => (
                 <div className="savedItem compactSavedItem" key={plan.id}>
                   <div>
-  <h4>
-    <button
-      type="button"
-      className="savedItemLink"
-      onClick={() => hydratePlan(plan)}
-    >
-      {plan.marketName || "Market Plan"}
-    </button>
-  </h4>
-
-  <p>
-    {plan.marketDate || "No date"} • {plan.location || "No location"}
-  </p>
-</div>
+                    <h4>{plan.marketName || "Market Plan"}</h4>
+                    <p>
+                      {plan.marketDate || "No date"} • {plan.location || "No location"}
+                    </p>
+                  </div>
 
                   <div className="itemActions">
                     <button type="button" onClick={() => hydratePlan(plan)}>
@@ -699,7 +716,7 @@ export default function MarketPrepPlanner() {
       </section>
 
       <section className="spiceWorkspace compactWorkspace">
-        <div className="workspacePanel compactPanel scrollAnchor" ref={forecastRef}>
+        <div className="workspacePanel compactPanel scrollAnchor marketPrepNoPrint" ref={forecastRef}>
           <div className="workspaceHeader compactPanelHeader">
             <div>
               <p className="eyebrow">Add Product</p>
