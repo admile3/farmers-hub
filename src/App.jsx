@@ -657,60 +657,51 @@ function WelcomePricingModal({ onClose }) {
 
   return (
     <div className="pricingModalOverlay">
-      <div className="pricingModal">
+      <div className="pricingModal pricingModalCompact">
         <button className="modalCloseButton" type="button" onClick={onClose}>
           <X size={18} />
         </button>
 
-        <div className="pricingModalHeader">
-          <p className="eyebrow">Welcome to Farmers Hub</p>
-          <h2>Start with full access for 15 days.</h2>
-          <p>
-            Create your account to try every Farmers Hub module free for 15 days.
-            No subscription is required to start. After the trial, choose the plan
-            that fits how many tools you want to keep using.
-          </p>
-        </div>
-
-        <div className="pricingFeatureGrid">
-          <div>
-            <strong>Plan your market day</strong>
-            <span>Prep lists, packing quantities, harvest needs, and reusable checklists.</span>
+        <div className="pricingModalScroll">
+          <div className="pricingModalHeader compactSignupHeader">
+            <p className="eyebrow">Welcome to Farmers Hub</p>
+            <h2>Start with full access for 15 days.</h2>
+            <p>
+              Create your account to try every Farmers Hub module free for 15 days.
+              No subscription is required to start. After the trial, choose the plan
+              that fits how many tools you want to keep using.
+            </p>
           </div>
 
-          <div>
-            <strong>Price with confidence</strong>
-            <span>Calculate costs, margins, retail prices, wholesale prices, and profitability.</span>
+          <div className="pricingFeatureGrid compactFeatureGrid">
+            <div>
+              <strong>Plan your market day</strong>
+              <span>Prep lists, packing quantities, harvest needs, and reusable checklists.</span>
+            </div>
+
+            <div>
+              <strong>Price with confidence</strong>
+              <span>Calculate costs, margins, retail prices, wholesale prices, and profitability.</span>
+            </div>
+
+            <div>
+              <strong>Manage recipes and products</strong>
+              <span>Build seasoning recipes, scale batches, and organize production notes.</span>
+            </div>
+
+            <div>
+              <strong>Track business details</strong>
+              <span>Keep permits, grants, deadlines, documents, lists, and backups organized.</span>
+            </div>
           </div>
 
-          <div>
-            <strong>Manage recipes and products</strong>
-            <span>Build seasoning recipes, scale batches, and organize production notes.</span>
-          </div>
+          <PricingCards
+            mode="trial"
+            checkoutLoading={checkoutLoading}
+            setCheckoutLoading={setCheckoutLoading}
+          />
 
-          <div>
-            <strong>Track business details</strong>
-            <span>Keep permits, grants, deadlines, documents, lists, and backups organized.</span>
-          </div>
-        </div>
-
-        <PricingCards
-          mode="trial"
-          checkoutLoading={checkoutLoading}
-          setCheckoutLoading={setCheckoutLoading}
-        />
-
-        <TrialSignupBox />
-
-        <div className="pricingModalFooter">
-          <p className="importExportText">
-            All plans start with the same 15-day full-access trial. You only choose
-            a paid plan when you are ready to continue.
-          </p>
-
-          <button className="textButton" type="button" onClick={onClose}>
-            Continue browsing
-          </button>
+          <TrialSignupBox />
         </div>
       </div>
     </div>
