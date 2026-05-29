@@ -3035,7 +3035,7 @@ input[type="number"] {
 }
 
 .dashboardPanel .dashboardRow p {
-  max-width: 620px;
+  max-width: none;
 }
 
 .compactDashboardRow {
