@@ -1126,3 +1126,46 @@
     font-size: 9px !important;
   }
 }
+/* =========================================================
+   Baking Planner Product Directory Styles
+   Append this to src/styles.css or bakingPlanner.css
+   ========================================================= */
+
+.bakingPlanner .bakingProductDirectoryPanel {
+  border-color: rgba(223, 160, 76, 0.28);
+  background: #fffaf2;
+}
+
+.bakingPlanner .bakingProductDirectoryToggle {
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  color: var(--text, #121820);
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.bakingPlanner .bakingProductDirectoryToggle input {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  accent-color: var(--sourdough, #dfa04c);
+  cursor: pointer;
+}
+
+.bakingPlanner .bakingProductDirectoryToggle span {
+  white-space: nowrap;
+}
+
+@media (max-width: 800px) {
+  .bakingPlanner .bakingProductDirectoryToggle {
+    width: 100%;
+  }
+
+  .bakingPlanner .bakingProductDirectoryToggle span {
+    white-space: normal;
+  }
+}
