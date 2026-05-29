@@ -14,6 +14,8 @@ import {
   CalendarDays,
   ChefHat,
   ClipboardList,
+  Eye,
+  EyeOff,
   FileText,
   Folder,
   Home,
@@ -363,6 +365,7 @@ function TrialSignupBox() {
   const [authMode, setAuthMode] = useState("create");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [authActionLoading, setAuthActionLoading] = useState("");
   const [authError, setAuthError] = useState("");
 
@@ -431,14 +434,26 @@ function TrialSignupBox() {
 
         <label>
           Password
-          <input
-            type="password"
-            value={password}
-            autoComplete={authMode === "create" ? "new-password" : "current-password"}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-            minLength={6}
-          />
+          <div className="passwordInputWrap">
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              autoComplete={authMode === "create" ? "new-password" : "current-password"}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+              minLength={6}
+            />
+
+            <button
+              className="passwordVisibilityButton"
+              type="button"
+              onClick={() => setShowPassword((current) => !current)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              <span>{showPassword ? "Hide" : "Show"}</span>
+            </button>
+          </div>
         </label>
 
         {authError ? <p className="authErrorText">{authError}</p> : null}
