@@ -641,7 +641,15 @@ export default function PermitGrantTracker() {
 
               return (
                 <div className="permitTableRow" key={item.id}>
-                  <span className="permitName">{item.name}</span>
+                  <span className="permitName">
+  <button
+    type="button"
+    className="permitNameButton"
+    onClick={() => openEditRecord(item)}
+  >
+    {item.name}
+  </button>
+</span>
 
                   <span>
                     <span className="permitTypePill">{item.type}</span>
