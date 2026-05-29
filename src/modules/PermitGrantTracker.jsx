@@ -476,11 +476,15 @@ export default function PermitGrantTracker() {
 
   if (!user) {
     return (
-      <div className="permitGrantModule">
-        <section className="permitGrantHero">
+      <div className="modulePage permitGrantModule compactSpicePage">
+        <section className="moduleHero compactHero">
           <div>
-            <h2>Permits & Grants</h2>
-            <p>Sign in to save permits, grants, licenses, insurance, and renewals.</p>
+            <p className="eyebrow">Permits & Grants</p>
+            <h2>Sign in to save permits, grants, licenses, insurance, and renewals.</h2>
+            <p>
+              Track required records, application links, documents, renewal dates,
+              deadlines, and reminders in one organized workspace.
+            </p>
           </div>
 
           <button className="primaryButton" onClick={loginWithGoogle}>
@@ -492,7 +496,7 @@ export default function PermitGrantTracker() {
   }
 
   return (
-    <div className="permitGrantModule">
+    <div className="modulePage permitGrantModule compactSpicePage">
       {statusMessage ? (
         <div className="floatingStatus success">
           <span>ⓘ</span>
@@ -503,28 +507,32 @@ export default function PermitGrantTracker() {
         </div>
       ) : null}
 
-      <section className="permitGrantHero">
+      <section className="moduleHero compactHero noActionHero">
         <div>
-          <h2>Permits & Grants</h2>
-          <p>Track permits, licenses, grants, insurance, and renewal deadlines.</p>
+          <p className="eyebrow">Permits & Grants</p>
+          <h2>Track permits, grants, licenses, insurance, and renewal deadlines.</h2>
+          <p>
+            Keep required records, application links, documents, renewal dates,
+            deadlines, and reminders in one place.
+          </p>
         </div>
+      </section>
 
-        <div className="formActions compactActions">
-          <button
-            className="secondaryButton compactButton"
-            type="button"
-            onClick={loadSampleRecords}
-            disabled={saving}
-          >
-            <FileText size={15} />
-            Load Sample Records
-          </button>
+      <section className="formActions compactActions permitGrantTopActions">
+        <button
+          className="secondaryButton compactButton"
+          type="button"
+          onClick={loadSampleRecords}
+          disabled={saving}
+        >
+          <FileText size={15} />
+          Load Sample Records
+        </button>
 
-          <button className="permitAddButton" type="button" onClick={openNewRecord}>
-            <Plus size={18} />
-            Add Record
-          </button>
-        </div>
+        <button className="primaryButton compactPrimary" type="button" onClick={openNewRecord}>
+          <Plus size={15} />
+          Add Record
+        </button>
       </section>
 
       <section className="hubStatGrid">
@@ -642,14 +650,14 @@ export default function PermitGrantTracker() {
               return (
                 <div className="permitTableRow" key={item.id}>
                   <span className="permitName">
-  <button
-    type="button"
-    className="permitNameButton"
-    onClick={() => openEditRecord(item)}
-  >
-    {item.name}
-  </button>
-</span>
+                    <button
+                      type="button"
+                      className="permitNameButton clickableName"
+                      onClick={() => openEditRecord(item)}
+                    >
+                      {item.name}
+                    </button>
+                  </span>
 
                   <span>
                     <span className="permitTypePill">{item.type}</span>
