@@ -4503,3 +4503,31 @@ input[type="number"] {
     margin: 0.35in;
   }
 }
+.calendarDayEvents {
+  align-content: start;
+}
+
+.calendarEventDot {
+  width: 100%;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 5px 9px;
+  border-radius: 999px;
+  line-height: 1.15;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.calendarEventDot:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  filter: brightness(0.96);
+  border-color: rgba(18, 24, 32, 0.15);
+}
+
+.calendarEventDot:focus-visible {
+  outline: 3px solid rgba(52, 117, 62, 0.25);
+  outline-offset: 2px;
+}
