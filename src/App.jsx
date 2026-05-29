@@ -1201,7 +1201,8 @@ function Dashboard() {
           source: "Spice Kitchen",
           time: formatActivityTime(date),
           timestamp: date.getTime(),
-          accent: "spice"
+          accent: "spice",
+          path: "/spice-kitchen"
         });
       }
     });
@@ -1212,7 +1213,8 @@ function Dashboard() {
         source: "Baking Planner",
         time: "Recently",
         timestamp: 0,
-        accent: "sourdough"
+        accent: "sourdough",
+        path: "/baking-planner"
       });
     });
 
@@ -1225,7 +1227,8 @@ function Dashboard() {
           source: "Permit & Grant Tracker",
           time: formatActivityTime(date),
           timestamp: date.getTime(),
-          accent: "grant"
+          accent: "grant",
+          path: `/permit-grants?record=${encodeURIComponent(item.id || "")}`
         });
       }
     });
@@ -1239,7 +1242,8 @@ function Dashboard() {
           source: "Lists",
           time: formatActivityTime(date),
           timestamp: date.getTime(),
-          accent: "lists"
+          accent: "lists",
+          path: "/lists"
         });
       }
     });
@@ -1425,10 +1429,10 @@ function Dashboard() {
                       <Activity size={18} />
                     </div>
 
-                    <div>
+                    <GuardedLink to={item.path || "/"} className="dashboardRowTextLink">
                       <h4>{item.title}</h4>
                       <p>{item.source}</p>
-                    </div>
+                    </GuardedLink>
 
                     <small className="dashboardTime">{item.time}</small>
                   </div>
