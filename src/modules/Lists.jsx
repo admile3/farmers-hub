@@ -328,13 +328,14 @@ export default function Lists() {
 
   if (!user) {
     return (
-      <div className="listsModule">
-        <section className="permitGrantHero">
+      <div className="listsModule modulePage compactSpicePage">
+        <section className="moduleHero compactHero">
           <div>
-            <h2>Lists</h2>
-
+            <p className="eyebrow">Lists</p>
+            <h2>Create reusable checklists for your vendor workflows.</h2>
             <p>
-              Sign in to create and save reusable lists for your vendor workflows.
+              Sign in to save market prep, production, shopping, permits, delivery,
+              and idea lists to your Farmers Hub account.
             </p>
           </div>
 
@@ -484,18 +485,20 @@ export default function Lists() {
         </div>
       ) : null}
 
-      <section className="permitGrantHero">
+      <section className="moduleHero compactHero noActionHero">
         <div>
-          <h2>Lists</h2>
-
+          <p className="eyebrow">Lists</p>
+          <h2>Create reusable checklists for your vendor workflows.</h2>
           <p>
-            Create reusable checklists for market prep, production, shopping,
-            permits, delivery, and ideas.
+            Organize market prep, production, shopping, permits, delivery, and ideas
+            into reusable workflow lists.
           </p>
         </div>
+      </section>
 
+      <section className="moduleActionBar">
         <button
-          className="permitAddButton"
+          className="primaryButton compactPrimary"
           type="button"
           onClick={() => setIsNewListOpen(true)}
         >
