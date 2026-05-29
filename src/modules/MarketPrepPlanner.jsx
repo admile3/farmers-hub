@@ -345,12 +345,19 @@ export default function MarketPrepPlanner() {
 
     try {
       await deleteMarketPrepPlan(user.uid, id);
-      markMarketPrepDirty();
 
       if (planId === id) {
-        startNewPlan();
+        const blank = createBlankPlan();
+
+        setPlanId(blank.id);
+        setMarketName(blank.marketName);
+        setMarketDate(blank.marketDate);
+        setLocation(blank.location);
+        setWeatherNotes(blank.weatherNotes);
+        setProducts(blank.products);
       }
 
+      markSaved();
       setStatusMessage("Saved plan deleted.");
       await loadSavedPlans();
     } catch (error) {
