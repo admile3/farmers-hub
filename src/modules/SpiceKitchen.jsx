@@ -1,218 +1,224 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  AlertCircle,
-  ArrowUp,
-  Beaker,
-  BookOpen,
-  Calculator,
-  ChevronDown,
-  ChevronUp,
-  DollarSign,
+  AlertTriangle,
+  CalendarDays,
   Edit3,
-  Library,
+  ExternalLink,
+  FileText,
+  Filter,
   Plus,
   Save,
   Search,
-  Scale,
+  ShieldCheck,
   Trash2,
+  Upload,
   X
 } from "lucide-react";
 import { useAuth } from "../AuthContext.jsx";
 import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import StatCard from "../components/StatCard.jsx";
 import {
-  createSpiceIngredient,
-  createSpiceRecipe,
-  deleteSpiceIngredient,
-  deleteSpiceRecipe,
-  getSpiceIngredients,
-  getSpiceRecipes,
-  updateSpiceIngredient,
-  updateSpiceRecipe
-} from "../services/spiceKitchenService.js";
+  deletePermitGrantItem,
+  getPermitGrantItems,
+  savePermitGrantItem
+} from "../services/permitGrantService.js";
 
-const ingredientCategories = [
-  "Herb",
-  "Chili",
-  "Salt",
-  "Sugar",
-  "Powder",
-  "Citrus",
-  "Seed",
-  "Spice",
-  "Pepper",
+const itemTypes = [
+  "Permit",
+  "Grant",
+  "License",
+  "Certification",
+  "Registration",
+  "Insurance",
+  "Tax Filing",
+  "Market Application",
   "Other"
 ];
 
-const recipeCategories = [
-  "Farmer's Market",
-  "Restaurant/Wholesale",
-  "DTC/Online",
-  "Catering",
-  "Test Batch",
-  "House Blend",
-  "Other"
+const statusOptions = [
+  "Not Started",
+  "In Progress",
+  "Submitted",
+  "Approved",
+  "Denied",
+  "Renewal Needed",
+  "Complete"
 ];
 
-const emptyIngredient = {
+const priorityOptions = ["Low", "Normal", "High", "Urgent"];
+
+const blankRecord = {
+  id: "",
   name: "",
-  category: "Other",
-  supplier: "",
-  cost: "",
-  costUnit: "oz",
+  type: "Permit",
+  agency: "",
+  status: "Not Started",
+  priority: "Normal",
+  issueDate: "",
+  dueDate: "",
+  submittedDate: "",
+  approvedDate: "",
+  renewalDate: "",
+  reminderAmount: 30,
+  reminderUnit: "days",
+  fee: "",
+  link: "",
+  documentName: "",
+  documentUrl: "",
   notes: ""
 };
 
-const emptyRecipe = {
-  name: "",
-  category: "House Blend",
-  notes: "",
-  ingredients: []
-};
+const starterItems = [
+  {
+    id: "sample-home-processor",
+    name: "SAMPLE - Home-Based Processor",
+    type: "Permit",
+    agency: "Kentucky Food and Safety Branch",
+    status: "Approved",
+    priority: "High",
+    issueDate: "2025-07-16",
+    dueDate: "2026-03-31",
+    submittedDate: "",
+    approvedDate: "2025-07-16",
+    renewalDate: "2026-03-31",
+    reminderAmount: 30,
+    reminderUnit: "days",
+    fee: 50,
+    link: "",
+    documentName: "Sample Homebased Processor Permit.pdf",
+    documentUrl: "",
+    notes: "Example record. Replace with your own permit or renewal."
+  },
+  {
+    id: "sample-insurance",
+    name: "SAMPLE - General Liability Insurance",
+    type: "Insurance",
+    agency: "FarmGuard Insurance",
+    status: "Renewal Needed",
+    priority: "Urgent",
+    issueDate: "2025-04-01",
+    dueDate: "2026-04-01",
+    submittedDate: "",
+    approvedDate: "",
+    renewalDate: "2026-04-01",
+    reminderAmount: 30,
+    reminderUnit: "days",
+    fee: 0,
+    link: "",
+    documentName: "",
+    documentUrl: "",
+    notes: "Example insurance renewal. Edit or delete anytime."
+  },
+  {
+    id: "sample-grant",
+    name: "SAMPLE - Local Food Innovation Grant",
+    type: "Grant",
+    agency: "County Economic Development",
+    status: "Submitted",
+    priority: "Normal",
+    issueDate: "",
+    dueDate: "2026-05-30",
+    submittedDate: "2026-05-01",
+    approvedDate: "",
+    renewalDate: "",
+    reminderAmount: 15,
+    reminderUnit: "days",
+    fee: 0,
+    link: "",
+    documentName: "",
+    documentUrl: "",
+    notes: "Example grant application. Edit or delete anytime."
+  }
+];
 
-function createBlankRecipeLine() {
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function makeId() {
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function createSampleItems() {
+  return starterItems.map((item) =>
+    normalizeRecord({
+      ...item,
+      id: `${item.id}-${makeId()}`
+    })
+  );
+}
+
+function daysUntil(dateString) {
+  if (!dateString) return null;
+
+  const today = new Date(todayISO());
+  const date = new Date(dateString);
+  const diff = date.getTime() - today.getTime();
+
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+}
+
+function getRelevantDate(item) {
+  if (item.status === "Approved" && item.renewalDate) return item.renewalDate;
+  if (item.renewalDate) return item.renewalDate;
+  return item.dueDate || "";
+}
+
+function getDueStatus(item) {
+  const relevantDate = getRelevantDate(item);
+  const days = daysUntil(relevantDate);
+
+  if (days === null) return { label: "No Date", tone: "neutral", days: null };
+  if (days < 0) return { label: "Expired", tone: "danger", days };
+  if (days === 0) return { label: "Due Today", tone: "danger", days };
+  if (days <= 7) return { label: `Due in ${days}d`, tone: "danger", days };
+  if (days <= 30) return { label: `In ${days}d`, tone: "warning", days };
+  return { label: `In ${days}d`, tone: "good", days };
+}
+
+function statusClass(status) {
+  return String(status || "").toLowerCase().replaceAll(" ", "-");
+}
+
+function normalizeRecord(record) {
   return {
-    ingredientId: "",
-    ingredientName: "",
-    parts: ""
+    ...blankRecord,
+    ...record,
+    fee: record.fee === "" ? "" : Number(record.fee) || 0,
+    reminderAmount: Number(record.reminderAmount) || 30
   };
 }
 
-function toNumber(value) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function round(value, places = 2) {
-  return Number(value || 0).toFixed(places);
-}
-
-function formatParts(value) {
-  const number = toNumber(value);
-  return Number(number.toFixed(2)).toString();
-}
-
-function ouncesToGrams(ounces) {
-  return ounces * 28.3495;
-}
-
-function gramsToOunces(grams) {
-  return grams / 28.3495;
-}
-
-export default function SpiceKitchen() {
+export default function PermitGrantTracker() {
   const { user, loginWithGoogle } = useAuth();
-  const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } = useUnsavedChanges();
+  const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } =
+    useUnsavedChanges();
 
-  const builderRef = useRef(null);
-  const calculatorRef = useRef(null);
-  const pantryRef = useRef(null);
-  const libraryRef = useRef(null);
-
-  const [ingredients, setIngredients] = useState([]);
-  const [recipes, setRecipes] = useState([]);
-  const [ingredientForm, setIngredientForm] = useState(emptyIngredient);
-  const [editingIngredientId, setEditingIngredientId] = useState(null);
-  const [expandedIngredientId, setExpandedIngredientId] = useState(null);
-  const [recipeForm, setRecipeForm] = useState(emptyRecipe);
-  const [editingRecipeId, setEditingRecipeId] = useState(null);
-  const [expandedRecipeId, setExpandedRecipeId] = useState(null);
-  const [ingredientSearch, setIngredientSearch] = useState("");
-  const [selectedRecipeId, setSelectedRecipeId] = useState("");
-  const [targetAmount, setTargetAmount] = useState("");
-  const [targetUnit, setTargetUnit] = useState("oz");
-  const [overagePercent, setOveragePercent] = useState("");
-  const [quickAddOpen, setQuickAddOpen] = useState(false);
-  const [quickIngredient, setQuickIngredient] = useState(emptyIngredient);
+  const [items, setItems] = useState([]);
   const [statusMessage, setStatusMessage] = useState("");
-  const [statusType, setStatusType] = useState("info");
-  const [loading, setLoading] = useState(false);
-  const [showBackToTop, setShowBackToTop] = useState(false);
+  const [loadingItems, setLoadingItems] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  function markSpiceDirty() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(blankRecord);
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [typeFilter, setTypeFilter] = useState("All Types");
+  const [statusFilter, setStatusFilter] = useState("All Statuses");
+  const [recordFilter, setRecordFilter] = useState("All Records");
+
+  function markPermitGrantDirty() {
     markUnsaved({
-      source: "Spice Kitchen",
-      onSave: savePendingSpiceChanges
+      source: "Permit & Grant Tracker",
+      onSave: async () => {
+        const saved = await saveRecord(editingRecord);
+
+        if (!saved) {
+          throw new Error("Permit or grant record could not be saved.");
+        }
+      }
     });
   }
-
-  function formHasValues(form) {
-    if (!form) return false;
-
-    return Object.values(form).some((value) => {
-      if (Array.isArray(value)) return value.length > 0;
-      return String(value || "").trim() !== "";
-    });
-  }
-
-  async function savePendingSpiceChanges() {
-    if (!user) return;
-
-    if (formHasValues(quickIngredient) && quickAddOpen) {
-      await quickAddIngredient();
-      return;
-    }
-
-    if (editingIngredientId || formHasValues(ingredientForm)) {
-      await saveIngredient();
-      return;
-    }
-
-    if (editingRecipeId || formHasValues(recipeForm)) {
-      await saveRecipe();
-      return;
-    }
-
-    markSaved();
-  }
-
-  function clearIngredientDraft() {
-    setIngredientForm(emptyIngredient);
-    setEditingIngredientId(null);
-    markSaved();
-  }
-
-  function clearRecipeDraft() {
-    setRecipeForm(emptyRecipe);
-    setEditingRecipeId(null);
-    markSaved();
-  }
-
-  function clearQuickIngredientDraft() {
-    setQuickIngredient(emptyIngredient);
-    setQuickAddOpen(false);
-    markSaved();
-  }
-
-  function showStatus(message, type = "info") {
-    setStatusMessage(message);
-    setStatusType(type);
-  }
-
-  function scrollToSection(ref) {
-    ref.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
-  }
-
-  function scrollToTop() {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
-  }
-
-  useEffect(() => {
-    function handleScroll() {
-      setShowBackToTop(window.scrollY > 50);
-    }
-
-    window.addEventListener("scroll", handleScroll);
-    handleScroll();
-
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   useEffect(() => {
     if (!statusMessage) return;
@@ -224,403 +230,257 @@ export default function SpiceKitchen() {
     return () => window.clearTimeout(timer);
   }, [statusMessage]);
 
-  async function loadData() {
+  async function loadItems() {
     if (!user) return;
 
-    setLoading(true);
+    setLoadingItems(true);
 
     try {
-      const [loadedIngredients, loadedRecipes] = await Promise.all([
-        getSpiceIngredients(user.uid),
-        getSpiceRecipes(user.uid)
-      ]);
-
-      setIngredients(loadedIngredients);
-      setRecipes(loadedRecipes);
+      const savedItems = await getPermitGrantItems(user.uid);
+      setItems(Array.isArray(savedItems) ? savedItems.map(normalizeRecord) : []);
     } catch (error) {
       console.error(error);
-      showStatus("Could not load Spice Kitchen data.", "error");
+      setStatusMessage("Could not load permit and grant records.");
     } finally {
-      setLoading(false);
+      setLoadingItems(false);
     }
   }
 
   useEffect(() => {
     if (user) {
-      loadData();
+      loadItems();
     } else {
-      setIngredients([]);
-      setRecipes([]);
+      setItems([]);
     }
   }, [user]);
 
-  const filteredIngredients = useMemo(() => {
-    const search = ingredientSearch.trim().toLowerCase();
+  const summary = useMemo(() => {
+    return items.reduce(
+      (sum, item) => {
+        const dueStatus = getDueStatus(item);
+        const isActive = ["Approved", "Complete"].includes(item.status);
+        const isMissingDocs = !item.documentName && !item.documentUrl;
+        const isGrant = item.type === "Grant";
+        const isUpcomingGrant =
+          isGrant &&
+          dueStatus.days !== null &&
+          dueStatus.days >= 0 &&
+          dueStatus.days <= 60;
 
-    if (!search) return ingredients;
+        return {
+          active: sum.active + (isActive ? 1 : 0),
+          expiringSoon:
+            sum.expiringSoon +
+            (dueStatus.days !== null && dueStatus.days >= 0 && dueStatus.days <= 30
+              ? 1
+              : 0),
+          expired: sum.expired + (dueStatus.days !== null && dueStatus.days < 0 ? 1 : 0),
+          missingDocs: sum.missingDocs + (isMissingDocs ? 1 : 0),
+          upcomingGrants: sum.upcomingGrants + (isUpcomingGrant ? 1 : 0)
+        };
+      },
+      {
+        active: 0,
+        expiringSoon: 0,
+        expired: 0,
+        missingDocs: 0,
+        upcomingGrants: 0
+      }
+    );
+  }, [items]);
 
-    return ingredients.filter((ingredient) => {
-      return (
-        ingredient.name?.toLowerCase().includes(search) ||
-        ingredient.category?.toLowerCase().includes(search) ||
-        ingredient.supplier?.toLowerCase().includes(search)
+  const filteredItems = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+
+    return items.filter((item) => {
+      const dueStatus = getDueStatus(item);
+
+      const matchesSearch =
+        !query ||
+        item.name.toLowerCase().includes(query) ||
+        item.agency.toLowerCase().includes(query) ||
+        item.notes.toLowerCase().includes(query);
+
+      const matchesType = typeFilter === "All Types" || item.type === typeFilter;
+      const matchesStatus =
+        statusFilter === "All Statuses" || item.status === statusFilter;
+
+      const matchesRecord =
+        recordFilter === "All Records" ||
+        (recordFilter === "Expiring Soon" &&
+          dueStatus.days !== null &&
+          dueStatus.days >= 0 &&
+          dueStatus.days <= 30) ||
+        (recordFilter === "Expired" && dueStatus.days !== null && dueStatus.days < 0) ||
+        (recordFilter === "Missing Docs" && !item.documentName && !item.documentUrl) ||
+        (recordFilter === "Grants" && item.type === "Grant");
+
+      return matchesSearch && matchesType && matchesStatus && matchesRecord;
+    });
+  }, [items, searchTerm, typeFilter, statusFilter, recordFilter]);
+
+  function openNewRecord() {
+    setEditingRecord({
+      ...blankRecord,
+      id: makeId()
+    });
+    setIsModalOpen(true);
+  }
+
+  function openEditRecord(item) {
+    setEditingRecord(normalizeRecord(item));
+    setIsModalOpen(true);
+  }
+
+  function closeModal({ discardChanges = true } = {}) {
+    setIsModalOpen(false);
+    setEditingRecord(blankRecord);
+
+    if (discardChanges) {
+      markSaved();
+    }
+  }
+
+  function updateEditingRecord(field, value) {
+    markPermitGrantDirty();
+
+    setEditingRecord((current) => ({
+      ...current,
+      [field]: value
+    }));
+  }
+
+  function handleDocumentSelection(event) {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    markPermitGrantDirty();
+
+    setEditingRecord((current) => ({
+      ...current,
+      documentName: file.name,
+      documentUrl: ""
+    }));
+  }
+
+  async function saveRecord(record = editingRecord) {
+    if (!record.name.trim()) {
+      setStatusMessage("Record name is required.");
+      return false;
+    }
+
+    const cleanRecord = normalizeRecord({
+      ...record,
+      name: record.name.trim(),
+      agency: record.agency.trim(),
+      link: record.link.trim(),
+      notes: record.notes.trim()
+    });
+
+    if (!user) {
+      setItems((current) => {
+        const exists = current.some((item) => item.id === cleanRecord.id);
+        return exists
+          ? current.map((item) => (item.id === cleanRecord.id ? cleanRecord : item))
+          : [...current, cleanRecord];
+      });
+      setStatusMessage("Record saved locally.");
+      closeModal({ discardChanges: false });
+      markSaved();
+      return true;
+    }
+
+    setSaving(true);
+
+    try {
+      const savedId = await savePermitGrantItem(user.uid, cleanRecord);
+      const savedRecord = { ...cleanRecord, id: savedId };
+
+      setItems((current) => {
+        const exists = current.some((item) => item.id === savedRecord.id);
+        return exists
+          ? current.map((item) => (item.id === savedRecord.id ? savedRecord : item))
+          : [...current, savedRecord];
+      });
+
+      setStatusMessage("Record saved.");
+      closeModal({ discardChanges: false });
+      await loadItems();
+      markSaved();
+      return true;
+    } catch (error) {
+      console.error(error);
+      setStatusMessage("Could not save record.");
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveSampleRecord(record) {
+    if (!user) {
+      setItems((current) => [...current, record]);
+      return;
+    }
+
+    await savePermitGrantItem(user.uid, record);
+  }
+
+  async function loadSampleRecords() {
+    if (items.length > 0) {
+      const confirmed = window.confirm(
+        "This will add sample permit, insurance, and grant records. Continue?"
       );
-    });
-  }, [ingredients, ingredientSearch]);
 
-  const selectedRecipe = useMemo(() => {
-    return recipes.find((recipe) => recipe.id === selectedRecipeId) || null;
-  }, [recipes, selectedRecipeId]);
-
-  const batchRows = useMemo(() => {
-    if (!selectedRecipe || !selectedRecipe.ingredients?.length) return [];
-
-    const targetGrams =
-      targetUnit === "oz"
-        ? ouncesToGrams(toNumber(targetAmount))
-        : toNumber(targetAmount);
-
-    const adjustedTargetGrams =
-      targetGrams * (1 + toNumber(overagePercent) / 100);
-
-    const totalParts = selectedRecipe.ingredients.reduce(
-      (sum, item) => sum + toNumber(item.parts),
-      0
-    );
-
-    if (!targetGrams || !totalParts) return [];
-
-    return selectedRecipe.ingredients.map((item) => {
-      const ingredient = ingredients.find((saved) => saved.id === item.ingredientId);
-      const grams = (toNumber(item.parts) / totalParts) * adjustedTargetGrams;
-      const ounces = gramsToOunces(grams);
-
-      let estimatedCost = 0;
-
-      if (ingredient?.cost) {
-        const cost = toNumber(ingredient.cost);
-
-        if (ingredient.costUnit === "oz") estimatedCost = ounces * cost;
-        if (ingredient.costUnit === "g") estimatedCost = grams * cost;
-        if (ingredient.costUnit === "lb") estimatedCost = (ounces / 16) * cost;
-      }
-
-      return {
-        name: item.ingredientName || ingredient?.name || "Unknown ingredient",
-        parts: toNumber(item.parts),
-        grams,
-        ounces,
-        estimatedCost
-      };
-    });
-  }, [selectedRecipe, ingredients, targetAmount, targetUnit, overagePercent]);
-
-  const batchTotals = useMemo(() => {
-    const grams = batchRows.reduce((sum, row) => sum + row.grams, 0);
-    const ounces = gramsToOunces(grams);
-    const cost = batchRows.reduce((sum, row) => sum + row.estimatedCost, 0);
-
-    return { grams, ounces, cost };
-  }, [batchRows]);
-
-  const spiceSummary = useMemo(() => {
-    const recipeIngredientCount = recipes.reduce(
-      (sum, recipe) => sum + (recipe.ingredients?.length || 0),
-      0
-    );
-
-    return {
-      ingredients: ingredients.length,
-      recipes: recipes.length,
-      recipeIngredientCount,
-      selectedBatchRows: batchRows.length
-    };
-  }, [ingredients, recipes, batchRows]);
-
-  function updateIngredientField(field, value) {
-    markSpiceDirty();
-    setIngredientForm((current) => ({ ...current, [field]: value }));
-  }
-
-  function updateRecipeField(field, value) {
-    markSpiceDirty();
-    setRecipeForm((current) => ({ ...current, [field]: value }));
-  }
-
-  async function saveIngredient(event) {
-    event?.preventDefault?.();
-    if (!user) return;
-
-    const cleanIngredient = {
-      name: ingredientForm.name.trim(),
-      category: ingredientForm.category,
-      supplier: ingredientForm.supplier.trim(),
-      cost: ingredientForm.cost,
-      costUnit: ingredientForm.costUnit,
-      notes: ingredientForm.notes.trim()
-    };
-
-    if (!cleanIngredient.name) {
-      showStatus("Ingredient name is required.", "error");
-      return;
+      if (!confirmed) return;
     }
 
+    const sampleRecords = createSampleItems();
+
+    setSaving(true);
+
     try {
-      if (editingIngredientId) {
-        await updateSpiceIngredient(user.uid, editingIngredientId, cleanIngredient);
-        showStatus("Ingredient updated.", "success");
+      if (user) {
+        await Promise.all(sampleRecords.map((record) => saveSampleRecord(record)));
+        await loadItems();
       } else {
-        await createSpiceIngredient(user.uid, cleanIngredient);
-        showStatus("Ingredient saved.", "success");
+        setItems((current) => [...current, ...sampleRecords]);
       }
 
-      setIngredientForm(emptyIngredient);
-      setEditingIngredientId(null);
-      markSaved();
-      await loadData();
+      setStatusMessage("Sample records added. You can edit or delete them anytime.");
     } catch (error) {
       console.error(error);
-      showStatus("Could not save ingredient.", "error");
+      setStatusMessage("Could not add sample records.");
+    } finally {
+      setSaving(false);
     }
   }
 
-  function editIngredient(ingredient) {
-    setEditingIngredientId(ingredient.id);
-    setIngredientForm({
-      name: ingredient.name || "",
-      category: ingredient.category || "Other",
-      supplier: ingredient.supplier || "",
-      cost: ingredient.cost || "",
-      costUnit: ingredient.costUnit || "oz",
-      notes: ingredient.notes || ""
-    });
-    scrollToSection(pantryRef);
-  }
-
-  async function removeIngredient(ingredientId) {
-    if (!user) return;
-
-    try {
-      await deleteSpiceIngredient(user.uid, ingredientId);
-      showStatus("Ingredient deleted.", "success");
-      if (expandedIngredientId === ingredientId) setExpandedIngredientId(null);
-      await loadData();
-    } catch (error) {
-      console.error(error);
-      showStatus("Could not delete ingredient.", "error");
-    }
-  }
-
-  function addRecipeLine() {
-    markSpiceDirty();
-    setRecipeForm((current) => ({
-      ...current,
-      ingredients: [...current.ingredients, createBlankRecipeLine()]
-    }));
-  }
-
-  function updateRecipeLine(index, field, value) {
-    markSpiceDirty();
-    setRecipeForm((current) => {
-      const nextIngredients = [...current.ingredients];
-      const nextLine = { ...nextIngredients[index], [field]: value };
-
-      if (field === "ingredientId") {
-        const ingredient = ingredients.find((item) => item.id === value);
-        nextLine.ingredientName = ingredient?.name || "";
-      }
-
-      nextIngredients[index] = nextLine;
-
-      const isPartsField = field === "parts";
-      const hasPartsValue = String(value).trim() !== "";
-      const isLastLine = index === nextIngredients.length - 1;
-      const lastLine = nextIngredients[nextIngredients.length - 1];
-      const lastLineHasAnyValue =
-        lastLine?.ingredientId ||
-        lastLine?.ingredientName ||
-        String(lastLine?.parts || "").trim();
-
-      if (isPartsField && hasPartsValue && isLastLine && lastLineHasAnyValue) {
-        nextIngredients.push(createBlankRecipeLine());
-      }
-
-      return {
-        ...current,
-        ingredients: nextIngredients
-      };
-    });
-  }
-
-  function removeRecipeLine(index) {
-    markSpiceDirty();
-    setRecipeForm((current) => ({
-      ...current,
-      ingredients: current.ingredients.filter((_, lineIndex) => lineIndex !== index)
-    }));
-  }
-
-  async function quickAddIngredient(event) {
-    event?.preventDefault?.();
-    if (!user) return;
-
-    const cleanIngredient = {
-      name: quickIngredient.name.trim(),
-      category: quickIngredient.category,
-      supplier: quickIngredient.supplier.trim(),
-      cost: quickIngredient.cost,
-      costUnit: quickIngredient.costUnit,
-      notes: quickIngredient.notes.trim()
-    };
-
-    if (!cleanIngredient.name) {
-      showStatus("Quick add ingredient name is required.", "error");
+  async function removeItem(id) {
+    if (!user) {
+      setItems((current) => current.filter((item) => item.id !== id));
+      setStatusMessage("Record deleted locally.");
       return;
     }
 
     try {
-      const newId = await createSpiceIngredient(user.uid, cleanIngredient);
-      const updatedIngredients = await getSpiceIngredients(user.uid);
-      setIngredients(updatedIngredients);
-
-      setRecipeForm((current) => ({
-        ...current,
-        ingredients: [
-          ...current.ingredients,
-          {
-            ingredientId: newId,
-            ingredientName: cleanIngredient.name,
-            parts: ""
-          }
-        ]
-      }));
-
-      setQuickIngredient(emptyIngredient);
-      setQuickAddOpen(false);
-      markSaved();
-      showStatus("Ingredient added to pantry and recipe.", "success");
+      await deletePermitGrantItem(user.uid, id);
+      setStatusMessage("Record deleted.");
+      await loadItems();
     } catch (error) {
       console.error(error);
-      showStatus("Could not quick add ingredient.", "error");
+      setStatusMessage("Could not delete record.");
     }
   }
-
-  async function saveRecipe(event) {
-    event?.preventDefault?.();
-    if (!user) return;
-
-    const cleanRecipe = {
-      name: recipeForm.name.trim(),
-      category: recipeForm.category,
-      notes: recipeForm.notes.trim(),
-      ingredients: recipeForm.ingredients
-        .filter((item) => item.ingredientId && toNumber(item.parts) > 0)
-        .map((item) => ({
-          ingredientId: item.ingredientId,
-          ingredientName: item.ingredientName,
-          parts: toNumber(item.parts)
-        }))
-    };
-
-    if (!cleanRecipe.name) {
-      showStatus("Recipe name is required.", "error");
-      return;
-    }
-
-    if (!cleanRecipe.ingredients.length) {
-      showStatus("Add at least one ingredient with parts greater than 0.", "error");
-      return;
-    }
-
-    try {
-      if (editingRecipeId) {
-        await updateSpiceRecipe(user.uid, editingRecipeId, cleanRecipe);
-        showStatus("Recipe updated.", "success");
-      } else {
-        await createSpiceRecipe(user.uid, cleanRecipe);
-        showStatus("Recipe saved.", "success");
-      }
-
-      setRecipeForm(emptyRecipe);
-      setEditingRecipeId(null);
-      markSaved();
-      await loadData();
-      scrollToSection(libraryRef);
-    } catch (error) {
-      console.error(error);
-      showStatus("Could not save recipe.", "error");
-    }
-  }
-
-  function editRecipe(recipe) {
-    setEditingRecipeId(recipe.id);
-    setRecipeForm({
-      name: recipe.name || "",
-      category: recipe.category || "House Blend",
-      notes: recipe.notes || "",
-      ingredients: recipe.ingredients || []
-    });
-    scrollToSection(builderRef);
-  }
-
-  async function removeRecipe(recipeId) {
-    if (!user) return;
-
-    try {
-      await deleteSpiceRecipe(user.uid, recipeId);
-      showStatus("Recipe deleted.", "success");
-      if (selectedRecipeId === recipeId) setSelectedRecipeId("");
-      if (expandedRecipeId === recipeId) setExpandedRecipeId(null);
-      await loadData();
-    } catch (error) {
-      console.error(error);
-      showStatus("Could not delete recipe.", "error");
-    }
-  }
-
-  function getIngredientName(line) {
-    const ingredient = ingredients.find((item) => item.id === line.ingredientId);
-    return line.ingredientName || ingredient?.name || "Unknown ingredient";
-  }
-
-  const sectionCards = [
-    {
-      title: "Recipe Builder",
-      description: "Create blends by parts using your saved pantry ingredients.",
-      icon: Beaker,
-      ref: builderRef
-    },
-    {
-      title: "Batch Calculator",
-      description: "Scale saved recipes to exact ounces, grams, and overage targets.",
-      icon: Calculator,
-      ref: calculatorRef
-    },
-    {
-      title: "Ingredient Pantry",
-      description: "Save ingredients, costs, suppliers, notes, and categories.",
-      icon: Library,
-      ref: pantryRef
-    },
-    {
-      title: "Recipe Library",
-      description: "Review, edit, and manage your saved seasoning recipes.",
-      icon: BookOpen,
-      ref: libraryRef
-    }
-  ];
 
   if (!user) {
     return (
-      <div className="modulePage spicePage compactSpicePage">
-        <section className="moduleHero compactHero">
+      <div className="permitGrantModule">
+        <section className="permitGrantHero">
           <div>
-            <p className="eyebrow">Spice Kitchen</p>
-            <h2>Sign in to build and save spice blends.</h2>
-            <p>
-              Your pantry, recipes, batch calculations, and production notes will be
-              saved to your Farmers Hub account.
-            </p>
+            <h2>Permits & Grants</h2>
+            <p>Sign in to save permits, grants, licenses, insurance, and renewals.</p>
           </div>
 
           <button className="primaryButton" onClick={loginWithGoogle}>
@@ -632,754 +492,457 @@ export default function SpiceKitchen() {
   }
 
   return (
-    <div className="modulePage spicePage compactSpicePage">
-      <section className="moduleHero compactHero noActionHero">
-        <div>
-          <p className="eyebrow">Spice Kitchen</p>
-          <h2>Build, scale, and organize seasoning recipes.</h2>
-          <p>
-            Manage your ingredient pantry, create recipes by parts, quick-add
-            ingredients while building a recipe, and calculate exact batch weights.
-          </p>
-        </div>
-      </section>
-
+    <div className="permitGrantModule">
       {statusMessage ? (
-        <div className={`floatingStatus ${statusType}`}>
-          <AlertCircle size={18} />
+        <div className="floatingStatus success">
+          <span>ⓘ</span>
           <span>{statusMessage}</span>
-          <button onClick={() => setStatusMessage("")}>
-            <X size={16} />
+          <button type="button" onClick={() => setStatusMessage("")}>
+            ×
           </button>
         </div>
       ) : null}
 
-      {loading ? <div className="floatingStatus info">Loading Spice Kitchen...</div> : null}
+      <section className="permitGrantHero">
+        <div>
+          <h2>Permits & Grants</h2>
+          <p>Track permits, licenses, grants, insurance, and renewal deadlines.</p>
+        </div>
 
-      <section className="hubStatGrid spiceStatGrid">
-        <StatCard
-          icon={Library}
-          label="Ingredients"
-          value={spiceSummary.ingredients}
-          sub="Saved pantry items"
-          accent="spice"
-        />
+        <div className="formActions compactActions">
+          <button
+            className="secondaryButton compactButton"
+            type="button"
+            onClick={loadSampleRecords}
+            disabled={saving}
+          >
+            <FileText size={15} />
+            Load Sample Records
+          </button>
 
-        <StatCard
-          icon={BookOpen}
-          label="Recipes"
-          value={spiceSummary.recipes}
-          sub="Saved seasoning blends"
-          accent="sourdough"
-        />
+          <button className="permitAddButton" type="button" onClick={openNewRecord}>
+            <Plus size={18} />
+            Add Record
+          </button>
+        </div>
+      </section>
 
+      <section className="hubStatGrid">
         <StatCard
-          icon={Beaker}
-          label="Recipe Lines"
-          value={spiceSummary.recipeIngredientCount}
-          sub="Total saved ingredient lines"
+          icon={ShieldCheck}
+          label="Active"
+          value={summary.active}
+          sub="Currently active"
           accent="market"
         />
 
         <StatCard
-          icon={Calculator}
-          label="Active Batch"
-          value={spiceSummary.selectedBatchRows}
-          sub="Ingredients in current calculation"
+          icon={CalendarDays}
+          label="Expiring Soon"
+          value={summary.expiringSoon}
+          sub="In reminder window"
+          accent="sourdough"
+        />
+
+        <StatCard
+          icon={AlertTriangle}
+          label="Expired"
+          value={summary.expired}
+          sub="Overdue records"
+          accent="spice"
+        />
+
+        <StatCard
+          icon={Upload}
+          label="Missing Docs"
+          value={summary.missingDocs}
+          sub="Need upload"
           accent="pricing"
+        />
+
+        <StatCard
+          icon={FileText}
+          label="Upcoming Grants"
+          value={summary.upcomingGrants}
+          sub="Deadlines approaching"
+          accent="grant"
         />
       </section>
 
-      <section className="toolGrid compactToolGrid">
-        {sectionCards.map((card) => {
-          const Icon = card.icon;
-
-          return (
-            <button
-              className="toolCard compactToolCard clickableToolCard"
-              key={card.title}
-              type="button"
-              onClick={() => scrollToSection(card.ref)}
-            >
-              <Icon size={22} />
-              <h3>{card.title}</h3>
-              <p>{card.description}</p>
-            </button>
-          );
-        })}
-      </section>
-
-      <section className="spiceWorkspace compactWorkspace">
-        <div className="workspacePanel compactPanel scrollAnchor" ref={builderRef}>
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Builder</p>
-              <h3>Recipe Builder</h3>
-            </div>
-
-            <button
-              className="secondaryButton compactButton"
-              onClick={() => {
-                markSpiceDirty();
-                setQuickAddOpen((current) => !current);
-              }}
-              type="button"
-            >
-              <Plus size={15} />
-              Quick Add Ingredient
-            </button>
-          </div>
-
-          {quickAddOpen ? (
-            <form className="quickAddPanel compactQuickAdd" onSubmit={quickAddIngredient}>
-              <div className="quickAddHeader">
-                <h4>Quick Add to Pantry</h4>
-                <button type="button" onClick={() => setQuickAddOpen(false)}>
-                  <X size={16} />
-                </button>
-              </div>
-
-              <div className="formGrid compactFormGrid">
-                <label>
-                  Ingredient Name
-                  <input
-                    value={quickIngredient.name}
-                    onChange={(event) => {
-                      markSpiceDirty();
-                      setQuickIngredient((current) => ({
-                        ...current,
-                        name: event.target.value
-                      }));
-                    }}
-                    placeholder="e.g., Smoked paprika"
-                  />
-                </label>
-
-                <label>
-                  Category
-                  <select
-                    value={quickIngredient.category}
-                    onChange={(event) => {
-                      markSpiceDirty();
-                      setQuickIngredient((current) => ({
-                        ...current,
-                        category: event.target.value
-                      }));
-                    }}
-                  >
-                    {ingredientCategories.map((category) => (
-                      <option key={category}>{category}</option>
-                    ))}
-                  </select>
-                </label>
-
-                <label>
-                  Cost
-                  <input
-                    type="number"
-                    step="0.0001"
-                    value={quickIngredient.cost}
-                    onChange={(event) => {
-                      markSpiceDirty();
-                      setQuickIngredient((current) => ({
-                        ...current,
-                        cost: event.target.value
-                      }));
-                    }}
-                    placeholder="e.g., 2.50"
-                  />
-                </label>
-
-                <label>
-                  Per
-                  <select
-                    value={quickIngredient.costUnit}
-                    onChange={(event) => {
-                      markSpiceDirty();
-                      setQuickIngredient((current) => ({
-                        ...current,
-                        costUnit: event.target.value
-                      }));
-                    }}
-                  >
-                    <option value="oz">oz</option>
-                    <option value="g">g</option>
-                    <option value="lb">lb</option>
-                  </select>
-                </label>
-              </div>
-
-              <button className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`} type="submit">
-                Add to Pantry and Recipe
-              </button>
-            </form>
-          ) : null}
-
-          <form onSubmit={saveRecipe}>
-            <div className="formGrid compactFormGrid">
-              <label>
-                Recipe Name
-                <input
-                  value={recipeForm.name}
-                  onChange={(event) => updateRecipeField("name", event.target.value)}
-                  placeholder="e.g., Garlic Miso Seasoning"
-                />
-              </label>
-
-              <label>
-                Recipe Category
-                <select
-                  value={recipeForm.category}
-                  onChange={(event) => updateRecipeField("category", event.target.value)}
-                >
-                  {recipeCategories.map((category) => (
-                    <option key={category}>{category}</option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="fullSpan">
-                Recipe Notes
-                <textarea
-                  value={recipeForm.notes}
-                  onChange={(event) => updateRecipeField("notes", event.target.value)}
-                  placeholder="e.g., Production notes, intended use, packaging notes"
-                />
-              </label>
-            </div>
-
-            <div className="recipeLines compactRecipeLines">
-              <div className="recipeLineHeader">
-                <h4>Ingredients by Parts</h4>
-                <button
-                  className="secondaryButton compactButton"
-                  type="button"
-                  onClick={addRecipeLine}
-                >
-                  <Plus size={15} />
-                  Add Line
-                </button>
-              </div>
-
-              {recipeForm.ingredients.length ? (
-                recipeForm.ingredients.map((line, index) => (
-                  <div className="recipeLine compactRecipeLine" key={`${line.ingredientId}-${index}`}>
-                    <label>
-                      Ingredient
-                      <select
-                        value={line.ingredientId}
-                        onChange={(event) =>
-                          updateRecipeLine(index, "ingredientId", event.target.value)
-                        }
-                      >
-                        <option value="">Select ingredient</option>
-                        {ingredients.map((ingredient) => (
-                          <option key={ingredient.id} value={ingredient.id}>
-                            {ingredient.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-
-                    <label>
-                      Parts
-                      <input
-                        type="number"
-                        step="0.0001"
-                        value={line.parts}
-                        onChange={(event) =>
-                          updateRecipeLine(index, "parts", event.target.value)
-                        }
-                        placeholder="e.g., 1"
-                      />
-                    </label>
-
-                    <button
-                      className="iconButton danger"
-                      type="button"
-                      onClick={() => removeRecipeLine(index)}
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <div className="placeholderBox compactPlaceholder">
-                  Add ingredients from your pantry, or use Quick Add Ingredient.
-                </div>
-              )}
-            </div>
-
-            <div className="formActions compactActions">
-              <button
-                className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`}
-                type="submit"
-              >
-                <Save size={15} />
-                {editingRecipeId
-                  ? hasUnsavedChanges
-                    ? "Update Recipe Changes"
-                    : "Update Recipe"
-                  : hasUnsavedChanges
-                    ? "Save Recipe Changes"
-                    : "Save Recipe"}
-              </button>
-
-              <button
-                className="secondaryButton compactButton"
-                type="button"
-                onClick={clearRecipeDraft}
-              >
-                Clear
-              </button>
-            </div>
-          </form>
+      <section className="permitFilterBar">
+        <div className="permitSearch">
+          <Search size={18} />
+          <input
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Search by name, agency, or notes..."
+          />
         </div>
 
-        <div className="workspacePanel compactPanel scrollAnchor" ref={calculatorRef}>
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Batch Calculator</p>
-              <h3>Scale a Saved Recipe</h3>
-            </div>
+        <label>
+          <Filter size={16} />
+          <select
+            value={typeFilter}
+            onChange={(event) => setTypeFilter(event.target.value)}
+          >
+            <option>All Types</option>
+            {itemTypes.map((type) => (
+              <option key={type}>{type}</option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+          >
+            <option>All Statuses</option>
+            {statusOptions.map((status) => (
+              <option key={status}>{status}</option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          <select
+            value={recordFilter}
+            onChange={(event) => setRecordFilter(event.target.value)}
+          >
+            <option>All Records</option>
+            <option>Expiring Soon</option>
+            <option>Expired</option>
+            <option>Missing Docs</option>
+            <option>Grants</option>
+          </select>
+        </label>
+      </section>
+
+      <section className="permitTablePanel">
+        <div className="permitTable">
+          <div className="permitTableHeader">
+            <span>Name</span>
+            <span>Type</span>
+            <span>Organization</span>
+            <span>Status</span>
+            <span>Priority</span>
+            <span>Issue</span>
+            <span>Due / Renewal</span>
+            <span>Reminder</span>
+            <span>Document</span>
+            <span>Actions</span>
           </div>
 
-          <div className="calculatorControls compactCalculatorControls">
-            <label>
-              Recipe
-              <select
-                value={selectedRecipeId}
-                onChange={(event) => setSelectedRecipeId(event.target.value)}
-              >
-                <option value="">Select recipe</option>
-                {recipes.map((recipe) => (
-                  <option key={recipe.id} value={recipe.id}>
-                    {recipe.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+          {loadingItems ? (
+            <div className="permitEmptyState">Loading records...</div>
+          ) : filteredItems.length ? (
+            filteredItems.map((item) => {
+              const dueStatus = getDueStatus(item);
 
-            <label>
-              Target Amount
-              <input
-                type="number"
-                step="0.01"
-                value={targetAmount}
-                onChange={(event) => setTargetAmount(event.target.value)}
-                placeholder="e.g., 10"
-              />
-            </label>
+              return (
+                <div className="permitTableRow" key={item.id}>
+                  <span className="permitName">{item.name}</span>
 
-            <label>
-              Unit
-              <select
-                value={targetUnit}
-                onChange={(event) => setTargetUnit(event.target.value)}
-              >
-                <option value="oz">oz</option>
-                <option value="g">g</option>
-              </select>
-            </label>
+                  <span>
+                    <span className="permitTypePill">{item.type}</span>
+                  </span>
 
-            <label>
-              Overage %
-              <input
-                type="number"
-                step="0.1"
-                value={overagePercent}
-                onChange={(event) => setOveragePercent(event.target.value)}
-                placeholder="e.g., 5"
-              />
-            </label>
-          </div>
+                  <span className="permitMuted">{item.agency || "None listed"}</span>
 
-          {batchRows.length ? (
-            <>
-              <div className="hubStatGrid spiceBatchStatGrid">
-                <StatCard
-                  icon={Scale}
-                  label="Total Grams"
-                  value={`${round(batchTotals.grams)} g`}
-                  sub="Scaled batch weight"
-                  accent="spice"
-                />
+                  <span>
+                    <span className={`permitStatusPill ${statusClass(item.status)}`}>
+                      {item.status}
+                    </span>
+                  </span>
 
-                <StatCard
-                  icon={Beaker}
-                  label="Total Ounces"
-                  value={`${round(batchTotals.ounces)} oz`}
-                  sub="Scaled batch weight"
-                  accent="sourdough"
-                />
+                  <span>
+                    <span className={`permitPriorityPill ${item.priority.toLowerCase()}`}>
+                      {item.priority}
+                    </span>
+                  </span>
 
-                <StatCard
-                  icon={DollarSign}
-                  label="Estimated Cost"
-                  value={`$${round(batchTotals.cost)}`}
-                  sub="Ingredient cost estimate"
-                  accent="pricing"
-                />
-              </div>
+                  <span className="permitMuted">{item.issueDate || "—"}</span>
 
-              <div className="batchTable compactBatchTable">
-                <div className="batchTableHeader">
-                  <span>Ingredient</span>
-                  <span>Parts</span>
-                  <span>Grams</span>
-                  <span>Ounces</span>
-                  <span>Cost</span>
+                  <span className="permitMuted">{getRelevantDate(item) || "—"}</span>
+
+                  <span>
+                    <span className={`permitDeadlinePill ${dueStatus.tone}`}>
+                      {dueStatus.tone === "danger" ? (
+                        <AlertTriangle size={13} />
+                      ) : (
+                        <CalendarDays size={13} />
+                      )}
+                      {dueStatus.label}
+                    </span>
+                  </span>
+
+                  <span>
+                    {item.documentName || item.documentUrl ? (
+                      <span className="permitDocument">
+                        <FileText size={14} />
+                        {item.documentUrl ? (
+                          <a href={item.documentUrl} target="_blank" rel="noreferrer">
+                            {item.documentName || "Open Document"}
+                          </a>
+                        ) : (
+                          <span>{item.documentName}</span>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="permitMissingDoc">
+                        <Upload size={14} />
+                        Missing
+                      </span>
+                    )}
+                  </span>
+
+                  <span className="permitActions">
+                    {item.link ? (
+                      <a href={item.link} target="_blank" rel="noreferrer">
+                        <ExternalLink size={16} />
+                      </a>
+                    ) : null}
+
+                    <button type="button" onClick={() => openEditRecord(item)}>
+                      <Edit3 size={16} />
+                    </button>
+
+                    <button type="button" onClick={() => removeItem(item.id)}>
+                      <Trash2 size={16} />
+                    </button>
+                  </span>
                 </div>
-
-                {batchRows.map((row) => (
-                  <div className="batchTableRow" key={row.name}>
-                    <span>{row.name}</span>
-                    <span>{formatParts(row.parts)}</span>
-                    <span>{round(row.grams)}</span>
-                    <span>{round(row.ounces)}</span>
-                    <span>${round(row.estimatedCost)}</span>
-                  </div>
-                ))}
-              </div>
-            </>
+              );
+            })
           ) : (
-            <div className="placeholderBox compactPlaceholder">
-              Select a saved recipe and enter a target amount to generate batch weights.
+            <div className="permitEmptyState">
+              No records yet. Add your first permit, grant, license, insurance,
+              or renewal, or load sample records to explore the tracker.
             </div>
           )}
         </div>
       </section>
 
-      <section className="lowerSpiceGrid">
-        <div className="workspacePanel compactPanel scrollAnchor" ref={pantryRef}>
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Pantry</p>
-              <h3>Ingredient Pantry</h3>
+      {isModalOpen ? (
+        <div className="permitModalOverlay" role="dialog" aria-modal="true">
+          <div className="permitModal">
+            <div className="permitModalHeader">
+              <h3>
+                {items.some((item) => item.id === editingRecord.id)
+                  ? "Edit Permit / Grant / Document"
+                  : "Add Permit / Grant / Document"}
+              </h3>
+
+              <button type="button" onClick={closeModal}>
+                <X size={20} />
+              </button>
             </div>
 
-            <div className="searchBox compactSearch">
-              <Search size={17} />
-              <input
-                value={ingredientSearch}
-                onChange={(event) => setIngredientSearch(event.target.value)}
-                placeholder="Search ingredients..."
-              />
-            </div>
-          </div>
-
-          <form className="formGrid compactFormGrid" onSubmit={saveIngredient}>
-            <label>
-              Ingredient Name
-              <input
-                value={ingredientForm.name}
-                onChange={(event) => updateIngredientField("name", event.target.value)}
-                placeholder="e.g., Dried thyme"
-              />
-            </label>
-
-            <label>
-              Category
-              <select
-                value={ingredientForm.category}
-                onChange={(event) => updateIngredientField("category", event.target.value)}
-              >
-                {ingredientCategories.map((category) => (
-                  <option key={category}>{category}</option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Supplier / Source
-              <input
-                value={ingredientForm.supplier}
-                onChange={(event) =>
-                  updateIngredientField("supplier", event.target.value)
-                }
-                placeholder="e.g., Bulk supplier, farm, store"
-              />
-            </label>
-
-            <div className="inlineFields">
-              <label>
-                Cost
+            <form
+              className="permitModalForm"
+              onSubmit={(event) => {
+                event.preventDefault();
+                saveRecord();
+              }}
+            >
+              <label className="permitFull">
+                Name *
                 <input
-                  type="number"
-                  step="0.0001"
-                  value={ingredientForm.cost}
-                  onChange={(event) => updateIngredientField("cost", event.target.value)}
-                  placeholder="e.g., 2.50"
+                  value={editingRecord.name}
+                  onChange={(event) => updateEditingRecord("name", event.target.value)}
+                  placeholder="e.g., Cottage Food License"
                 />
               </label>
 
               <label>
-                Per
+                Type *
                 <select
-                  value={ingredientForm.costUnit}
-                  onChange={(event) =>
-                    updateIngredientField("costUnit", event.target.value)
-                  }
+                  value={editingRecord.type}
+                  onChange={(event) => updateEditingRecord("type", event.target.value)}
                 >
-                  <option value="oz">oz</option>
-                  <option value="g">g</option>
-                  <option value="lb">lb</option>
+                  {itemTypes.map((type) => (
+                    <option key={type}>{type}</option>
+                  ))}
                 </select>
               </label>
-            </div>
 
-            <label className="fullSpan">
-              Notes
-              <textarea
-                value={ingredientForm.notes}
-                onChange={(event) => updateIngredientField("notes", event.target.value)}
-                placeholder="e.g., Flavor notes, grind size, sourcing notes"
-              />
-            </label>
+              <label>
+                Status *
+                <select
+                  value={editingRecord.status}
+                  onChange={(event) =>
+                    updateEditingRecord("status", event.target.value)
+                  }
+                >
+                  {statusOptions.map((status) => (
+                    <option key={status}>{status}</option>
+                  ))}
+                </select>
+              </label>
 
-            <div className="formActions fullSpan compactActions">
-              <button
-                className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`}
-                type="submit"
-              >
-                <Save size={15} />
-                {editingIngredientId
-                  ? hasUnsavedChanges
-                    ? "Update Ingredient Changes"
-                    : "Update Ingredient"
-                  : hasUnsavedChanges
-                    ? "Save Ingredient Changes"
-                    : "Save Ingredient"}
-              </button>
+              <label>
+                Priority
+                <select
+                  value={editingRecord.priority}
+                  onChange={(event) =>
+                    updateEditingRecord("priority", event.target.value)
+                  }
+                >
+                  {priorityOptions.map((priority) => (
+                    <option key={priority}>{priority}</option>
+                  ))}
+                </select>
+              </label>
 
-              <button
-                className="secondaryButton compactButton"
-                type="button"
-                onClick={clearIngredientDraft}
-              >
-                Clear
-              </button>
-            </div>
-          </form>
+              <label>
+                Fee
+                <input
+                  type="number"
+                  step="0.01"
+                  value={editingRecord.fee}
+                  onChange={(event) => updateEditingRecord("fee", event.target.value)}
+                  placeholder="e.g., 25"
+                />
+              </label>
 
-          <div className="savedList compactSavedList spiceExpandableList">
-            <h4 className="smallSectionTitle">Saved Ingredients</h4>
+              <label className="permitFull">
+                Issuing Organization
+                <input
+                  value={editingRecord.agency}
+                  onChange={(event) => updateEditingRecord("agency", event.target.value)}
+                  placeholder="e.g., State Department of Agriculture"
+                />
+              </label>
 
-            {filteredIngredients.length ? (
-              filteredIngredients.map((ingredient) => {
-                const isExpanded = expandedIngredientId === ingredient.id;
+              <label>
+                Issue Date
+                <input
+                  type="date"
+                  value={editingRecord.issueDate}
+                  onChange={(event) =>
+                    updateEditingRecord("issueDate", event.target.value)
+                  }
+                />
+              </label>
 
-                return (
-                  <div
-                    className={isExpanded ? "savedItemBlock expanded" : "savedItemBlock"}
-                    key={ingredient.id}
-                  >
-                    <button
-                      className="savedItem compactSavedItem expandableSavedItem"
-                      type="button"
-                      onClick={() =>
-                        setExpandedIngredientId(isExpanded ? null : ingredient.id)
-                      }
-                    >
-                      <div>
-                        <h4>{ingredient.name}</h4>
-                        <p>
-                          {ingredient.category}
-                          {ingredient.supplier ? ` • ${ingredient.supplier}` : ""}
-                          {ingredient.cost
-                            ? ` • $${ingredient.cost} / ${ingredient.costUnit}`
-                            : ""}
-                        </p>
-                      </div>
+              <label>
+                Expiration / Deadline Date
+                <input
+                  type="date"
+                  value={editingRecord.dueDate}
+                  onChange={(event) => updateEditingRecord("dueDate", event.target.value)}
+                />
+              </label>
 
-                      <div className="itemActions">
-                        <span className="expandIcon">
-                          {isExpanded ? (
-                            <ChevronUp size={14} />
-                          ) : (
-                            <ChevronDown size={14} />
-                          )}
-                        </span>
+              <label>
+                Renewal Date
+                <input
+                  type="date"
+                  value={editingRecord.renewalDate}
+                  onChange={(event) =>
+                    updateEditingRecord("renewalDate", event.target.value)
+                  }
+                />
+              </label>
 
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            editIngredient(ingredient);
-                          }}
-                        >
-                          <Edit3 size={14} />
-                        </button>
+              <label>
+                Submitted Date
+                <input
+                  type="date"
+                  value={editingRecord.submittedDate}
+                  onChange={(event) =>
+                    updateEditingRecord("submittedDate", event.target.value)
+                  }
+                />
+              </label>
 
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            removeIngredient(ingredient.id);
-                          }}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </button>
+              <label>
+                Approved Date
+                <input
+                  type="date"
+                  value={editingRecord.approvedDate}
+                  onChange={(event) =>
+                    updateEditingRecord("approvedDate", event.target.value)
+                  }
+                />
+              </label>
 
-                    {isExpanded ? (
-                      <div className="spiceDetailPanel">
-                        <div>
-                          <strong>Category</strong>
-                          <span>{ingredient.category || "Other"}</span>
-                        </div>
+              <label>
+                Reminder Amount
+                <input
+                  type="number"
+                  value={editingRecord.reminderAmount}
+                  onChange={(event) =>
+                    updateEditingRecord("reminderAmount", event.target.value)
+                  }
+                />
+              </label>
 
-                        <div>
-                          <strong>Supplier / Source</strong>
-                          <span>{ingredient.supplier || "Not listed"}</span>
-                        </div>
+              <label>
+                Reminder Unit
+                <select
+                  value={editingRecord.reminderUnit}
+                  onChange={(event) =>
+                    updateEditingRecord("reminderUnit", event.target.value)
+                  }
+                >
+                  <option>days</option>
+                  <option>weeks</option>
+                  <option>months</option>
+                </select>
+              </label>
 
-                        <div>
-                          <strong>Cost</strong>
-                          <span>
-                            {ingredient.cost
-                              ? `$${ingredient.cost} / ${ingredient.costUnit}`
-                              : "Not listed"}
-                          </span>
-                        </div>
+              <label className="permitFull">
+                Link
+                <input
+                  value={editingRecord.link}
+                  onChange={(event) => updateEditingRecord("link", event.target.value)}
+                  placeholder="Application, portal, or reference URL"
+                />
+              </label>
 
-                        <div className="fullSpan">
-                          <strong>Notes</strong>
-                          <span>{ingredient.notes || "No notes saved."}</span>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })
-            ) : (
-              <div className="placeholderBox compactPlaceholder">
-                No ingredients saved yet.
+              <label className="permitFull">
+                Notes
+                <textarea
+                  value={editingRecord.notes}
+                  onChange={(event) => updateEditingRecord("notes", event.target.value)}
+                  placeholder="Additional notes or details..."
+                />
+              </label>
+
+              <label className="permitFull">
+                Document Upload
+                <input type="file" onChange={handleDocumentSelection} />
+                {editingRecord.documentName ? (
+                  <span className="permitSelectedFile">
+                    Selected: {editingRecord.documentName}
+                  </span>
+                ) : null}
+              </label>
+
+              <div className="permitModalActions permitFull">
+                <button
+                  className="secondaryButton compactButton"
+                  type="button"
+                  onClick={closeModal}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  className={`primaryButton compactPrimary ${
+                    hasUnsavedChanges ? "dirtySaveButton" : ""
+                  }`}
+                  type="submit"
+                  disabled={saving}
+                >
+                  <Save size={15} />
+                  {saving ? "Saving..." : hasUnsavedChanges ? "Save Changes" : "Save Record"}
+                </button>
               </div>
-            )}
+            </form>
           </div>
         </div>
-
-        <div className="workspacePanel compactPanel scrollAnchor spiceLibraryPanel" ref={libraryRef}>
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Saved Recipes</p>
-              <h3>Recipe Library</h3>
-            </div>
-          </div>
-
-          <div className="recipeLibrary compactSavedList spiceRecipeLibraryTall">
-            {recipes.length ? (
-              recipes.map((recipe) => {
-                const isExpanded = expandedRecipeId === recipe.id;
-                const sortedRecipeIngredients = [...(recipe.ingredients || [])].sort(
-                  (a, b) => toNumber(b.parts) - toNumber(a.parts)
-                );
-
-                return (
-                  <div
-                    className={isExpanded ? "savedItemBlock expanded" : "savedItemBlock"}
-                    key={recipe.id}
-                  >
-                    <button
-                      className="savedItem recipeItem compactSavedItem expandableSavedItem"
-                      type="button"
-                      onClick={() =>
-                        setExpandedRecipeId(isExpanded ? null : recipe.id)
-                      }
-                    >
-                      <div>
-                        <h4>{recipe.name}</h4>
-                        <p>
-                          {recipe.category} • {recipe.ingredients?.length || 0} ingredients
-                        </p>
-                      </div>
-
-                      <div className="itemActions">
-                        <span className="expandIcon">
-                          {isExpanded ? (
-                            <ChevronUp size={14} />
-                          ) : (
-                            <ChevronDown size={14} />
-                          )}
-                        </span>
-
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            editRecipe(recipe);
-                          }}
-                        >
-                          <Edit3 size={14} />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            removeRecipe(recipe.id);
-                          }}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </button>
-
-                    {isExpanded ? (
-                      <div className="spiceDetailPanel recipeDetailPanel">
-                        <div>
-                          <strong>Category</strong>
-                          <span>{recipe.category || "House Blend"}</span>
-                        </div>
-
-                        <div>
-                          <strong>Total Ingredients</strong>
-                          <span>{recipe.ingredients?.length || 0}</span>
-                        </div>
-
-                        <div className="fullSpan">
-                          <strong>Recipe Notes</strong>
-                          <span>{recipe.notes || "No notes saved."}</span>
-                        </div>
-
-                        <div className="fullSpan recipePartsList">
-                          <strong>Ingredients by Parts</strong>
-
-                          {sortedRecipeIngredients.length ? (
-                            sortedRecipeIngredients.map((line, index) => (
-                              <div
-                                className="recipePartsRow"
-                                key={`${line.ingredientId}-${index}`}
-                              >
-                                <span>{getIngredientName(line)}</span>
-                                <span>{formatParts(line.parts)} parts</span>
-                              </div>
-                            ))
-                          ) : (
-                            <span>No ingredients saved.</span>
-                          )}
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })
-            ) : (
-              <div className="placeholderBox compactPlaceholder">
-                No recipes saved yet.
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {showBackToTop ? (
-        <button className="backToTopButton" type="button" onClick={scrollToTop}>
-          <ArrowUp size={18} />
-          Top
-        </button>
       ) : null}
     </div>
   );
