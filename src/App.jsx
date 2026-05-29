@@ -872,23 +872,6 @@ function AppShell({ children }) {
         </nav>
 
         <AccountStatusCard />
-
-        <div className="sidebarCard importExportSidebarCard">
-          <p className="eyebrow">Backup</p>
-          <h3>Import / Export</h3>
-          <p>Move saved Hub data between accounts.</p>
-
-          <GuardedLink to="/import-export" className="secondaryButton fullButton">
-            <Upload size={16} />
-            Import / Export
-          </GuardedLink>
-        </div>
-
-        <div className="sidebarCard">
-          <p className="eyebrow">Current build</p>
-          <h3>Foundation</h3>
-          <p>Modular dashboard structure ready for future sub-apps.</p>
-        </div>
       </aside>
 
       <main className="main modernMain">{children}</main>
