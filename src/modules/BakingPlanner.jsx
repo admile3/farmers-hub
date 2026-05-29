@@ -239,6 +239,10 @@ const blankPantryItem = {
   packageSize: "",
   packageUnit: "lb",
   packageCost: "",
+  trackInventory: false,
+  quantityOnHand: "",
+  onHandUnit: "lb",
+  lowStockThreshold: "",
   notes: ""
 };
 
@@ -272,7 +276,14 @@ function normalizePantryItem(item = {}) {
   const packageSize = item.packageSize === "" ? "" : Number(item.packageSize) || 0;
   const packageCost = item.packageCost === "" ? "" : Number(item.packageCost) || 0;
   const packageUnit = pantryUnits.includes(item.packageUnit) ? item.packageUnit : "lb";
+  const onHandUnit = pantryUnits.includes(item.onHandUnit) ? item.onHandUnit : packageUnit;
+  const quantityOnHand =
+    item.quantityOnHand === "" ? "" : Number(item.quantityOnHand) || 0;
+  const lowStockThreshold =
+    item.lowStockThreshold === "" ? "" : Number(item.lowStockThreshold) || 0;
   const packageGrams = convertToGrams(packageSize, packageUnit);
+  const quantityOnHandGrams = convertToGrams(quantityOnHand, onHandUnit);
+  const lowStockThresholdGrams = convertToGrams(lowStockThreshold, onHandUnit);
   const costPerGram =
     packageGrams > 0 && Number(packageCost) > 0
       ? Number(packageCost) / packageGrams
@@ -285,7 +296,13 @@ function normalizePantryItem(item = {}) {
     packageSize,
     packageUnit,
     packageCost,
+    trackInventory: Boolean(item.trackInventory),
+    quantityOnHand,
+    onHandUnit,
+    lowStockThreshold,
     packageGrams,
+    quantityOnHandGrams,
+    lowStockThresholdGrams,
     costPerGram,
     costPerOunce: costPerGram * 28.349523125,
     costPerPound: costPerGram * 453.59237
@@ -321,6 +338,45 @@ function findPantryMatch(ingredientName, pantryItems) {
   return containedMatch?.item || null;
 }
 
+function getInventoryStatus(row) {
+  const item = row?.pantryItem;
+
+  if (!item?.trackInventory) {
+    return {
+      status: "not-tracked",
+      label: "Inventory not tracked",
+      className: "muted tiny"
+    };
+  }
+
+  const onHand = Number(item.quantityOnHandGrams) || 0;
+  const needed = Number(row.grams) || 0;
+  const lowThreshold = Number(item.lowStockThresholdGrams) || 0;
+
+  if (needed > onHand) {
+    return {
+      status: "short",
+      label: `Short ${formatSmartWeight(needed - onHand)}`,
+      className: "warning-text tiny"
+    };
+  }
+
+  if (lowThreshold > 0 && onHand - needed <= lowThreshold) {
+    return {
+      status: "low",
+      label: `Low after pull, ${formatSmartWeight(onHand - needed)} left`,
+      className: "warning-text tiny"
+    };
+  }
+
+  return {
+    status: "ok",
+    label: `${formatSmartWeight(onHand - needed)} left after pull`,
+    className: "muted tiny"
+  };
+}
+
+
 function formatSmartWeight(value, label = "") {
   const grams = Number(value) || 0;
   let base = formatGrams(grams);
@@ -337,8 +393,9 @@ function formatSmartWeight(value, label = "") {
   return label ? `${base} ${label}` : base;
 }
 
-function buildIngredientPullRow(name, grams, pantryItems) {
-  const pantryItem = findPantryMatch(name, pantryItems);
+function buildIngredientPullRow(name, grams, pantryItems, options = {}) {
+  const isNonCosted = Boolean(options.isNonCosted);
+  const pantryItem = isNonCosted ? null : findPantryMatch(name, pantryItems);
   const amount = Number(grams) || 0;
   const estimatedCost = pantryItem?.costPerGram ? amount * pantryItem.costPerGram : 0;
   const packageCount = pantryItem?.packageGrams ? amount / pantryItem.packageGrams : 0;
@@ -348,7 +405,8 @@ function buildIngredientPullRow(name, grams, pantryItems) {
     grams: amount,
     pantryItem,
     estimatedCost,
-    packageCount
+    packageCount,
+    isNonCosted
   };
 }
 
@@ -376,13 +434,28 @@ function buildPlanCostRows(plan, pantryItems, starterLabel, includeBuffer = fals
     rows.push(buildIngredientPullRow(flour.name, flour.grams * multiplier, pantryItems));
   });
 
-  rows.push(buildIngredientPullRow("Water", plan.waterG * multiplier, pantryItems));
+  rows.push(
+    buildIngredientPullRow("Water", plan.waterG * multiplier, pantryItems, {
+      isNonCosted: true
+    })
+  );
 
   if (plan.bassinageWaterG > 0) {
-    rows.push(buildIngredientPullRow("Bassinage Water", plan.bassinageWaterG * multiplier, pantryItems));
+    rows.push(
+      buildIngredientPullRow(
+        "Bassinage Water",
+        plan.bassinageWaterG * multiplier,
+        pantryItems,
+        { isNonCosted: true }
+      )
+    );
   }
 
-  rows.push(buildIngredientPullRow(starterLabel, plan.starterG * multiplier, pantryItems));
+  rows.push(
+    buildIngredientPullRow(starterLabel, plan.starterG * multiplier, pantryItems, {
+      isNonCosted: true
+    })
+  );
   rows.push(buildIngredientPullRow("Salt", plan.saltG * multiplier, pantryItems));
 
   plan.otherBreakdown.forEach((ingredient) => {
@@ -402,9 +475,10 @@ function calculatePlanIngredientCost(plan, pantryItems, starterLabel, includeBuf
   );
 
   const totalCost = rows.reduce((sum, row) => sum + (row.estimatedCost || 0), 0);
-  const matchedRows = rows.filter((row) => row.pantryItem).length;
-  const totalRows = rows.length;
-  const unmatchedRows = rows.filter((row) => !row.pantryItem);
+  const costedRows = rows.filter((row) => !row.isNonCosted);
+  const matchedRows = costedRows.filter((row) => row.pantryItem).length;
+  const totalRows = costedRows.length;
+  const unmatchedRows = costedRows.filter((row) => !row.pantryItem);
 
   return {
     rows,
@@ -1389,7 +1463,11 @@ export default function BakingPlanner() {
       rows.push(buildIngredientPullRow(name, grams, pantryItems));
     });
 
-    rows.push(buildIngredientPullRow("Water", totals.bufferedWaterG, pantryItems));
+    rows.push(
+      buildIngredientPullRow("Water", totals.bufferedWaterG, pantryItems, {
+        isNonCosted: true
+      })
+    );
 
     const bassinageWaterG = plans.reduce(
       (sum, plan) => sum + (plan.bassinageWaterG || 0),
@@ -1397,14 +1475,19 @@ export default function BakingPlanner() {
     ) * ingredientBuffer;
 
     if (bassinageWaterG > 0) {
-      rows.push(buildIngredientPullRow("Bassinage Water", bassinageWaterG, pantryItems));
+      rows.push(
+        buildIngredientPullRow("Bassinage Water", bassinageWaterG, pantryItems, {
+          isNonCosted: true
+        })
+      );
     }
 
     rows.push(
       buildIngredientPullRow(
         matureStarterPullLabel,
         totals.bufferedStarterG,
-        pantryItems
+        pantryItems,
+        { isNonCosted: true }
       )
     );
 
@@ -1431,6 +1514,22 @@ export default function BakingPlanner() {
     (sum, row) => sum + (row.estimatedCost || 0),
     0
   );
+
+  const inventoryAlerts = ingredientPullRows
+    .filter((row) => row.pantryItem?.trackInventory)
+    .map((row) => ({
+      row,
+      inventory: getInventoryStatus(row)
+    }))
+    .filter(({ inventory }) => inventory.status === "short" || inventory.status === "low");
+
+  const lowStockPantryItems = pantryItems
+    .filter((item) => item.trackInventory && Number(item.lowStockThresholdGrams) > 0)
+    .filter(
+      (item) =>
+        Number(item.quantityOnHandGrams) > 0 &&
+        Number(item.quantityOnHandGrams) <= Number(item.lowStockThresholdGrams)
+    );
 
   const planCostRows = useMemo(() => {
     return plans.map((plan) => ({
@@ -2887,6 +2986,55 @@ export default function BakingPlanner() {
                       suffix="$"
                     />
 
+                    <label className="field">
+                      <span>Track Inventory</span>
+                      <select
+                        className="text-field"
+                        value={pantryDraft.trackInventory ? "yes" : "no"}
+                        onChange={(event) =>
+                          updatePantryDraft("trackInventory", event.target.value === "yes")
+                        }
+                      >
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                      </select>
+                    </label>
+
+                    <NumberInput
+                      label="Quantity On Hand"
+                      value={pantryDraft.quantityOnHand}
+                      onChange={(value) =>
+                        updatePantryDraft("quantityOnHand", Number(value))
+                      }
+                      min={0}
+                    />
+
+                    <label className="field">
+                      <span>On Hand Unit</span>
+                      <select
+                        className="text-field"
+                        value={pantryDraft.onHandUnit}
+                        onChange={(event) =>
+                          updatePantryDraft("onHandUnit", event.target.value)
+                        }
+                      >
+                        {pantryUnits.map((unit) => (
+                          <option key={unit} value={unit}>
+                            {unit}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <NumberInput
+                      label="Low Stock Alert"
+                      value={pantryDraft.lowStockThreshold}
+                      onChange={(value) =>
+                        updatePantryDraft("lowStockThreshold", Number(value))
+                      }
+                      min={0}
+                    />
+
                     <label className="field span-two">
                       <span>Notes</span>
                       <textarea
@@ -2946,6 +3094,9 @@ export default function BakingPlanner() {
                             <th>Cost / g</th>
                             <th>Cost / oz</th>
                             <th>Cost / lb</th>
+                            <th>Inventory</th>
+                            <th>Low Alert</th>
+                            <th>Status</th>
                             <th>Notes</th>
                             <th>Actions</th>
                           </tr>
@@ -3038,6 +3189,78 @@ export default function BakingPlanner() {
                               <td>{formatMoney(item.costPerGram, 4)}</td>
                               <td>{formatMoney(item.costPerOunce, 4)}</td>
                               <td>{formatMoney(item.costPerPound, 2)}</td>
+                              <td>
+                                <div className="grid two">
+                                  <input
+                                    className="text-field"
+                                    type="number"
+                                    min="0"
+                                    step="any"
+                                    value={item.quantityOnHand}
+                                    onChange={(event) =>
+                                      updatePantryItem(
+                                        item.id,
+                                        "quantityOnHand",
+                                        Number(event.target.value)
+                                      )
+                                    }
+                                  />
+                                  <select
+                                    className="text-field"
+                                    value={item.onHandUnit}
+                                    onChange={(event) =>
+                                      updatePantryItem(
+                                        item.id,
+                                        "onHandUnit",
+                                        event.target.value
+                                      )
+                                    }
+                                  >
+                                    {pantryUnits.map((unit) => (
+                                      <option key={unit} value={unit}>
+                                        {unit}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </td>
+                              <td>
+                                <input
+                                  className="text-field"
+                                  type="number"
+                                  min="0"
+                                  step="any"
+                                  value={item.lowStockThreshold}
+                                  onChange={(event) =>
+                                    updatePantryItem(
+                                      item.id,
+                                      "lowStockThreshold",
+                                      Number(event.target.value)
+                                    )
+                                  }
+                                />
+                              </td>
+                              <td>
+                                <select
+                                  className="text-field"
+                                  value={item.trackInventory ? "yes" : "no"}
+                                  onChange={(event) =>
+                                    updatePantryItem(
+                                      item.id,
+                                      "trackInventory",
+                                      event.target.value === "yes"
+                                    )
+                                  }
+                                >
+                                  <option value="no">Not tracked</option>
+                                  <option value="yes">Tracked</option>
+                                </select>
+                                {item.trackInventory ? (
+                                  <p className="muted tiny">
+                                    On hand: {formatSmartWeight(item.quantityOnHandGrams)}
+                                  </p>
+                                ) : null}
+                              </td>
                               <td>
                                 <textarea
                                   className="text-field"
@@ -3174,6 +3397,10 @@ export default function BakingPlanner() {
                                     ? ` • ${formatNumber(row.pantryItem.packageSize, 2)}${row.pantryItem.packageUnit} package`
                                     : ""}
                                 </p>
+                              ) : row.isNonCosted ? (
+                                <p className="muted tiny">
+                                  No pantry item needed.
+                                </p>
                               ) : (
                                 <p className="muted tiny">
                                   No pantry match yet. Add or rename a pantry item to estimate package pull and cost.
@@ -3183,12 +3410,21 @@ export default function BakingPlanner() {
                             <div style={{ textAlign: "right" }}>
                               <strong>{formatSmartWeight(row.grams)}</strong>
                               {row.pantryItem ? (
-                                <p className="muted tiny">
-                                  {formatPackagePull(row)}
-                                  {row.estimatedCost
-                                    ? ` • ${formatMoney(row.estimatedCost, 2)}`
-                                    : ""}
-                                </p>
+                                <>
+                                  <p className="muted tiny">
+                                    {formatPackagePull(row)}
+                                    {row.estimatedCost
+                                      ? ` • ${formatMoney(row.estimatedCost, 2)}`
+                                      : ""}
+                                  </p>
+                                  {row.pantryItem.trackInventory ? (
+                                    <p className={getInventoryStatus(row).className}>
+                                      {getInventoryStatus(row).label}
+                                    </p>
+                                  ) : null}
+                                </>
+                              ) : row.isNonCosted ? (
+                                <p className="muted tiny">Not costed</p>
                               ) : null}
                             </div>
                           </div>
@@ -3260,6 +3496,40 @@ export default function BakingPlanner() {
                       <span className="muted tiny">Ingredient rows matched to Pantry</span>
                     </div>
                   </div>
+                </div>
+
+                <div className="soft-panel">
+                  <div className="section-head">
+                    <div>
+                      <h3>Inventory Alerts</h3>
+                      <p className="muted small">
+                        Pantry items marked as tracked will warn you when this bake cycle exceeds what is on hand or drops below the low-stock alert.
+                      </p>
+                    </div>
+                    <span className="pill">
+                      {inventoryAlerts.length + lowStockPantryItems.length} alert{inventoryAlerts.length + lowStockPantryItems.length === 1 ? "" : "s"}
+                    </span>
+                  </div>
+
+                  {inventoryAlerts.length || lowStockPantryItems.length ? (
+                    <div className="stack">
+                      {inventoryAlerts.map(({ row, inventory }) => (
+                        <p key={`pull-${row.name}`} className="notice warning-box">
+                          <strong>{row.pantryItem.name}</strong>: {inventory.label}. Needed for this bake cycle: {formatSmartWeight(row.grams)}.
+                        </p>
+                      ))}
+
+                      {lowStockPantryItems.map((item) => (
+                        <p key={`low-${item.id}`} className="notice warning-box">
+                          <strong>{item.name}</strong> is at or below its low-stock alert. Current amount: {formatSmartWeight(item.quantityOnHandGrams)}.
+                        </p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="notice good-box">
+                      No inventory shortages or low-stock alerts found for tracked pantry items.
+                    </p>
+                  )}
                 </div>
 
                 <div className="soft-panel">
