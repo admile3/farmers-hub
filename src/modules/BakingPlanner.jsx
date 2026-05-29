@@ -1183,7 +1183,7 @@ export default function BakingPlanner() {
   const { user } = useAuth();
   const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } = useUnsavedChanges();
 
-  const [activeTab, setActiveTab] = useState("planner");
+  const [activeTab, setActiveTab] = useState("recipes");
   const [cloudLoading, setCloudLoading] = useState(false);
   const [cloudStatus, setCloudStatus] = useState("Local only");
 
@@ -2309,12 +2309,12 @@ export default function BakingPlanner() {
         </header>
 
         <nav className="tabs">
-          {tabButton("planner", "Bake Plan", ClipboardList)}
-          {tabButton("recipes", "Recipes", BookOpen)}
-          {tabButton("starter", "Starter", FlaskConical)}
-          {tabButton("pantry", "Pantry", Package)}
-          {tabButton("sheet", "Production Sheet", Printer)}
-        </nav>
+  {tabButton("pantry", "Pantry", Package)}
+  {tabButton("recipes", "Recipes", BookOpen)}
+  {tabButton("starter", "Starter", FlaskConical)}
+  {tabButton("planner", "Bake Plan", ClipboardList)}
+  {tabButton("sheet", "Production Sheet", Printer)}
+</nav>
 
         {activeTab === "planner" && (
           <div className="layout two-col">
