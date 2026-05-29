@@ -25,7 +25,6 @@ import {
   PackageCheck,
   Settings,
   Sprout,
-  Upload,
   Users,
   Wheat,
   X
@@ -40,7 +39,6 @@ import PermitGrantTracker from "./modules/PermitGrantTracker.jsx";
 import Lists from "./modules/Lists.jsx";
 import Calendar from "./modules/Calendar.jsx";
 import Customers from "./modules/Customers.jsx";
-import ImportExport from "./modules/ImportExport.jsx";
 import AccountSettings from "./modules/AccountSettings.jsx";
 import Onboarding from "./modules/Onboarding.jsx";
 import { useAuth } from "./AuthContext.jsx";
@@ -872,6 +870,7 @@ function AppShell({ children }) {
         </nav>
 
         <AccountStatusCard />
+
       </aside>
 
       <main className="main modernMain">{children}</main>
@@ -1545,8 +1544,6 @@ export default function App() {
         <Route path="/lists" element={<AccessGate><Lists /></AccessGate>} />
         <Route path="/calendar" element={<AccessGate><Calendar /></AccessGate>} />
         <Route path="/customers" element={<AccessGate><Customers /></AccessGate>} />
-        <Route path="/import-export" element={<AccessGate><ImportExport /></AccessGate>} />
-
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
