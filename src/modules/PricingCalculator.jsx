@@ -9,9 +9,13 @@ import {
   Search,
   Tag,
   Target,
-  Trash2
+  Trash2,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebase";
 import { useAuth } from "../AuthContext.jsx";
 import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import {
@@ -19,6 +23,7 @@ import {
   getProducts,
   saveProduct
 } from "../services/productService.js";
+import { getSpiceRecipes } from "../services/spiceKitchenService.js";
 import StatCard from "../components/StatCard.jsx";
 
 const categories = [
@@ -128,6 +133,171 @@ function sampleProduct() {
   };
 }
 
+function numberOrBlank(value) {
+  if (value === "" || value === null || value === undefined) return "";
+  const number = Number(value);
+  return Number.isFinite(number) ? number : "";
+}
+
+function formatPackageSize(size, unit) {
+  const amount = Number(size) || 0;
+  if (!amount) return "";
+  return `${Number(amount.toFixed(3)).toString()} ${unit || ""}`.trim();
+}
+
+function buildSpiceDirectoryProducts(spiceRecipes = []) {
+  const products = [];
+
+  spiceRecipes
+    .filter((recipe) => recipe?.listInProductDirectory)
+    .forEach((recipe) => {
+      const packageRows = Array.isArray(recipe.productPackages)
+        ? recipe.productPackages
+        : [];
+      const costPerOunce = Number(recipe.formulaCostPerOunce) || 0;
+      const listSizesAsUniqueProducts = Boolean(recipe.listSizesAsUniqueProducts);
+
+      if (listSizesAsUniqueProducts) {
+        packageRows.forEach((packageItem, index) => {
+          const packageName = packageItem.name || formatPackageSize(packageItem.size, packageItem.unit) || `Size ${index + 1}`;
+          const ingredientCost =
+            Number(packageItem.ingredientCost) ||
+            (Number(packageItem.packageOunces) || 0) * costPerOunce;
+
+          products.push({
+            id: `spice-${recipe.id}-${index}`,
+            sourceType: "spice",
+            sourceLabel: "Spice Kitchen",
+            sourceRecipeId: recipe.id,
+            sourceVariantIndex: index,
+            isGeneratedProduct: true,
+            isVariantProduct: true,
+            parentName: recipe.name,
+            name: `${recipe.name} - ${packageName}`,
+            category: "Spices",
+            status: "Active",
+            sku: "",
+            unitLabel: packageName,
+            description: recipe.notes || "",
+            retailPrice: "",
+            wholesalePrice: "",
+            targetMargin: 70,
+            batchIngredientCost: ingredientCost,
+            batchUnits: 1,
+            packagingCostPerUnit: "",
+            laborHours: "",
+            laborRate: "",
+            overheadCost: "",
+            notes: "Generated from Spice Kitchen.",
+            generatedVariants: [],
+            updatedAt: recipe.updatedAt || recipe.createdAt || ""
+          });
+        });
+
+        return;
+      }
+
+      const variants = packageRows.map((packageItem, index) => {
+        const packageName = packageItem.name || formatPackageSize(packageItem.size, packageItem.unit) || `Size ${index + 1}`;
+        const ingredientCost =
+          Number(packageItem.ingredientCost) ||
+          (Number(packageItem.packageOunces) || 0) * costPerOunce;
+
+        return {
+          id: `spice-${recipe.id}-variant-${index}`,
+          name: packageName,
+          size: packageItem.size,
+          unit: packageItem.unit,
+          packageOunces: packageItem.packageOunces,
+          ingredientCost,
+          costPerUnit: ingredientCost
+        };
+      });
+
+      const firstVariant = variants[0] || null;
+
+      products.push({
+        id: `spice-${recipe.id}`,
+        sourceType: "spice",
+        sourceLabel: "Spice Kitchen",
+        sourceRecipeId: recipe.id,
+        isGeneratedProduct: true,
+        name: recipe.name || "Untitled Spice Blend",
+        category: "Spices",
+        status: "Active",
+        sku: "",
+        unitLabel: firstVariant?.name || "package",
+        description: recipe.notes || "",
+        retailPrice: "",
+        wholesalePrice: "",
+        targetMargin: 70,
+        batchIngredientCost: firstVariant?.ingredientCost || costPerOunce,
+        batchUnits: 1,
+        packagingCostPerUnit: "",
+        laborHours: "",
+        laborRate: "",
+        overheadCost: "",
+        notes: "Generated from Spice Kitchen. Package sizes are shown as variants.",
+        formulaCostPerOunce: costPerOunce,
+        generatedVariants: variants,
+        listSizesAsUniqueProducts,
+        updatedAt: recipe.updatedAt || recipe.createdAt || ""
+      });
+    });
+
+  return products;
+}
+
+function buildBakingDirectoryProducts(bakingRecipes = []) {
+  return bakingRecipes
+    .filter((recipe) => recipe?.listInProductDirectory)
+    .map((recipe) => {
+      const directory = recipe.productDirectory || {};
+      const productName = directory.productName || recipe.name || "Untitled Baking Product";
+      const unitsPerBatch = Number(directory.unitsPerBatch) || Number(recipe.ovenCapacityUnits) || 1;
+      const laborHours = Number(directory.laborHoursPerBatch) || "";
+      const batchIngredientCost =
+        recipe.pricingSummary?.totalCost ||
+        recipe.productDirectory?.batchIngredientCost ||
+        "";
+
+      return {
+        id: `baking-${recipe.id}`,
+        sourceType: "baking",
+        sourceLabel: "Baking Planner",
+        sourceRecipeId: recipe.id,
+        isGeneratedProduct: true,
+        name: productName,
+        category: recipe.category === "Loaf" || recipe.category === "Baguette" || recipe.category === "Pan Loaf"
+          ? "Bread"
+          : "Baked Goods",
+        status: "Active",
+        sku: "",
+        unitLabel: directory.sellingUnit || recipe.unitsLabel || "unit",
+        description: directory.notes || "",
+        retailPrice: "",
+        wholesalePrice: "",
+        targetMargin: 70,
+        batchIngredientCost,
+        batchUnits: unitsPerBatch,
+        packagingCostPerUnit: "",
+        laborHours,
+        laborRate: "",
+        overheadCost: "",
+        notes: "Generated from Baking Planner.",
+        generatedVariants: [],
+        updatedAt: recipe.updatedAt || ""
+      };
+    });
+}
+
+function productSourceLabel(product) {
+  if (product?.sourceLabel) return product.sourceLabel;
+  if (product?.sourceType === "manual") return "Manual";
+  return "Manual";
+}
+
+
 function calculateProduct(product) {
   const batchIngredientCost = Number(product.batchIngredientCost) || 0;
   const batchUnits = Number(product.batchUnits) || 0;
@@ -219,6 +389,9 @@ export default function PricingCalculator() {
   const pricingRef = useRef(null);
 
   const [products, setProducts] = useState([]);
+  const [spiceProducts, setSpiceProducts] = useState([]);
+  const [bakingProducts, setBakingProducts] = useState([]);
+  const [expandedProductIds, setExpandedProductIds] = useState({});
   const [selectedProductId, setSelectedProductId] = useState("");
   const [form, setForm] = useState(blankProduct());
   const [queryText, setQueryText] = useState("");
@@ -229,16 +402,27 @@ export default function PricingCalculator() {
   const [statusMessage, setStatusMessage] = useState("");
   const [showBackToTop, setShowBackToTop] = useState(false);
 
+  const allDirectoryProducts = useMemo(() => {
+    const manualProducts = products.map((product) => ({
+      ...product,
+      sourceType: product.sourceType || "manual",
+      sourceLabel: product.sourceLabel || "Manual",
+      generatedVariants: product.generatedVariants || []
+    }));
+
+    return [...manualProducts, ...spiceProducts, ...bakingProducts];
+  }, [products, spiceProducts, bakingProducts]);
+
   const selectedProduct = useMemo(() => {
-    return products.find((product) => product.id === selectedProductId) || null;
-  }, [products, selectedProductId]);
+    return allDirectoryProducts.find((product) => product.id === selectedProductId) || null;
+  }, [allDirectoryProducts, selectedProductId]);
 
   const calculation = useMemo(() => calculateProduct(form), [form]);
 
   const filteredProducts = useMemo(() => {
     const search = normalize(queryText);
 
-    return products.filter((product) => {
+    return allDirectoryProducts.filter((product) => {
       const matchesSearch = search
         ? [product.name, product.category, product.sku, product.description, product.notes]
             .map(normalize)
@@ -253,11 +437,11 @@ export default function PricingCalculator() {
 
       return matchesSearch && matchesCategory && matchesStatus;
     });
-  }, [products, queryText, categoryFilter, statusFilter]);
+  }, [allDirectoryProducts, queryText, categoryFilter, statusFilter]);
 
   const stats = useMemo(() => {
-    const activeProducts = products.filter((product) => product.status === "Active");
-    const productsWithPricing = products.filter((product) => {
+    const activeProducts = allDirectoryProducts.filter((product) => product.status === "Active");
+    const productsWithPricing = allDirectoryProducts.filter((product) => {
       const calc = calculateProduct(product);
       return calc.costPerUnit > 0 && Number(product.retailPrice) > 0;
     });
@@ -274,7 +458,7 @@ export default function PricingCalculator() {
       averageRetailMargin,
       productsWithPricing: productsWithPricing.length
     };
-  }, [products]);
+  }, [allDirectoryProducts]);
 
   function markProductsDirty() {
     markUnsaved({
@@ -306,6 +490,8 @@ export default function PricingCalculator() {
       loadProducts();
     } else {
       setProducts([]);
+      setSpiceProducts([]);
+      setBakingProducts([]);
       setSelectedProductId("");
       setForm(blankProduct());
     }
@@ -317,8 +503,25 @@ export default function PricingCalculator() {
     setLoadingProducts(true);
 
     try {
-      const saved = await getProducts(user.uid);
+      const [saved, spiceRecipes, bakingSnapshot] = await Promise.all([
+        getProducts(user.uid),
+        getSpiceRecipes(user.uid).catch((error) => {
+          console.error(error);
+          return [];
+        }),
+        getDoc(doc(db, "users", user.uid, "bakingPlanner", "main")).catch((error) => {
+          console.error(error);
+          return null;
+        })
+      ]);
+
+      const bakingRecipes = bakingSnapshot?.exists?.()
+        ? bakingSnapshot.data()?.recipes || []
+        : [];
+
       setProducts(Array.isArray(saved) ? saved : []);
+      setSpiceProducts(buildSpiceDirectoryProducts(spiceRecipes));
+      setBakingProducts(buildBakingDirectoryProducts(bakingRecipes));
     } catch (error) {
       console.error(error);
       setStatusMessage("Could not load products.");
@@ -382,10 +585,16 @@ export default function PricingCalculator() {
 
     const productToSave = {
       ...form,
-      id: selectedProductId || form.id || makeId(),
+      id:
+        form.isGeneratedProduct || String(selectedProductId).startsWith("spice-") || String(selectedProductId).startsWith("baking-")
+          ? makeId()
+          : selectedProductId || form.id || makeId(),
       name: form.name.trim(),
       category: form.category || "Other",
       status: form.status || "Active",
+      sourceType: form.isGeneratedProduct ? "manual" : form.sourceType || "manual",
+      sourceLabel: form.isGeneratedProduct ? "Manual" : form.sourceLabel || "Manual",
+      isGeneratedProduct: false,
       pricingSummary: calculation
     };
 
@@ -408,6 +617,11 @@ export default function PricingCalculator() {
     if (!user || !productId) return;
 
     const product = products.find((item) => item.id === productId);
+
+    if (!product) {
+      setStatusMessage("Generated products are managed in their source module.");
+      return;
+    }
     const confirmed = window.confirm(
       `Delete ${product?.name || "this product"}? This cannot be undone.`
     );
@@ -429,6 +643,13 @@ export default function PricingCalculator() {
       console.error(error);
       setStatusMessage("Could not delete product.");
     }
+  }
+
+  function toggleProductExpanded(productId) {
+    setExpandedProductIds((current) => ({
+      ...current,
+      [productId]: !current[productId]
+    }));
   }
 
   const sectionCards = [
@@ -485,7 +706,7 @@ export default function PricingCalculator() {
       </section>
 
       <section className="hubStatGrid pricingStatGrid">
-        <StatCard icon={Package} label="Products" value={loadingProducts ? "..." : products.length} sub="saved products" accent="pricing" />
+        <StatCard icon={Package} label="Products" value={loadingProducts ? "..." : allDirectoryProducts.length} sub="manual + module products" accent="pricing" />
         <StatCard icon={Tag} label="Active" value={loadingProducts ? "..." : stats.activeCount} sub="currently available" accent="market" />
         <StatCard icon={Target} label="Avg Margin" value={loadingProducts ? "..." : percent(stats.averageRetailMargin)} sub="retail margin" accent="spice" />
         <StatCard icon={Calculator} label="Priced" value={loadingProducts ? "..." : stats.productsWithPricing} sub="cost + retail price" accent="sourdough" />
@@ -543,7 +764,7 @@ export default function PricingCalculator() {
 
         <div className="batchTable compactBatchTable pricingComparisonTable">
           <div className="pricingComparisonHeader">
-            <span>Product</span><span>Category</span><span>Retail</span><span>Wholesale</span><span>Cost / Unit</span><span>Margin</span><span>Status</span><span>Updated</span><span>Notes</span><span></span>
+            <span>Product</span><span>Source</span><span>Category</span><span>Retail</span><span>Wholesale</span><span>Cost / Unit</span><span>Margin</span><span>Status</span><span>Updated</span><span>Notes</span><span></span>
           </div>
 
           {filteredProducts.length ? (
@@ -554,7 +775,11 @@ export default function PricingCalculator() {
                   <span>
                     <button className="savedItemLink" type="button" onClick={() => loadProduct(product)}>{product.name || "Untitled Product"}</button>
                     {product.sku ? <small>{product.sku}</small> : null}
+                    {product.generatedVariants?.length ? (
+                      <small>{product.generatedVariants.length} size variant{product.generatedVariants.length === 1 ? "" : "s"}</small>
+                    ) : null}
                   </span>
+                  <span>{productSourceLabel(product)}</span>
                   <span>{product.category || "Other"}</span>
                   <span className="pricingMetric">{money(product.retailPrice)}</span>
                   <span className="pricingMetric">{money(product.wholesalePrice)}</span>
@@ -563,7 +788,28 @@ export default function PricingCalculator() {
                   <span>{product.status || "Active"}</span>
                   <span>{formatShortDate(product.updatedAt)}</span>
                   <span>{product.notes || product.description || ""}</span>
-                  <span><button className="iconButton danger" type="button" onClick={() => removeProduct(product.id)} aria-label="Delete product"><Trash2 size={15} /></button></span>
+                  <span>
+                    {product.generatedVariants?.length ? (
+                      <button className="iconButton" type="button" onClick={() => toggleProductExpanded(product.id)} aria-label="Toggle variants">
+                        {expandedProductIds[product.id] ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                      </button>
+                    ) : product.isGeneratedProduct ? (
+                      <span className="pricingGeneratedBadge">Linked</span>
+                    ) : (
+                      <button className="iconButton danger" type="button" onClick={() => removeProduct(product.id)} aria-label="Delete product"><Trash2 size={15} /></button>
+                    )}
+                  </span>
+                  {expandedProductIds[product.id] && product.generatedVariants?.length ? (
+                    <div className="pricingVariantList">
+                      {product.generatedVariants.map((variant) => (
+                        <div className="pricingVariantRow" key={variant.id}>
+                          <span>{variant.name}</span>
+                          <span>{formatPackageSize(variant.size, variant.unit)}</span>
+                          <span>{money(variant.ingredientCost)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               );
             })
@@ -585,6 +831,12 @@ export default function PricingCalculator() {
               </button>
             </div>
           </div>
+
+          {form.isGeneratedProduct ? (
+            <div className="placeholderBox compactPlaceholder linkedProductNotice">
+              <strong>Linked product:</strong> this product is generated from {productSourceLabel(form)}. Saving edits here will create a manual product copy. To change the source recipe or package variants, edit it in the source module.
+            </div>
+          ) : null}
 
           <div className="formGrid compactFormGrid">
             <label>Product Name<input value={form.name} onChange={(event) => updateField("name", event.target.value)} placeholder="e.g., Sourdough Loaf, Soy Candle, Lavender Bouquet" /></label>
@@ -614,7 +866,7 @@ export default function PricingCalculator() {
         <div className="workspaceHeader compactPanelHeader">
           <div><p className="eyebrow">Pricing</p><h3>Pricing Analysis</h3></div>
           <div className="formActions compactActions">
-            <label>Select Product<select value={selectedProductId} onChange={(event) => { const product = products.find((item) => item.id === event.target.value); if (product) loadProduct(product); }}><option value="">Unsaved or new product</option>{products.map((product) => <option key={product.id} value={product.id}>{product.name || "Untitled Product"}</option>)}</select></label>
+            <label>Select Product<select value={selectedProductId} onChange={(event) => { const product = allDirectoryProducts.find((item) => item.id === event.target.value); if (product) loadProduct(product); }}><option value="">Unsaved or new product</option>{allDirectoryProducts.map((product) => <option key={product.id} value={product.id}>{product.name || "Untitled Product"} ({productSourceLabel(product)})</option>)}</select></label>
             <button className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`} type="button" onClick={saveCurrentProduct} disabled={saving}><Save size={15} />{saving ? "Saving..." : hasUnsavedChanges ? "Save Changes" : "Save Product"}</button>
           </div>
         </div>
