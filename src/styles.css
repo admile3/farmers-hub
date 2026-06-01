@@ -6544,3 +6544,105 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+/* =========================================================
+   Orders module refinements: modal editor, compact line items,
+   wholesale pricing toggle
+   Append this below the existing Orders CSS.
+   ========================================================= */
+
+.ordersDirectoryOnlyLayout {
+  display: block;
+}
+
+.ordersDirectoryOnlyLayout .ordersDirectoryPanel {
+  width: 100%;
+}
+
+.ordersDirectoryOnlyLayout .ordersList {
+  max-height: none;
+}
+
+.ordersEditorOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(18, 24, 32, 0.46);
+  backdrop-filter: blur(5px);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.ordersEditorModal {
+  width: min(1180px, 96vw);
+  max-height: 92vh;
+  overflow: auto;
+  box-shadow: 0 24px 70px rgba(18, 24, 32, 0.28);
+  border-color: rgba(123, 111, 176, 0.24);
+}
+
+.ordersEditorModal > .workspaceHeader {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(10px);
+  margin: -2px -2px 8px;
+  padding: 2px 2px 10px;
+  border-bottom: 1px solid rgba(123, 111, 176, 0.12);
+}
+
+.ordersLineProduct {
+  gap: 7px;
+}
+
+.ordersLineMode {
+  display: inline-flex;
+  width: fit-content;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #ffffff;
+  padding: 3px;
+}
+
+.ordersLineMode button {
+  min-height: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 4px 9px;
+  cursor: pointer;
+}
+
+.ordersLineMode button.selected {
+  background: #f3f0ff;
+  color: #5b5293;
+}
+
+.ordersLineMode button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ordersLineRow {
+  align-items: end;
+}
+
+.ordersLineHeader {
+  align-items: center;
+}
+
+@media (max-width: 800px) {
+  .ordersEditorOverlay {
+    padding: 10px;
+  }
+
+  .ordersEditorModal {
+    width: 100%;
+    max-height: 95vh;
+    border-radius: 18px;
+  }
+}
