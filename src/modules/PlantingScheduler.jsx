@@ -632,22 +632,20 @@ export default function PlantingScheduler() {
   if (!user) {
     return (
       <div className="plantingModule modulePage plantingSchedulerResponsive">
-        <section className="moduleHero compactHero plantingSchedulerHero plantingActionHero">
-          <div className="plantingHeroContent">
-            <div className="plantingHeroText">
-              <p className="eyebrow">Planting Scheduler</p>
-              <h2>Sign in to schedule plantings.</h2>
-              <p>
-                Create crop templates, schedule planting batches, and track growing
-                tasks from seed to harvest.
-              </p>
-            </div>
+        <section className="moduleHero compactHero plantingSchedulerHero plantingCalendarHero">
+          <div className="plantingHeroText">
+            <p className="eyebrow">Planting Scheduler</p>
+            <h2>Sign in to schedule plantings.</h2>
+            <p>
+              Create crop templates, schedule planting batches, and track growing
+              tasks from seed to harvest.
+            </p>
+          </div>
 
-            <div className="moduleHeroActions plantingHeroActions">
-              <button className="primaryButton" type="button" onClick={loginWithGoogle}>
-                Sign in with Google
-              </button>
-            </div>
+          <div className="plantingHeroActions">
+            <button className="primaryButton" type="button" onClick={loginWithGoogle}>
+              Sign in with Google
+            </button>
           </div>
         </section>
       </div>
@@ -665,29 +663,27 @@ export default function PlantingScheduler() {
         </div>
       ) : null}
 
-      <section className="moduleHero compactHero plantingSchedulerHero plantingActionHero">
-        <div className="plantingHeroContent">
-          <div className="plantingHeroText">
-            <p className="eyebrow">Planting Scheduler</p>
-            <h2>Plan crops, plantings, growing tasks, and harvest windows.</h2>
-            <p>
-              Build reusable crop templates, schedule batches by planting date or
-              target harvest date, and track upcoming crop tasks across trays, beds,
-              pots, fields, and greenhouse space.
-            </p>
-          </div>
+      <section className="moduleHero compactHero plantingSchedulerHero plantingCalendarHero">
+        <div className="plantingHeroText">
+          <p className="eyebrow">Planting Scheduler</p>
+          <h2>Plan crops, plantings, growing tasks, and harvest windows.</h2>
+          <p>
+            Build reusable crop templates, schedule batches by planting date or
+            target harvest date, and track upcoming crop tasks across trays, beds,
+            pots, fields, and greenhouse space.
+          </p>
+        </div>
 
-          <div className="moduleHeroActions plantingHeroActions">
-            <button className="secondaryButton compactButton" type="button" onClick={startNewTemplate}>
-              <Leaf size={16} />
-              New Template
-            </button>
+        <div className="plantingHeroActions">
+          <button className="secondaryButton compactButton" type="button" onClick={startNewTemplate}>
+            <Leaf size={16} />
+            New Template
+          </button>
 
-            <button className="primaryButton compactPrimary" type="button" onClick={startNewBatch}>
-              <Plus size={16} />
-              New Planting
-            </button>
-          </div>
+          <button className="primaryButton compactPrimary" type="button" onClick={startNewBatch}>
+            <Plus size={16} />
+            New Planting
+          </button>
         </div>
       </section>
 
