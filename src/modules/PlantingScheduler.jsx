@@ -632,7 +632,7 @@ export default function PlantingScheduler() {
   if (!user) {
     return (
       <div className="plantingModule modulePage plantingSchedulerResponsive">
-        <section className="moduleHero compactHero plantingSchedulerHero">
+        <section className="moduleHero compactHero plantingSchedulerHero standardModuleHeroWithActions">
           <div>
             <p className="eyebrow">Planting Scheduler</p>
             <h2>Sign in to schedule plantings.</h2>
@@ -661,7 +661,7 @@ export default function PlantingScheduler() {
         </div>
       ) : null}
 
-      <section className="moduleHero compactHero plantingSchedulerHero">
+      <section className="moduleHero compactHero plantingSchedulerHero standardModuleHeroWithActions">
         <div>
           <p className="eyebrow">Planting Scheduler</p>
           <h2>Plan crops, plantings, growing tasks, and harvest windows.</h2>
@@ -672,7 +672,7 @@ export default function PlantingScheduler() {
           </p>
         </div>
 
-        <div className="formActions compactActions">
+        <div className="moduleHeroActions plantingHeroActions">
           <button className="secondaryButton compactButton" type="button" onClick={startNewTemplate}>
             <Leaf size={16} />
             New Template
