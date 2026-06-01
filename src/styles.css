@@ -9355,3 +9355,200 @@ input[type="number"] {
     display: none;
   }
 }
+/* =========================================================
+   Dashboard mobile/tablet optimization
+   Append to the bottom of src/styles.css
+   ========================================================= */
+
+.dashboardOverviewGridOptimized,
+.dashboardTwoColumnOptimized,
+.dashboardSubscriptionBanner {
+  min-width: 0;
+}
+
+.dashboardFooterCopy {
+  min-width: 0;
+}
+
+.dashboardFooterCopy p {
+  max-width: 760px;
+  overflow-wrap: anywhere;
+}
+
+.dashboardFooterActions {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboardFooterButton {
+  flex: 0 1 auto;
+  min-width: 170px;
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+}
+
+.dashboardWorkspaceList .dashboardRow,
+.dashboardTwoColumnOptimized .dashboardRow {
+  min-width: 0;
+}
+
+.dashboardTwoColumnOptimized .dashboardRowTextLink,
+.dashboardTwoColumnOptimized .dashboardRowTextLink h4,
+.dashboardTwoColumnOptimized .dashboardRowTextLink p {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1050px) {
+  .dashboardHeroV2.dashboardHeroV2,
+  .dashboardTwoColumnOptimized {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dashboardOverviewGridOptimized {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .dashboardPanel {
+    padding: 16px !important;
+    border-radius: 16px !important;
+  }
+
+  .dashboardPanel .sectionHeader h2 {
+    font-size: clamp(1.4rem, 5vw, 2rem);
+    line-height: 1.05;
+  }
+
+  .dashboardSubscriptionBanner {
+    grid-template-columns: 1fr !important;
+    gap: 14px;
+    padding: 16px !important;
+    align-items: stretch;
+  }
+
+  .dashboardFooterActions {
+    justify-content: flex-start !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .dashboardHeroMainV2 h2 {
+    white-space: normal !important;
+  }
+
+  .dashboardOverviewGridOptimized {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .dashboardTwoColumnOptimized {
+    gap: 12px;
+  }
+
+  .dashboardPanel {
+    padding: 14px !important;
+  }
+
+  .dashboardPanelHeader {
+    margin-bottom: 8px;
+  }
+
+  .dashboardRow,
+  .compactDashboardRow {
+    grid-template-columns: 38px minmax(0, 1fr) !important;
+    gap: 10px !important;
+    align-items: start !important;
+    padding: 11px 0 !important;
+  }
+
+  .dashboardRowIcon {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 11px !important;
+  }
+
+  .dashboardRowIcon svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .dashboardRowTextLink {
+    grid-column: 2;
+  }
+
+  .dashboardRowTextLink h4 {
+    font-size: 0.94rem;
+    line-height: 1.18;
+  }
+
+  .dashboardRowTextLink p {
+    font-size: 0.8rem;
+    line-height: 1.28;
+  }
+
+  .dashboardRow > .secondaryButton,
+  .dashboardRightMeta,
+  .dashboardTime {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .dashboardRow > .secondaryButton {
+    width: fit-content !important;
+    min-width: 108px;
+  }
+
+  .dashboardRightMeta {
+    justify-items: start;
+    white-space: normal;
+  }
+
+  .dashboardFooterCopy h3 {
+    margin-bottom: 6px;
+    font-size: 1.15rem;
+    line-height: 1.15;
+  }
+
+  .dashboardFooterCopy p {
+    margin: 0;
+    font-size: 0.86rem;
+    line-height: 1.4;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .dashboardFooterActions {
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+
+  .dashboardFooterButton,
+  .dashboardFooterActions .primaryButton,
+  .dashboardFooterActions .secondaryButton {
+    width: 100% !important;
+    min-width: 0 !important;
+    justify-content: center !important;
+    white-space: normal !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .dashboardOverviewGridOptimized {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .dashboardPanel {
+    padding: 12px !important;
+  }
+
+  .dashboardSubscriptionBanner {
+    padding: 14px !important;
+  }
+}
