@@ -7476,3 +7476,70 @@ input[type="number"] {
 .app:has(.calendarModule) .modulePage::before {
   background: var(--calendar);
 }
+@media (max-width: 1050px) {
+  .app {
+    display: block;
+  }
+
+  .sidebar,
+  .modernSidebar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    height: auto;
+    max-height: none;
+    padding: 10px 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+  }
+
+  .brand {
+    min-height: 42px;
+  }
+
+  .brandIcon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .brand h1 {
+    font-size: 1rem;
+  }
+
+  .brand p {
+    display: none;
+  }
+
+  .modernNav {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scroll-snap-type: x proximity;
+  }
+
+  .modernNavLink {
+    flex: 0 0 auto;
+    min-height: 40px;
+    padding: 9px 12px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    scroll-snap-align: start;
+    white-space: nowrap;
+  }
+
+  .modernNavLink svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .sidebarCard {
+    display: none;
+  }
+
+  .main,
+  .modernMain {
+    padding: 14px;
+  }
+}
