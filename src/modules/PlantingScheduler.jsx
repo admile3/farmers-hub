@@ -723,9 +723,38 @@ export default function PlantingScheduler() {
       </section>
 
       <section className="plantingTodayPanel workspacePanel compactPanel">
-        <div className="workspaceHeader compactPanelHeader">
-          <div>
-            <p className="eyebrow">Tasks</p>
+        <div className="workspaceHeader compactPanelHeader plantingTasksHeader">
+          <div className="plantingTasksTitleBlock">
+            <div className="plantingTasksEyebrowRow">
+              <p className="eyebrow">Tasks</p>
+
+              <div className="plantingTaskFilters">
+                <label>
+                  <span>Task</span>
+                  <select
+                    value={taskFilter}
+                    onChange={(event) => setTaskFilter(event.target.value)}
+                  >
+                    {TASK_FILTERS.map((task) => (
+                      <option key={task}>{task}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  <span>Date Range</span>
+                  <select
+                    value={taskDateRange}
+                    onChange={(event) => setTaskDateRange(event.target.value)}
+                  >
+                    {TASK_DATE_RANGES.map((range) => (
+                      <option key={range}>{range}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </div>
+
             <h3>Upcoming Planting Tasks</h3>
           </div>
 
@@ -733,29 +762,6 @@ export default function PlantingScheduler() {
             <RefreshCw size={15} />
             Refresh
           </button>
-        </div>
-
-        <div className="plantingTaskFilters">
-          <label>
-            Task
-            <select value={taskFilter} onChange={(event) => setTaskFilter(event.target.value)}>
-              {TASK_FILTERS.map((task) => (
-                <option key={task}>{task}</option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Date Range
-            <select
-              value={taskDateRange}
-              onChange={(event) => setTaskDateRange(event.target.value)}
-            >
-              {TASK_DATE_RANGES.map((range) => (
-                <option key={range}>{range}</option>
-              ))}
-            </select>
-          </label>
         </div>
 
         {upcomingTasks.length ? (
