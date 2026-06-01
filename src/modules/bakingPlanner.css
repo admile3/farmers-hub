@@ -1628,3 +1628,177 @@
     padding: 11px 12px;
   }
 }
+
+/* =========================================================
+   Mobile Header Stat Compression + Swipeable Tab Indicator
+   Added 2026-06-01
+   Purpose:
+   - Reduce mobile hero stat card height/space usage
+   - Keep Products, Planned Units, and Settings in one compact row
+   - Make the horizontal tab row visibly scrollable on mobile
+   ========================================================= */
+
+@media (max-width: 700px) {
+  .bakingPlanner .hero-inner {
+    gap: 14px;
+  }
+
+  .bakingPlanner .hero-stats {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .bakingPlanner .hero-stats div,
+  .bakingPlanner .hero-settings-card {
+    min-width: 0;
+    min-height: 78px;
+    padding: 10px;
+    border-radius: 14px;
+  }
+
+  .bakingPlanner .hero-settings-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+  }
+
+  .bakingPlanner .hero-settings-card svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .bakingPlanner .hero-settings-card p,
+  .bakingPlanner .hero-stats p {
+    margin-bottom: 4px;
+    font-size: 0.7rem;
+    line-height: 1.05;
+    overflow-wrap: anywhere;
+  }
+
+  .bakingPlanner .hero-stats strong,
+  .bakingPlanner .hero-settings-card strong {
+    font-size: 1.18rem;
+    line-height: 1.05;
+  }
+
+  .bakingPlanner .tabs {
+    position: relative;
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    padding: 2px 22px 42px 2px;
+    margin-bottom: 18px;
+    scrollbar-width: thin;
+    scrollbar-color: #dfa04c rgba(18, 24, 32, 0.14);
+    background:
+      linear-gradient(90deg, #fbfaf6 0%, rgba(251, 250, 246, 0) 42px),
+      linear-gradient(270deg, #fbfaf6 0%, rgba(251, 250, 246, 0) 42px);
+    background-position: left top, right top;
+    background-repeat: no-repeat;
+    background-size: 52px calc(100% - 32px), 52px calc(100% - 32px);
+  }
+
+  .bakingPlanner .tabs::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .bakingPlanner .tabs::-webkit-scrollbar-track {
+    background: rgba(18, 24, 32, 0.14);
+    border-radius: 999px;
+    margin-inline: 74px;
+  }
+
+  .bakingPlanner .tabs::-webkit-scrollbar-thumb {
+    background: #dfa04c;
+    border-radius: 999px;
+  }
+
+  .bakingPlanner .tabs::before {
+    content: "";
+    display: block;
+    position: absolute;
+    left: 70px;
+    right: 70px;
+    bottom: 23px;
+    height: 5px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #dfa04c 0%, #dfa04c 42%, rgba(18, 24, 32, 0.18) 42%, rgba(18, 24, 32, 0.18) 100%);
+    pointer-events: none;
+  }
+
+  .bakingPlanner .tabs::after {
+    content: "‹   Swipe to see more   ›";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 22px;
+    display: grid;
+    place-items: center;
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    pointer-events: none;
+  }
+
+  .bakingPlanner .tab {
+    flex: 0 0 148px;
+    min-height: 56px;
+    scroll-snap-align: start;
+    padding: 11px 12px;
+    border-radius: 14px;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 430px) {
+  .bakingPlanner .hero-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .bakingPlanner .hero-stats div,
+  .bakingPlanner .hero-settings-card {
+    min-height: 72px;
+    padding: 9px;
+  }
+
+  .bakingPlanner .hero-settings-card {
+    grid-template-columns: 1fr;
+    align-content: center;
+    justify-items: start;
+    gap: 4px;
+  }
+
+  .bakingPlanner .hero-settings-card svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .bakingPlanner .hero-settings-card p,
+  .bakingPlanner .hero-stats p {
+    font-size: 0.66rem;
+  }
+
+  .bakingPlanner .hero-stats strong,
+  .bakingPlanner .hero-settings-card strong {
+    font-size: 1.05rem;
+  }
+
+  .bakingPlanner .tab {
+    flex-basis: 136px;
+  }
+
+  .bakingPlanner .tabs::before {
+    left: 54px;
+    right: 54px;
+  }
+}
