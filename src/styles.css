@@ -6216,3 +6216,16 @@ input[type="number"] {
     width: 100%;
   }
 }
+/* =========================================================
+   Customers plan selector button
+   Append this to src/styles.css
+   ========================================================= */
+
+.planModuleButton.customers {
+  background: var(--customers, #6f8f72);
+}
+
+.planModuleButton.customers.selected {
+  border-color: rgba(18, 24, 32, 0.4);
+  box-shadow: 0 8px 18px rgba(22, 27, 34, 0.12);
+}
