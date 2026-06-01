@@ -79,7 +79,6 @@ const modules = [
     icon: Sprout,
     accent: "planting"
   },
-
   {
     key: "customers",
     title: "Customers",
@@ -389,7 +388,6 @@ function getCurrentModuleTitle(pathname) {
   return modules.find((module) => module.path === pathname)?.title || "Farmers Hub";
 }
 
-
 function TrialSignupBox() {
   const { loginWithGoogle, createAccountWithEmail, loginWithEmail } = useAuth();
 
@@ -519,6 +517,10 @@ function TrialSignupBox() {
 }
 
 function ModuleSelector({ selectedModules, setSelectedModules, limit }) {
+  const selectedCount = selectedModules.length;
+  const remainingCount = Math.max(limit - selectedCount, 0);
+  const isComplete = selectedCount === limit;
+
   function toggleModule(moduleKey) {
     const alreadySelected = selectedModules.includes(moduleKey);
 
@@ -533,27 +535,47 @@ function ModuleSelector({ selectedModules, setSelectedModules, limit }) {
   }
 
   return (
-    <div className="planModulePicker">
-      {modules.map((module) => {
-        const Icon = module.icon;
-        const isSelected = selectedModules.includes(module.key);
-        const isDisabled = !isSelected && selectedModules.length >= limit;
+    <div className="modulePickerBlock">
+      <div className={`modulePickerProgress ${isComplete ? "complete" : ""}`}>
+        <span>{selectedCount} of {limit} selected</span>
+        <strong>
+          {isComplete
+            ? "Ready to choose plan"
+            : `${remainingCount} more ${remainingCount === 1 ? "module" : "modules"} needed`}
+        </strong>
+      </div>
 
-        return (
-          <button
-            key={module.key}
-            type="button"
-            className={`planModuleButton ${module.accent} ${
-              isSelected ? "selected" : ""
-            } ${isDisabled ? "disabled" : ""}`}
-            onClick={() => toggleModule(module.key)}
-            disabled={isDisabled}
-          >
-            <Icon size={16} />
-            <span>{module.title}</span>
-          </button>
-        );
-      })}
+      <div className="planModulePicker">
+        {modules.map((module) => {
+          const Icon = module.icon;
+          const isSelected = selectedModules.includes(module.key);
+          const isDisabled = !isSelected && selectedModules.length >= limit;
+
+          return (
+            <button
+              key={module.key}
+              type="button"
+              className={`planModuleButton ${module.accent} ${
+                isSelected ? "selected" : ""
+              } ${isDisabled ? "disabled" : ""}`}
+              onClick={() => toggleModule(module.key)}
+              disabled={isDisabled}
+              aria-pressed={isSelected}
+              title={
+                isSelected
+                  ? `${module.title} selected`
+                  : isDisabled
+                    ? `Deselect another module before choosing ${module.title}`
+                    : `Select ${module.title}`
+              }
+            >
+              <Icon size={16} />
+              <span>{module.title}</span>
+              {isSelected ? <strong className="moduleSelectedCheck">Selected</strong> : null}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -611,20 +633,25 @@ function PricingCards({
   }
 
   return (
-    <section className="pricingPlanGrid">
+    <section className="pricingPlanGrid subscriptionPricingGrid">
       {pricingPlans.map((plan) => {
         const isBasic = plan.plan === "basic";
         const isGrowth = plan.plan === "growth";
         const isPro = plan.plan === "pro";
 
         return (
-          <div className="workspacePanel compactPanel" key={plan.plan}>
-            <p className="eyebrow">{plan.eyebrow}</p>
-            <h3>{plan.price}</h3>
-            <p className="importExportText">{plan.description}</p>
-            <p className="importExportText">
-              <strong>{plan.feature}</strong>
-            </p>
+          <div
+            className={`workspacePanel compactPanel subscriptionPlanCard subscriptionPlanCard-${plan.plan}`}
+            key={plan.plan}
+          >
+            <div className="subscriptionPlanIntro">
+              <p className="eyebrow">{plan.eyebrow}</p>
+              <h3>{plan.price}</h3>
+              <p className="importExportText">{plan.description}</p>
+              <p className="importExportText subscriptionPlanFeature">
+                <strong>{plan.feature}</strong>
+              </p>
+            </div>
 
             {mode === "checkout" && isBasic ? (
               <>
@@ -649,26 +676,37 @@ function PricingCards({
             ) : null}
 
             {mode === "checkout" && isPro ? (
-              <div className="planModulePicker proIncludedModules">
-                {modules.map((module) => {
-                  const Icon = module.icon;
+              <>
+                <p className="modulePickerHint">Included modules:</p>
 
-                  return (
-                    <div
-                      key={module.key}
-                      className={`planModuleButton ${module.accent} selected`}
-                    >
-                      <Icon size={16} />
-                      <span>{module.title}</span>
-                    </div>
-                  );
-                })}
-              </div>
+                <div className="modulePickerBlock proModulePickerBlock">
+                  <div className="modulePickerProgress complete">
+                    <span>{modules.length} of {modules.length} included</span>
+                    <strong>All modules included</strong>
+                  </div>
+
+                  <div className="planModulePicker proIncludedModules">
+                    {modules.map((module) => {
+                      const Icon = module.icon;
+
+                      return (
+                        <div
+                          key={module.key}
+                          className={`planModuleButton ${module.accent} selected proIncludedModule`}
+                        >
+                          <Icon size={16} />
+                          <span>{module.title}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
             ) : null}
 
             {mode === "checkout" ? (
               <button
-                className="primaryButton compactPrimary"
+                className="primaryButton compactPrimary subscriptionChooseButton"
                 type="button"
                 onClick={() => handlePlanClick(plan.plan)}
                 disabled={checkoutLoading === plan.plan}
@@ -1183,7 +1221,6 @@ function DashboardRoute() {
     />
   );
 }
-
 
 function NotFound() {
   return (
