@@ -7213,3 +7213,129 @@ input[type="number"] {
     flex: 1;
   }
 }
+/* =========================================================
+   Planting Scheduler: Proper Upcoming Tasks Header Layout
+   Replace/remove older planting task header/filter patches, or place this
+   at the very bottom of styles.css so it wins.
+   ========================================================= */
+
+.plantingTodayPanel {
+  gap: 12px;
+}
+
+.plantingTodayPanel .plantingTasksHeader {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: start !important;
+  gap: 14px !important;
+  margin-bottom: 2px !important;
+}
+
+.plantingTasksTitleBlock {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.plantingTasksEyebrowRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.plantingTasksEyebrowRow .eyebrow {
+  flex: 0 0 auto;
+}
+
+.plantingTaskFilters {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  width: auto !important;
+  min-width: 0 !important;
+}
+
+.plantingTaskFilters label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  font-size: 0.72rem !important;
+  font-weight: 900 !important;
+  color: var(--text) !important;
+  white-space: nowrap;
+}
+
+.plantingTaskFilters label span {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.plantingTaskFilters select {
+  width: auto !important;
+  min-width: 145px !important;
+  max-width: 170px !important;
+  min-height: 34px !important;
+  padding: 7px 10px !important;
+}
+
+.plantingTodayPanel .plantingTasksHeader .secondaryButton {
+  width: fit-content !important;
+  white-space: nowrap;
+  align-self: center;
+}
+
+.plantingTaskGrid {
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+@media (max-width: 1400px) {
+  .plantingTaskGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 1150px) {
+  .plantingTodayPanel .plantingTasksHeader {
+    grid-template-columns: 1fr !important;
+  }
+
+  .plantingTodayPanel .plantingTasksHeader .secondaryButton {
+    justify-self: start;
+  }
+
+  .plantingTasksEyebrowRow {
+    flex-wrap: wrap;
+  }
+
+  .plantingTaskGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 800px) {
+  .plantingTaskFilters {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .plantingTaskFilters label {
+    display: grid !important;
+    gap: 4px !important;
+  }
+
+  .plantingTaskFilters select {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .plantingTaskGrid {
+    grid-template-columns: 1fr !important;
+  }
+}
