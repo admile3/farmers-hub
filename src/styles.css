@@ -5823,3 +5823,133 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+/* =========================================================
+   Dashboard compact hero refinement
+   Append this to the bottom of src/styles.css
+   ========================================================= */
+
+.dashboardHeroV2 {
+  grid-template-columns: minmax(0, 1fr) minmax(230px, 280px) !important;
+  gap: 14px !important;
+  margin-bottom: 12px !important;
+  align-items: stretch !important;
+}
+
+.dashboardHeroMainV2,
+.dashboardDatePanel {
+  padding: 18px 22px !important;
+  border-radius: 16px !important;
+}
+
+.dashboardHeroMainV2 {
+  display: grid;
+  align-content: center;
+  min-height: 124px;
+}
+
+.dashboardHeroMainV2 > .eyebrow {
+  font-size: 0 !important;
+  line-height: 1 !important;
+  margin: 0 0 6px !important;
+}
+
+.dashboardHeroMainV2 > .eyebrow::after {
+  content: "Your business command center";
+  font-size: 0.72rem;
+  line-height: 1;
+  color: #2e7137;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.dashboardHeroMainV2 h2 {
+  max-width: none !important;
+  margin: 0 !important;
+  font-size: clamp(2rem, 2.8vw, 3.05rem) !important;
+  line-height: 0.98 !important;
+  letter-spacing: -0.052em !important;
+  white-space: nowrap;
+}
+
+.dashboardHeroMainV2 .heroText {
+  max-width: none !important;
+  margin-top: 8px !important;
+  font-size: 0.94rem !important;
+  line-height: 1.35 !important;
+}
+
+.dashboardDatePanel {
+  min-height: 124px;
+  gap: 10px;
+}
+
+.dashboardDatePanel .eyebrow {
+  display: none;
+}
+
+.dashboardDatePanel h3 {
+  margin: 0 0 6px !important;
+  font-size: 1.18rem !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.02em;
+}
+
+.dashboardDatePanel p {
+  margin: 0 !important;
+  font-size: 0.88rem !important;
+  line-height: 1.35 !important;
+}
+
+.dashboardDatePanel .primaryButton {
+  min-height: 36px;
+  padding: 8px 13px !important;
+  font-size: 0.82rem !important;
+  white-space: nowrap;
+}
+
+.dashboardOverviewGrid {
+  margin-top: 0 !important;
+}
+
+@media (max-width: 1250px) {
+  .dashboardHeroMainV2 h2 {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 1000px) {
+  .dashboardHeroV2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dashboardHeroMainV2,
+  .dashboardDatePanel {
+    min-height: 0;
+  }
+
+  .dashboardDatePanel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+}
+
+@media (max-width: 700px) {
+  .dashboardHeroMainV2,
+  .dashboardDatePanel {
+    padding: 16px !important;
+  }
+
+  .dashboardHeroMainV2 h2 {
+    font-size: clamp(1.8rem, 9vw, 2.4rem) !important;
+  }
+
+  .dashboardDatePanel {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardDatePanel .primaryButton {
+    width: fit-content;
+  }
+}
