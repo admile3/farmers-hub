@@ -159,6 +159,99 @@ label {
   font-size: 0.82rem;
 }
 
+/* App shell responsive controls */
+.mobileTopBar,
+.mobileBrand {
+  display: none;
+}
+
+.desktopBrand {
+  display: flex;
+}
+
+.mobileTopActions {
+  display: none;
+}
+
+.mobileModulesToggle,
+.mobileAccountPill {
+  min-height: 38px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: #ffffff;
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 11px;
+  font-size: 0.8rem;
+  font-weight: 900;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.mobileModulesToggle {
+  background: var(--green);
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.mobileAccountPill {
+  max-width: 150px;
+  overflow: hidden;
+}
+
+.mobileAccountPill img,
+.mobileAccountInitial {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.mobileAccountPill img {
+  object-fit: cover;
+}
+
+.mobileAccountInitial {
+  display: grid;
+  place-items: center;
+  background: var(--green);
+  color: #ffffff;
+  font-size: 0.76rem;
+  font-weight: 950;
+}
+
+.mobileAccountPill span:not(.mobileAccountInitial) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobileAccountPill.trial {
+  background: #fff0e8;
+  border-color: rgba(185, 79, 50, 0.2);
+  color: #b94f32;
+}
+
+.mobileAccountPill.active,
+.mobileAccountPill.admin {
+  background: #edf3e7;
+  border-color: rgba(45, 101, 53, 0.2);
+  color: #2d6535;
+}
+
+.mobileAccountPill.expired {
+  background: var(--danger-bg);
+  border-color: rgba(197, 35, 24, 0.22);
+  color: var(--danger);
+}
+
+.mobileAccountPill.loading {
+  color: var(--muted);
+}
+
 .nav,
 .modernNav {
   display: grid;
@@ -2325,23 +2418,113 @@ input[type="number"] {
 
 @media (max-width: 1050px) {
   .app {
-    grid-template-columns: 1fr;
+    display: block;
+    min-height: 100vh;
   }
 
-  .sidebar {
-    position: static;
+  .sidebar,
+  .modernSidebar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
     height: auto;
     max-height: none;
+    overflow: visible;
+    padding: 9px 10px 10px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    gap: 8px;
+    background: rgba(251, 250, 246, 0.97);
+    backdrop-filter: blur(12px);
+  }
+
+  .desktopBrand,
+  .desktopAccountCard,
+  .modernSidebar > .authCard:not(.desktopAccountCard) {
+    display: none !important;
+  }
+
+  .mobileTopBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .mobileBrand {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .mobileBrand .brandIcon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+
+  .mobileBrand h1 {
+    font-size: 1.02rem;
+    line-height: 1.05;
+  }
+
+  .mobileBrand p {
+    display: block;
+    margin-top: 2px;
+    max-width: 42vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.72rem;
+  }
+
+  .mobileTopActions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 7px;
+    flex: 0 0 auto;
+  }
+
+  .modernNav {
+    display: none;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 2px 0 4px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+  }
+
+  .modernNav.mobileOpen {
+    display: flex;
+  }
+
+  .modernNavLink {
+    flex: 0 0 auto;
+    min-height: 38px;
+    padding: 8px 11px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    scroll-snap-align: start;
+    white-space: nowrap;
+    gap: 7px;
+  }
+
+  .modernNavLink svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .main,
+  .modernMain {
+    padding: 12px;
   }
 
   .hero,
   .hero.modernHero,
   .moduleHero {
     grid-template-columns: 1fr;
-  }
-
-  .main {
-    padding: 20px;
   }
 }
 
@@ -7476,70 +7659,402 @@ input[type="number"] {
 .app:has(.calendarModule) .modulePage::before {
   background: var(--calendar);
 }
+
+/* =========================================================
+   Mobile and tablet optimization pass
+   Works with App-MOBILE-SHELL.jsx
+   ========================================================= */
+
 @media (max-width: 1050px) {
-  .app {
-    display: block;
+  body {
+    overflow-x: hidden;
   }
 
-  .sidebar,
-  .modernSidebar {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    height: auto;
-    max-height: none;
-    padding: 10px 12px;
-    border-right: 0;
-    border-bottom: 1px solid var(--border);
-    gap: 10px;
-  }
-
-  .brand {
-    min-height: 42px;
-  }
-
-  .brandIcon {
-    width: 38px;
-    height: 38px;
-  }
-
-  .brand h1 {
-    font-size: 1rem;
-  }
-
-  .brand p {
-    display: none;
-  }
-
-  .modernNav {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-    scroll-snap-type: x proximity;
-  }
-
-  .modernNavLink {
-    flex: 0 0 auto;
-    min-height: 40px;
-    padding: 9px 12px;
-    border-radius: 999px;
-    font-size: 0.82rem;
-    scroll-snap-align: start;
-    white-space: nowrap;
-  }
-
-  .modernNavLink svg {
-    width: 16px;
-    height: 16px;
-  }
-
+  .authCard,
   .sidebarCard {
     display: none;
   }
 
+  .floatingStatus {
+    top: 74px;
+    left: 12px;
+    right: 12px;
+    transform: none;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    padding: 11px 13px;
+    font-size: 0.84rem;
+  }
+
+  .modulePage,
+  .spicePage,
+  .bakingPlanner,
+  .marketPrepPage,
+  .pricingPage,
+  .permitGrantModule,
+  .listsModule,
+  .calendarModule,
+  .customersModule,
+  .ordersModule,
+  .plantingModule,
+  .accountSettingsPage,
+  .subscribePage,
+  .onboardingPage {
+    gap: 12px;
+  }
+
+  .modulePage::before,
+  .subscribePage::before,
+  .accountSettingsPage::before,
+  .bakingPlanner::before,
+  .permitGrantModule::before,
+  .listsModule::before,
+  .calendarModule::before {
+    height: 4px;
+    margin-bottom: 2px;
+  }
+
+  .hero > div:first-child,
+  .moduleHero > div:first-child,
+  .modernHeroMain,
+  .compactHero > div:first-child,
+  .dashboardHeroMainV2,
+  .dashboardDatePanel,
+  .accountSettingsHeroCompact,
+  .calendarHero {
+    padding: 15px 16px !important;
+    border-radius: 15px !important;
+  }
+
+  .hero h2,
+  .moduleHero h2,
+  .compactHero h2,
+  .dashboardHeroMainV2 h2,
+  .calendarHero h2,
+  .accountSettingsHeroPanel h2 {
+    font-size: clamp(1.55rem, 7.2vw, 2.35rem) !important;
+    line-height: 1.02 !important;
+    letter-spacing: -0.045em !important;
+  }
+
+  .heroText,
+  .moduleHero p,
+  .compactHero p,
+  .dashboardHeroMainV2 .heroText,
+  .calendarHero p,
+  .accountSettingsHeroPanel p {
+    font-size: 0.86rem !important;
+    line-height: 1.38 !important;
+  }
+
+  .workspacePanel,
+  .dashboardPanel,
+  .calendarPanel,
+  .compactPanel,
+  .toolCard,
+  .moduleCard,
+  .modernModuleCard {
+    border-radius: 15px;
+    padding: 13px !important;
+  }
+
+  .workspaceHeader {
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .workspaceHeader h3 {
+    font-size: 1.05rem;
+  }
+
+  .primaryButton,
+  .secondaryButton,
+  .dangerButton {
+    min-height: 38px;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+  }
+
+  .compactButton,
+  .compactPrimary {
+    min-height: 36px;
+    padding: 7px 11px;
+    font-size: 0.78rem;
+  }
+
+  input,
+  select,
+  textarea {
+    min-height: 38px;
+    font-size: 0.86rem;
+    padding: 8px 10px;
+  }
+
+  label {
+    font-size: 0.74rem;
+  }
+
+  .hubStatGrid,
+  .dashboardOverviewGrid,
+  .pricingStatGrid,
+  .marketPrepStatsGrid,
+  .customersStatGrid,
+  .ordersStatGrid,
+  .plantingStatGrid,
+  .calendarStatGrid,
+  .spiceStatGrid,
+  .spiceBatchStatGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .hubStatCard {
+    min-height: 58px !important;
+    padding: 10px !important;
+    gap: 8px !important;
+    border-radius: 13px !important;
+  }
+
+  .hubStatIcon {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 10px !important;
+  }
+
+  .hubStatIcon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .hubStatText span {
+    font-size: 0.64rem !important;
+    margin-bottom: 1px !important;
+  }
+
+  .hubStatText strong {
+    display: block !important;
+    font-size: 1.02rem !important;
+    line-height: 1.05 !important;
+    margin: 0 !important;
+  }
+
+  .hubStatText p {
+    display: block !important;
+    margin: 2px 0 0 !important;
+    font-size: 0.68rem !important;
+    line-height: 1.15 !important;
+  }
+
+  .toolGrid,
+  .compactToolGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 9px !important;
+  }
+
+  .clickableToolCard,
+  .toolCard.clickableToolCard,
+  .compactToolCard.clickableToolCard {
+    min-height: 72px !important;
+    padding: 11px 12px 11px 14px !important;
+    row-gap: 5px !important;
+  }
+
+  .clickableToolCard h3 {
+    font-size: 0.88rem !important;
+  }
+
+  .clickableToolCard p {
+    display: none;
+  }
+
+  .formGrid,
+  .compactFormGrid,
+  .settingsFormGrid,
+  .calculatorControls,
+  .batchTotals,
+  .grid.two,
+  .grid.three,
+  .grid.four {
+    grid-template-columns: 1fr !important;
+  }
+
+  .searchBox,
+  .compactSearch,
+  .customersSearchBox {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .table-wrap,
+  .batchTable,
+  .pricingComparisonTable,
+  .pricingEditableTable,
+  .marketPrepCompactTable,
+  .customersTablePanel,
+  .permitTablePanel {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 760px) {
+  .mobileTopBar {
+    gap: 8px;
+  }
+
+  .mobileModulesToggle {
+    font-size: 0;
+    min-width: 38px;
+    padding: 8px;
+  }
+
+  .mobileModulesToggle svg {
+    margin: 0;
+  }
+
+  .mobileAccountPill {
+    max-width: 112px;
+    padding: 7px 9px;
+  }
+
+  .mobileAccountPill span:not(.mobileAccountInitial) {
+    font-size: 0.72rem;
+  }
+
+  .modernNav.mobileOpen {
+    padding-top: 6px;
+  }
+
+  .modernNavLink {
+    min-height: 36px;
+    padding: 7px 10px;
+    font-size: 0.74rem;
+  }
+
   .main,
   .modernMain {
-    padding: 14px;
+    padding: 10px;
+  }
+
+  .moduleHero,
+  .dashboardHeroV2,
+  .accountSettingsHeroPanel,
+  .calendarHero {
+    margin-bottom: 8px !important;
+  }
+
+  .dashboardDatePanel {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dashboardDatePanel .primaryButton {
+    width: fit-content;
+  }
+
+  .moduleGrid,
+  .modernModuleGrid,
+  .pricingPlanGrid,
+  .pricingFeatureGrid,
+  .listsGrid,
+  .permitStatsGrid,
+  .onboardingChoiceGrid,
+  .accountSettingsTopGrid,
+  .accountQuickStats,
+  .accountChoiceGrid,
+  .accountShortcutGrid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .toolGrid,
+  .compactToolGrid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hubStatGrid,
+  .dashboardOverviewGrid,
+  .pricingStatGrid,
+  .marketPrepStatsGrid,
+  .customersStatGrid,
+  .ordersStatGrid,
+  .plantingStatGrid,
+  .calendarStatGrid,
+  .spiceStatGrid,
+  .spiceBatchStatGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .hubStatCard {
+    align-items: flex-start;
+  }
+
+  .hubStatIcon {
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+  .workspaceHeader,
+  .recipeLineHeader,
+  .permitGrantHero {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .workspaceHeader .primaryButton,
+  .workspaceHeader .secondaryButton,
+  .formActions .primaryButton,
+  .formActions .secondaryButton,
+  .compactActions .primaryButton,
+  .compactActions .secondaryButton {
+    width: 100%;
+  }
+
+  .floatingStatus {
+    top: 66px;
+  }
+
+  .backToTopButton {
+    right: 12px;
+    bottom: 12px;
+    padding: 9px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 430px) {
+  .mobileBrand p {
+    max-width: 34vw;
+  }
+
+  .mobileAccountPill {
+    max-width: 96px;
+  }
+
+  .hubStatGrid,
+  .dashboardOverviewGrid,
+  .pricingStatGrid,
+  .marketPrepStatsGrid,
+  .customersStatGrid,
+  .ordersStatGrid,
+  .plantingStatGrid,
+  .calendarStatGrid,
+  .spiceStatGrid,
+  .spiceBatchStatGrid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .hubStatCard {
+    min-width: 0;
+  }
+
+  .hubStatText {
+    min-width: 0;
+  }
+
+  .hubStatText p {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
