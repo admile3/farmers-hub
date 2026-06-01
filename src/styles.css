@@ -9202,3 +9202,156 @@ input[type="number"] {
     min-height: 6px;
   }
 }
+/* =========================================================
+   Subscription plan selector polish
+   Append to the bottom of src/styles.css
+   ========================================================= */
+
+.subscribePage .subscriptionPricingGrid,
+.pricingModalCompact .subscriptionPricingGrid {
+  align-items: stretch;
+}
+
+.subscribePage .subscriptionPlanCard,
+.pricingModalCompact .subscriptionPlanCard {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.subscribePage .subscriptionPlanIntro,
+.pricingModalCompact .subscriptionPlanIntro {
+  display: grid;
+  gap: 0;
+}
+
+.subscribePage .subscriptionPlanFeature,
+.pricingModalCompact .subscriptionPlanFeature {
+  margin-bottom: 14px;
+}
+
+.subscribePage .modulePickerHint,
+.pricingModalCompact .modulePickerHint {
+  margin: 0 0 8px;
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 950;
+}
+
+.subscribePage .modulePickerBlock,
+.pricingModalCompact .modulePickerBlock {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.subscribePage .modulePickerProgress,
+.pricingModalCompact .modulePickerProgress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 34px;
+  border: 1px solid rgba(22, 27, 34, 0.12);
+  border-radius: 12px;
+  background: #fbfaf6;
+  padding: 7px 10px;
+}
+
+.subscribePage .modulePickerProgress span,
+.pricingModalCompact .modulePickerProgress span {
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.subscribePage .modulePickerProgress strong,
+.pricingModalCompact .modulePickerProgress strong {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-align: right;
+}
+
+.subscribePage .modulePickerProgress.complete,
+.pricingModalCompact .modulePickerProgress.complete {
+  border-color: rgba(52, 117, 62, 0.35);
+  background: #edf7ea;
+}
+
+.subscribePage .modulePickerProgress.complete strong,
+.pricingModalCompact .modulePickerProgress.complete strong {
+  color: var(--green-dark);
+}
+
+.subscribePage .planModuleButton,
+.pricingModalCompact .planModuleButton {
+  position: relative;
+  min-height: 42px;
+  border-width: 2px;
+}
+
+.subscribePage .planModuleButton.selected,
+.pricingModalCompact .planModuleButton.selected {
+  border: 3px solid rgba(18, 24, 32, 0.72) !important;
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.72) inset,
+    0 8px 18px rgba(18, 24, 32, 0.18) !important;
+  filter: saturate(1.08) contrast(1.03);
+  opacity: 1 !important;
+}
+
+.subscribePage .planModuleButton.disabled,
+.pricingModalCompact .planModuleButton.disabled {
+  opacity: 0.28;
+  filter: grayscale(1);
+}
+
+.subscribePage .moduleSelectedCheck,
+.pricingModalCompact .moduleSelectedCheck {
+  margin-left: auto;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #121820;
+  padding: 3px 7px;
+  font-size: 0.64rem;
+  font-weight: 950;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.subscribePage .proIncludedModules,
+.pricingModalCompact .proIncludedModules {
+  margin-top: 0;
+}
+
+.subscribePage .proIncludedModule,
+.pricingModalCompact .proIncludedModule {
+  cursor: default;
+}
+
+.subscribePage .subscriptionChooseButton,
+.pricingModalCompact .subscriptionChooseButton {
+  margin-top: auto;
+}
+
+@media (max-width: 900px) {
+  .subscribePage .modulePickerProgress,
+  .pricingModalCompact .modulePickerProgress {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .subscribePage .modulePickerProgress strong,
+  .pricingModalCompact .modulePickerProgress strong {
+    text-align: left;
+  }
+
+  .subscribePage .moduleSelectedCheck,
+  .pricingModalCompact .moduleSelectedCheck {
+    display: none;
+  }
+}
