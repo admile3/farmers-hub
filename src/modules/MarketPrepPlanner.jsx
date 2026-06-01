@@ -131,6 +131,21 @@ function getProductTotals(product) {
   };
 }
 
+function formatAmount(value, unit) {
+  const cleanUnit = unit ? ` ${unit}` : "";
+  return `${round(value)}${cleanUnit}`;
+}
+
+function productSummaryLine(product) {
+  const totals = getProductTotals(product);
+  const unit = product.amountUnit || "";
+
+  return `${totals.plannedUnits} ${product.unitLabel || "units"} • Target ${formatAmount(
+    totals.finalAmount,
+    unit
+  )}`;
+}
+
 export default function MarketPrepPlanner() {
   const { user, loginWithGoogle } = useAuth();
   const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } = useUnsavedChanges();
@@ -529,7 +544,7 @@ export default function MarketPrepPlanner() {
         })}
       </section>
 
-      <section className="spiceWorkspace compactWorkspace">
+      <section className="marketPrepTopGrid compactWorkspace">
         <div className="workspacePanel compactPanel scrollAnchor marketPrepPrintDetails" ref={setupRef}>
           <div className="workspaceHeader compactPanelHeader">
             <div>
@@ -641,6 +656,21 @@ export default function MarketPrepPlanner() {
             />
           </div>
 
+          <div className="marketPrepMobileSummary marketPrepNoPrint">
+            <div>
+              <span>Products</span>
+              <strong>{totals.productCount}</strong>
+            </div>
+            <div>
+              <span>Units</span>
+              <strong>{totals.plannedUnits}</strong>
+            </div>
+            <div>
+              <span>Buffered</span>
+              <strong>{totals.lineItemsWithBuffer}</strong>
+            </div>
+          </div>
+
           <div className="placeholderBox compactPlaceholder marketPrepNoPrint">
             <strong>{marketName}</strong>
             {location ? (
@@ -730,7 +760,7 @@ export default function MarketPrepPlanner() {
         </div>
       </section>
 
-      <section className="spiceWorkspace compactWorkspace">
+      <section className="marketPrepForecastGrid compactWorkspace">
         <div className="workspacePanel compactPanel scrollAnchor marketPrepNoPrint" ref={forecastRef}>
           <div className="workspaceHeader compactPanelHeader">
             <div>
@@ -739,7 +769,7 @@ export default function MarketPrepPlanner() {
             </div>
           </div>
 
-          <form className="formGrid compactFormGrid" onSubmit={addProduct}>
+          <form className="formGrid compactFormGrid marketPrepAddProductForm" onSubmit={addProduct}>
             <label>
               Product / Item
               <input
@@ -936,6 +966,149 @@ export default function MarketPrepPlanner() {
             {location ? ` • ${location}` : ""}
             {weatherNotes ? ` • ${weatherNotes}` : ""}
           </p>
+        </div>
+
+        <div className="marketPrepMobilePackCards marketPrepNoPrint">
+          {products.length ? (
+            products.map((product) => {
+              const productTotals = getProductTotals(product);
+
+              return (
+                <article className="marketPrepMobilePackCard" key={`mobile-${product.id}`}>
+                  <div className="marketPrepMobilePackHeader">
+                    <label className="marketPrepMobileDone">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(product.packed)}
+                        onChange={() => togglePacked(product.id)}
+                      />
+                      <span>{product.packed ? "Packed" : "Pack"}</span>
+                    </label>
+
+                    <button
+                      className="iconButton danger"
+                      type="button"
+                      onClick={() => removeProduct(product.id)}
+                      aria-label={`Remove ${product.name || "product"}`}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+
+                  <div className="marketPrepMobileProductTitle">
+                    <strong>{product.name || "Untitled product"}</strong>
+                    <span>{productSummaryLine(product)}</span>
+                  </div>
+
+                  <div className="marketPrepMobileCardGrid">
+                    <label>
+                      Product
+                      <input
+                        value={product.name}
+                        onChange={(event) =>
+                          updateProduct(product.id, "name", event.target.value)
+                        }
+                      />
+                    </label>
+
+                    <label>
+                      Category
+                      <select
+                        value={product.category}
+                        onChange={(event) =>
+                          updateProduct(product.id, "category", event.target.value)
+                        }
+                      >
+                        {marketCategories.map((category) => (
+                          <option key={category}>{category}</option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label>
+                      Unit
+                      <input
+                        value={product.unitLabel}
+                        onChange={(event) =>
+                          updateProduct(product.id, "unitLabel", event.target.value)
+                        }
+                      />
+                    </label>
+
+                    <label>
+                      Qty
+                      <input
+                        type="number"
+                        value={product.plannedUnits}
+                        onChange={(event) =>
+                          updateProduct(product.id, "plannedUnits", event.target.value)
+                        }
+                      />
+                    </label>
+
+                    <label>
+                      Amount
+                      <input
+                        type="number"
+                        step="0.0001"
+                        value={product.unitAmount}
+                        onChange={(event) =>
+                          updateProduct(product.id, "unitAmount", event.target.value)
+                        }
+                      />
+                    </label>
+
+                    <label>
+                      Amount Unit
+                      <input
+                        value={product.amountUnit}
+                        onChange={(event) =>
+                          updateProduct(product.id, "amountUnit", event.target.value)
+                        }
+                      />
+                    </label>
+
+                    <label>
+                      Buffer %
+                      <input
+                        type="number"
+                        value={product.bufferPct}
+                        onChange={(event) =>
+                          updateProduct(product.id, "bufferPct", event.target.value)
+                        }
+                      />
+                    </label>
+
+                    <label>
+                      Notes
+                      <input
+                        value={product.notes}
+                        onChange={(event) =>
+                          updateProduct(product.id, "notes", event.target.value)
+                        }
+                      />
+                    </label>
+                  </div>
+
+                  <div className="marketPrepMobileTargets">
+                    <div>
+                      <span>Total</span>
+                      <strong>{formatAmount(productTotals.plannedAmount, product.amountUnit)}</strong>
+                    </div>
+                    <div>
+                      <span>Target</span>
+                      <strong>{formatAmount(productTotals.finalAmount, product.amountUnit)}</strong>
+                    </div>
+                  </div>
+                </article>
+              );
+            })
+          ) : (
+            <div className="placeholderBox compactPlaceholder">
+              No products in this market plan yet. Add a product above, or use
+              Load Samples to add editable sample products.
+            </div>
+          )}
         </div>
 
         <div className="batchTable compactBatchTable marketPrepCompactTable">
