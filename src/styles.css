@@ -8554,3 +8554,332 @@ input[type="number"] {
     border-radius: 14px;
   }
 }
+/* =========================================================
+   Permit & Grant Tracker mobile record cards
+   Append this to the bottom of src/styles.css.
+   Works with permitGrantTracker_mobile-card-records JSX.
+   ========================================================= */
+
+.permitGrantModule {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.permitGrantModule .permitGrantTopActions {
+  justify-content: flex-end;
+}
+
+.permitGrantModule .permitRecordsPanel {
+  border-radius: 16px;
+  padding: 18px;
+  overflow: hidden;
+}
+
+.permitGrantModule .permitRecordsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.permitGrantModule .permitRecordsHeader h3 {
+  margin: 5px 0 0;
+  color: var(--text);
+  font-size: 1.32rem;
+}
+
+.permitGrantModule .permitRecordsCount {
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fbfaf6;
+  color: var(--muted);
+  padding: 7px 11px;
+  font-size: 0.78rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.permitGrantModule .permitTableDesktopWrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.permitGrantModule .permitMobileCardList {
+  display: none;
+}
+
+.permitGrantModule .permitRecordCard {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: var(--shadow);
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.permitGrantModule .permitRecordCardTop {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.permitGrantModule .permitCardTitle {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.permitGrantModule .permitCardTitle .permitNameButton {
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 950;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.permitGrantModule .permitCardAgency {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.permitGrantModule .permitCardPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+}
+
+.permitGrantModule .permitCardDetails {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.permitGrantModule .permitCardDetails > div,
+.permitGrantModule .permitCardDocumentRow,
+.permitGrantModule .permitCardNotes {
+  border: 1px solid rgba(22, 27, 34, 0.08);
+  border-radius: 13px;
+  background: #fbfaf6;
+  padding: 10px;
+  min-width: 0;
+}
+
+.permitGrantModule .permitCardDetails span,
+.permitGrantModule .permitCardDocumentRow span:first-child,
+.permitGrantModule .permitCardNotes span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 950;
+  letter-spacing: 0.07em;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.permitGrantModule .permitCardDetails strong,
+.permitGrantModule .permitCardDocumentRow strong {
+  display: block;
+  color: var(--text);
+  font-size: 0.88rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.permitGrantModule .permitCardDocumentRow {
+  display: grid;
+  gap: 4px;
+}
+
+.permitGrantModule .permitCardDocumentRow .permitDocument,
+.permitGrantModule .permitCardDocumentRow .permitMissingDoc {
+  max-width: 100%;
+}
+
+.permitGrantModule .permitCardDocumentRow .permitDocument a,
+.permitGrantModule .permitCardDocumentRow .permitDocument span {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.permitGrantModule .permitCardNotes p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.permitGrantModule .permitCardActions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.permitGrantModule .permitCardActions a,
+.permitGrantModule .permitCardActions button {
+  min-height: 38px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: #ffffff;
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 10px;
+  font-size: 0.78rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.permitGrantModule .permitCardActions a:hover,
+.permitGrantModule .permitCardActions button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(22, 27, 34, 0.08);
+}
+
+.permitGrantModule .permitCardActions button:last-child {
+  color: var(--danger);
+  border-color: rgba(197, 35, 24, 0.2);
+  background: #fff7f5;
+}
+
+@media (max-width: 1100px) {
+  .permitGrantModule .permitFilterBar {
+    grid-template-columns: minmax(0, 1fr) minmax(170px, 0.45fr) minmax(170px, 0.45fr);
+  }
+
+  .permitGrantModule .permitFilterBar label:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 900px) {
+  .permitGrantModule .permitGrantTopActions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .permitGrantModule .permitGrantTopActions .secondaryButton,
+  .permitGrantModule .permitGrantTopActions .primaryButton {
+    width: 100%;
+  }
+
+  .permitGrantModule .hubStatGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .permitGrantModule .permitFilterBar {
+    grid-template-columns: 1fr;
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .permitGrantModule .permitSearch {
+    min-height: 40px;
+  }
+
+  .permitGrantModule .permitTableDesktopWrap,
+  .permitGrantModule .permitTable {
+    display: none;
+  }
+
+  .permitGrantModule .permitTablePanel,
+  .permitGrantModule .permitRecordsPanel {
+    overflow: visible;
+    padding: 14px;
+  }
+
+  .permitGrantModule .permitMobileCardList {
+    display: grid;
+    gap: 12px;
+  }
+
+  .permitGrantModule .permitModalOverlay {
+    padding: 10px;
+    align-items: start;
+    overflow-y: auto;
+  }
+
+  .permitGrantModule .permitModal {
+    width: 100%;
+    max-height: none;
+    min-height: calc(100vh - 20px);
+    border-radius: 18px;
+  }
+
+  .permitGrantModule .permitModalForm {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .permitGrantModule .permitModalHeader {
+    padding: 16px 16px 12px;
+  }
+
+  .permitGrantModule .permitModalActions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+
+  .permitGrantModule .permitModalActions .secondaryButton,
+  .permitGrantModule .permitModalActions .primaryButton {
+    width: 100%;
+  }
+}
+
+@media (max-width: 620px) {
+  .permitGrantModule .permitGrantTopActions,
+  .permitGrantModule .permitCardDetails,
+  .permitGrantModule .permitCardActions {
+    grid-template-columns: 1fr;
+  }
+
+  .permitGrantModule .permitRecordsHeader,
+  .permitGrantModule .permitRecordCardTop {
+    grid-template-columns: 1fr;
+  }
+
+  .permitGrantModule .permitRecordsCount {
+    width: fit-content;
+  }
+
+  .permitGrantModule .hubStatGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .permitGrantModule .permitRecordCard {
+    padding: 12px;
+    border-radius: 15px;
+  }
+
+  .permitGrantModule .permitTypePill,
+  .permitGrantModule .permitStatusPill,
+  .permitGrantModule .permitPriorityPill,
+  .permitGrantModule .permitDeadlinePill {
+    white-space: normal;
+    line-height: 1.15;
+  }
+}
+
+@media (max-width: 420px) {
+  .permitGrantModule .hubStatGrid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .permitGrantModule .permitRecordsPanel,
+  .permitGrantModule .permitTablePanel {
+    padding: 12px;
+  }
+}
