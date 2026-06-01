@@ -6693,3 +6693,78 @@ input[type="number"] {
     border-radius: 14px;
   }
 }
+/* =========================================================
+   Orders dashboard stat refinements + Due Today panel
+   Append this below existing Orders CSS patches.
+   ========================================================= */
+
+.ordersTodayPanel {
+  display: grid;
+  gap: 12px;
+}
+
+.ordersTodayList {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ordersTodayCard {
+  min-width: 0;
+  border: 1px solid rgba(123, 111, 176, 0.18);
+  border-radius: 15px;
+  background: #fbfaff;
+  color: var(--text);
+  text-align: left;
+  padding: 12px;
+  display: grid;
+  gap: 4px;
+  cursor: pointer;
+  transition:
+    transform 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.ordersTodayCard:hover {
+  transform: translateY(-1px);
+  border-color: rgba(123, 111, 176, 0.4);
+  box-shadow: 0 10px 24px rgba(18, 24, 32, 0.1);
+}
+
+.ordersTodayCard strong,
+.ordersTodayCard span,
+.ordersTodayCard small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ordersTodayCard strong {
+  font-size: 0.9rem;
+  font-weight: 950;
+}
+
+.ordersTodayCard span {
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.ordersTodayCard small {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+@media (max-width: 1200px) {
+  .ordersTodayList {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 800px) {
+  .ordersTodayList {
+    grid-template-columns: 1fr;
+  }
+}
