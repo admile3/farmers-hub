@@ -6768,3 +6768,300 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+/* =========================================================
+   Planting Scheduler module
+   Append this to src/styles.css
+   ========================================================= */
+
+:root {
+  --planting: #5f8f4e;
+}
+
+.modernNavLink.moduleNav.planting {
+  background: var(--planting);
+}
+
+.modernModuleIcon.planting,
+.moduleCard.planting .moduleIcon,
+.hubStatIcon.planting,
+.dashboardRowIcon.planting {
+  background: var(--planting);
+}
+
+.modernModuleCard.planting::before {
+  background: var(--planting);
+}
+
+.modernModuleFooter.planting,
+.moduleCard.planting .moduleFooter {
+  color: #4f7c40;
+}
+
+.plantingModule {
+  display: grid;
+  gap: 16px;
+}
+
+.plantingStatGrid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.plantingTodayPanel {
+  display: grid;
+  gap: 12px;
+}
+
+.plantingTaskGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.plantingTaskCard {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: #ffffff;
+  color: var(--text);
+  text-align: left;
+  padding: 12px;
+  display: grid;
+  gap: 4px;
+  cursor: pointer;
+  transition:
+    transform 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.plantingTaskCard:hover {
+  transform: translateY(-1px);
+  border-color: rgba(95, 143, 78, 0.38);
+  box-shadow: 0 10px 24px rgba(18, 24, 32, 0.1);
+}
+
+.plantingTaskCard.warning {
+  background: #fffaf0;
+  border-color: rgba(217, 119, 6, 0.22);
+}
+
+.plantingTaskCard.danger {
+  background: #fff5f5;
+  border-color: rgba(185, 28, 28, 0.24);
+}
+
+.plantingTaskCard strong,
+.plantingTaskCard span,
+.plantingTaskCard small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plantingTaskCard strong {
+  color: var(--green-dark);
+  font-size: 0.84rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.plantingTaskCard span {
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.plantingTaskCard small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.plantingLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(390px, 0.55fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.plantingFilterPanel {
+  margin-bottom: 12px;
+}
+
+.plantingBatchList,
+.plantingTemplateList {
+  display: grid;
+  gap: 8px;
+}
+
+.plantingBatchRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 38px;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 10px;
+}
+
+.plantingBatchRow > button:first-child,
+.plantingTemplateRow > button:first-child {
+  min-width: 0;
+  color: inherit;
+  background: transparent;
+  text-align: left;
+  display: grid;
+  gap: 3px;
+  cursor: pointer;
+}
+
+.plantingBatchRow strong,
+.plantingTemplateRow strong {
+  color: var(--text);
+  font-size: 0.94rem;
+}
+
+.plantingBatchRow span,
+.plantingBatchRow small,
+.plantingTemplateRow span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.plantingStatusPill {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 6px 9px;
+  background: #eef0ea;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.plantingStatusPill.ready,
+.plantingStatusPill.harvested {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.plantingStatusPill.planted,
+.plantingStatusPill.germinated,
+.plantingStatusPill.moved-to-light,
+.plantingStatusPill.transplanted {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.plantingStatusPill.failed {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+.plantingSideStack,
+.plantingEditorStack {
+  display: grid;
+  gap: 14px;
+}
+
+.plantingPanelToggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #ffffff;
+  padding: 3px;
+}
+
+.plantingPanelToggle button {
+  min-height: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 5px 11px;
+  cursor: pointer;
+}
+
+.plantingPanelToggle button.selected {
+  background: #edf7ea;
+  color: #4f7c40;
+}
+
+.plantingDatePreview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.plantingDatePreview div {
+  border: 1px solid rgba(95, 143, 78, 0.18);
+  border-radius: 14px;
+  background: #f8fcf6;
+  padding: 12px;
+  display: grid;
+  gap: 5px;
+}
+
+.plantingDatePreview span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.plantingDatePreview strong {
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.plantingTemplateRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 38px;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 10px;
+}
+
+@media (max-width: 1250px) {
+  .plantingLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .plantingTaskGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 950px) {
+  .plantingStatGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .plantingBatchRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .plantingStatGrid,
+  .plantingTaskGrid,
+  .plantingDatePreview {
+    grid-template-columns: 1fr;
+  }
+
+  .plantingPanelToggle {
+    width: 100%;
+  }
+
+  .plantingPanelToggle button {
+    flex: 1;
+  }
+}
