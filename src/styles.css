@@ -9552,3 +9552,70 @@ input[type="number"] {
     padding: 14px !important;
   }
 }
+/* =========================================================
+   Shared module hero actions, Calendar-style header alignment
+   Append to bottom of src/styles.css.
+   ========================================================= */
+
+.standardModuleHeroWithActions,
+.moduleHero.standardModuleHeroWithActions,
+.plantingSchedulerHero.standardModuleHeroWithActions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+}
+
+.standardModuleHeroWithActions > div:first-child,
+.plantingSchedulerHero.standardModuleHeroWithActions > div:first-child {
+  min-width: 0;
+}
+
+.moduleHeroActions,
+.plantingHeroActions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: max-content;
+}
+
+.moduleHeroActions .primaryButton,
+.moduleHeroActions .secondaryButton,
+.plantingHeroActions .primaryButton,
+.plantingHeroActions .secondaryButton {
+  width: fit-content;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .standardModuleHeroWithActions,
+  .moduleHero.standardModuleHeroWithActions,
+  .plantingSchedulerHero.standardModuleHeroWithActions {
+    grid-template-columns: 1fr;
+  }
+
+  .moduleHeroActions,
+  .plantingHeroActions {
+    width: 100%;
+    min-width: 0;
+    justify-content: stretch;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .moduleHeroActions .primaryButton,
+  .moduleHeroActions .secondaryButton,
+  .plantingHeroActions .primaryButton,
+  .plantingHeroActions .secondaryButton {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .moduleHeroActions,
+  .plantingHeroActions {
+    grid-template-columns: 1fr;
+  }
+}
