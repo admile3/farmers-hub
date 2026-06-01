@@ -1,3 +1,4 @@
+/* Mobile/tablet optimization pass: original logic preserved, responsive class hooks added only. */
 import { useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
@@ -630,8 +631,8 @@ export default function PlantingScheduler() {
 
   if (!user) {
     return (
-      <div className="plantingModule modulePage">
-        <section className="moduleHero compactHero">
+      <div className="plantingModule modulePage plantingSchedulerResponsive">
+        <section className="moduleHero compactHero plantingSchedulerHero">
           <div>
             <p className="eyebrow">Planting Scheduler</p>
             <h2>Sign in to schedule plantings.</h2>
@@ -650,7 +651,7 @@ export default function PlantingScheduler() {
   }
 
   return (
-    <div className="plantingModule modulePage">
+    <div className="plantingModule modulePage plantingSchedulerResponsive">
       {statusMessage ? (
         <div className="floatingStatus" role="status">
           <span>{statusMessage}</span>
@@ -660,7 +661,7 @@ export default function PlantingScheduler() {
         </div>
       ) : null}
 
-      <section className="moduleHero compactHero">
+      <section className="moduleHero compactHero plantingSchedulerHero">
         <div>
           <p className="eyebrow">Planting Scheduler</p>
           <h2>Plan crops, plantings, growing tasks, and harvest windows.</h2>
@@ -684,7 +685,7 @@ export default function PlantingScheduler() {
         </div>
       </section>
 
-      <section className="hubStatGrid plantingStatGrid">
+      <section className="hubStatGrid plantingStatGrid plantingStatGridResponsive">
         <StatCard
           icon={Leaf}
           label="Templates"
@@ -722,13 +723,13 @@ export default function PlantingScheduler() {
         />
       </section>
 
-      <section className="plantingTodayPanel workspacePanel compactPanel">
+      <section className="plantingTodayPanel workspacePanel compactPanel plantingTasksPanelResponsive">
         <div className="workspaceHeader compactPanelHeader plantingTasksHeader">
           <div className="plantingTasksTitleBlock">
             <div className="plantingTasksEyebrowRow">
               <p className="eyebrow">Tasks</p>
 
-              <div className="plantingTaskFilters">
+              <div className="plantingTaskFilters plantingTaskFiltersResponsive">
                 <label>
                   <span>Task</span>
                   <select
@@ -765,7 +766,7 @@ export default function PlantingScheduler() {
         </div>
 
         {upcomingTasks.length ? (
-          <div className="plantingTaskGrid">
+          <div className="plantingTaskGrid plantingTaskGridResponsive">
             {upcomingTasks.map((task) => (
               <button
                 className={`plantingTaskCard ${taskStatus(task.date)}`}
@@ -791,8 +792,8 @@ export default function PlantingScheduler() {
         )}
       </section>
 
-      <section className="plantingLayout">
-        <div className="workspacePanel compactPanel plantingDirectoryPanel">
+      <section className="plantingLayout plantingLayoutResponsive">
+        <div className="workspacePanel compactPanel plantingDirectoryPanel plantingDirectoryPanelResponsive">
           <div className="workspaceHeader compactPanelHeader">
             <div>
               <p className="eyebrow">Schedule</p>
@@ -805,7 +806,7 @@ export default function PlantingScheduler() {
             </button>
           </div>
 
-          <div className="customersFilterPanel plantingFilterPanel">
+          <div className="customersFilterPanel plantingFilterPanel plantingFilterPanelResponsive">
             <div className="searchBox compactSearch customersSearchBox">
               <Search size={17} />
               <input
@@ -844,10 +845,10 @@ export default function PlantingScheduler() {
             </label>
           </div>
 
-          <div className="plantingBatchList">
+          <div className="plantingBatchList plantingBatchListResponsive">
             {filteredBatches.length ? (
               filteredBatches.map((batch) => (
-                <div className="plantingBatchRow" key={batch.id}>
+                <div className="plantingBatchRow plantingBatchRowResponsive" key={batch.id}>
                   <button type="button" onClick={() => loadBatch(batch)}>
                     <strong>{batchLabel(batch)}</strong>
                     <span>
@@ -882,15 +883,15 @@ export default function PlantingScheduler() {
           </div>
         </div>
 
-        <div className="plantingSideStack">
-          <div className="workspacePanel compactPanel">
+        <div className="plantingSideStack plantingSideStackResponsive">
+          <div className="workspacePanel compactPanel plantingBuilderPanelResponsive">
             <div className="workspaceHeader compactPanelHeader">
               <div>
                 <p className="eyebrow">Builder</p>
                 <h3>{activePanel === "template" ? "Crop Template" : "Planting Batch"}</h3>
               </div>
 
-              <div className="plantingPanelToggle">
+              <div className="plantingPanelToggle plantingPanelToggleResponsive">
                 <button
                   type="button"
                   className={activePanel === "batch" ? "selected" : ""}
@@ -910,7 +911,7 @@ export default function PlantingScheduler() {
 
             {activePanel === "template" ? (
               <div className="plantingEditorStack">
-                <div className="formGrid compactFormGrid">
+                <div className="formGrid compactFormGrid plantingFormGridResponsive">
                   <label>
                     Crop Name
                     <input
@@ -1076,7 +1077,7 @@ export default function PlantingScheduler() {
               </div>
             ) : (
               <div className="plantingEditorStack">
-                <div className="formGrid compactFormGrid">
+                <div className="formGrid compactFormGrid plantingFormGridResponsive">
                   <label>
                     Use Template
                     <select
@@ -1244,7 +1245,7 @@ export default function PlantingScheduler() {
                   </label>
                 </div>
 
-                <div className="plantingDatePreview">
+                <div className="plantingDatePreview plantingDatePreviewResponsive">
                   <div>
                     <span>Plant</span>
                     <strong>{formatDate(batchForm.plantingDate)}</strong>
@@ -1279,7 +1280,7 @@ export default function PlantingScheduler() {
             )}
           </div>
 
-          <div className="workspacePanel compactPanel">
+          <div className="workspacePanel compactPanel plantingBuilderPanelResponsive">
             <div className="workspaceHeader compactPanelHeader">
               <div>
                 <p className="eyebrow">Templates</p>
@@ -1287,10 +1288,10 @@ export default function PlantingScheduler() {
               </div>
             </div>
 
-            <div className="plantingTemplateList">
+            <div className="plantingTemplateList plantingTemplateListResponsive">
               {templates.length ? (
                 templates.map((template) => (
-                  <div className="plantingTemplateRow" key={template.id}>
+                  <div className="plantingTemplateRow plantingTemplateRowResponsive" key={template.id}>
                     <button type="button" onClick={() => loadTemplate(template)}>
                       <strong>{template.cropName || "Untitled Crop"}</strong>
                       <span>
