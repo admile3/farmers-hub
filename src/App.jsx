@@ -7,9 +7,6 @@ import {
   useNavigate
 } from "react-router-dom";
 import {
-  Activity,
-  ArrowRight,
-  BookOpen,
   Calculator,
   CalendarDays,
   ChefHat,
@@ -17,11 +14,11 @@ import {
   Eye,
   EyeOff,
   FileText,
-  Folder,
   Home,
   ListChecks,
   LogIn,
   LogOut,
+  Menu,
   PackageCheck,
   Settings,
   Sprout,
@@ -29,8 +26,6 @@ import {
   Wheat,
   X
 } from "lucide-react";
-import { doc, getDoc } from "firebase/firestore";
-
 import SpiceKitchen from "./modules/SpiceKitchen.jsx";
 import BakingPlanner from "./modules/BakingPlanner.jsx";
 import MarketPrepPlanner from "./modules/MarketPrepPlanner.jsx";
@@ -46,12 +41,6 @@ import Onboarding from "./modules/Onboarding.jsx";
 import Dashboard from "./modules/Dashboard.jsx";
 import { useAuth } from "./AuthContext.jsx";
 import { useUnsavedChanges } from "./UnsavedChangesContext.jsx";
-import { db } from "./firebase";
-import StatCard from "./components/StatCard.jsx";
-import { getSpiceRecipes } from "./services/spiceKitchenService.js";
-import { getPermitGrantItems } from "./services/permitGrantService.js";
-import { getLists } from "./services/listsService.js";
-import { getCustomers } from "./services/customerService.js";
 
 const modules = [
   {
@@ -390,6 +379,16 @@ function ScrollToTop() {
 
   return null;
 }
+
+function getCurrentModuleTitle(pathname) {
+  if (pathname === "/") return "Dashboard";
+  if (pathname === "/subscribe") return "Plans";
+  if (pathname === "/account-settings") return "Account";
+  if (pathname === "/onboarding") return "Setup";
+
+  return modules.find((module) => module.path === pathname)?.title || "Farmers Hub";
+}
+
 
 function TrialSignupBox() {
   const { loginWithGoogle, createAccountWithEmail, loginWithEmail } = useAuth();
@@ -740,7 +739,7 @@ function WelcomePricingModal({ onClose }) {
   );
 }
 
-function AccountStatusCard() {
+function AccountStatusCard({ compact = false }) {
   const {
     user,
     accountProfile,
@@ -756,6 +755,14 @@ function AccountStatusCard() {
   } = useAuth();
 
   if (authLoading || accountLoading) {
+    if (compact) {
+      return (
+        <div className="mobileAccountPill loading">
+          Checking...
+        </div>
+      );
+    }
+
     return (
       <div className="authCard">
         <p>Checking sign-in...</p>
@@ -764,6 +771,15 @@ function AccountStatusCard() {
   }
 
   if (!user) {
+    if (compact) {
+      return (
+        <button className="mobileAccountPill" type="button" onClick={loginWithGoogle}>
+          <LogIn size={15} />
+          Account
+        </button>
+      );
+    }
+
     return (
       <div className="authCard">
         <p className="eyebrow">Account</p>
@@ -787,8 +803,37 @@ function AccountStatusCard() {
     user.displayName ||
     "Signed in";
 
+  const statusLabel = isAdmin
+    ? "Admin"
+    : isTrial
+      ? `${daysRemaining}d trial`
+      : accessStatus.status === "active"
+        ? "Active"
+        : isExpired
+          ? "Upgrade"
+          : "Account";
+
+  if (compact) {
+    return (
+      <GuardedLink
+        to="/account-settings"
+        className={`mobileAccountPill ${accessStatus.status}`}
+        title={user.email || displayName}
+      >
+        {user.photoURL ? (
+          <img src={user.photoURL} alt={displayName} />
+        ) : (
+          <span className="mobileAccountInitial">
+            {(displayName || user.email || "U").charAt(0)}
+          </span>
+        )}
+        <span>{statusLabel}</span>
+      </GuardedLink>
+    );
+  }
+
   return (
-    <div className="authCard">
+    <div className="authCard desktopAccountCard">
       <p className="eyebrow">Account</p>
 
       <div className="userRow">
@@ -841,16 +886,51 @@ function AccountStatusCard() {
 function AppShell({ children }) {
   const { accountProfile } = useAuth();
   const location = useLocation();
+  const [mobileModulesOpen, setMobileModulesOpen] = useState(false);
 
   const densityClass =
     accountProfile?.settings?.dashboardDensity === "compact"
       ? "compactDensity"
       : "comfortableDensity";
 
+  const currentTitle = getCurrentModuleTitle(location.pathname);
+
+  useEffect(() => {
+    setMobileModulesOpen(false);
+  }, [location.pathname]);
+
   return (
     <div className={`app ${densityClass}`}>
       <aside className="sidebar modernSidebar">
-        <GuardedLink to="/" className="brand">
+        <div className="mobileTopBar">
+          <GuardedLink to="/" className="brand mobileBrand">
+            <div className="brandIcon">
+              <Sprout size={23} />
+            </div>
+
+            <div>
+              <h1>Farmers Hub</h1>
+              <p>{currentTitle}</p>
+            </div>
+          </GuardedLink>
+
+          <div className="mobileTopActions">
+            <button
+              className="mobileModulesToggle"
+              type="button"
+              onClick={() => setMobileModulesOpen((current) => !current)}
+              aria-expanded={mobileModulesOpen}
+              aria-controls="farmers-hub-mobile-nav"
+            >
+              <Menu size={16} />
+              Modules
+            </button>
+
+            <AccountStatusCard compact />
+          </div>
+        </div>
+
+        <GuardedLink to="/" className="brand desktopBrand">
           <div className="brandIcon">
             <Sprout size={26} />
           </div>
@@ -861,7 +941,10 @@ function AppShell({ children }) {
           </div>
         </GuardedLink>
 
-        <nav className="nav modernNav">
+        <nav
+          id="farmers-hub-mobile-nav"
+          className={`nav modernNav ${mobileModulesOpen ? "mobileOpen" : ""}`}
+        >
           <GuardedLink
             to="/"
             className={`navLink modernNavLink dashboardNav ${
@@ -869,7 +952,7 @@ function AppShell({ children }) {
             }`}
           >
             <Home size={18} />
-            Dashboard
+            <span>Dashboard</span>
           </GuardedLink>
 
           {modules.map((module) => {
@@ -884,14 +967,13 @@ function AppShell({ children }) {
                 }`}
               >
                 <Icon size={18} />
-                {module.title}
+                <span>{module.title}</span>
               </GuardedLink>
             );
           })}
         </nav>
 
         <AccountStatusCard />
-
       </aside>
 
       <main className="main modernMain">{children}</main>
