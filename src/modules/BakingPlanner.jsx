@@ -2448,27 +2448,31 @@ export default function BakingPlanner() {
         </header>
 
         <div className="mobileTabShell">
-  <span className="mobileTabArrow" aria-hidden="true">‹</span>
+          <span className="mobileTabArrow" aria-hidden="true">
+            ‹
+          </span>
 
-  <nav className="tabs">
-    {tabButton("pantry", "Pantry", Package)}
-    {tabButton("recipes", "Recipes", BookOpen)}
-    {tabButton("starter", "Starter", FlaskConical)}
-    {tabButton("planner", "Bake Plan", ClipboardList)}
-    {tabButton("sheet", "Production Sheet", Printer)}
-  </nav>
+          <nav className="tabs" aria-label="Baking planner sections">
+            {tabButton("pantry", "Pantry", Package)}
+            {tabButton("recipes", "Recipes", BookOpen)}
+            {tabButton("starter", "Starter", FlaskConical)}
+            {tabButton("planner", "Bake Plan", ClipboardList)}
+            {tabButton("sheet", "Production Sheet", Printer)}
+          </nav>
 
-  <span className="mobileTabArrow" aria-hidden="true">›</span>
+          <span className="mobileTabArrow" aria-hidden="true">
+            ›
+          </span>
 
-  <div className="mobileSwipeHint" aria-hidden="true">
-    <span className={activeTab === "pantry" ? "active" : ""}></span>
-    <span className={activeTab === "recipes" ? "active" : ""}></span>
-    <span className={activeTab === "starter" ? "active" : ""}></span>
-    <span className={activeTab === "planner" ? "active" : ""}></span>
-    <span className={activeTab === "sheet" ? "active" : ""}></span>
-    <em>Swipe left or right</em>
-  </div>
-</div>
+          <div className="mobileSwipeHint" aria-hidden="true">
+            <span className={activeTab === "pantry" ? "active" : ""}></span>
+            <span className={activeTab === "recipes" ? "active" : ""}></span>
+            <span className={activeTab === "starter" ? "active" : ""}></span>
+            <span className={activeTab === "planner" ? "active" : ""}></span>
+            <span className={activeTab === "sheet" ? "active" : ""}></span>
+            <em>Swipe left or right</em>
+          </div>
+        </div>
 
         {activeTab === "planner" && (
           <div className="layout two-col">
