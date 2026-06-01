@@ -9747,3 +9747,40 @@ input[type="number"] {
     flex-wrap: wrap !important;
   }
 }
+/* Prevent early text wrapping in module hero bubbles */
+.moduleHero > div:first-child,
+.compactHero > div:first-child,
+.calendarHero > div:first-child,
+.plantingSchedulerHero > div:first-child {
+  max-width: none !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.moduleHero h2,
+.compactHero h2,
+.calendarHero h2,
+.plantingSchedulerHero h2 {
+  max-width: none !important;
+}
+
+.moduleHero p:not(.eyebrow),
+.compactHero p:not(.eyebrow),
+.calendarHero p:not(.eyebrow),
+.plantingSchedulerHero p:not(.eyebrow) {
+  max-width: none !important;
+}
+
+.moduleHero,
+.compactHero,
+.plantingSchedulerHero {
+  grid-template-columns: minmax(0, 1fr) auto !important;
+}
+
+@media (max-width: 900px) {
+  .moduleHero,
+  .compactHero,
+  .plantingSchedulerHero {
+    grid-template-columns: 1fr !important;
+  }
+}
