@@ -39,6 +39,7 @@ import PermitGrantTracker from "./modules/PermitGrantTracker.jsx";
 import Lists from "./modules/Lists.jsx";
 import Calendar from "./modules/Calendar.jsx";
 import Customers from "./modules/Customers.jsx";
+import Orders from "./modules/Orders.jsx";
 import AccountSettings from "./modules/AccountSettings.jsx";
 import Onboarding from "./modules/Onboarding.jsx";
 import Dashboard from "./modules/Dashboard.jsx";
@@ -89,6 +90,15 @@ const modules = [
     icon: Users,
     accent: "customers"
   },
+  {
+  key: "orders",
+  title: "Orders",
+  description:
+    "Create customer orders, add line items, track fulfillment, and manage order totals.",
+  path: "/orders",
+  icon: PackageCheck,
+  accent: "orders"
+},
   {
     key: "pricing",
     title: "Products & Pricing",
@@ -1135,6 +1145,14 @@ export default function App() {
         <Route path="/lists" element={<AccessGate><Lists /></AccessGate>} />
         <Route path="/calendar" element={<AccessGate><Calendar /></AccessGate>} />
         <Route path="/customers" element={<AccessGate><Customers /></AccessGate>} />
+        <Route
+  path="/orders"
+  element={
+    <AccessGate>
+      <Orders />
+    </AccessGate>
+  }
+/>
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
