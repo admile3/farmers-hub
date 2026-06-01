@@ -77,7 +77,7 @@ function blankCustomerSnapshot() {
 function blankLineItem() {
   return {
     id: makeId("line"),
-    mode: "product",
+    mode: "manual",
     productId: "",
     productName: "",
     sourceLabel: "",
@@ -97,6 +97,7 @@ function blankOrder() {
     dueDate: "",
     status: "Draft",
     fulfillmentType: "Market pickup",
+    pricingMode: "retail",
     customerMode: "saved",
     customerId: "",
     customerSnapshot: blankCustomerSnapshot(),
@@ -130,6 +131,25 @@ function calculateOrder(order) {
     total,
     balanceDue
   };
+}
+
+function isLineItemFilled(item) {
+  return Boolean(
+    String(item?.productId || "").trim() ||
+      String(item?.productName || "").trim() ||
+      Number(item?.quantity) ||
+      Number(item?.unitPrice)
+  );
+}
+
+function getProductPrice(product, pricingMode, fallback = "") {
+  if (!product) return fallback;
+
+  if (pricingMode === "wholesale") {
+    return product.wholesalePrice || product.retailPrice || fallback || "";
+  }
+
+  return product.retailPrice || product.wholesalePrice || fallback || "";
 }
 
 function formatPackageSize(size, unit) {
@@ -241,6 +261,7 @@ export default function Orders() {
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState(blankOrder());
   const [selectedOrderId, setSelectedOrderId] = useState("");
+  const [editorOpen, setEditorOpen] = useState(false);
   const [queryText, setQueryText] = useState("");
   const [statusFilter, setStatusFilter] = useState("Open orders");
   const [loading, setLoading] = useState(false);
@@ -360,6 +381,24 @@ export default function Orders() {
     }));
   }
 
+  function updatePricingMode(value) {
+    setForm((current) => ({
+      ...current,
+      pricingMode: value,
+      lineItems: current.lineItems.map((item) => {
+        if (!item.productId) return item;
+
+        const product = products.find((saved) => saved.id === item.productId);
+        if (!product) return item;
+
+        return {
+          ...item,
+          unitPrice: getProductPrice(product, value, item.unitPrice)
+        };
+      })
+    }));
+  }
+
   function updateLineItem(lineId, field, value) {
     setForm((current) => ({
       ...current,
@@ -377,11 +416,7 @@ export default function Orders() {
             sourceLabel: product?.sourceLabel || "",
             category: product?.category || "",
             unitLabel: product?.unitLabel || "each",
-            unitPrice:
-              product?.retailPrice ||
-              product?.wholesalePrice ||
-              item.unitPrice ||
-              "",
+            unitPrice: getProductPrice(product, current.pricingMode, item.unitPrice),
             notes: item.notes
           };
         }
@@ -417,6 +452,7 @@ export default function Orders() {
       ...blankOrder(),
       orderNumber: `ORD-${Date.now().toString().slice(-6)}`
     });
+    setEditorOpen(true);
     setStatusMessage("Started a new order.");
   }
 
@@ -431,6 +467,7 @@ export default function Orders() {
       },
       lineItems: order.lineItems?.length ? order.lineItems : [blankLineItem()]
     });
+    setEditorOpen(true);
     setStatusMessage("Order loaded.");
   }
 
@@ -485,7 +522,12 @@ export default function Orders() {
       return;
     }
 
-    if (!form.lineItems?.length || form.lineItems.every((item) => !item.productName)) {
+    const filledLineItems = (form.lineItems || []).filter(isLineItemFilled);
+
+    if (
+      !filledLineItems.length ||
+      filledLineItems.every((item) => !String(item.productName || "").trim())
+    ) {
       setStatusMessage("Add at least one line item.");
       return;
     }
@@ -493,13 +535,17 @@ export default function Orders() {
     setSaving(true);
 
     try {
-      const totals = calculateOrder(form);
-      const cleanLineItems = form.lineItems.map((item) => ({
+      const cleanLineItems = filledLineItems.map((item) => ({
         ...item,
         quantity: Number(item.quantity) || 0,
         unitPrice: Number(item.unitPrice) || 0,
         lineTotal: (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0)
       }));
+
+      const totals = calculateOrder({
+        ...form,
+        lineItems: cleanLineItems
+      });
 
       const orderToSave = await quickAddCustomerIfNeeded({
         ...form,
@@ -522,6 +568,7 @@ export default function Orders() {
           ? orderToSave.lineItems
           : [blankLineItem()]
       });
+      setEditorOpen(false);
       setStatusMessage("Order saved.");
       await loadData();
     } catch (error) {
@@ -544,6 +591,7 @@ export default function Orders() {
       if (selectedOrderId === order.id) {
         setSelectedOrderId("");
         setForm(blankOrder());
+        setEditorOpen(false);
       }
 
       setStatusMessage("Order deleted.");
@@ -683,7 +731,7 @@ export default function Orders() {
         />
       </section>
 
-      <section className="ordersLayout">
+      <section className="ordersDirectoryOnlyLayout">
         <div className="workspacePanel compactPanel ordersDirectoryPanel">
           <div className="workspaceHeader compactPanelHeader">
             <div>
@@ -761,23 +809,37 @@ export default function Orders() {
             )}
           </div>
         </div>
+      </section>
 
-        <div className="workspacePanel compactPanel ordersEditorPanel">
+      {editorOpen ? (
+        <div className="ordersEditorOverlay" role="dialog" aria-modal="true">
+          <div className="workspacePanel compactPanel ordersEditorPanel ordersEditorModal">
           <div className="workspaceHeader compactPanelHeader">
             <div>
               <p className="eyebrow">Editor</p>
               <h3>{form.id ? form.orderNumber || "Edit Order" : "New Order"}</h3>
             </div>
 
-            <button
-              className="primaryButton compactPrimary"
-              type="button"
-              onClick={handleSaveOrder}
-              disabled={saving}
-            >
-              <Save size={15} />
-              {saving ? "Saving..." : "Save Order"}
-            </button>
+            <div className="formActions compactActions">
+              <button
+                className="secondaryButton compactButton"
+                type="button"
+                onClick={() => setEditorOpen(false)}
+              >
+                <X size={15} />
+                Close
+              </button>
+
+              <button
+                className="primaryButton compactPrimary"
+                type="button"
+                onClick={handleSaveOrder}
+                disabled={saving}
+              >
+                <Save size={15} />
+                {saving ? "Saving..." : "Save Order"}
+              </button>
+            </div>
           </div>
 
           <div className="formGrid compactFormGrid">
@@ -831,6 +893,17 @@ export default function Orders() {
                 {FULFILLMENT_TYPES.map((type) => (
                   <option key={type}>{type}</option>
                 ))}
+              </select>
+            </label>
+
+            <label>
+              Pricing
+              <select
+                value={form.pricingMode}
+                onChange={(event) => updatePricingMode(event.target.value)}
+              >
+                <option value="retail">Retail pricing</option>
+                <option value="wholesale">Wholesale pricing</option>
               </select>
             </label>
           </div>
@@ -986,7 +1059,7 @@ export default function Orders() {
             </div>
 
             <div className="ordersLineHeader">
-              <span>Product / Manual Item</span>
+              <span>Item</span>
               <span>Qty</span>
               <span>Unit</span>
               <span>Price</span>
@@ -998,21 +1071,40 @@ export default function Orders() {
               {form.lineItems.map((item) => (
                 <div className="ordersLineRow" key={item.id}>
                   <div className="ordersLineProduct">
-                    <select
-                      value={item.productId}
-                      onChange={(event) =>
-                        updateLineItem(item.id, "productId", event.target.value)
-                      }
-                    >
-                      <option value="">Manual item...</option>
-                      {products.map((product) => (
-                        <option key={product.id} value={product.id}>
-                          {product.name} ({product.sourceLabel})
-                        </option>
-                      ))}
-                    </select>
+                    <div className="ordersLineMode">
+                      <button
+                        type="button"
+                        className={item.productId ? "selected" : ""}
+                        onClick={() =>
+                          updateLineItem(item.id, "productId", products[0]?.id || "")
+                        }
+                        disabled={!products.length}
+                      >
+                        Product
+                      </button>
+                      <button
+                        type="button"
+                        className={!item.productId ? "selected" : ""}
+                        onClick={() => updateLineItem(item.id, "productId", "")}
+                      >
+                        Manual
+                      </button>
+                    </div>
 
-                    {!item.productId ? (
+                    {item.productId ? (
+                      <select
+                        value={item.productId}
+                        onChange={(event) =>
+                          updateLineItem(item.id, "productId", event.target.value)
+                        }
+                      >
+                        {products.map((product) => (
+                          <option key={product.id} value={product.id}>
+                            {product.name} ({product.sourceLabel})
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
                       <input
                         value={item.productName}
                         onChange={(event) =>
@@ -1020,7 +1112,7 @@ export default function Orders() {
                         }
                         placeholder="Manual item name"
                       />
-                    ) : null}
+                    )}
                   </div>
 
                   <input
@@ -1156,7 +1248,7 @@ export default function Orders() {
             </div>
           </div>
         </div>
-      </section>
+      ) : null}
     </div>
   );
 }
