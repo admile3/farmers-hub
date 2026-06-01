@@ -7281,3 +7281,81 @@ input[type="number"] {
     min-width: 0;
   }
 }
+/* =========================================================
+   Planting Scheduler Upcoming Tasks Header Fix
+   Place this BELOW the previous Upcoming Tasks header CSS.
+   ========================================================= */
+
+.plantingModule .plantingTodayPanel {
+  gap: 12px;
+}
+
+.plantingModule .plantingTodayPanel .workspaceHeader {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto auto !important;
+  align-items: end !important;
+  gap: 12px !important;
+}
+
+.plantingModule .plantingTodayPanel .workspaceHeader > div:first-child {
+  min-width: 0;
+}
+
+.plantingModule .plantingTodayPanel .workspaceHeader .secondaryButton {
+  grid-column: 3;
+  grid-row: 1;
+  align-self: end;
+  white-space: nowrap;
+}
+
+.plantingModule .plantingTaskFilters {
+  grid-column: 2;
+  grid-row: 1;
+  display: grid !important;
+  grid-template-columns: 150px 150px !important;
+  gap: 8px !important;
+  align-items: end !important;
+  margin: 0 !important;
+  width: auto !important;
+}
+
+.plantingModule .plantingTaskFilters label {
+  min-width: 0 !important;
+  margin: 0 !important;
+  display: grid !important;
+  gap: 4px !important;
+  font-size: 0.72rem !important;
+}
+
+.plantingModule .plantingTaskFilters select {
+  min-width: 0 !important;
+  width: 100% !important;
+  min-height: 36px !important;
+}
+
+.plantingModule .plantingTaskGrid {
+  margin-top: 0 !important;
+}
+
+@media (max-width: 950px) {
+  .plantingModule .plantingTodayPanel .workspaceHeader {
+    grid-template-columns: 1fr !important;
+  }
+
+  .plantingModule .plantingTodayPanel .workspaceHeader .secondaryButton,
+  .plantingModule .plantingTaskFilters {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+  }
+
+  .plantingModule .plantingTaskFilters {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .plantingModule .plantingTaskFilters {
+    grid-template-columns: 1fr !important;
+  }
+}
