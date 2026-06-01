@@ -1,132 +1,109 @@
-/* Mobile/tablet optimization pass: original logic preserved, responsive class hooks added only. */
 import { useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
-  CheckCircle2,
-  ClipboardList,
-  Flower2,
-  Leaf,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Link as LinkIcon,
   Plus,
-  RefreshCw,
   Save,
-  Search,
-  Sprout,
   Trash2,
   X
 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { doc, getDoc } from "firebase/firestore";
 
 import { useAuth } from "../AuthContext.jsx";
-import StatCard from "../components/StatCard.jsx";
+import { db } from "../firebase";
 import {
-  deletePlantingBatch,
-  deletePlantingTemplate,
-  getPlantingBatches,
-  getPlantingTemplates,
-  savePlantingBatch,
-  savePlantingTemplate
-} from "../services/plantingService.js";
+  deleteCalendarEvent,
+  getCalendarEvents,
+  saveCalendarEvent
+} from "../services/calendarService.js";
+import { getMarketPrepPlans } from "../services/marketPrepService.js";
+import { getPermitGrantItems } from "../services/permitGrantService.js";
+import StatCard from "../components/StatCard.jsx";
 
-const CROP_CATEGORIES = [
-  "Microgreens",
-  "Herbs",
-  "Vegetables",
-  "Flowers",
-  "Houseplants",
-  "Fruit",
-  "Field crop",
-  "Plant starts",
+const blankEvent = {
+  id: "",
+  title: "",
+  type: "Market",
+  date: "",
+  startTime: "",
+  endTime: "",
+  location: "",
+  notes: ""
+};
+
+const eventTypes = [
+  "Market",
+  "Event",
+  "Delivery",
+  "Production",
+  "Deadline",
+  "Reminder",
+  "Meeting",
   "Other"
 ];
 
-const GROWING_METHODS = [
-  "Microgreen tray",
-  "Seed tray",
-  "Plug tray",
-  "Container",
-  "Raised bed",
-  "Field row",
-  "Hydroponic",
-  "Greenhouse bench",
-  "Propagation tray",
-  "Other"
-];
+const defaultBakingSettings = {
+  altitudeFt: 980,
+  baselineTempF: 72,
+  baselineHumidityPct: 55,
+  starterHydrationPct: 100,
+  levainBufferPct: 10,
+  ingredientBufferPct: 3,
+  mixerCapacityG: 7000,
+  proofingCapacityUnits: 24,
+  defaultStartTime: "06:00"
+};
 
-const QUANTITY_UNITS = [
-  "trays",
-  "pots",
-  "cells",
-  "plugs",
-  "plants",
-  "rows",
-  "bed feet",
-  "sq ft",
-  "bunches",
-  "units"
-];
-
-const BATCH_STATUSES = [
-  "Planned",
-  "Planted",
-  "Germinated",
-  "Moved to Light",
-  "Transplanted",
-  "Ready",
-  "Harvested",
-  "Failed"
-];
-
-const TASK_FILTERS = [
-  "All tasks",
-  "Plant",
-  "Germination",
-  "Move",
-  "Transplant",
-  "Harvest"
-];
-
-const TASK_DATE_RANGES = [
-  "Today",
-  "Next 7 days",
-  "Next 14 days",
-  "Next 30 days",
-  "Overdue",
-  "All upcoming"
-];
-
-function makeId(prefix = "item") {
-  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
-function todayString() {
+function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function addDays(dateString, days) {
-  if (!dateString) return "";
-
-  const date = new Date(`${dateString}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return "";
-
-  date.setDate(date.getDate() + (Number(days) || 0));
-  return date.toISOString().slice(0, 10);
+function monthKey(date) {
+  return `${date.getFullYear()}-${date.getMonth()}`;
 }
 
-function daysBetween(dateString) {
+function parseLocalDate(dateString) {
   if (!dateString) return null;
 
-  const today = new Date(`${todayString()}T00:00:00`);
-  const target = new Date(`${dateString}T00:00:00`);
-
-  if (Number.isNaN(target.getTime())) return null;
-
-  return Math.ceil((target.getTime() - today.getTime()) / 86400000);
+  const [year, month, day] = dateString.split("-").map(Number);
+  return new Date(year, month - 1, day);
 }
 
-function formatDate(value) {
-  if (!value) return "Not set";
+function formatDisplayDate(dateString) {
+  const date = parseLocalDate(dateString);
+  if (!date) return "";
 
-  const date = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return "Not set";
+  return date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric"
+  });
+}
+
+function daysUntil(dateString) {
+  const date = parseLocalDate(dateString);
+  if (!date) return null;
+
+  const today = parseLocalDate(todayISO());
+  return Math.ceil((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function formatDue(days) {
+  if (days === null) return "";
+  if (days < 0) return "Past due";
+  if (days === 0) return "Today";
+  if (days === 1) return "Tomorrow";
+  return `${days} days`;
+}
+
+function formatPlainDate(dateString) {
+  if (!dateString) return "";
+  const date = parseLocalDate(dateString);
+  if (!date) return dateString;
 
   return date.toLocaleDateString("en-US", {
     month: "short",
@@ -135,514 +112,518 @@ function formatDate(value) {
   });
 }
 
-function formatDueText(value) {
-  const days = daysBetween(value);
-
-  if (days === null) return "No date";
-  if (days < 0) return `${Math.abs(days)} day${Math.abs(days) === 1 ? "" : "s"} overdue`;
-  if (days === 0) return "Today";
-  if (days === 1) return "Tomorrow";
-  return `In ${days} days`;
+function formatGrams(value) {
+  const grams = Math.round(Number(value) || 0);
+  return `${grams.toLocaleString("en-US")}g`;
 }
 
-function normalize(value) {
-  return String(value || "").toLowerCase().trim();
+function formatKilograms(value) {
+  const kg = (Number(value) || 0) / 1000;
+  return `${kg.toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  })} kg`;
 }
 
-function blankTemplate() {
+function getMonthDays(viewDate) {
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+
+  const firstDay = new Date(year, month, 1);
+  const startDay = firstDay.getDay();
+
+  const gridStart = new Date(year, month, 1 - startDay);
+  const days = [];
+
+  for (let index = 0; index < 42; index += 1) {
+    const date = new Date(gridStart);
+    date.setDate(gridStart.getDate() + index);
+
+    days.push({
+      date,
+      iso: date.toISOString().slice(0, 10),
+      isCurrentMonth: date.getMonth() === month,
+      isToday: date.toISOString().slice(0, 10) === todayISO()
+    });
+  }
+
+  return days;
+}
+
+function normalizeRecipe(recipe) {
   return {
-    id: "",
-    cropName: "",
-    variety: "",
-    category: "Microgreens",
-    growingMethod: "Microgreen tray",
-    germinationDays: 2,
-    blackoutDays: 3,
-    daysToHarvest: 10,
-    transplantDays: "",
-    harvestWindowDays: 3,
-    successionIntervalDays: 7,
-    defaultQuantityUnit: "trays",
-    defaultLocation: "",
-    notes: "",
-    createdAt: "",
-    updatedAt: ""
-  };
-}
-
-function blankBatch() {
-  return {
-    id: "",
-    templateId: "",
-    cropName: "",
-    variety: "",
-    category: "Microgreens",
-    growingMethod: "Microgreen tray",
-    plantingDate: todayString(),
-    targetHarvestDate: addDays(todayString(), 10),
-    germinationDate: addDays(todayString(), 2),
-    moveToLightDate: addDays(todayString(), 5),
-    transplantDate: "",
-    quantity: 1,
-    quantityUnit: "trays",
-    location: "",
-    status: "Planned",
-    notes: "",
-    createdAt: "",
-    updatedAt: ""
-  };
-}
-
-function batchLabel(batch) {
-  const variety = batch.variety ? `, ${batch.variety}` : "";
-  return `${batch.cropName || "Untitled Crop"}${variety}`;
-}
-
-function batchTaskList(batch) {
-  const tasks = [
-    {
-      type: "Plant",
-      date: batch.plantingDate,
-      label: `Plant ${batchLabel(batch)}`
-    },
-    {
-      type: "Germination",
-      date: batch.germinationDate,
-      label: `Check germination: ${batchLabel(batch)}`
-    },
-    {
-      type: "Move",
-      date: batch.moveToLightDate,
-      label: `Move to light: ${batchLabel(batch)}`
-    },
-    {
-      type: "Transplant",
-      date: batch.transplantDate,
-      label: `Transplant ${batchLabel(batch)}`
-    },
-    {
-      type: "Harvest",
-      date: batch.targetHarvestDate,
-      label: `Harvest ${batchLabel(batch)}`
+    ...recipe,
+    flourTypes: recipe.flourTypes || [{ name: "Bread Flour", pct: 100 }],
+    otherIngredients: recipe.otherIngredients || [],
+    process: {
+      autolyseMin: 0,
+      mixMin: 0,
+      bulkMin: 0,
+      foldCount: 0,
+      foldIntervalMin: 30,
+      foldDurationMin: 5,
+      divideAndPreshapeMin: 12,
+      benchRestMin: 0,
+      finalShapeMin: 10,
+      finalProofMin: 0,
+      bakeTempF: 400,
+      bakeMin: 30,
+      coolMin: 60,
+      ...(recipe.process || {})
     }
-  ];
-
-  return tasks.filter((task) => task.date);
+  };
 }
 
-function taskStatus(taskDate) {
-  const days = daysBetween(taskDate);
+function calculateBakingRecipePlan(rawRecipe, quantity, settings) {
+  const recipe = normalizeRecipe(rawRecipe);
+  const qty = Number(quantity) || 0;
 
-  if (days === null) return "neutral";
-  if (days < 0) return "danger";
-  if (days <= 2) return "warning";
-  return "neutral";
+  if (qty <= 0) {
+    return null;
+  }
+
+  const finishedUnitWeight = Number(recipe.finishedUnitWeight) || 0;
+  const bakeLossPct = Number(recipe.bakeLossPct) || 0;
+  const desiredBakedWeight = qty * finishedUnitWeight;
+  const doughWeight = bakeLossPct >= 100
+    ? desiredBakedWeight
+    : desiredBakedWeight / (1 - bakeLossPct / 100);
+
+  const otherPct = (recipe.otherIngredients || []).reduce(
+    (sum, item) => sum + (Number(item.pct) || 0),
+    0
+  );
+
+  const hydrationPct = Number(recipe.hydrationPct) || 0;
+  const starterPct = Number(recipe.starterPct) || 0;
+  const saltPct = Number(recipe.saltPct) || 0;
+  const formulaTotalPct = 100 + hydrationPct + starterPct + saltPct + otherPct;
+
+  const baseFlourG = formulaTotalPct > 0 ? doughWeight / (formulaTotalPct / 100) : 0;
+  const starterG = (baseFlourG * starterPct) / 100;
+
+  const mixerCapacity = Number(settings.mixerCapacityG) || 1;
+  const recipeBatchMax = Number(recipe.batchMaxDoughG) || mixerCapacity;
+  const maxBatchSize = Math.max(1, Math.min(recipeBatchMax, mixerCapacity));
+  const mixerBatches = Math.ceil(doughWeight / maxBatchSize);
+
+  const ovenCapacity = Math.max(1, Number(recipe.ovenCapacityUnits) || 1);
+  const ovenLoads = Math.ceil(qty / ovenCapacity);
+
+  return {
+    recipe,
+    quantity: qty,
+    doughWeight,
+    starterG,
+    mixerBatches,
+    ovenLoads
+  };
 }
 
-export default function PlantingScheduler() {
+function getBakingPlanDetails(bakingData) {
+  const settings = {
+    ...defaultBakingSettings,
+    ...(bakingData.settings || {})
+  };
+
+  const recipes = Array.isArray(bakingData.recipes)
+    ? bakingData.recipes.map(normalizeRecipe)
+    : [];
+
+  const productionItems = Array.isArray(bakingData.productionItems)
+    ? bakingData.productionItems
+    : [];
+
+  const plans = productionItems
+    .map((item) => {
+      const recipe = recipes.find((savedRecipe) => savedRecipe.id === item.recipeId);
+      if (!recipe) return null;
+      return calculateBakingRecipePlan(recipe, item.quantity, settings);
+    })
+    .filter(Boolean);
+
+  const plannedProducts = plans.length;
+  const plannedUnits = plans.reduce((sum, plan) => sum + plan.quantity, 0);
+  const totalDoughG = plans.reduce((sum, plan) => sum + plan.doughWeight, 0);
+  const starterNeededG =
+    plans.reduce((sum, plan) => sum + plan.starterG, 0) *
+    (1 + (Number(settings.levainBufferPct) || 0) / 100);
+  const mixerBatches = plans.reduce((sum, plan) => sum + plan.mixerBatches, 0);
+  const ovenLoads = plans.reduce((sum, plan) => sum + plan.ovenLoads, 0);
+
+  const productSummary = plans
+    .map((plan) => `${plan.recipe.name}: ${plan.quantity} ${plan.recipe.unitsLabel || "units"}`)
+    .join(", ");
+
+  return {
+    productionDate: bakingData.productionDate || "",
+    defaultStartTime: settings.defaultStartTime || "",
+    plannedProducts,
+    plannedUnits,
+    totalDoughG,
+    starterNeededG,
+    mixerBatches,
+    ovenLoads,
+    productSummary,
+    mixerCapacityG: settings.mixerCapacityG || "",
+    proofingCapacityUnits: settings.proofingCapacityUnits || ""
+  };
+}
+
+function getPermitDetails(item) {
+  return {
+    name: item.name || "",
+    type: item.type || "",
+    organization: item.organization || item.agency || "",
+    status: item.status || "",
+    priority: item.priority || "",
+    issueDate: item.issueDate || "",
+    dueDate: item.dueDate || "",
+    renewalDate: item.renewalDate || "",
+    reminderDays: item.reminderDays || item.reminder || "",
+    documentName: item.documentName || item.documentFileName || "",
+    documentUrl: item.documentUrl || "",
+    notes: item.notes || ""
+  };
+}
+
+function getMarketPlanDetails(plan) {
+  return {
+    name: plan.marketName || "Market Plan",
+    marketDate: plan.marketDate || "",
+    location: plan.location || "",
+    weatherNotes: plan.weatherNotes || "",
+    notes: plan.notes || "",
+    productsCount: Array.isArray(plan.products) ? plan.products.length : "",
+    totalUnits: plan.totalUnits || "",
+    totalRevenue: plan.totalRevenue || ""
+  };
+}
+
+function normalizeImportedEvents({ marketPlans, permitItems, bakingData }) {
+  const events = [];
+
+  marketPlans.forEach((plan) => {
+    if (!plan.marketDate) return;
+
+    events.push({
+      id: `market-${plan.id}`,
+      title: plan.marketName || "Market Plan",
+      type: "Market Prep",
+      date: plan.marketDate,
+      startTime: "",
+      endTime: "",
+      location: plan.location || "",
+      notes: plan.weatherNotes || plan.notes || "",
+      source: "marketPrep",
+      sourcePath: "/market-prep",
+      accent: "market",
+      details: getMarketPlanDetails(plan)
+    });
+  });
+
+  permitItems.forEach((item) => {
+    const renewalDate = item.renewalDate || "";
+    const dueDate = item.dueDate || "";
+    const details = getPermitDetails(item);
+
+    if (renewalDate) {
+      events.push({
+        id: `permit-renewal-${item.id}`,
+        title: `${item.name || "Permit"} renewal`,
+        type: item.type || "Permit",
+        date: renewalDate,
+        startTime: "",
+        endTime: "",
+        location: item.organization || item.agency || "",
+        notes: item.notes || "",
+        source: "permitGrant",
+        sourcePath: `/permit-grants?record=${encodeURIComponent(item.id || "")}`,
+        accent: "grant",
+        details
+      });
+    }
+
+    if (dueDate && dueDate !== renewalDate) {
+      events.push({
+        id: `permit-due-${item.id}`,
+        title: `${item.name || "Permit"} deadline`,
+        type: item.type || "Permit",
+        date: dueDate,
+        startTime: "",
+        endTime: "",
+        location: item.organization || item.agency || "",
+        notes: item.notes || "",
+        source: "permitGrant",
+        sourcePath: `/permit-grants?record=${encodeURIComponent(item.id || "")}`,
+        accent: "grant",
+        details
+      });
+    }
+  });
+
+  if (bakingData?.productionDate) {
+    const details = getBakingPlanDetails(bakingData);
+
+    events.push({
+      id: "baking-production-date",
+      title: "Baking production day",
+      type: "Production",
+      date: bakingData.productionDate,
+      startTime: details.defaultStartTime || "",
+      endTime: "",
+      location: "",
+      notes: "Generated from Baking Planner production date.",
+      source: "bakingPlanner",
+      sourcePath: "/baking-planner",
+      accent: "sourdough",
+      details
+    });
+  }
+
+  return events;
+}
+
+function DetailCard({ label, value }) {
+  if (value === undefined || value === null || value === "") return null;
+
+  return (
+    <div>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+export default function Calendar() {
   const { user, loginWithGoogle } = useAuth();
 
-  const [templates, setTemplates] = useState([]);
-  const [batches, setBatches] = useState([]);
-  const [templateForm, setTemplateForm] = useState(blankTemplate());
-  const [batchForm, setBatchForm] = useState(blankBatch());
-  const [activePanel, setActivePanel] = useState("batch");
-  const [queryText, setQueryText] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("All categories");
-  const [statusFilter, setStatusFilter] = useState("Active batches");
-  const [taskFilter, setTaskFilter] = useState("All tasks");
-  const [taskDateRange, setTaskDateRange] = useState("Next 7 days");
-  const [loading, setLoading] = useState(false);
-  const [savingTemplate, setSavingTemplate] = useState(false);
-  const [savingBatch, setSavingBatch] = useState(false);
+  const [viewDate, setViewDate] = useState(() => new Date());
+  const [manualEvents, setManualEvents] = useState([]);
+  const [importedEvents, setImportedEvents] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(todayISO());
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [isEventFormOpen, setIsEventFormOpen] = useState(false);
+  const [eventForm, setEventForm] = useState({ ...blankEvent, date: todayISO() });
   const [statusMessage, setStatusMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      loadData();
-    } else {
-      setTemplates([]);
-      setBatches([]);
-      setTemplateForm(blankTemplate());
-      setBatchForm(blankBatch());
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (!statusMessage) return undefined;
-
-    const timer = window.setTimeout(() => setStatusMessage(""), 3200);
-    return () => window.clearTimeout(timer);
-  }, [statusMessage]);
-
-  async function loadData() {
+  async function loadCalendarData() {
     if (!user) return;
 
     setLoading(true);
 
     try {
-      const [savedTemplates, savedBatches] = await Promise.all([
-        getPlantingTemplates(user.uid),
-        getPlantingBatches(user.uid)
-      ]);
+      const [savedEvents, marketPlans, permitItems, bakingSnapshot] =
+        await Promise.all([
+          getCalendarEvents(user.uid),
+          getMarketPrepPlans(user.uid),
+          getPermitGrantItems(user.uid),
+          getDoc(doc(db, "users", user.uid, "bakingPlanner", "main"))
+        ]);
 
-      setTemplates(Array.isArray(savedTemplates) ? savedTemplates : []);
-      setBatches(Array.isArray(savedBatches) ? savedBatches : []);
+      const bakingData = bakingSnapshot.exists() ? bakingSnapshot.data() : {};
+
+      setManualEvents(
+        savedEvents.map((event) => ({
+          ...event,
+          source: "manual",
+          accent: "calendar",
+          details: event.details || {}
+        }))
+      );
+
+      setImportedEvents(
+        normalizeImportedEvents({
+          marketPlans: Array.isArray(marketPlans) ? marketPlans : [],
+          permitItems: Array.isArray(permitItems) ? permitItems : [],
+          bakingData
+        })
+      );
     } catch (error) {
-      console.error("Could not load planting scheduler data:", error);
-      setStatusMessage("Could not load planting scheduler data.");
+      console.error(error);
+      setStatusMessage("Could not load calendar.");
     } finally {
       setLoading(false);
     }
   }
 
-  function updateTemplateField(field, value) {
-    setTemplateForm((current) => ({
-      ...current,
-      [field]: value
-    }));
-  }
+  useEffect(() => {
+    if (user) {
+      loadCalendarData();
+    } else {
+      setManualEvents([]);
+      setImportedEvents([]);
+    }
+  }, [user]);
 
-  function updateBatchField(field, value) {
-    setBatchForm((current) => ({
-      ...current,
-      [field]: value
-    }));
-  }
+  useEffect(() => {
+    if (!statusMessage) return;
 
-  function updateBatchDateMode(field, value) {
-    setBatchForm((current) => {
-      const next = {
-        ...current,
-        [field]: value
-      };
+    const timer = window.setTimeout(() => {
+      setStatusMessage("");
+    }, 3000);
 
-      if (field === "plantingDate") {
-        const template = templates.find((item) => item.id === next.templateId);
-        const daysToHarvest =
-          Number(template?.daysToHarvest ?? next.daysToHarvest ?? 10) || 0;
-        const germinationDays = Number(template?.germinationDays ?? 0) || 0;
-        const blackoutDays = Number(template?.blackoutDays ?? 0) || 0;
-        const transplantDays = Number(template?.transplantDays ?? 0) || 0;
+    return () => window.clearTimeout(timer);
+  }, [statusMessage]);
 
-        next.targetHarvestDate = addDays(value, daysToHarvest);
-        next.germinationDate = germinationDays ? addDays(value, germinationDays) : "";
-        next.moveToLightDate =
-          germinationDays || blackoutDays
-            ? addDays(value, germinationDays + blackoutDays)
-            : "";
-        next.transplantDate = transplantDays ? addDays(value, transplantDays) : "";
+  const allEvents = useMemo(() => {
+    return [...manualEvents, ...importedEvents].sort((a, b) => {
+      const dateCompare = String(a.date || "").localeCompare(String(b.date || ""));
+      if (dateCompare !== 0) return dateCompare;
+
+      return String(a.startTime || "").localeCompare(String(b.startTime || ""));
+    });
+  }, [manualEvents, importedEvents]);
+
+  const calendarDays = useMemo(() => getMonthDays(viewDate), [viewDate]);
+
+  const eventsByDate = useMemo(() => {
+    return allEvents.reduce((map, event) => {
+      if (!event.date) return map;
+
+      if (!map[event.date]) {
+        map[event.date] = [];
       }
 
-      if (field === "targetHarvestDate") {
-        const template = templates.find((item) => item.id === next.templateId);
-        const daysToHarvest = Number(template?.daysToHarvest || 0);
+      map[event.date].push(event);
 
-        if (daysToHarvest) {
-          const plantingDate = addDays(value, -daysToHarvest);
-          const germinationDays = Number(template?.germinationDays || 0);
-          const blackoutDays = Number(template?.blackoutDays || 0);
-          const transplantDays = Number(template?.transplantDays || 0);
+      return map;
+    }, {});
+  }, [allEvents]);
 
-          next.plantingDate = plantingDate;
-          next.germinationDate = germinationDays
-            ? addDays(plantingDate, germinationDays)
-            : "";
-          next.moveToLightDate =
-            germinationDays || blackoutDays
-              ? addDays(plantingDate, germinationDays + blackoutDays)
-              : "";
-          next.transplantDate = transplantDays
-            ? addDays(plantingDate, transplantDays)
-            : "";
-        }
-      }
+  const selectedDateEvents = eventsByDate[selectedDate] || [];
 
+  const upcomingEvents = useMemo(() => {
+    return allEvents
+      .map((event) => ({
+        ...event,
+        days: daysUntil(event.date)
+      }))
+      .filter((event) => event.days !== null && event.days >= 0)
+      .sort((a, b) => a.days - b.days)
+      .slice(0, 8);
+  }, [allEvents]);
+
+  const monthEventsCount = useMemo(() => {
+    const key = monthKey(viewDate);
+
+    return allEvents.filter((event) => {
+      const date = parseLocalDate(event.date);
+      return date && monthKey(date) === key;
+    }).length;
+  }, [allEvents, viewDate]);
+
+  function shiftMonth(direction) {
+    setViewDate((current) => {
+      const next = new Date(current);
+      next.setMonth(current.getMonth() + direction);
       return next;
     });
   }
 
-  function applyTemplate(templateId) {
-    const template = templates.find((item) => item.id === templateId);
+  function openNewEvent(date = selectedDate) {
+    setEventForm({
+      ...blankEvent,
+      date: date || todayISO()
+    });
+    setSelectedEvent(null);
+    setIsEventFormOpen(true);
+  }
 
-    if (!template) {
-      setBatchForm(blankBatch());
+  function openEditEvent(event) {
+    if (event.source !== "manual") {
+      setSelectedEvent(event);
       return;
     }
 
-    const plantingDate = batchForm.plantingDate || todayString();
-    const germinationDays = Number(template.germinationDays) || 0;
-    const blackoutDays = Number(template.blackoutDays) || 0;
-    const daysToHarvest = Number(template.daysToHarvest) || 0;
-    const transplantDays = Number(template.transplantDays) || 0;
-
-    setBatchForm((current) => ({
-      ...current,
-      templateId,
-      cropName: template.cropName || "",
-      variety: template.variety || "",
-      category: template.category || "Other",
-      growingMethod: template.growingMethod || "Other",
-      plantingDate,
-      germinationDate: germinationDays ? addDays(plantingDate, germinationDays) : "",
-      moveToLightDate:
-        germinationDays || blackoutDays
-          ? addDays(plantingDate, germinationDays + blackoutDays)
-          : "",
-      transplantDate: transplantDays ? addDays(plantingDate, transplantDays) : "",
-      targetHarvestDate: daysToHarvest ? addDays(plantingDate, daysToHarvest) : "",
-      quantityUnit: template.defaultQuantityUnit || "units",
-      location: template.defaultLocation || "",
-      notes: current.notes || template.notes || ""
-    }));
-  }
-
-  function startNewTemplate() {
-    setTemplateForm(blankTemplate());
-    setActivePanel("template");
-    setStatusMessage("Started a new crop template.");
-  }
-
-  function startNewBatch() {
-    setBatchForm(blankBatch());
-    setActivePanel("batch");
-    setStatusMessage("Started a new planting batch.");
-  }
-
-  function loadTemplate(template) {
-    setTemplateForm({
-      ...blankTemplate(),
-      ...template
+    setEventForm({
+      id: event.id || "",
+      title: event.title || "",
+      type: event.type || "Market",
+      date: event.date || todayISO(),
+      startTime: event.startTime || "",
+      endTime: event.endTime || "",
+      location: event.location || "",
+      notes: event.notes || ""
     });
-    setActivePanel("template");
-    setStatusMessage("Crop template loaded.");
+
+    setSelectedEvent(event);
+    setIsEventFormOpen(true);
   }
 
-  function loadBatch(batch) {
-    setBatchForm({
-      ...blankBatch(),
-      ...batch
-    });
-    setActivePanel("batch");
-    setStatusMessage("Planting batch loaded.");
+  function openCalendarEventFromName(event, domEvent) {
+    domEvent?.stopPropagation?.();
+    setSelectedDate(event.date || selectedDate);
+    openEditEvent(event);
   }
 
-  async function handleSaveTemplate() {
+  async function saveEvent(event) {
+    event.preventDefault();
+
     if (!user) return;
 
-    if (!templateForm.cropName.trim()) {
-      setStatusMessage("Crop name is required.");
+    if (!eventForm.title.trim() || !eventForm.date) {
+      setStatusMessage("Event title and date are required.");
       return;
     }
 
-    setSavingTemplate(true);
-
     try {
-      const id = await savePlantingTemplate(user.uid, {
-        ...templateForm,
-        cropName: templateForm.cropName.trim(),
-        variety: templateForm.variety.trim()
+      await saveCalendarEvent(user.uid, {
+        ...eventForm,
+        title: eventForm.title.trim(),
+        location: eventForm.location.trim(),
+        notes: eventForm.notes.trim()
       });
 
-      setTemplateForm((current) => ({
-        ...current,
-        id
-      }));
-
-      setStatusMessage("Crop template saved.");
-      await loadData();
+      setStatusMessage("Calendar event saved.");
+      setIsEventFormOpen(false);
+      setEventForm({ ...blankEvent, date: todayISO() });
+      await loadCalendarData();
     } catch (error) {
-      console.error("Could not save crop template:", error);
-      setStatusMessage("Could not save crop template.");
-    } finally {
-      setSavingTemplate(false);
+      console.error(error);
+      setStatusMessage("Could not save calendar event.");
     }
   }
 
-  async function handleSaveBatch() {
-    if (!user) return;
-
-    if (!batchForm.cropName.trim()) {
-      setStatusMessage("Crop name is required.");
-      return;
-    }
-
-    if (!batchForm.plantingDate && !batchForm.targetHarvestDate) {
-      setStatusMessage("Add a planting date or target harvest date.");
-      return;
-    }
-
-    setSavingBatch(true);
+  async function removeEvent(eventId) {
+    if (!user || !eventId) return;
 
     try {
-      const id = await savePlantingBatch(user.uid, {
-        ...batchForm,
-        cropName: batchForm.cropName.trim(),
-        variety: batchForm.variety.trim(),
-        quantity: Number(batchForm.quantity) || 0
-      });
-
-      setBatchForm((current) => ({
-        ...current,
-        id
-      }));
-
-      setStatusMessage("Planting batch saved.");
-      await loadData();
+      await deleteCalendarEvent(user.uid, eventId);
+      setStatusMessage("Calendar event deleted.");
+      setIsEventFormOpen(false);
+      setSelectedEvent(null);
+      await loadCalendarData();
     } catch (error) {
-      console.error("Could not save planting batch:", error);
-      setStatusMessage("Could not save planting batch.");
-    } finally {
-      setSavingBatch(false);
+      console.error(error);
+      setStatusMessage("Could not delete calendar event.");
     }
   }
 
-  async function handleDeleteTemplate(template) {
-    if (!user || !template?.id) return;
-
-    const confirmed = window.confirm(`Delete ${template.cropName || "this crop template"}?`);
-    if (!confirmed) return;
-
-    try {
-      await deletePlantingTemplate(user.uid, template.id);
-
-      if (templateForm.id === template.id) {
-        setTemplateForm(blankTemplate());
-      }
-
-      setStatusMessage("Crop template deleted.");
-      await loadData();
-    } catch (error) {
-      console.error("Could not delete crop template:", error);
-      setStatusMessage("Could not delete crop template.");
-    }
-  }
-
-  async function handleDeleteBatch(batch) {
-    if (!user || !batch?.id) return;
-
-    const confirmed = window.confirm(`Delete ${batchLabel(batch)}?`);
-    if (!confirmed) return;
-
-    try {
-      await deletePlantingBatch(user.uid, batch.id);
-
-      if (batchForm.id === batch.id) {
-        setBatchForm(blankBatch());
-      }
-
-      setStatusMessage("Planting batch deleted.");
-      await loadData();
-    } catch (error) {
-      console.error("Could not delete planting batch:", error);
-      setStatusMessage("Could not delete planting batch.");
-    }
-  }
-
-  const filteredBatches = useMemo(() => {
-    const search = normalize(queryText);
-
-    return batches.filter((batch) => {
-      const matchesSearch = search
-        ? [
-            batch.cropName,
-            batch.variety,
-            batch.category,
-            batch.growingMethod,
-            batch.location,
-            batch.status,
-            batch.notes
-          ]
-            .map(normalize)
-            .some((value) => value.includes(search))
-        : true;
-
-      const matchesCategory =
-        categoryFilter === "All categories" || batch.category === categoryFilter;
-
-      const matchesStatus =
-        statusFilter === "All batches" ||
-        (statusFilter === "Active batches"
-          ? !["Harvested", "Failed"].includes(batch.status)
-          : batch.status === statusFilter);
-
-      return matchesSearch && matchesCategory && matchesStatus;
-    });
-  }, [batches, queryText, categoryFilter, statusFilter]);
-
-  const allUpcomingTasks = useMemo(() => {
-    return batches
-      .filter((batch) => !["Harvested", "Failed"].includes(batch.status))
-      .flatMap((batch) =>
-        batchTaskList(batch).map((task) => ({
-          ...task,
-          batchId: batch.id,
-          cropName: batch.cropName,
-          variety: batch.variety,
-          status: batch.status,
-          location: batch.location,
-          quantity: batch.quantity,
-          quantityUnit: batch.quantityUnit
-        }))
-      )
-      .filter((task) => {
-        const days = daysBetween(task.date);
-        return days !== null && days >= -30 && days <= 60;
-      })
-      .sort((a, b) => String(a.date).localeCompare(String(b.date)));
-  }, [batches]);
-
-  const upcomingTasks = useMemo(() => {
-    return allUpcomingTasks
-      .filter((task) => {
-        if (taskFilter !== "All tasks" && task.type !== taskFilter) {
-          return false;
-        }
-
-        const days = daysBetween(task.date);
-
-        if (days === null) return false;
-        if (taskDateRange === "Today") return days === 0;
-        if (taskDateRange === "Next 7 days") return days >= 0 && days <= 7;
-        if (taskDateRange === "Next 14 days") return days >= 0 && days <= 14;
-        if (taskDateRange === "Next 30 days") return days >= 0 && days <= 30;
-        if (taskDateRange === "Overdue") return days < 0;
-        return days >= 0;
-      })
-      .slice(0, 24);
-  }, [allUpcomingTasks, taskFilter, taskDateRange]);
-
-  const stats = useMemo(() => {
-    const activeBatches = batches.filter(
-      (batch) => !["Harvested", "Failed"].includes(batch.status)
-    );
-    const readyBatches = activeBatches.filter((batch) => batch.status === "Ready");
-    const overdueTasks = allUpcomingTasks.filter((task) => daysBetween(task.date) < 0);
-    const dueTodayTasks = allUpcomingTasks.filter((task) => daysBetween(task.date) === 0);
-
-    return {
-      templates: templates.length,
-      active: activeBatches.length,
-      ready: readyBatches.length,
-      overdue: overdueTasks.length,
-      dueToday: dueTodayTasks.length
-    };
-  }, [templates, batches, allUpcomingTasks]);
+  const monthLabel = viewDate.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric"
+  });
 
   if (!user) {
     return (
-      <div className="plantingModule modulePage plantingSchedulerResponsive">
-        <section className="moduleHero compactHero plantingSchedulerHero moduleActionHero plantingActionHero">
+      <div className="calendarModule">
+        <section className="moduleHero compactHero calendarHero">
           <div>
-            <p className="eyebrow">Planting Scheduler</p>
-            <h2>Sign in to schedule plantings.</h2>
+            <p className="eyebrow">Calendar</p>
+            <h2>Sign in to view your vendor calendar.</h2>
             <p>
-              Create crop templates, schedule planting batches, and track growing
-              tasks from seed to harvest.
+              Calendar events are built from your market plans, permits, grants,
+              baking schedule, and manually added events.
             </p>
           </div>
 
-          <button className="primaryButton" type="button" onClick={loginWithGoogle}>
+          <button
+            className="primaryButton calendarAddButton"
+            type="button"
+            onClick={loginWithGoogle}
+          >
             Sign in with Google
           </button>
         </section>
@@ -651,673 +632,583 @@ export default function PlantingScheduler() {
   }
 
   return (
-    <div className="plantingModule modulePage plantingSchedulerResponsive">
+    <div className="calendarModule">
       {statusMessage ? (
-        <div className="floatingStatus" role="status">
+        <div className="floatingStatus success">
+          <span>ⓘ</span>
           <span>{statusMessage}</span>
           <button type="button" onClick={() => setStatusMessage("")}>
-            <X size={16} />
+            ×
           </button>
         </div>
       ) : null}
 
-      <section className="moduleHero compactHero plantingSchedulerHero moduleActionHero plantingActionHero">
+      <section className="moduleHero compactHero calendarHero">
         <div>
-          <p className="eyebrow">Planting Scheduler</p>
-          <h2>Plan crops, plantings, growing tasks, and harvest windows.</h2>
+          <p className="eyebrow">Calendar</p>
+          <h2>See every dated vendor task in one place.</h2>
           <p>
-            Build reusable crop templates, schedule batches by planting date or
-            target harvest date, and track upcoming crop tasks across trays, beds,
-            pots, fields, and greenhouse space.
+            Market plans, permit deadlines, grant renewals, baking production dates,
+            and manually added events appear together on your calendar.
           </p>
         </div>
 
-        <div className="moduleHeroActions plantingHeroActions">
-          <button className="secondaryButton compactButton" type="button" onClick={startNewTemplate}>
-            <Leaf size={16} />
-            New Template
-          </button>
-
-          <button className="primaryButton compactPrimary" type="button" onClick={startNewBatch}>
-            <Plus size={16} />
-            New Planting
-          </button>
-        </div>
+        <button
+          className="primaryButton calendarAddButton"
+          type="button"
+          onClick={() => openNewEvent()}
+        >
+          <Plus size={16} />
+          Add Event
+        </button>
       </section>
 
-      <section className="hubStatGrid plantingStatGrid plantingStatGridResponsive">
-        <StatCard
-          icon={Leaf}
-          label="Templates"
-          value={loading ? "..." : stats.templates}
-          sub="saved crop profiles"
-          accent="planting"
-        />
-        <StatCard
-          icon={Sprout}
-          label="Active"
-          value={loading ? "..." : stats.active}
-          sub="open planting batches"
-          accent="market"
-        />
+      <section className="hubStatGrid calendarStatGrid">
         <StatCard
           icon={CalendarDays}
-          label="Due Today"
-          value={loading ? "..." : stats.dueToday}
-          sub="planting tasks"
+          label="This Month"
+          value={loading ? "..." : monthEventsCount}
+          sub="calendar items"
+          accent="calendar"
+        />
+
+        <StatCard
+          icon={Clock}
+          label="Upcoming"
+          value={loading ? "..." : upcomingEvents.length}
+          sub="next visible events"
           accent="sourdough"
         />
+
         <StatCard
-          icon={CheckCircle2}
-          label="Ready"
-          value={loading ? "..." : stats.ready}
-          sub="ready to harvest or sell"
+          icon={LinkIcon}
+          label="Imported"
+          value={loading ? "..." : importedEvents.length}
+          sub="from other modules"
+          accent="market"
+        />
+
+        <StatCard
+          icon={Plus}
+          label="Manual"
+          value={loading ? "..." : manualEvents.length}
+          sub="custom calendar events"
           accent="pricing"
         />
-        <StatCard
-          icon={ClipboardList}
-          label="Overdue"
-          value={loading ? "..." : stats.overdue}
-          sub="past-due tasks"
-          accent="grant"
-        />
       </section>
 
-      <section className="plantingTodayPanel workspacePanel compactPanel plantingTasksPanelResponsive">
-        <div className="workspaceHeader compactPanelHeader plantingTasksHeader">
-          <div className="plantingTasksTitleBlock">
-            <div className="plantingTasksEyebrowRow">
-              <p className="eyebrow">Tasks</p>
-
-              <div className="plantingTaskFilters plantingTaskFiltersResponsive">
-                <label>
-                  <span>Task</span>
-                  <select
-                    value={taskFilter}
-                    onChange={(event) => setTaskFilter(event.target.value)}
-                  >
-                    {TASK_FILTERS.map((task) => (
-                      <option key={task}>{task}</option>
-                    ))}
-                  </select>
-                </label>
-
-                <label>
-                  <span>Date Range</span>
-                  <select
-                    value={taskDateRange}
-                    onChange={(event) => setTaskDateRange(event.target.value)}
-                  >
-                    {TASK_DATE_RANGES.map((range) => (
-                      <option key={range}>{range}</option>
-                    ))}
-                  </select>
-                </label>
-              </div>
+      <section className="calendarLayout">
+        <div className="calendarPanel calendarMainPanel">
+          <div className="calendarToolbar">
+            <div>
+              <p className="eyebrow">Month View</p>
+              <h3>{monthLabel}</h3>
             </div>
 
-            <h3>Upcoming Planting Tasks</h3>
+            <div className="calendarToolbarActions">
+              <button
+                type="button"
+                className="secondaryButton compactButton"
+                onClick={() => shiftMonth(-1)}
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              <button
+                type="button"
+                className="secondaryButton compactButton"
+                onClick={() => setViewDate(new Date())}
+              >
+                Today
+              </button>
+
+              <button
+                type="button"
+                className="secondaryButton compactButton"
+                onClick={() => shiftMonth(1)}
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
 
-          <button className="secondaryButton compactButton" type="button" onClick={loadData}>
-            <RefreshCw size={15} />
-            Refresh
-          </button>
-        </div>
-
-        {upcomingTasks.length ? (
-          <div className="plantingTaskGrid plantingTaskGridResponsive">
-            {upcomingTasks.map((task) => (
-              <button
-                className={`plantingTaskCard ${taskStatus(task.date)}`}
-                type="button"
-                key={`${task.batchId}-${task.type}-${task.date}`}
-                onClick={() => {
-                  const match = batches.find((batch) => batch.id === task.batchId);
-                  if (match) loadBatch(match);
-                }}
-              >
-                <strong>{task.type}</strong>
-                <span>{task.label}</span>
-                <small>
-                  {formatDate(task.date)} • {formatDueText(task.date)}
-                </small>
-              </button>
+          <div className="calendarWeekHeader">
+            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+              <span key={day}>{day}</span>
             ))}
           </div>
-        ) : (
-          <p className="dashboardEmpty">
-            {loading ? "Loading tasks..." : "No planting tasks match the selected filters."}
-          </p>
-        )}
-      </section>
 
-      <section className="plantingLayout plantingLayoutResponsive">
-        <div className="workspacePanel compactPanel plantingDirectoryPanel plantingDirectoryPanelResponsive">
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Schedule</p>
-              <h3>Planting Batches</h3>
-            </div>
+          <div className="calendarGrid">
+            {calendarDays.map((day) => {
+              const dayEvents = eventsByDate[day.iso] || [];
+              const isSelected = selectedDate === day.iso;
 
-            <button className="secondaryButton compactButton" type="button" onClick={loadData}>
-              <RefreshCw size={15} />
-              Refresh
-            </button>
-          </div>
+              return (
+                <button
+                  type="button"
+                  key={day.iso}
+                  className={[
+                    "calendarDay",
+                    day.isCurrentMonth ? "" : "muted",
+                    day.isToday ? "today" : "",
+                    isSelected ? "selected" : ""
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  onClick={() => setSelectedDate(day.iso)}
+                  onDoubleClick={() => openNewEvent(day.iso)}
+                >
+                  <span className="calendarDayNumber">{day.date.getDate()}</span>
 
-          <div className="customersFilterPanel plantingFilterPanel plantingFilterPanelResponsive">
-            <div className="searchBox compactSearch customersSearchBox">
-              <Search size={17} />
-              <input
-                type="search"
-                value={queryText}
-                onChange={(event) => setQueryText(event.target.value)}
-                placeholder="Search crop, variety, location, notes, or status"
-              />
-            </div>
+                  <div className="calendarDayEvents">
+                    {dayEvents.slice(0, 3).map((event) => (
+                      <button
+                        key={event.id}
+                        type="button"
+                        className={`calendarEventDot clickableName ${event.accent || "calendar"}`}
+                        onClick={(clickEvent) =>
+                          openCalendarEventFromName(event, clickEvent)
+                        }
+                      >
+                        {event.title}
+                      </button>
+                    ))}
 
-            <label>
-              Category
-              <select
-                value={categoryFilter}
-                onChange={(event) => setCategoryFilter(event.target.value)}
-              >
-                <option>All categories</option>
-                {CROP_CATEGORIES.map((category) => (
-                  <option key={category}>{category}</option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Status
-              <select
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
-              >
-                <option>Active batches</option>
-                <option>All batches</option>
-                {BATCH_STATUSES.map((status) => (
-                  <option key={status}>{status}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <div className="plantingBatchList plantingBatchListResponsive">
-            {filteredBatches.length ? (
-              filteredBatches.map((batch) => (
-                <div className="plantingBatchRow plantingBatchRowResponsive" key={batch.id}>
-                  <button type="button" onClick={() => loadBatch(batch)}>
-                    <strong>{batchLabel(batch)}</strong>
-                    <span>
-                      {batch.quantity || 0} {batch.quantityUnit || "units"} •{" "}
-                      {batch.location || "No location"}
-                    </span>
-                    <small>
-                      Plant {formatDate(batch.plantingDate)} • Harvest{" "}
-                      {formatDate(batch.targetHarvestDate)}
-                    </small>
-                  </button>
-
-                  <span className={`plantingStatusPill ${normalize(batch.status).replace(/[^a-z0-9]+/g, "-")}`}>
-                    {batch.status || "Planned"}
-                  </span>
-
-                  <button
-                    className="iconButton danger"
-                    type="button"
-                    onClick={() => handleDeleteBatch(batch)}
-                    aria-label="Delete planting batch"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </div>
-              ))
-            ) : (
-              <p className="dashboardEmpty">
-                {loading ? "Loading batches..." : "No planting batches match your filters."}
-              </p>
-            )}
+                    {dayEvents.length > 3 ? (
+                      <small>+{dayEvents.length - 3} more</small>
+                    ) : null}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        <div className="plantingSideStack plantingSideStackResponsive">
-          <div className="workspacePanel compactPanel plantingBuilderPanelResponsive">
-            <div className="workspaceHeader compactPanelHeader">
+        <aside className="calendarSideStack">
+          <div className="calendarPanel">
+            <div className="calendarPanelHeader">
               <div>
-                <p className="eyebrow">Builder</p>
-                <h3>{activePanel === "template" ? "Crop Template" : "Planting Batch"}</h3>
+                <p className="eyebrow">Selected Day</p>
+                <h3>{formatDisplayDate(selectedDate)}</h3>
               </div>
 
-              <div className="plantingPanelToggle plantingPanelToggleResponsive">
-                <button
-                  type="button"
-                  className={activePanel === "batch" ? "selected" : ""}
-                  onClick={() => setActivePanel("batch")}
-                >
-                  Batch
-                </button>
-                <button
-                  type="button"
-                  className={activePanel === "template" ? "selected" : ""}
-                  onClick={() => setActivePanel("template")}
-                >
-                  Template
-                </button>
-              </div>
+              <button
+                className="secondaryButton compactButton"
+                type="button"
+                onClick={() => openNewEvent(selectedDate)}
+              >
+                <Plus size={15} />
+                Add
+              </button>
             </div>
 
-            {activePanel === "template" ? (
-              <div className="plantingEditorStack">
-                <div className="formGrid compactFormGrid plantingFormGridResponsive">
-                  <label>
-                    Crop Name
-                    <input
-                      value={templateForm.cropName}
-                      onChange={(event) => updateTemplateField("cropName", event.target.value)}
-                      placeholder="Basil, Sunflower, Zinnia, Tomato"
-                    />
-                  </label>
-
-                  <label>
-                    Variety
-                    <input
-                      value={templateForm.variety}
-                      onChange={(event) => updateTemplateField("variety", event.target.value)}
-                      placeholder="Genovese, Rambo, Queen Lime"
-                    />
-                  </label>
-
-                  <label>
-                    Category
-                    <select
-                      value={templateForm.category}
-                      onChange={(event) => updateTemplateField("category", event.target.value)}
-                    >
-                      {CROP_CATEGORIES.map((category) => (
-                        <option key={category}>{category}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label>
-                    Growing Method
-                    <select
-                      value={templateForm.growingMethod}
-                      onChange={(event) =>
-                        updateTemplateField("growingMethod", event.target.value)
-                      }
-                    >
-                      {GROWING_METHODS.map((method) => (
-                        <option key={method}>{method}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label>
-                    Germination Days
-                    <input
-                      type="number"
-                      value={templateForm.germinationDays}
-                      onChange={(event) =>
-                        updateTemplateField("germinationDays", event.target.value)
-                      }
-                    />
-                  </label>
-
-                  <label>
-                    Blackout Days
-                    <input
-                      type="number"
-                      value={templateForm.blackoutDays}
-                      onChange={(event) =>
-                        updateTemplateField("blackoutDays", event.target.value)
-                      }
-                    />
-                  </label>
-
-                  <label>
-                    Days to Harvest
-                    <input
-                      type="number"
-                      value={templateForm.daysToHarvest}
-                      onChange={(event) =>
-                        updateTemplateField("daysToHarvest", event.target.value)
-                      }
-                    />
-                  </label>
-
-                  <label>
-                    Transplant Days
-                    <input
-                      type="number"
-                      value={templateForm.transplantDays}
-                      onChange={(event) =>
-                        updateTemplateField("transplantDays", event.target.value)
-                      }
-                      placeholder="Optional"
-                    />
-                  </label>
-
-                  <label>
-                    Harvest Window Days
-                    <input
-                      type="number"
-                      value={templateForm.harvestWindowDays}
-                      onChange={(event) =>
-                        updateTemplateField("harvestWindowDays", event.target.value)
-                      }
-                    />
-                  </label>
-
-                  <label>
-                    Succession Interval Days
-                    <input
-                      type="number"
-                      value={templateForm.successionIntervalDays}
-                      onChange={(event) =>
-                        updateTemplateField("successionIntervalDays", event.target.value)
-                      }
-                    />
-                  </label>
-
-                  <label>
-                    Default Quantity Unit
-                    <select
-                      value={templateForm.defaultQuantityUnit}
-                      onChange={(event) =>
-                        updateTemplateField("defaultQuantityUnit", event.target.value)
-                      }
-                    >
-                      {QUANTITY_UNITS.map((unit) => (
-                        <option key={unit}>{unit}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label>
-                    Default Location
-                    <input
-                      value={templateForm.defaultLocation}
-                      onChange={(event) =>
-                        updateTemplateField("defaultLocation", event.target.value)
-                      }
-                      placeholder="Rack 1, greenhouse, bed A"
-                    />
-                  </label>
-
-                  <label className="fullSpan">
-                    Template Notes
-                    <textarea
-                      value={templateForm.notes}
-                      onChange={(event) => updateTemplateField("notes", event.target.value)}
-                      placeholder="Seeding notes, crop timing, spacing, care notes, harvest notes"
-                    />
-                  </label>
-                </div>
-
-                <div className="formActions compactActions">
-                  <button className="secondaryButton compactButton" type="button" onClick={startNewTemplate}>
-                    <Plus size={15} />
-                    New Template
-                  </button>
-
+            <div className="calendarAgendaList">
+              {selectedDateEvents.length ? (
+                selectedDateEvents.map((event) => (
                   <button
-                    className="primaryButton compactPrimary"
                     type="button"
-                    onClick={handleSaveTemplate}
-                    disabled={savingTemplate}
+                    key={event.id}
+                    className="calendarAgendaItem"
+                    onClick={() => openEditEvent(event)}
                   >
-                    <Save size={15} />
-                    {savingTemplate ? "Saving..." : "Save Template"}
+                    <span className={`calendarAgendaColor ${event.accent || "calendar"}`} />
+
+                    <div>
+                      <strong className="clickableNameText">{event.title}</strong>
+                      <p>
+                        {event.startTime
+                          ? `${event.startTime}${event.endTime ? ` - ${event.endTime}` : ""}`
+                          : event.type}
+                      </p>
+                    </div>
                   </button>
-                </div>
-              </div>
-            ) : (
-              <div className="plantingEditorStack">
-                <div className="formGrid compactFormGrid plantingFormGridResponsive">
-                  <label>
-                    Use Template
-                    <select
-                      value={batchForm.templateId}
-                      onChange={(event) => applyTemplate(event.target.value)}
-                    >
-                      <option value="">No template, manual crop</option>
-                      {templates.map((template) => (
-                        <option key={template.id} value={template.id}>
-                          {template.cropName}
-                          {template.variety ? `, ${template.variety}` : ""}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label>
-                    Status
-                    <select
-                      value={batchForm.status}
-                      onChange={(event) => updateBatchField("status", event.target.value)}
-                    >
-                      {BATCH_STATUSES.map((status) => (
-                        <option key={status}>{status}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label>
-                    Crop Name
-                    <input
-                      value={batchForm.cropName}
-                      onChange={(event) => updateBatchField("cropName", event.target.value)}
-                      placeholder="Crop"
-                    />
-                  </label>
-
-                  <label>
-                    Variety
-                    <input
-                      value={batchForm.variety}
-                      onChange={(event) => updateBatchField("variety", event.target.value)}
-                      placeholder="Optional"
-                    />
-                  </label>
-
-                  <label>
-                    Category
-                    <select
-                      value={batchForm.category}
-                      onChange={(event) => updateBatchField("category", event.target.value)}
-                    >
-                      {CROP_CATEGORIES.map((category) => (
-                        <option key={category}>{category}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label>
-                    Growing Method
-                    <select
-                      value={batchForm.growingMethod}
-                      onChange={(event) => updateBatchField("growingMethod", event.target.value)}
-                    >
-                      {GROWING_METHODS.map((method) => (
-                        <option key={method}>{method}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label>
-                    Planting Date
-                    <input
-                      type="date"
-                      value={batchForm.plantingDate}
-                      onChange={(event) =>
-                        updateBatchDateMode("plantingDate", event.target.value)
-                      }
-                    />
-                  </label>
-
-                  <label>
-                    Target Harvest Date
-                    <input
-                      type="date"
-                      value={batchForm.targetHarvestDate}
-                      onChange={(event) =>
-                        updateBatchDateMode("targetHarvestDate", event.target.value)
-                      }
-                    />
-                  </label>
-
-                  <label>
-                    Germination Date
-                    <input
-                      type="date"
-                      value={batchForm.germinationDate}
-                      onChange={(event) =>
-                        updateBatchField("germinationDate", event.target.value)
-                      }
-                    />
-                  </label>
-
-                  <label>
-                    Move to Light Date
-                    <input
-                      type="date"
-                      value={batchForm.moveToLightDate}
-                      onChange={(event) =>
-                        updateBatchField("moveToLightDate", event.target.value)
-                      }
-                    />
-                  </label>
-
-                  <label>
-                    Transplant Date
-                    <input
-                      type="date"
-                      value={batchForm.transplantDate}
-                      onChange={(event) =>
-                        updateBatchField("transplantDate", event.target.value)
-                      }
-                    />
-                  </label>
-
-                  <label>
-                    Quantity
-                    <input
-                      type="number"
-                      value={batchForm.quantity}
-                      onChange={(event) => updateBatchField("quantity", event.target.value)}
-                    />
-                  </label>
-
-                  <label>
-                    Quantity Unit
-                    <select
-                      value={batchForm.quantityUnit}
-                      onChange={(event) =>
-                        updateBatchField("quantityUnit", event.target.value)
-                      }
-                    >
-                      {QUANTITY_UNITS.map((unit) => (
-                        <option key={unit}>{unit}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label>
-                    Location
-                    <input
-                      value={batchForm.location}
-                      onChange={(event) => updateBatchField("location", event.target.value)}
-                      placeholder="Rack, bed, field, greenhouse, shelf"
-                    />
-                  </label>
-
-                  <label className="fullSpan">
-                    Batch Notes
-                    <textarea
-                      value={batchForm.notes}
-                      onChange={(event) => updateBatchField("notes", event.target.value)}
-                      placeholder="Batch notes, market target, crop condition, amendments, problems, harvest notes"
-                    />
-                  </label>
-                </div>
-
-                <div className="plantingDatePreview plantingDatePreviewResponsive">
-                  <div>
-                    <span>Plant</span>
-                    <strong>{formatDate(batchForm.plantingDate)}</strong>
-                  </div>
-                  <div>
-                    <span>Move / Care</span>
-                    <strong>{formatDate(batchForm.moveToLightDate || batchForm.transplantDate)}</strong>
-                  </div>
-                  <div>
-                    <span>Harvest</span>
-                    <strong>{formatDate(batchForm.targetHarvestDate)}</strong>
-                  </div>
-                </div>
-
-                <div className="formActions compactActions">
-                  <button className="secondaryButton compactButton" type="button" onClick={startNewBatch}>
-                    <Plus size={15} />
-                    New Batch
-                  </button>
-
-                  <button
-                    className="primaryButton compactPrimary"
-                    type="button"
-                    onClick={handleSaveBatch}
-                    disabled={savingBatch}
-                  >
-                    <Save size={15} />
-                    {savingBatch ? "Saving..." : "Save Batch"}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="workspacePanel compactPanel plantingBuilderPanelResponsive">
-            <div className="workspaceHeader compactPanelHeader">
-              <div>
-                <p className="eyebrow">Templates</p>
-                <h3>Crop Template Library</h3>
-              </div>
-            </div>
-
-            <div className="plantingTemplateList plantingTemplateListResponsive">
-              {templates.length ? (
-                templates.map((template) => (
-                  <div className="plantingTemplateRow plantingTemplateRowResponsive" key={template.id}>
-                    <button type="button" onClick={() => loadTemplate(template)}>
-                      <strong>{template.cropName || "Untitled Crop"}</strong>
-                      <span>
-                        {template.variety || template.category} • {template.daysToHarvest || 0} days
-                      </span>
-                    </button>
-
-                    <button
-                      className="iconButton danger"
-                      type="button"
-                      onClick={() => handleDeleteTemplate(template)}
-                      aria-label="Delete crop template"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
                 ))
               ) : (
-                <p className="dashboardEmpty">
-                  No crop templates yet. Save one to speed up future plantings.
-                </p>
+                <p className="dashboardEmpty">No events for this day.</p>
               )}
             </div>
           </div>
-        </div>
+
+          <div className="calendarPanel">
+            <div className="calendarPanelHeader">
+              <div>
+                <p className="eyebrow">Agenda</p>
+                <h3>Upcoming</h3>
+              </div>
+            </div>
+
+            <div className="calendarAgendaList">
+              {upcomingEvents.length ? (
+                upcomingEvents.map((event) => (
+                  <button
+                    type="button"
+                    key={event.id}
+                    className="calendarAgendaItem"
+                    onClick={() => openEditEvent(event)}
+                  >
+                    <span className={`calendarAgendaColor ${event.accent || "calendar"}`} />
+
+                    <div>
+                      <strong className="clickableNameText">{event.title}</strong>
+                      <p>
+                        {formatDisplayDate(event.date)} • {formatDue(event.days)}
+                      </p>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <p className="dashboardEmpty">No upcoming events found.</p>
+              )}
+            </div>
+          </div>
+        </aside>
       </section>
+
+      {selectedEvent && !isEventFormOpen ? (
+        <div className="permitModalOverlay" role="dialog" aria-modal="true">
+          <div className="permitModal calendarModal">
+            <div className="permitModalHeader">
+              <h3>{selectedEvent.title}</h3>
+
+              <button type="button" onClick={() => setSelectedEvent(null)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="calendarEventDetail calendarEventDetailV2">
+              <div className="calendarDetailGrid">
+                <DetailCard label="Type" value={selectedEvent.type || "Event"} />
+                <DetailCard label="Date" value={formatDisplayDate(selectedEvent.date)} />
+
+                {selectedEvent.startTime && selectedEvent.source !== "bakingPlanner" ? (
+                  <DetailCard
+                    label="Time"
+                    value={`${selectedEvent.startTime}${
+                      selectedEvent.endTime ? ` - ${selectedEvent.endTime}` : ""
+                    }`}
+                  />
+                ) : null}
+
+                <DetailCard
+                  label={
+                    selectedEvent.source === "permitGrant"
+                      ? "Organization"
+                      : "Location"
+                  }
+                  value={
+                    selectedEvent.details?.organization ||
+                    selectedEvent.details?.location ||
+                    selectedEvent.location
+                  }
+                />
+
+                <DetailCard label="Status" value={selectedEvent.details?.status} />
+                <DetailCard label="Priority" value={selectedEvent.details?.priority} />
+                <DetailCard
+                  label="Issue Date"
+                  value={formatPlainDate(selectedEvent.details?.issueDate)}
+                />
+                <DetailCard
+                  label="Due Date"
+                  value={formatPlainDate(selectedEvent.details?.dueDate)}
+                />
+                <DetailCard
+                  label="Renewal Date"
+                  value={formatPlainDate(selectedEvent.details?.renewalDate)}
+                />
+                <DetailCard
+                  label="Reminder"
+                  value={
+                    selectedEvent.details?.reminderDays
+                      ? `${selectedEvent.details.reminderDays} days before`
+                      : ""
+                  }
+                />
+                <DetailCard
+                  label="Document"
+                  value={selectedEvent.details?.documentName}
+                />
+
+                {selectedEvent.source === "marketPrep" ? (
+                  <>
+                    <DetailCard
+                      label="Products"
+                      value={selectedEvent.details?.productsCount}
+                    />
+                    <DetailCard
+                      label="Total Units"
+                      value={selectedEvent.details?.totalUnits}
+                    />
+                    <DetailCard
+                      label="Projected Revenue"
+                      value={selectedEvent.details?.totalRevenue}
+                    />
+                  </>
+                ) : null}
+
+                {selectedEvent.source === "bakingPlanner" ? (
+                  <>
+                    <DetailCard
+                      label="Start Time"
+                      value={selectedEvent.details?.defaultStartTime}
+                    />
+                    <DetailCard
+                      label="Products / Recipes"
+                      value={selectedEvent.details?.plannedProducts}
+                    />
+                    <DetailCard
+                      label="Planned Units"
+                      value={selectedEvent.details?.plannedUnits}
+                    />
+                    <DetailCard
+                      label="Total Dough"
+                      value={
+                        selectedEvent.details?.totalDoughG
+                          ? formatKilograms(selectedEvent.details.totalDoughG)
+                          : ""
+                      }
+                    />
+                    <DetailCard
+                      label="Preferment Needed"
+                      value={
+                        selectedEvent.details?.starterNeededG
+                          ? formatGrams(selectedEvent.details.starterNeededG)
+                          : ""
+                      }
+                    />
+                    <DetailCard
+                      label="Mixer Batches"
+                      value={selectedEvent.details?.mixerBatches}
+                    />
+                    <DetailCard
+                      label="Oven Loads"
+                      value={selectedEvent.details?.ovenLoads}
+                    />
+                    <DetailCard
+                      label="Mixer Capacity"
+                      value={
+                        selectedEvent.details?.mixerCapacityG
+                          ? `${selectedEvent.details.mixerCapacityG}g dough`
+                          : ""
+                      }
+                    />
+                    <DetailCard
+                      label="Proofing Capacity"
+                      value={
+                        selectedEvent.details?.proofingCapacityUnits
+                          ? `${selectedEvent.details.proofingCapacityUnits} units`
+                          : ""
+                      }
+                    />
+                  </>
+                ) : null}
+              </div>
+
+              {selectedEvent.source === "bakingPlanner" &&
+              selectedEvent.details?.productSummary ? (
+                <div className="calendarDetailNotes">
+                  <span>Products</span>
+                  <p>{selectedEvent.details.productSummary}</p>
+                </div>
+              ) : null}
+
+              {selectedEvent.notes || selectedEvent.details?.notes ? (
+                <div className="calendarDetailNotes">
+                  <span>Notes</span>
+                  <p>{selectedEvent.notes || selectedEvent.details.notes}</p>
+                </div>
+              ) : null}
+
+              <div className="calendarDetailActions">
+                {selectedEvent.details?.documentUrl ? (
+                  <a
+                    href={selectedEvent.details.documentUrl}
+                    className="secondaryButton compactButton"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Open Document
+                  </a>
+                ) : null}
+
+                {selectedEvent.sourcePath ? (
+                  <Link
+                    to={selectedEvent.sourcePath}
+                    className="primaryButton compactPrimary"
+                  >
+                    Open Source
+                  </Link>
+                ) : null}
+
+                {selectedEvent.source === "manual" ? (
+                  <button
+                    type="button"
+                    className="secondaryButton compactButton"
+                    onClick={() => {
+                      setEventForm({
+                        id: selectedEvent.id || "",
+                        title: selectedEvent.title || "",
+                        type: selectedEvent.type || "Market",
+                        date: selectedEvent.date || todayISO(),
+                        startTime: selectedEvent.startTime || "",
+                        endTime: selectedEvent.endTime || "",
+                        location: selectedEvent.location || "",
+                        notes: selectedEvent.notes || ""
+                      });
+                      setIsEventFormOpen(true);
+                    }}
+                  >
+                    Edit Event
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {isEventFormOpen ? (
+        <div className="permitModalOverlay" role="dialog" aria-modal="true">
+          <div className="permitModal calendarModal">
+            <div className="permitModalHeader">
+              <h3>{eventForm.id ? "Edit Calendar Event" : "Add Calendar Event"}</h3>
+
+              <button type="button" onClick={() => setIsEventFormOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <form className="permitModalForm" onSubmit={saveEvent}>
+              <label className="permitFull">
+                Title *
+                <input
+                  value={eventForm.title}
+                  onChange={(event) =>
+                    setEventForm((current) => ({
+                      ...current,
+                      title: event.target.value
+                    }))
+                  }
+                  placeholder="e.g., Southland Market"
+                />
+              </label>
+
+              <label>
+                Type
+                <select
+                  value={eventForm.type}
+                  onChange={(event) =>
+                    setEventForm((current) => ({
+                      ...current,
+                      type: event.target.value
+                    }))
+                  }
+                >
+                  {eventTypes.map((type) => (
+                    <option key={type}>{type}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Date *
+                <input
+                  type="date"
+                  value={eventForm.date}
+                  onChange={(event) =>
+                    setEventForm((current) => ({
+                      ...current,
+                      date: event.target.value
+                    }))
+                  }
+                />
+              </label>
+
+              <label>
+                Start Time
+                <input
+                  type="time"
+                  value={eventForm.startTime}
+                  onChange={(event) =>
+                    setEventForm((current) => ({
+                      ...current,
+                      startTime: event.target.value
+                    }))
+                  }
+                />
+              </label>
+
+              <label>
+                End Time
+                <input
+                  type="time"
+                  value={eventForm.endTime}
+                  onChange={(event) =>
+                    setEventForm((current) => ({
+                      ...current,
+                      endTime: event.target.value
+                    }))
+                  }
+                />
+              </label>
+
+              <label className="permitFull">
+                Location
+                <input
+                  value={eventForm.location}
+                  onChange={(event) =>
+                    setEventForm((current) => ({
+                      ...current,
+                      location: event.target.value
+                    }))
+                  }
+                  placeholder="Market location, venue, or delivery area"
+                />
+              </label>
+
+              <label className="permitFull">
+                Notes
+                <textarea
+                  value={eventForm.notes}
+                  onChange={(event) =>
+                    setEventForm((current) => ({
+                      ...current,
+                      notes: event.target.value
+                    }))
+                  }
+                  placeholder="Optional details..."
+                />
+              </label>
+
+              <div className="permitModalActions permitFull">
+                {eventForm.id ? (
+                  <button
+                    className="secondaryButton compactButton dangerButton"
+                    type="button"
+                    onClick={() => removeEvent(eventForm.id)}
+                  >
+                    <Trash2 size={15} />
+                    Delete
+                  </button>
+                ) : null}
+
+                <button
+                  className="secondaryButton compactButton"
+                  type="button"
+                  onClick={() => setIsEventFormOpen(false)}
+                >
+                  Cancel
+                </button>
+
+                <button className="primaryButton compactPrimary" type="submit">
+                  <Save size={15} />
+                  Save Event
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
