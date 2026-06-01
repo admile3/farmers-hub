@@ -9617,3 +9617,54 @@ input[type="number"] {
   }
 }
 
+/* Customers hero, calendar-style action layout */
+.customersCalendarHero {
+  position: relative;
+  display: block !important;
+  margin-bottom: 8px;
+  padding: 22px 210px 22px 26px;
+  border-radius: var(--radius);
+  background: #ffffff;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.customersCalendarHero > div:first-child,
+.customersCalendarHero .customersHeroText {
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  max-width: none !important;
+  width: 100% !important;
+}
+
+.customersCalendarHero h2,
+.customersCalendarHero p {
+  max-width: none !important;
+}
+
+.customersHeroActions {
+  position: absolute;
+  top: 50%;
+  right: 26px;
+  transform: translateY(-50%);
+}
+
+.customersHeroActions .primaryButton {
+  min-height: 46px;
+  border-radius: 14px;
+  white-space: nowrap;
+}
+
+@media (max-width: 820px) {
+  .customersCalendarHero {
+    padding: 18px !important;
+  }
+
+  .customersHeroActions {
+    position: static;
+    transform: none;
+    margin-top: 14px;
+  }
+}
