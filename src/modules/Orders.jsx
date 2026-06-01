@@ -75,6 +75,23 @@ function todayString() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function orderDateStatus(dueDate) {
+  if (!dueDate) return "none";
+
+  const today = todayString();
+  if (dueDate < today) return "overdue";
+  if (dueDate === today) return "today";
+  return "future";
+}
+
+function isClosedOrder(order) {
+  return ["Completed", "Cancelled"].includes(order?.status);
+}
+
+function orderIsCommitted(order) {
+  return ["Confirmed", "In Production", "Ready"].includes(order?.status);
+}
+
 function blankCustomerSnapshot() {
   return {
     name: "",
@@ -661,20 +678,34 @@ export default function Orders() {
   }, [orders, queryText, statusFilter]);
 
   const stats = useMemo(() => {
-    const openOrders = orders.filter(
-      (order) => !["Completed", "Cancelled"].includes(order.status)
+    const activeOrders = orders.filter((order) => !isClosedOrder(order));
+    const draftOrders = orders.filter((order) => order.status === "Draft");
+    const overdueOrders = activeOrders.filter(
+      (order) => orderDateStatus(order.dueDate) === "overdue"
     );
-    const readyOrders = orders.filter((order) => order.status === "Ready");
-    const totalOpenValue = openOrders.reduce((sum, order) => {
+    const dueTodayOrders = activeOrders.filter(
+      (order) => orderDateStatus(order.dueDate) === "today"
+    );
+    const committedOrders = activeOrders.filter(orderIsCommitted);
+    const committedValue = committedOrders.reduce((sum, order) => {
       return sum + (Number(order.totals?.balanceDue ?? order.totals?.total) || 0);
     }, 0);
 
     return {
-      open: openOrders.length,
-      ready: readyOrders.length,
-      total: orders.length,
-      openValue: totalOpenValue
+      active: activeOrders.length,
+      draft: draftOrders.length,
+      overdue: overdueOrders.length,
+      dueToday: dueTodayOrders.length,
+      committedValue
     };
+  }, [orders]);
+
+  const dueTodayOrders = useMemo(() => {
+    return orders
+      .filter((order) => !isClosedOrder(order))
+      .filter((order) => orderDateStatus(order.dueDate) === "today")
+      .sort((a, b) => String(a.orderNumber || "").localeCompare(String(b.orderNumber || "")))
+      .slice(0, 5);
   }, [orders]);
 
   const totals = calculateOrder(form);
@@ -730,32 +761,67 @@ export default function Orders() {
       <section className="hubStatGrid ordersStatGrid">
         <StatCard
           icon={ClipboardList}
-          label="Open"
-          value={loading ? "..." : stats.open}
-          sub="active orders"
+          label="Active"
+          value={loading ? "..." : stats.active}
+          sub="not completed or cancelled"
           accent="orders"
         />
         <StatCard
+          icon={Package}
+          label="Drafts"
+          value={loading ? "..." : stats.draft}
+          sub="not counted in value"
+          accent="sourdough"
+        />
+        <StatCard
           icon={CheckCircle2}
-          label="Ready"
-          value={loading ? "..." : stats.ready}
-          sub="ready for fulfillment"
-          accent="market"
+          label="Overdue"
+          value={loading ? "..." : stats.overdue}
+          sub="past due and still open"
+          accent="grant"
         />
         <StatCard
           icon={DollarSign}
-          label="Open Value"
-          value={loading ? "..." : money(stats.openValue)}
-          sub="balance due"
+          label="Confirmed Value"
+          value={loading ? "..." : money(stats.committedValue)}
+          sub="confirmed, production, ready"
           accent="pricing"
         />
-        <StatCard
-          icon={Package}
-          label="Products"
-          value={loading ? "..." : products.length}
-          sub="available line items"
-          accent="sourdough"
-        />
+      </section>
+
+      <section className="ordersTodayPanel workspacePanel compactPanel">
+        <div className="workspaceHeader compactPanelHeader">
+          <div>
+            <p className="eyebrow">Due Today</p>
+            <h3>{loading ? "Checking today's orders..." : `${stats.dueToday} order${stats.dueToday === 1 ? "" : "s"} due today`}</h3>
+          </div>
+
+          <button className="secondaryButton compactButton" type="button" onClick={loadData}>
+            <RefreshCw size={15} />
+            Refresh
+          </button>
+        </div>
+
+        {dueTodayOrders.length ? (
+          <div className="ordersTodayList">
+            {dueTodayOrders.map((order) => (
+              <button
+                className="ordersTodayCard"
+                type="button"
+                key={order.id}
+                onClick={() => loadOrder(order)}
+              >
+                <strong>{order.orderNumber || "Untitled Order"}</strong>
+                <span>{orderCustomerDisplay(order)}</span>
+                <small>{order.status || "Draft"} • {money(order.totals?.total || 0)}</small>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="dashboardEmpty">
+            {loading ? "Loading due today..." : "No orders are due today."}
+          </p>
+        )}
       </section>
 
       <section className="ordersDirectoryOnlyLayout">
