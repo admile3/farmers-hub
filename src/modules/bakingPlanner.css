@@ -1802,3 +1802,125 @@
     right: 54px;
   }
 }
+/* =========================================================
+   Baking Planner Mobile Tab Scroll Indicator
+   Cleaner swipe affordance, no duplicate progress bars
+   ========================================================= */
+
+.bakingPlanner .mobileTabShell {
+  position: relative;
+  margin-bottom: 18px;
+}
+
+.bakingPlanner .mobileTabArrow,
+.bakingPlanner .mobileSwipeHint {
+  display: none;
+}
+
+@media (max-width: 800px) {
+  .bakingPlanner .mobileTabShell {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) 28px;
+    grid-template-areas:
+      "left tabs right"
+      ". hint .";
+    align-items: center;
+    gap: 6px;
+    margin: 0 -2px 18px;
+    padding: 10px 0 12px;
+    background: linear-gradient(
+      90deg,
+      rgba(251, 250, 246, 0.98),
+      rgba(255, 255, 255, 0.92)
+    );
+    border-radius: 18px;
+  }
+
+  .bakingPlanner .mobileTabShell .tabs {
+    grid-area: tabs;
+    display: flex;
+    grid-template-columns: none;
+    gap: 12px;
+    margin: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 4px;
+    padding: 4px 4px 8px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .bakingPlanner .mobileTabShell .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .bakingPlanner .mobileTabShell .tab {
+    flex: 0 0 auto;
+    min-width: 156px;
+    min-height: 64px;
+    padding: 14px 18px;
+    scroll-snap-align: start;
+    justify-content: center;
+    font-size: 1rem;
+  }
+
+  .bakingPlanner .mobileTabArrow {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 64px;
+    color: #64748b;
+    font-size: 2rem;
+    font-weight: 500;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .bakingPlanner .mobileTabArrow:first-of-type {
+    grid-area: left;
+  }
+
+  .bakingPlanner .mobileTabArrow:last-of-type {
+    grid-area: right;
+  }
+
+  .bakingPlanner .mobileSwipeHint {
+    grid-area: hint;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 7px;
+    margin-top: 2px;
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 800;
+  }
+
+  .bakingPlanner .mobileSwipeHint span {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: rgba(100, 116, 139, 0.28);
+  }
+
+  .bakingPlanner .mobileSwipeHint span.active {
+    width: 18px;
+    background: #dfa04c;
+  }
+
+  .bakingPlanner .mobileSwipeHint em {
+    margin-left: 4px;
+    font-style: normal;
+  }
+}
+
+@media (min-width: 801px) {
+  .bakingPlanner .mobileTabShell {
+    margin-bottom: 18px;
+  }
+
+  .bakingPlanner .mobileTabShell .tabs {
+    margin-bottom: 0;
+  }
+}
