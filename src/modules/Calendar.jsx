@@ -150,6 +150,75 @@ function getMonthDays(viewDate) {
   return days;
 }
 
+function getWeekDays(viewDate) {
+  const start = new Date(viewDate);
+  start.setDate(viewDate.getDate() - viewDate.getDay());
+
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(start);
+    date.setDate(start.getDate() + index);
+
+    return {
+      date,
+      iso: date.toISOString().slice(0, 10),
+      isCurrentMonth: date.getMonth() === viewDate.getMonth(),
+      isToday: date.toISOString().slice(0, 10) === todayISO()
+    };
+  });
+}
+
+function getDayViewDate(viewDate) {
+  return [
+    {
+      date: viewDate,
+      iso: viewDate.toISOString().slice(0, 10),
+      isCurrentMonth: true,
+      isToday: viewDate.toISOString().slice(0, 10) === todayISO()
+    }
+  ];
+}
+
+function getCalendarViewDays(viewDate, viewMode) {
+  if (viewMode === "day") return getDayViewDate(viewDate);
+  if (viewMode === "week") return getWeekDays(viewDate);
+  return getMonthDays(viewDate);
+}
+
+function getCalendarViewLabel(viewDate, viewMode) {
+  if (viewMode === "day") {
+    return viewDate.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric"
+    });
+  }
+
+  if (viewMode === "week") {
+    const days = getWeekDays(viewDate);
+    const first = days[0].date;
+    const last = days[6].date;
+
+    const firstLabel = first.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric"
+    });
+
+    const lastLabel = last.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    });
+
+    return `${firstLabel} - ${lastLabel}`;
+  }
+
+  return viewDate.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric"
+  });
+}
+
 function normalizeRecipe(recipe) {
   return {
     ...recipe,
@@ -399,6 +468,7 @@ export default function Calendar() {
   const { user, loginWithGoogle } = useAuth();
 
   const [viewDate, setViewDate] = useState(() => new Date());
+  const [calendarView, setCalendarView] = useState("month");
   const [manualEvents, setManualEvents] = useState([]);
   const [importedEvents, setImportedEvents] = useState([]);
   const [selectedDate, setSelectedDate] = useState(todayISO());
@@ -476,7 +546,10 @@ export default function Calendar() {
     });
   }, [manualEvents, importedEvents]);
 
-  const calendarDays = useMemo(() => getMonthDays(viewDate), [viewDate]);
+  const calendarDays = useMemo(
+    () => getCalendarViewDays(viewDate, calendarView),
+    [viewDate, calendarView]
+  );
 
   const eventsByDate = useMemo(() => {
     return allEvents.reduce((map, event) => {
@@ -514,12 +587,40 @@ export default function Calendar() {
     }).length;
   }, [allEvents, viewDate]);
 
-  function shiftMonth(direction) {
+  function shiftCalendar(direction) {
     setViewDate((current) => {
       const next = new Date(current);
+
+      if (calendarView === "day") {
+        next.setDate(current.getDate() + direction);
+        setSelectedDate(next.toISOString().slice(0, 10));
+        return next;
+      }
+
+      if (calendarView === "week") {
+        next.setDate(current.getDate() + direction * 7);
+        setSelectedDate(next.toISOString().slice(0, 10));
+        return next;
+      }
+
       next.setMonth(current.getMonth() + direction);
       return next;
     });
+  }
+
+  function goToToday() {
+    const today = new Date();
+    setViewDate(today);
+    setSelectedDate(todayISO());
+  }
+
+  function changeCalendarView(nextView) {
+    setCalendarView(nextView);
+
+    const selected = parseLocalDate(selectedDate);
+    if (selected) {
+      setViewDate(selected);
+    }
   }
 
   function openNewEvent(date = selectedDate) {
@@ -601,10 +702,7 @@ export default function Calendar() {
     }
   }
 
-  const monthLabel = viewDate.toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric"
-  });
+  const calendarViewLabel = getCalendarViewLabel(viewDate, calendarView);
 
   if (!user) {
     return (
@@ -699,46 +797,71 @@ export default function Calendar() {
 
       <section className="calendarLayout">
         <div className="calendarPanel calendarMainPanel">
-          <div className="calendarToolbar">
-            <div>
-              <p className="eyebrow">Month View</p>
-              <h3>{monthLabel}</h3>
+          <div className="calendarToolbar calendarToolbarV2">
+            <div className="calendarToolbarTitle">
+              <p className="eyebrow">
+                {calendarView === "day"
+                  ? "Day View"
+                  : calendarView === "week"
+                    ? "Week View"
+                    : "Month View"}
+              </p>
+              <h3>{calendarViewLabel}</h3>
             </div>
 
-            <div className="calendarToolbarActions">
-              <button
-                type="button"
-                className="secondaryButton compactButton"
-                onClick={() => shiftMonth(-1)}
-              >
-                <ChevronLeft size={16} />
-              </button>
+            <div className="calendarToolbarControls">
+              <div className="calendarViewToggle" aria-label="Calendar view">
+                {["day", "week", "month"].map((view) => (
+                  <button
+                    key={view}
+                    type="button"
+                    className={calendarView === view ? "selected" : ""}
+                    onClick={() => changeCalendarView(view)}
+                  >
+                    {view.charAt(0).toUpperCase() + view.slice(1)}
+                  </button>
+                ))}
+              </div>
 
-              <button
-                type="button"
-                className="secondaryButton compactButton"
-                onClick={() => setViewDate(new Date())}
-              >
-                Today
-              </button>
+              <div className="calendarToolbarActions">
+                <button
+                  type="button"
+                  className="secondaryButton compactButton"
+                  onClick={() => shiftCalendar(-1)}
+                  aria-label="Previous calendar period"
+                >
+                  <ChevronLeft size={16} />
+                </button>
 
-              <button
-                type="button"
-                className="secondaryButton compactButton"
-                onClick={() => shiftMonth(1)}
-              >
-                <ChevronRight size={16} />
-              </button>
+                <button
+                  type="button"
+                  className="secondaryButton compactButton"
+                  onClick={goToToday}
+                >
+                  Today
+                </button>
+
+                <button
+                  type="button"
+                  className="secondaryButton compactButton"
+                  onClick={() => shiftCalendar(1)}
+                  aria-label="Next calendar period"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="calendarWeekHeader">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <span key={day}>{day}</span>
-            ))}
-          </div>
+          {calendarView !== "day" ? (
+            <div className="calendarWeekHeader">
+              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                <span key={day}>{day}</span>
+              ))}
+            </div>
+          ) : null}
 
-          <div className="calendarGrid">
+          <div className={`calendarGrid calendarGrid-${calendarView}`}>
             {calendarDays.map((day) => {
               const dayEvents = eventsByDate[day.iso] || [];
               const isSelected = selectedDate === day.iso;
@@ -755,13 +878,26 @@ export default function Calendar() {
                   ]
                     .filter(Boolean)
                     .join(" ")}
-                  onClick={() => setSelectedDate(day.iso)}
+                  onClick={() => {
+                    setSelectedDate(day.iso);
+                    if (calendarView === "day") {
+                      setViewDate(day.date);
+                    }
+                  }}
                   onDoubleClick={() => openNewEvent(day.iso)}
                 >
-                  <span className="calendarDayNumber">{day.date.getDate()}</span>
+                  <span className="calendarDayNumber">
+                    {calendarView === "month"
+                      ? day.date.getDate()
+                      : day.date.toLocaleDateString("en-US", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric"
+                        })}
+                  </span>
 
                   <div className="calendarDayEvents">
-                    {dayEvents.slice(0, 3).map((event) => (
+                    {dayEvents.slice(0, calendarView === "month" ? 3 : 8).map((event) => (
                       <button
                         key={event.id}
                         type="button"
@@ -774,8 +910,8 @@ export default function Calendar() {
                       </button>
                     ))}
 
-                    {dayEvents.length > 3 ? (
-                      <small>+{dayEvents.length - 3} more</small>
+                    {dayEvents.length > (calendarView === "month" ? 3 : 8) ? (
+                      <small>+{dayEvents.length - (calendarView === "month" ? 3 : 8)} more</small>
                     ) : null}
                   </div>
                 </button>
