@@ -9708,3 +9708,42 @@ input[type="number"] {
     grid-template-columns: 1fr !important;
   }
 }
+.plantingModule .plantingSchedulerHero {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 24px !important;
+}
+
+.plantingModule .plantingSchedulerHero > div:first-child {
+  max-width: none !important;
+  width: 100% !important;
+}
+
+.plantingModule .plantingSchedulerHero h2 {
+  max-width: 1100px !important;
+  font-size: clamp(2.25rem, 3.15vw, 3.7rem) !important;
+  line-height: 1.02 !important;
+}
+
+.plantingModule .plantingSchedulerHero p:not(.eyebrow) {
+  max-width: 1120px !important;
+}
+
+.plantingModule .plantingSchedulerHero .compactActions {
+  margin-top: 0 !important;
+  flex-wrap: nowrap !important;
+  justify-content: flex-end !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 900px) {
+  .plantingModule .plantingSchedulerHero {
+    grid-template-columns: 1fr !important;
+  }
+
+  .plantingModule .plantingSchedulerHero .compactActions {
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+  }
+}
