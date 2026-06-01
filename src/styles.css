@@ -2522,8 +2522,7 @@ input[type="number"] {
   }
 
   .hero,
-  .hero.modernHero,
-  .moduleHero {
+  .hero.modernHero {
     grid-template-columns: 1fr;
   }
 }
@@ -2816,16 +2815,6 @@ input[type="number"] {
   background: var(--calendar);
 }
 
-.modulePage::before,
-.subscribePage::before,
-.accountSettingsPage::before {
-  content: "";
-  display: block;
-  height: 6px;
-  border-radius: 999px;
-  background: #34753e;
-  margin-bottom: 4px;
-}
 .modulePage::before,
 .subscribePage::before,
 .accountSettingsPage::before,
@@ -8266,295 +8255,6 @@ input[type="number"] {
   }
 }
 /* =========================================================
-   Planting Scheduler Mobile/Tablet Optimization Patch
-   Append this AFTER your existing Planting Scheduler styles.
-   This patch is intentionally scoped to .plantingModule.
-   ========================================================= */
-
-.plantingModule {
-  max-width: 100%;
-  overflow-x: hidden;
-}
-
-.plantingModule .compactHero {
-  gap: 18px;
-}
-
-.plantingModule .compactHero h2 {
-  max-width: 980px;
-}
-
-.plantingModule .compactActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-}
-
-.plantingModule .plantingStatGrid {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  align-items: stretch;
-}
-
-.plantingModule .plantingLayout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
-  gap: 18px;
-  align-items: start;
-}
-
-.plantingModule .plantingSideStack {
-  display: grid;
-  gap: 18px;
-  align-items: start;
-}
-
-.plantingModule .plantingTasksHeader,
-.plantingModule .plantingTasksEyebrowRow {
-  gap: 14px;
-}
-
-.plantingModule .plantingTasksTitleBlock {
-  min-width: 0;
-}
-
-.plantingModule .plantingTasksEyebrowRow {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  flex-wrap: wrap;
-}
-
-.plantingModule .plantingTaskFilters {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(150px, 1fr));
-  gap: 10px;
-  align-items: end;
-}
-
-.plantingModule .plantingTaskFilters label,
-.plantingModule .plantingFilterPanel label,
-.plantingModule .compactFormGrid label {
-  min-width: 0;
-}
-
-.plantingModule .plantingTaskGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 12px;
-}
-
-.plantingModule .plantingTaskCard {
-  width: 100%;
-  min-width: 0;
-  text-align: left;
-}
-
-.plantingModule .plantingFilterPanel {
-  display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(150px, 0.45fr) minmax(150px, 0.45fr);
-  gap: 12px;
-  align-items: end;
-}
-
-.plantingModule .plantingBatchList,
-.plantingModule .plantingTemplateList,
-.plantingModule .plantingEditorStack {
-  display: grid;
-  gap: 12px;
-}
-
-.plantingModule .plantingBatchRow,
-.plantingModule .plantingTemplateRow {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 10px;
-  align-items: center;
-}
-
-.plantingModule .plantingTemplateRow {
-  grid-template-columns: minmax(0, 1fr) auto;
-}
-
-.plantingModule .plantingBatchRow > button:first-child,
-.plantingModule .plantingTemplateRow > button:first-child {
-  min-width: 0;
-  text-align: left;
-}
-
-.plantingModule .plantingBatchRow strong,
-.plantingModule .plantingBatchRow span,
-.plantingModule .plantingBatchRow small,
-.plantingModule .plantingTemplateRow strong,
-.plantingModule .plantingTemplateRow span {
-  overflow-wrap: anywhere;
-}
-
-.plantingModule .plantingStatusPill {
-  white-space: nowrap;
-}
-
-.plantingModule .plantingPanelToggle {
-  display: inline-grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px;
-  min-width: 180px;
-}
-
-.plantingModule .compactFormGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.plantingModule .compactFormGrid .fullSpan {
-  grid-column: 1 / -1;
-}
-
-.plantingModule .plantingDatePreview {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.plantingModule .plantingDatePreview > div {
-  min-width: 0;
-}
-
-.plantingModule input,
-.plantingModule select,
-.plantingModule textarea,
-.plantingModule button {
-  max-width: 100%;
-}
-
-@media (max-width: 1180px) {
-  .plantingModule .plantingStatGrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .plantingModule .plantingLayout {
-    grid-template-columns: 1fr;
-  }
-
-  .plantingModule .plantingSideStack {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 820px) {
-  .plantingModule.modulePage {
-    padding-inline: clamp(12px, 4vw, 18px);
-  }
-
-  .plantingModule .compactHero {
-    padding: 18px;
-  }
-
-  .plantingModule .compactHero h2 {
-    font-size: clamp(1.65rem, 8vw, 2.45rem);
-    line-height: 1.03;
-  }
-
-  .plantingModule .compactHero p {
-    font-size: 0.95rem;
-    line-height: 1.45;
-  }
-
-  .plantingModule .compactActions,
-  .plantingModule .compactActions .compactButton,
-  .plantingModule .compactActions .compactPrimary {
-    width: 100%;
-  }
-
-  .plantingModule .compactActions .compactButton,
-  .plantingModule .compactActions .compactPrimary {
-    justify-content: center;
-  }
-
-  .plantingModule .plantingStatGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-  }
-
-  .plantingModule .plantingTodayPanel,
-  .plantingModule .compactPanel {
-    padding: 16px;
-    border-radius: 18px;
-  }
-
-  .plantingModule .workspaceHeader,
-  .plantingModule .compactPanelHeader,
-  .plantingModule .plantingTasksHeader,
-  .plantingModule .plantingTasksEyebrowRow {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .plantingModule .plantingTaskFilters,
-  .plantingModule .plantingFilterPanel,
-  .plantingModule .compactFormGrid,
-  .plantingModule .plantingDatePreview {
-    grid-template-columns: 1fr;
-  }
-
-  .plantingModule .plantingTaskGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .plantingModule .plantingBatchRow {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
-  }
-
-  .plantingModule .plantingBatchRow .plantingStatusPill {
-    justify-self: end;
-  }
-
-  .plantingModule .plantingBatchRow .iconButton {
-    grid-column: 1 / -1;
-    justify-self: stretch;
-    width: 100%;
-  }
-
-  .plantingModule .plantingTemplateRow {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .plantingModule .plantingPanelToggle {
-    width: 100%;
-  }
-}
-
-@media (max-width: 520px) {
-  .plantingModule .plantingStatGrid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .plantingModule .plantingStatGrid .hubStatCard,
-  .plantingModule .plantingStatGrid .stat-card,
-  .plantingModule .plantingStatGrid > * {
-    min-width: 0;
-  }
-
-  .plantingModule .plantingStatGrid .stat-card-content,
-  .plantingModule .plantingStatGrid .hubStatCardInner {
-    padding: 12px;
-    gap: 10px;
-  }
-
-  .plantingModule .plantingStatGrid .stat-value,
-  .plantingModule .plantingStatGrid strong {
-    font-size: clamp(1.4rem, 9vw, 2rem);
-  }
-
-  .plantingModule .plantingBatchRow,
-  .plantingModule .plantingTemplateRow {
-    border-radius: 14px;
-  }
-}
-/* =========================================================
    Permit & Grant Tracker mobile record cards
    Append this to the bottom of src/styles.css.
    Works with permitGrantTracker_mobile-card-records JSX.
@@ -9784,3 +9484,136 @@ input[type="number"] {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* =========================================================
+   Final module hero normalization
+   Prevents early text wrapping inside hero bubbles while keeping
+   action buttons inside the hero on desktop.
+   ========================================================= */
+
+.moduleHero h2,
+.compactHero h2,
+.calendarHero h2,
+.accountSettingsHeroPanel h2 {
+  max-width: none;
+}
+
+.moduleHero p:not(.eyebrow),
+.compactHero p:not(.eyebrow),
+.calendarHero p:not(.eyebrow),
+.accountSettingsHeroPanel p:not(.eyebrow) {
+  max-width: none;
+}
+
+/* Calendar-style hero used by PlantingScheduler.jsx */
+.plantingModule .plantingCalendarHero {
+  position: relative !important;
+  display: block !important;
+  margin-bottom: 16px !important;
+  padding: 28px 330px 28px 28px !important;
+  border-radius: var(--radius) !important;
+  background: #ffffff !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
+  overflow: hidden !important;
+}
+
+.plantingModule .plantingCalendarHero > .plantingHeroText {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.plantingModule .plantingCalendarHero h2 {
+  max-width: none !important;
+  margin: 7px 0 10px !important;
+  color: var(--text) !important;
+  font-size: clamp(2rem, 3.2vw, 3.45rem) !important;
+  line-height: 1.02 !important;
+  letter-spacing: -0.055em !important;
+}
+
+.plantingModule .plantingCalendarHero p:not(.eyebrow) {
+  max-width: none !important;
+  margin: 0 !important;
+  color: var(--muted) !important;
+  font-size: 0.96rem !important;
+  line-height: 1.5 !important;
+}
+
+.plantingModule .plantingHeroActions {
+  position: absolute !important;
+  top: 50% !important;
+  right: 28px !important;
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  width: auto !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+}
+
+.plantingModule .plantingHeroActions .primaryButton,
+.plantingModule .plantingHeroActions .secondaryButton,
+.plantingModule .plantingHeroActions .compactButton,
+.plantingModule .plantingHeroActions .compactPrimary {
+  width: fit-content !important;
+  min-height: 42px !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+  justify-content: center !important;
+}
+
+@media (max-width: 1050px) {
+  .plantingModule .plantingCalendarHero {
+    padding: 22px 260px 22px 22px !important;
+  }
+
+  .plantingModule .plantingHeroActions {
+    right: 22px !important;
+  }
+
+  .plantingModule .plantingCalendarHero h2 {
+    font-size: clamp(1.85rem, 5.4vw, 2.85rem) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .plantingModule .plantingCalendarHero {
+    padding: 18px !important;
+  }
+
+  .plantingModule .plantingHeroActions {
+    position: static !important;
+    transform: none !important;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+    margin-top: 16px !important;
+    width: 100% !important;
+    white-space: normal !important;
+  }
+
+  .plantingModule .plantingHeroActions .primaryButton,
+  .plantingModule .plantingHeroActions .secondaryButton,
+  .plantingModule .plantingHeroActions .compactButton,
+  .plantingModule .plantingHeroActions .compactPrimary {
+    flex: 1 1 160px !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .plantingModule .plantingHeroActions .primaryButton,
+  .plantingModule .plantingHeroActions .secondaryButton,
+  .plantingModule .plantingHeroActions .compactButton,
+  .plantingModule .plantingHeroActions .compactPrimary {
+    width: 100% !important;
+    flex-basis: 100% !important;
+  }
+}
+
