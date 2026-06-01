@@ -74,6 +74,24 @@ const BATCH_STATUSES = [
   "Failed"
 ];
 
+const TASK_FILTERS = [
+  "All tasks",
+  "Plant",
+  "Germination",
+  "Move",
+  "Transplant",
+  "Harvest"
+];
+
+const TASK_DATE_RANGES = [
+  "Today",
+  "Next 7 days",
+  "Next 14 days",
+  "Next 30 days",
+  "Overdue",
+  "All upcoming"
+];
+
 function makeId(prefix = "item") {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
@@ -231,6 +249,8 @@ export default function PlantingScheduler() {
   const [queryText, setQueryText] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All categories");
   const [statusFilter, setStatusFilter] = useState("Active batches");
+  const [taskFilter, setTaskFilter] = useState("All tasks");
+  const [taskDateRange, setTaskDateRange] = useState("Next 7 days");
   const [loading, setLoading] = useState(false);
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [savingBatch, setSavingBatch] = useState(false);
@@ -549,7 +569,7 @@ export default function PlantingScheduler() {
     });
   }, [batches, queryText, categoryFilter, statusFilter]);
 
-  const upcomingTasks = useMemo(() => {
+  const allUpcomingTasks = useMemo(() => {
     return batches
       .filter((batch) => !["Harvested", "Failed"].includes(batch.status))
       .flatMap((batch) =>
@@ -566,19 +586,38 @@ export default function PlantingScheduler() {
       )
       .filter((task) => {
         const days = daysBetween(task.date);
-        return days !== null && days >= -7 && days <= 14;
+        return days !== null && days >= -30 && days <= 60;
       })
-      .sort((a, b) => String(a.date).localeCompare(String(b.date)))
-      .slice(0, 12);
+      .sort((a, b) => String(a.date).localeCompare(String(b.date)));
   }, [batches]);
+
+  const upcomingTasks = useMemo(() => {
+    return allUpcomingTasks
+      .filter((task) => {
+        if (taskFilter !== "All tasks" && task.type !== taskFilter) {
+          return false;
+        }
+
+        const days = daysBetween(task.date);
+
+        if (days === null) return false;
+        if (taskDateRange === "Today") return days === 0;
+        if (taskDateRange === "Next 7 days") return days >= 0 && days <= 7;
+        if (taskDateRange === "Next 14 days") return days >= 0 && days <= 14;
+        if (taskDateRange === "Next 30 days") return days >= 0 && days <= 30;
+        if (taskDateRange === "Overdue") return days < 0;
+        return days >= 0;
+      })
+      .slice(0, 24);
+  }, [allUpcomingTasks, taskFilter, taskDateRange]);
 
   const stats = useMemo(() => {
     const activeBatches = batches.filter(
       (batch) => !["Harvested", "Failed"].includes(batch.status)
     );
     const readyBatches = activeBatches.filter((batch) => batch.status === "Ready");
-    const overdueTasks = upcomingTasks.filter((task) => daysBetween(task.date) < 0);
-    const dueTodayTasks = upcomingTasks.filter((task) => daysBetween(task.date) === 0);
+    const overdueTasks = allUpcomingTasks.filter((task) => daysBetween(task.date) < 0);
+    const dueTodayTasks = allUpcomingTasks.filter((task) => daysBetween(task.date) === 0);
 
     return {
       templates: templates.length,
@@ -587,7 +626,7 @@ export default function PlantingScheduler() {
       overdue: overdueTasks.length,
       dueToday: dueTodayTasks.length
     };
-  }, [templates, batches, upcomingTasks]);
+  }, [templates, batches, allUpcomingTasks]);
 
   if (!user) {
     return (
@@ -696,6 +735,29 @@ export default function PlantingScheduler() {
           </button>
         </div>
 
+        <div className="plantingTaskFilters">
+          <label>
+            Task
+            <select value={taskFilter} onChange={(event) => setTaskFilter(event.target.value)}>
+              {TASK_FILTERS.map((task) => (
+                <option key={task}>{task}</option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Date Range
+            <select
+              value={taskDateRange}
+              onChange={(event) => setTaskDateRange(event.target.value)}
+            >
+              {TASK_DATE_RANGES.map((range) => (
+                <option key={range}>{range}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+
         {upcomingTasks.length ? (
           <div className="plantingTaskGrid">
             {upcomingTasks.map((task) => (
@@ -718,7 +780,7 @@ export default function PlantingScheduler() {
           </div>
         ) : (
           <p className="dashboardEmpty">
-            {loading ? "Loading tasks..." : "No upcoming planting tasks found."}
+            {loading ? "Loading tasks..." : "No planting tasks match the selected filters."}
           </p>
         )}
       </section>
