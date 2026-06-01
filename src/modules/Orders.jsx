@@ -46,6 +46,19 @@ const CUSTOMER_MODES = [
   { value: "oneTime", label: "One-time customer" }
 ];
 
+const CUSTOMER_TYPES = [
+  "Retail customer",
+  "Market regular",
+  "Wholesale buyer",
+  "Restaurant / food service",
+  "Retail shop",
+  "Event client",
+  "Subscription customer",
+  "Custom order customer",
+  "Lead / prospect",
+  "Other"
+];
+
 function makeId(prefix = "item") {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
@@ -103,6 +116,7 @@ function blankOrder() {
     customerSnapshot: blankCustomerSnapshot(),
     lineItems: [blankLineItem()],
     discountAmount: "",
+    serviceFee: "",
     taxRate: "",
     depositPaid: "",
     internalNotes: "",
@@ -118,7 +132,8 @@ function calculateOrder(order) {
   }, 0);
 
   const discountAmount = Number(order.discountAmount) || 0;
-  const taxableSubtotal = Math.max(0, subtotal - discountAmount);
+  const serviceFee = Number(order.serviceFee) || 0;
+  const taxableSubtotal = Math.max(0, subtotal - discountAmount + serviceFee);
   const taxAmount = taxableSubtotal * ((Number(order.taxRate) || 0) / 100);
   const total = taxableSubtotal + taxAmount;
   const balanceDue = Math.max(0, total - (Number(order.depositPaid) || 0));
@@ -126,6 +141,7 @@ function calculateOrder(order) {
   return {
     subtotal,
     discountAmount,
+    serviceFee,
     taxableSubtotal,
     taxAmount,
     total,
@@ -238,6 +254,17 @@ function buildBakingOrderProducts(bakingRecipes = []) {
         costPerUnit: recipe.pricingSummary?.costPerUnit || ""
       };
     });
+}
+
+function getNextOrderNumber(orders = []) {
+  const maxNumber = orders.reduce((highest, order) => {
+    const match = String(order.orderNumber || "").match(/^ORD-(\d+)$/i);
+    if (!match) return highest;
+
+    return Math.max(highest, Number(match[1]) || 0);
+  }, 0);
+
+  return `ORD-${String(maxNumber + 1).padStart(6, "0")}`;
 }
 
 function orderCustomerDisplay(order) {
@@ -450,7 +477,7 @@ export default function Orders() {
     setSelectedOrderId("");
     setForm({
       ...blankOrder(),
-      orderNumber: `ORD-${Date.now().toString().slice(-6)}`
+      orderNumber: getNextOrderNumber(orders)
     });
     setEditorOpen(true);
     setStatusMessage("Started a new order.");
@@ -549,7 +576,7 @@ export default function Orders() {
 
       const orderToSave = await quickAddCustomerIfNeeded({
         ...form,
-        orderNumber: form.orderNumber || `ORD-${Date.now().toString().slice(-6)}`,
+        orderNumber: form.orderNumber || getNextOrderNumber(orders),
         lineItems: cleanLineItems,
         totals
       });
@@ -999,13 +1026,16 @@ export default function Orders() {
                 <>
                   <label>
                     Customer Type
-                    <input
+                    <select
                       value={form.customerSnapshot.customerType}
                       onChange={(event) =>
                         updateCustomerSnapshot("customerType", event.target.value)
                       }
-                      placeholder="Retail customer"
-                    />
+                    >
+                      {CUSTOMER_TYPES.map((type) => (
+                        <option key={type}>{type}</option>
+                      ))}
+                    </select>
                   </label>
 
                   <label>
@@ -1183,6 +1213,19 @@ export default function Orders() {
               </label>
 
               <label>
+                Service / Delivery Fee $
+                <input
+                  type="number"
+                  step="0.01"
+                  value={form.serviceFee}
+                  onChange={(event) =>
+                    updateOrderField("serviceFee", event.target.value)
+                  }
+                  placeholder="0.00"
+                />
+              </label>
+
+              <label>
                 Tax %
                 <input
                   type="number"
@@ -1209,6 +1252,11 @@ export default function Orders() {
               <div>
                 <span>Subtotal</span>
                 <strong>{money(totals.subtotal)}</strong>
+              </div>
+
+              <div>
+                <span>Service Fee</span>
+                <strong>{money(totals.serviceFee)}</strong>
               </div>
 
               <div>
