@@ -10,6 +10,8 @@ import {
   FileText,
   Folder,
   ListChecks,
+  PackageCheck,
+  Sprout,
   Users,
   Wheat
 } from "lucide-react";
@@ -52,6 +54,15 @@ const modules = [
     accent: "market"
   },
   {
+    key: "planting",
+    title: "Planting Scheduler",
+    description:
+      "Create crop templates, schedule planting batches, and track grow tasks from seed to harvest.",
+    path: "/planting-scheduler",
+    icon: Sprout,
+    accent: "planting"
+  },
+  {
     key: "customers",
     title: "Customers",
     description:
@@ -59,6 +70,15 @@ const modules = [
     path: "/customers",
     icon: Users,
     accent: "customers"
+  },
+  {
+    key: "orders",
+    title: "Orders",
+    description:
+      "Create customer orders, add line items, track fulfillment, and manage order totals.",
+    path: "/orders",
+    icon: PackageCheck,
+    accent: "orders"
   },
   {
     key: "pricing",
@@ -393,7 +413,7 @@ export default function Dashboard({
         </div>
       </section>
 
-      <section className="dashboardOverviewGrid">
+      <section className="dashboardOverviewGrid dashboardOverviewGridOptimized">
         <StatCard
           icon={Users}
           label="Customers"
@@ -435,7 +455,7 @@ export default function Dashboard({
         />
       </section>
 
-      <section className="dashboardTwoColumn">
+      <section className="dashboardTwoColumn dashboardTwoColumnOptimized">
         <div className="dashboardPanel">
           <div className="sectionHeader dashboardPanelHeader">
             <div>
@@ -548,8 +568,8 @@ export default function Dashboard({
         </div>
       </section>
 
-      <section className="dashboardFooterBanner">
-        <div>
+      <section className="dashboardFooterBanner dashboardSubscriptionBanner">
+        <div className="dashboardFooterCopy">
           <p className="eyebrow">Subscription</p>
           <h3>{isTrial ? "Need more time?" : "Keep your vendor tools active."}</h3>
           <p>
@@ -558,12 +578,12 @@ export default function Dashboard({
           </p>
         </div>
 
-        <div className="button-row">
-          <GuardedLink to="/account-settings" className="secondaryButton">
+        <div className="button-row dashboardFooterActions">
+          <GuardedLink to="/account-settings" className="secondaryButton dashboardFooterButton">
             Manage Subscription
           </GuardedLink>
 
-          <GuardedLink to="/subscribe" className="primaryButton">
+          <GuardedLink to="/subscribe" className="primaryButton dashboardFooterButton">
             Upgrade Now
           </GuardedLink>
         </div>
