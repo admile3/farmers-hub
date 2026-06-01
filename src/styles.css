@@ -8883,3 +8883,322 @@ input[type="number"] {
     padding: 12px;
   }
 }
+/* =========================================================
+   Calendar mobile/tablet optimization
+   Append this to the bottom of src/styles.css after existing calendar styles.
+   Works with calendar_mobile-day-week-month JSX.
+   ========================================================= */
+
+.calendarToolbarV2 {
+  align-items: flex-start;
+}
+
+.calendarToolbarTitle {
+  min-width: 0;
+}
+
+.calendarToolbarControls {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+}
+
+.calendarViewToggle {
+  display: inline-grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+.calendarViewToggle button {
+  min-height: 32px;
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.calendarViewToggle button.selected {
+  background: #eef3ff;
+  color: #4f65a0;
+}
+
+.calendarGrid-month {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.calendarGrid-week {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.calendarGrid-day {
+  grid-template-columns: 1fr;
+}
+
+.calendarGrid-week .calendarDay,
+.calendarGrid-day .calendarDay {
+  min-height: 220px;
+}
+
+.calendarGrid-day .calendarDay {
+  cursor: default;
+}
+
+.calendarGrid-day .calendarDayNumber,
+.calendarGrid-week .calendarDayNumber {
+  font-size: 0.9rem;
+}
+
+.calendarGrid-day .calendarDayEvents,
+.calendarGrid-week .calendarDayEvents {
+  gap: 6px;
+}
+
+.calendarGrid-day .calendarEventDot,
+.calendarGrid-week .calendarEventDot {
+  min-height: 32px;
+  border-radius: 12px;
+  white-space: normal;
+  text-align: left;
+}
+
+.calendarGrid-month .calendarEventDot {
+  min-height: 24px;
+}
+
+@media (max-width: 1200px) {
+  .calendarGrid-month {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .calendarGrid-week {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .calendarGrid-month .calendarDay {
+    min-height: 84px;
+    padding: 7px;
+    gap: 5px;
+  }
+
+  .calendarGrid-week .calendarDay {
+    min-height: 160px;
+  }
+
+  .calendarGrid-month .calendarEventDot {
+    min-height: 20px;
+    padding: 3px 6px;
+    font-size: 0.66rem;
+  }
+
+  .calendarGrid-month .calendarEventDot::after {
+    display: none;
+  }
+
+  .calendarGrid-month .calendarDayEvents small {
+    font-size: 0.66rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .calendarToolbarV2 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .calendarToolbarControls {
+    justify-items: stretch;
+  }
+
+  .calendarViewToggle,
+  .calendarToolbarActions {
+    width: 100%;
+  }
+
+  .calendarToolbarActions {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 8px;
+  }
+
+  .calendarToolbarActions .secondaryButton {
+    width: 100%;
+  }
+
+  .calendarWeekHeader {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+    margin-bottom: 5px;
+  }
+
+  .calendarWeekHeader span {
+    padding: 0;
+    text-align: center;
+    font-size: 0.64rem;
+  }
+
+  .calendarGrid-month {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .calendarGrid-week {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .calendarGrid-month .calendarDay {
+    min-height: 54px;
+    border-radius: 10px;
+    padding: 5px;
+    gap: 3px;
+  }
+
+  .calendarGrid-month .calendarDayNumber {
+    font-size: 0.76rem;
+  }
+
+  .calendarGrid-month .calendarDayEvents {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+
+  .calendarGrid-month .calendarEventDot {
+    width: 7px;
+    min-width: 7px;
+    height: 7px;
+    min-height: 7px;
+    padding: 0;
+    border-radius: 999px;
+    overflow: hidden;
+    color: transparent;
+  }
+
+  .calendarGrid-month .calendarDayEvents small {
+    width: 100%;
+    font-size: 0.58rem;
+    line-height: 1;
+    color: var(--muted);
+  }
+
+  .calendarGrid-week .calendarDay {
+    min-height: 118px;
+    border-radius: 12px;
+    padding: 7px;
+  }
+
+  .calendarGrid-week .calendarDayNumber {
+    font-size: 0.76rem;
+    line-height: 1.15;
+  }
+
+  .calendarGrid-week .calendarEventDot {
+    min-height: 24px;
+    padding: 4px 6px;
+    font-size: 0.68rem;
+    border-radius: 10px;
+  }
+
+  .calendarGrid-day .calendarDay {
+    min-height: 260px;
+  }
+
+  .calendarLayout {
+    gap: 12px;
+  }
+
+  .calendarPanel {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 560px) {
+  .calendarHero {
+    padding: 16px !important;
+  }
+
+  .calendarHero .calendarAddButton {
+    width: 100%;
+  }
+
+  .calendarStatGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .calendarMainPanel {
+    overflow: hidden;
+  }
+
+  .calendarGrid-month {
+    gap: 3px;
+  }
+
+  .calendarGrid-month .calendarDay {
+    min-height: 46px;
+    padding: 4px;
+  }
+
+  .calendarGrid-month .calendarDayNumber {
+    font-size: 0.7rem;
+  }
+
+  .calendarGrid-month .calendarDayEvents small {
+    display: none;
+  }
+
+  .calendarGrid-week {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scroll-snap-type: x proximity;
+  }
+
+  .calendarGrid-week .calendarDay {
+    flex: 0 0 138px;
+    scroll-snap-align: start;
+  }
+
+  .calendarGrid-day .calendarDay {
+    min-height: 300px;
+  }
+
+  .calendarViewToggle button {
+    padding-inline: 8px;
+    font-size: 0.74rem;
+  }
+
+  .calendarPanelHeader {
+    gap: 10px;
+  }
+
+  .calendarPanelHeader .secondaryButton {
+    width: 100%;
+  }
+
+  .calendarAgendaItem {
+    grid-template-columns: 8px minmax(0, 1fr);
+    padding: 10px;
+  }
+}
+
+@media (max-width: 390px) {
+  .calendarGrid-month .calendarDay {
+    min-height: 42px;
+  }
+
+  .calendarGrid-month .calendarEventDot {
+    width: 6px;
+    min-width: 6px;
+    height: 6px;
+    min-height: 6px;
+  }
+}
