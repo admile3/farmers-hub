@@ -626,117 +626,262 @@ export default function PermitGrantTracker() {
         </label>
       </section>
 
-      <section className="permitTablePanel">
-        <div className="permitTable">
-          <div className="permitTableHeader">
-            <span>Name</span>
-            <span>Type</span>
-            <span>Organization</span>
-            <span>Status</span>
-            <span>Priority</span>
-            <span>Issue</span>
-            <span>Due / Renewal</span>
-            <span>Reminder</span>
-            <span>Document</span>
-            <span>Actions</span>
+      <section className="permitRecordsPanel">
+        <div className="permitRecordsHeader">
+          <div>
+            <p className="eyebrow">Current Entries</p>
+            <h3>Records</h3>
           </div>
 
-          {loadingItems ? (
-            <div className="permitEmptyState">Loading records...</div>
-          ) : filteredItems.length ? (
-            filteredItems.map((item) => {
-              const dueStatus = getDueStatus(item);
+          <span className="permitRecordsCount">
+            {loadingItems
+              ? "Loading..."
+              : `${filteredItems.length} record${filteredItems.length === 1 ? "" : "s"}`}
+          </span>
+        </div>
 
-              return (
-                <div className="permitTableRow" key={item.id}>
-                  <span className="permitName">
-                    <button
-                      type="button"
-                      className="permitNameButton clickableName"
-                      onClick={() => openEditRecord(item)}
-                    >
-                      {item.name}
-                    </button>
-                  </span>
+        {loadingItems ? (
+          <div className="permitEmptyState">Loading records...</div>
+        ) : filteredItems.length ? (
+          <>
+            <div className="permitMobileCardList">
+              {filteredItems.map((item) => {
+                const dueStatus = getDueStatus(item);
+                const relevantDate = getRelevantDate(item);
 
-                  <span>
-                    <span className="permitTypePill">{item.type}</span>
-                  </span>
+                return (
+                  <article className="permitRecordCard" key={`card-${item.id}`}>
+                    <div className="permitRecordCardTop">
+                      <div>
+                        <button
+                          type="button"
+                          className="permitNameButton clickableName permitCardTitle"
+                          onClick={() => openEditRecord(item)}
+                        >
+                          {item.name}
+                        </button>
 
-                  <span className="permitMuted">{item.agency || "None listed"}</span>
+                        <p className="permitCardAgency">
+                          {item.agency || "No organization listed"}
+                        </p>
+                      </div>
 
-                  <span>
-                    <span className={`permitStatusPill ${statusClass(item.status)}`}>
-                      {item.status}
-                    </span>
-                  </span>
-
-                  <span>
-                    <span className={`permitPriorityPill ${item.priority.toLowerCase()}`}>
-                      {item.priority}
-                    </span>
-                  </span>
-
-                  <span className="permitMuted">{item.issueDate || "—"}</span>
-
-                  <span className="permitMuted">{getRelevantDate(item) || "—"}</span>
-
-                  <span>
-                    <span className={`permitDeadlinePill ${dueStatus.tone}`}>
-                      {dueStatus.tone === "danger" ? (
-                        <AlertTriangle size={13} />
-                      ) : (
-                        <CalendarDays size={13} />
-                      )}
-                      {dueStatus.label}
-                    </span>
-                  </span>
-
-                  <span>
-                    {item.documentName || item.documentUrl ? (
-                      <span className="permitDocument">
-                        <FileText size={14} />
-                        {item.documentUrl ? (
-                          <a href={item.documentUrl} target="_blank" rel="noreferrer">
-                            {item.documentName || "Open Document"}
-                          </a>
+                      <span className={`permitDeadlinePill ${dueStatus.tone}`}>
+                        {dueStatus.tone === "danger" ? (
+                          <AlertTriangle size={13} />
                         ) : (
-                          <span>{item.documentName}</span>
+                          <CalendarDays size={13} />
                         )}
+                        {dueStatus.label}
                       </span>
-                    ) : (
-                      <span className="permitMissingDoc">
-                        <Upload size={14} />
-                        Missing
-                      </span>
-                    )}
-                  </span>
+                    </div>
 
-                  <span className="permitActions">
-                    {item.link ? (
-                      <a href={item.link} target="_blank" rel="noreferrer">
-                        <ExternalLink size={16} />
-                      </a>
+                    <div className="permitCardPills">
+                      <span className="permitTypePill">{item.type}</span>
+                      <span className={`permitStatusPill ${statusClass(item.status)}`}>
+                        {item.status}
+                      </span>
+                      <span className={`permitPriorityPill ${item.priority.toLowerCase()}`}>
+                        {item.priority}
+                      </span>
+                    </div>
+
+                    <div className="permitCardDetails">
+                      <div>
+                        <span>Issue</span>
+                        <strong>{item.issueDate || "Not set"}</strong>
+                      </div>
+
+                      <div>
+                        <span>Due / Renewal</span>
+                        <strong>{relevantDate || "Not set"}</strong>
+                      </div>
+
+                      <div>
+                        <span>Reminder</span>
+                        <strong>
+                          {item.reminderAmount || 0} {item.reminderUnit || "days"}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>Fee</span>
+                        <strong>
+                          {item.fee === "" ? "Not set" : `$${Number(item.fee || 0).toFixed(2)}`}
+                        </strong>
+                      </div>
+                    </div>
+
+                    {item.notes ? (
+                      <p className="permitCardNotes">{item.notes}</p>
                     ) : null}
 
-                    <button type="button" onClick={() => openEditRecord(item)}>
-                      <Edit3 size={16} />
-                    </button>
+                    <div className="permitCardDocumentRow">
+                      {item.documentName || item.documentUrl ? (
+                        <span className="permitDocument">
+                          <FileText size={14} />
+                          {item.documentUrl ? (
+                            <a href={item.documentUrl} target="_blank" rel="noreferrer">
+                              {item.documentName || "Open Document"}
+                            </a>
+                          ) : (
+                            <span>{item.documentName}</span>
+                          )}
+                        </span>
+                      ) : (
+                        <span className="permitMissingDoc">
+                          <Upload size={14} />
+                          Missing document
+                        </span>
+                      )}
+                    </div>
 
-                    <button type="button" onClick={() => removeItem(item.id)}>
-                      <Trash2 size={16} />
-                    </button>
-                  </span>
-                </div>
-              );
-            })
-          ) : (
-            <div className="permitEmptyState">
-              No records yet. Add your first permit, grant, license, insurance,
-              or renewal, or load sample records to explore the tracker.
+                    <div className="permitCardActions">
+                      {item.link ? (
+                        <a
+                          className="secondaryButton compactButton"
+                          href={item.link}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <ExternalLink size={15} />
+                          Open Link
+                        </a>
+                      ) : null}
+
+                      <button
+                        className="secondaryButton compactButton"
+                        type="button"
+                        onClick={() => openEditRecord(item)}
+                      >
+                        <Edit3 size={15} />
+                        Edit
+                      </button>
+
+                      <button
+                        className="secondaryButton compactButton dangerButton"
+                        type="button"
+                        onClick={() => removeItem(item.id)}
+                      >
+                        <Trash2 size={15} />
+                        Delete
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
-          )}
-        </div>
+
+            <div className="permitTableDesktopWrap">
+              <div className="permitTable">
+                <div className="permitTableHeader">
+                  <span>Name</span>
+                  <span>Type</span>
+                  <span>Organization</span>
+                  <span>Status</span>
+                  <span>Priority</span>
+                  <span>Issue</span>
+                  <span>Due / Renewal</span>
+                  <span>Reminder</span>
+                  <span>Document</span>
+                  <span>Actions</span>
+                </div>
+
+                {filteredItems.map((item) => {
+                  const dueStatus = getDueStatus(item);
+
+                  return (
+                    <div className="permitTableRow" key={`row-${item.id}`}>
+                      <span className="permitName">
+                        <button
+                          type="button"
+                          className="permitNameButton clickableName"
+                          onClick={() => openEditRecord(item)}
+                        >
+                          {item.name}
+                        </button>
+                      </span>
+
+                      <span>
+                        <span className="permitTypePill">{item.type}</span>
+                      </span>
+
+                      <span className="permitMuted">{item.agency || "None listed"}</span>
+
+                      <span>
+                        <span className={`permitStatusPill ${statusClass(item.status)}`}>
+                          {item.status}
+                        </span>
+                      </span>
+
+                      <span>
+                        <span className={`permitPriorityPill ${item.priority.toLowerCase()}`}>
+                          {item.priority}
+                        </span>
+                      </span>
+
+                      <span className="permitMuted">{item.issueDate || "—"}</span>
+
+                      <span className="permitMuted">{getRelevantDate(item) || "—"}</span>
+
+                      <span>
+                        <span className={`permitDeadlinePill ${dueStatus.tone}`}>
+                          {dueStatus.tone === "danger" ? (
+                            <AlertTriangle size={13} />
+                          ) : (
+                            <CalendarDays size={13} />
+                          )}
+                          {dueStatus.label}
+                        </span>
+                      </span>
+
+                      <span>
+                        {item.documentName || item.documentUrl ? (
+                          <span className="permitDocument">
+                            <FileText size={14} />
+                            {item.documentUrl ? (
+                              <a href={item.documentUrl} target="_blank" rel="noreferrer">
+                                {item.documentName || "Open Document"}
+                              </a>
+                            ) : (
+                              <span>{item.documentName}</span>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="permitMissingDoc">
+                            <Upload size={14} />
+                            Missing
+                          </span>
+                        )}
+                      </span>
+
+                      <span className="permitActions">
+                        {item.link ? (
+                          <a href={item.link} target="_blank" rel="noreferrer">
+                            <ExternalLink size={16} />
+                          </a>
+                        ) : null}
+
+                        <button type="button" onClick={() => openEditRecord(item)}>
+                          <Edit3 size={16} />
+                        </button>
+
+                        <button type="button" onClick={() => removeItem(item.id)}>
+                          <Trash2 size={16} />
+                        </button>
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="permitEmptyState">
+            No records yet. Add your first permit, grant, license, insurance,
+            or renewal, or load sample records to explore the tracker.
+          </div>
+        )}
       </section>
 
       {isModalOpen ? (
