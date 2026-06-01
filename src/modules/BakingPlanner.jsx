@@ -3723,7 +3723,8 @@ export default function BakingPlanner() {
                   </div>
 
                   {pantryItems.length ? (
-                    <div className="table-wrap">
+                    <>
+                      <div className="table-wrap bakingDesktopTable">
                       <table>
                         <thead>
                           <tr>
@@ -3923,7 +3924,226 @@ export default function BakingPlanner() {
                           ))}
                         </tbody>
                       </table>
-                    </div>
+                      </div>
+
+                      <div className="bakingMobilePantryCards" aria-label="Saved pantry items mobile list">
+                        {pantryItems.map((item) => (
+                          <article className="bakingMobilePantryCard" key={`mobile-${item.id}`}>
+                            <div className="bakingMobileCardHeader">
+                              <div>
+                                <p className="eyebrow">{item.category}</p>
+                                <input
+                                  className="text-field"
+                                  value={item.name}
+                                  onChange={(event) =>
+                                    updatePantryItem(item.id, "name", event.target.value)
+                                  }
+                                />
+                              </div>
+                              <Button
+                                variant="outline"
+                                onClick={() => deletePantryItem(item.id)}
+                              >
+                                <Trash2 size={16} /> Delete
+                              </Button>
+                            </div>
+
+                            <div className="bakingMobileFieldGrid">
+                              <label className="field">
+                                <span>Category</span>
+                                <select
+                                  className="text-field"
+                                  value={item.category}
+                                  onChange={(event) =>
+                                    updatePantryItem(item.id, "category", event.target.value)
+                                  }
+                                >
+                                  {pantryCategories.map((category) => (
+                                    <option key={category}>{category}</option>
+                                  ))}
+                                </select>
+                              </label>
+
+                              <label className="field">
+                                <span>Source</span>
+                                <input
+                                  className="text-field"
+                                  value={item.source}
+                                  onChange={(event) =>
+                                    updatePantryItem(item.id, "source", event.target.value)
+                                  }
+                                />
+                              </label>
+
+                              <label className="field">
+                                <span>Package Size</span>
+                                <input
+                                  className="text-field"
+                                  type="number"
+                                  min="0"
+                                  step="any"
+                                  value={item.packageSize}
+                                  onChange={(event) =>
+                                    updatePantryItem(
+                                      item.id,
+                                      "packageSize",
+                                      Number(event.target.value)
+                                    )
+                                  }
+                                />
+                              </label>
+
+                              <label className="field">
+                                <span>Package Unit</span>
+                                <select
+                                  className="text-field"
+                                  value={item.packageUnit}
+                                  onChange={(event) =>
+                                    updatePantryItem(
+                                      item.id,
+                                      "packageUnit",
+                                      event.target.value
+                                    )
+                                  }
+                                >
+                                  {pantryUnits.map((unit) => (
+                                    <option key={unit} value={unit}>
+                                      {unit}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+
+                              <label className="field">
+                                <span>Package Cost</span>
+                                <input
+                                  className="text-field"
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={item.packageCost}
+                                  onChange={(event) =>
+                                    updatePantryItem(
+                                      item.id,
+                                      "packageCost",
+                                      Number(event.target.value)
+                                    )
+                                  }
+                                />
+                              </label>
+
+                              <label className="field">
+                                <span>Track Inventory</span>
+                                <select
+                                  className="text-field"
+                                  value={item.trackInventory ? "yes" : "no"}
+                                  onChange={(event) =>
+                                    updatePantryItem(
+                                      item.id,
+                                      "trackInventory",
+                                      event.target.value === "yes"
+                                    )
+                                  }
+                                >
+                                  <option value="no">Not tracked</option>
+                                  <option value="yes">Tracked</option>
+                                </select>
+                              </label>
+
+                              <label className="field">
+                                <span>Quantity On Hand</span>
+                                <input
+                                  className="text-field"
+                                  type="number"
+                                  min="0"
+                                  step="any"
+                                  value={item.quantityOnHand}
+                                  onChange={(event) =>
+                                    updatePantryItem(
+                                      item.id,
+                                      "quantityOnHand",
+                                      Number(event.target.value)
+                                    )
+                                  }
+                                />
+                              </label>
+
+                              <label className="field">
+                                <span>On Hand Unit</span>
+                                <select
+                                  className="text-field"
+                                  value={item.onHandUnit}
+                                  onChange={(event) =>
+                                    updatePantryItem(
+                                      item.id,
+                                      "onHandUnit",
+                                      event.target.value
+                                    )
+                                  }
+                                >
+                                  {pantryUnits.map((unit) => (
+                                    <option key={unit} value={unit}>
+                                      {unit}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+
+                              <label className="field">
+                                <span>Low Alert</span>
+                                <input
+                                  className="text-field"
+                                  type="number"
+                                  min="0"
+                                  step="any"
+                                  value={item.lowStockThreshold}
+                                  onChange={(event) =>
+                                    updatePantryItem(
+                                      item.id,
+                                      "lowStockThreshold",
+                                      Number(event.target.value)
+                                    )
+                                  }
+                                />
+                              </label>
+                            </div>
+
+                            <div className="bakingMobileMetricGrid">
+                              <div className="pill">
+                                <strong>{formatMoney(item.costPerPound, 2)}</strong>
+                                <br />
+                                <span className="muted tiny">Cost / lb</span>
+                              </div>
+                              <div className="pill">
+                                <strong>{formatMoney(item.costPerOunce, 4)}</strong>
+                                <br />
+                                <span className="muted tiny">Cost / oz</span>
+                              </div>
+                              <div className="pill">
+                                <strong>
+                                  {item.trackInventory
+                                    ? formatSmartWeight(item.quantityOnHandGrams)
+                                    : "Not tracked"}
+                                </strong>
+                                <br />
+                                <span className="muted tiny">Inventory</span>
+                              </div>
+                            </div>
+
+                            <label className="field">
+                              <span>Notes</span>
+                              <textarea
+                                className="text-field"
+                                value={item.notes}
+                                onChange={(event) =>
+                                  updatePantryItem(item.id, "notes", event.target.value)
+                                }
+                              />
+                            </label>
+                          </article>
+                        ))}
+                      </div>
+                    </>
                   ) : (
                     <p className="notice good-box">
                       No pantry items yet. Add flour, salt, sugar, butter, seeds,
