@@ -40,6 +40,7 @@ import Lists from "./modules/Lists.jsx";
 import Calendar from "./modules/Calendar.jsx";
 import Customers from "./modules/Customers.jsx";
 import Orders from "./modules/Orders.jsx";
+import PlantingScheduler from "./modules/PlantingScheduler.jsx";
 import AccountSettings from "./modules/AccountSettings.jsx";
 import Onboarding from "./modules/Onboarding.jsx";
 import Dashboard from "./modules/Dashboard.jsx";
@@ -80,6 +81,15 @@ const modules = [
     icon: ClipboardList,
     accent: "market"
   },
+  {
+    key: "planting",
+    title: "Planting Scheduler",
+    description:
+      "Create crop templates, schedule planting batches, and track grow tasks from seed to harvest.",
+    path: "/planting-scheduler",
+    icon: Sprout,
+    accent: "planting"
+  },
 
   {
     key: "customers",
@@ -91,14 +101,14 @@ const modules = [
     accent: "customers"
   },
   {
-  key: "orders",
-  title: "Orders",
-  description:
-    "Create customer orders, add line items, track fulfillment, and manage order totals.",
-  path: "/orders",
-  icon: PackageCheck,
-  accent: "orders"
-},
+    key: "orders",
+    title: "Orders",
+    description:
+      "Create customer orders, add line items, track fulfillment, and manage order totals.",
+    path: "/orders",
+    icon: PackageCheck,
+    accent: "orders"
+  },
   {
     key: "pricing",
     title: "Products & Pricing",
@@ -1140,19 +1150,13 @@ export default function App() {
         <Route path="/spice-kitchen" element={<AccessGate><SpiceKitchen /></AccessGate>} />
         <Route path="/baking-planner" element={<AccessGate><BakingPlanner /></AccessGate>} />
         <Route path="/market-prep" element={<AccessGate><MarketPrepPlanner /></AccessGate>} />
+        <Route path="/planting-scheduler" element={<AccessGate><PlantingScheduler /></AccessGate>} />
         <Route path="/pricing" element={<AccessGate><PricingCalculator /></AccessGate>} />
         <Route path="/permit-grants" element={<AccessGate><PermitGrantTracker /></AccessGate>} />
         <Route path="/lists" element={<AccessGate><Lists /></AccessGate>} />
         <Route path="/calendar" element={<AccessGate><Calendar /></AccessGate>} />
         <Route path="/customers" element={<AccessGate><Customers /></AccessGate>} />
-        <Route
-  path="/orders"
-  element={
-    <AccessGate>
-      <Orders />
-    </AccessGate>
-  }
-/>
+        <Route path="/orders" element={<AccessGate><Orders /></AccessGate>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
