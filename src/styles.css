@@ -9619,3 +9619,92 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+/* =========================================================
+   Planting Scheduler, Calendar-style full-width hero header
+   Append to the bottom of src/styles.css so it overrides older hero rules.
+   ========================================================= */
+
+.plantingModule .plantingActionHero,
+.plantingModule .moduleHero.plantingActionHero,
+.plantingModule .plantingSchedulerHero.plantingActionHero {
+  position: relative;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 24px !important;
+  width: 100% !important;
+  margin-bottom: 18px !important;
+  padding: 28px !important;
+  border-radius: var(--radius) !important;
+  background: #ffffff !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
+  overflow: hidden !important;
+}
+
+.plantingModule .plantingActionHero > div:first-child {
+  min-width: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.plantingModule .plantingActionHero h2 {
+  margin: 7px 0 10px !important;
+  max-width: 1050px !important;
+}
+
+.plantingModule .plantingActionHero p:not(.eyebrow) {
+  max-width: 1120px !important;
+}
+
+.plantingModule .moduleHeroActions,
+.plantingModule .plantingHeroActions {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  min-width: max-content !important;
+  margin: 0 !important;
+}
+
+.plantingModule .plantingHeroActions .primaryButton,
+.plantingModule .plantingHeroActions .secondaryButton {
+  width: fit-content !important;
+  white-space: nowrap !important;
+  flex: 0 0 auto !important;
+}
+
+@media (max-width: 900px) {
+  .plantingModule .plantingActionHero,
+  .plantingModule .moduleHero.plantingActionHero,
+  .plantingModule .plantingSchedulerHero.plantingActionHero {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    padding: 18px !important;
+    border-radius: 18px !important;
+  }
+
+  .plantingModule .moduleHeroActions,
+  .plantingModule .plantingHeroActions {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .plantingModule .plantingHeroActions .primaryButton,
+  .plantingModule .plantingHeroActions .secondaryButton {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .plantingModule .moduleHeroActions,
+  .plantingModule .plantingHeroActions {
+    grid-template-columns: 1fr !important;
+  }
+}
