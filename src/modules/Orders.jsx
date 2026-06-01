@@ -1,18 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  CalendarClock,
   CheckCircle2,
   ClipboardList,
   DollarSign,
-  Edit3,
   Package,
   Plus,
   RefreshCw,
   Save,
   Search,
   Trash2,
-  Truck,
-  UserPlus,
   Users,
   X
 } from "lucide-react";
@@ -381,7 +377,11 @@ export default function Orders() {
             sourceLabel: product?.sourceLabel || "",
             category: product?.category || "",
             unitLabel: product?.unitLabel || "each",
-            unitPrice: product?.retailPrice || item.unitPrice || "",
+            unitPrice:
+              product?.retailPrice ||
+              product?.wholesalePrice ||
+              item.unitPrice ||
+              "",
             notes: item.notes
           };
         }
@@ -510,7 +510,18 @@ export default function Orders() {
 
       const savedId = await saveOrder(user.uid, orderToSave);
       setSelectedOrderId(savedId);
-      setForm((current) => ({ ...current, ...orderToSave, id: savedId }));
+      setForm({
+        ...blankOrder(),
+        ...orderToSave,
+        id: savedId,
+        customerSnapshot: {
+          ...blankCustomerSnapshot(),
+          ...(orderToSave.customerSnapshot || {})
+        },
+        lineItems: orderToSave.lineItems?.length
+          ? orderToSave.lineItems
+          : [blankLineItem()]
+      });
       setStatusMessage("Order saved.");
       await loadData();
     } catch (error) {
