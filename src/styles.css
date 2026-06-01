@@ -6768,9 +6768,9 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+
 /* =========================================================
-   Planting Scheduler module
-   Append this to src/styles.css
+   Planting Scheduler module, consolidated
    ========================================================= */
 
 :root {
@@ -6797,6 +6797,15 @@ input[type="number"] {
   color: #4f7c40;
 }
 
+.app:has(.plantingModule) .modulePage::before,
+.app:has(.plantingModule) .plantingModule::before {
+  background: var(--planting);
+}
+
+.app:has(.plantingModule) .clickableToolCard::before {
+  background: var(--planting);
+}
+
 .plantingModule {
   display: grid;
   gap: 16px;
@@ -6806,14 +6815,56 @@ input[type="number"] {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
+/* Upcoming tasks panel */
 .plantingTodayPanel {
   display: grid;
   gap: 12px;
 }
 
+.plantingTodayPanel .workspaceHeader {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(320px, auto) auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 0;
+}
+
+.plantingTodayPanel .workspaceHeader > div:first-child {
+  min-width: 0;
+}
+
+.plantingTodayPanel .workspaceHeader .secondaryButton {
+  width: fit-content;
+  white-space: nowrap;
+}
+
+.plantingTaskFilters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(130px, 165px));
+  gap: 8px;
+  align-items: end;
+  justify-self: end;
+}
+
+.plantingTaskFilters label {
+  min-width: 0;
+  margin: 0;
+  display: grid;
+  gap: 4px;
+  color: var(--text);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.plantingTaskFilters select {
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+}
+
 .plantingTaskGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -6878,21 +6929,62 @@ input[type="number"] {
   font-size: 0.78rem;
 }
 
+/* Main scheduler layout */
 .plantingLayout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(390px, 0.55fr);
+  grid-template-columns: minmax(360px, 0.68fr) minmax(720px, 1.32fr);
   gap: 14px;
   align-items: start;
 }
 
-.plantingFilterPanel {
+.plantingDirectoryPanel,
+.plantingSideStack {
+  min-width: 0;
+}
+
+.plantingDirectoryPanel {
+  overflow: hidden;
+}
+
+.plantingDirectoryPanel .workspaceHeader {
+  gap: 10px;
+}
+
+.plantingDirectoryPanel .workspaceHeader .secondaryButton {
+  flex: 0 0 auto;
+}
+
+.plantingFilterPanel,
+.plantingDirectoryPanel .customersFilterPanel {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 9px;
+  align-items: end;
   margin-bottom: 12px;
+}
+
+.plantingDirectoryPanel .searchBox,
+.plantingDirectoryPanel label,
+.plantingDirectoryPanel input,
+.plantingDirectoryPanel select {
+  min-width: 0;
+  width: 100%;
 }
 
 .plantingBatchList,
 .plantingTemplateList {
   display: grid;
   gap: 8px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.plantingBatchList {
+  max-height: 620px;
+}
+
+.plantingTemplateList {
+  max-height: 260px;
 }
 
 .plantingBatchRow {
@@ -6966,6 +7058,23 @@ input[type="number"] {
   gap: 14px;
 }
 
+.plantingSideStack > .workspacePanel:first-child {
+  border-color: rgba(95, 143, 78, 0.22);
+  box-shadow: 0 14px 34px rgba(18, 24, 32, 0.08);
+}
+
+.plantingSideStack .compactFormGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.plantingSideStack .compactFormGrid .fullSpan {
+  grid-column: 1 / -1;
+}
+
+.plantingEditorStack textarea {
+  min-height: 86px;
+}
+
 .plantingPanelToggle {
   display: inline-flex;
   border: 1px solid var(--border);
@@ -7030,13 +7139,46 @@ input[type="number"] {
   padding: 10px;
 }
 
+@media (max-width: 1500px) {
+  .plantingTaskGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .plantingSideStack .compactFormGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 1250px) {
   .plantingLayout {
     grid-template-columns: 1fr;
   }
 
+  .plantingDirectoryPanel {
+    order: 2;
+  }
+
+  .plantingSideStack {
+    order: 1;
+  }
+
   .plantingTaskGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1050px) {
+  .plantingTodayPanel .workspaceHeader {
+    grid-template-columns: 1fr;
+  }
+
+  .plantingTaskFilters {
+    justify-self: stretch;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .plantingTodayPanel .workspaceHeader .secondaryButton {
+    width: fit-content;
   }
 }
 
@@ -7048,12 +7190,18 @@ input[type="number"] {
   .plantingBatchRow {
     grid-template-columns: 1fr;
   }
+
+  .plantingTaskGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 700px) {
   .plantingStatGrid,
   .plantingTaskGrid,
-  .plantingDatePreview {
+  .plantingTaskFilters,
+  .plantingDatePreview,
+  .plantingSideStack .compactFormGrid {
     grid-template-columns: 1fr;
   }
 
@@ -7063,299 +7211,5 @@ input[type="number"] {
 
   .plantingPanelToggle button {
     flex: 1;
-  }
-}
-/* =========================================================
-   Planting Scheduler Layout Refinement
-   Append this below the existing Planting Scheduler CSS.
-   Makes the builder the primary workspace and reduces the
-   oversized planting batch directory column.
-   ========================================================= */
-
-.plantingModule .plantingLayout {
-  grid-template-columns: minmax(360px, 0.72fr) minmax(680px, 1.28fr) !important;
-  align-items: start;
-}
-
-.plantingModule .plantingDirectoryPanel {
-  min-height: auto;
-}
-
-.plantingModule .plantingBatchList {
-  max-height: 620px;
-  overflow: auto;
-  padding-right: 2px;
-}
-
-.plantingModule .plantingSideStack {
-  min-width: 0;
-}
-
-.plantingModule .plantingSideStack > .workspacePanel:first-child {
-  border-color: rgba(95, 143, 78, 0.22);
-  box-shadow: 0 14px 34px rgba(18, 24, 32, 0.08);
-}
-
-.plantingModule .plantingSideStack .compactFormGrid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.plantingModule .plantingEditorStack textarea {
-  min-height: 86px;
-}
-
-.plantingModule .plantingDatePreview {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.plantingModule .plantingTemplateList {
-  max-height: 260px;
-  overflow: auto;
-  padding-right: 2px;
-}
-
-@media (min-width: 1450px) {
-  .plantingModule .plantingLayout {
-    grid-template-columns: minmax(390px, 0.68fr) minmax(760px, 1.32fr) !important;
-  }
-
-  .plantingModule .plantingSideStack .compactFormGrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .plantingModule .plantingSideStack .compactFormGrid .fullSpan {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (max-width: 1250px) {
-  .plantingModule .plantingLayout {
-    grid-template-columns: 1fr !important;
-  }
-
-  .plantingModule .plantingSideStack .compactFormGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .plantingModule .plantingDirectoryPanel {
-    order: 2;
-  }
-
-  .plantingModule .plantingSideStack {
-    order: 1;
-  }
-}
-
-@media (max-width: 760px) {
-  .plantingModule .plantingSideStack .compactFormGrid,
-  .plantingModule .plantingDatePreview {
-    grid-template-columns: 1fr;
-  }
-}
-/* =========================================================
-   Planting Scheduler Schedule Panel Overflow Fix
-   Append below the previous Planting Scheduler layout patch.
-   ========================================================= */
-
-.plantingModule .plantingDirectoryPanel {
-  overflow: hidden;
-}
-
-.plantingModule .plantingDirectoryPanel .plantingFilterPanel,
-.plantingModule .plantingDirectoryPanel .customersFilterPanel {
-  grid-template-columns: 1fr !important;
-  gap: 9px !important;
-}
-
-.plantingModule .plantingDirectoryPanel .searchBox,
-.plantingModule .plantingDirectoryPanel label,
-.plantingModule .plantingDirectoryPanel input,
-.plantingModule .plantingDirectoryPanel select {
-  min-width: 0 !important;
-  width: 100% !important;
-}
-
-.plantingModule .plantingDirectoryPanel .workspaceHeader {
-  gap: 10px;
-}
-
-.plantingModule .plantingDirectoryPanel .workspaceHeader .secondaryButton {
-  flex: 0 0 auto;
-}
-
-@media (min-width: 1450px) {
-  .plantingModule .plantingDirectoryPanel .plantingFilterPanel,
-  .plantingModule .plantingDirectoryPanel .customersFilterPanel {
-    grid-template-columns: 1fr 1fr !important;
-  }
-
-  .plantingModule .plantingDirectoryPanel .searchBox {
-    grid-column: 1 / -1;
-  }
-}
-/* =========================================================
-   Planting Scheduler Upcoming Task Filters
-   Append below existing Planting Scheduler CSS patches.
-   ========================================================= */
-
-.plantingModule .plantingTaskFilters {
-  display: grid;
-  grid-template-columns: minmax(160px, 220px) minmax(160px, 220px);
-  gap: 10px;
-  align-items: end;
-}
-
-.plantingModule .plantingTaskFilters label {
-  display: grid;
-  gap: 5px;
-  color: var(--text);
-  font-size: 0.78rem;
-  font-weight: 900;
-}
-
-.plantingModule .plantingTaskFilters select {
-  min-height: 38px;
-  width: 100%;
-}
-
-.plantingModule .plantingTaskGrid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-@media (max-width: 1100px) {
-  .plantingModule .plantingTaskGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 700px) {
-  .plantingModule .plantingTaskFilters,
-  .plantingModule .plantingTaskGrid {
-    grid-template-columns: 1fr;
-  }
-}
-/* =========================================================
-   Upcoming Tasks Header Layout
-   Move filters into the header row
-   ========================================================= */
-
-.plantingTodayPanel .workspaceHeader {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: nowrap;
-}
-
-.plantingTodayPanel .workspaceHeader > div:first-child {
-  flex: 1;
-}
-
-.plantingTaskFilters {
-  display: flex !important;
-  align-items: end;
-  gap: 10px;
-  margin-left: auto;
-}
-
-.plantingTaskFilters label {
-  margin: 0;
-  min-width: 160px;
-}
-
-.plantingTaskFilters select {
-  min-width: 160px;
-}
-
-@media (max-width: 1000px) {
-  .plantingTodayPanel .workspaceHeader {
-    flex-wrap: wrap;
-  }
-
-  .plantingTaskFilters {
-    width: 100%;
-  }
-
-  .plantingTaskFilters label {
-    flex: 1;
-    min-width: 0;
-  }
-}
-/* =========================================================
-   Planting Scheduler Upcoming Tasks Header Fix
-   Place this BELOW the previous Upcoming Tasks header CSS.
-   ========================================================= */
-
-.plantingModule .plantingTodayPanel {
-  gap: 12px;
-}
-
-.plantingModule .plantingTodayPanel .workspaceHeader {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) auto auto !important;
-  align-items: end !important;
-  gap: 12px !important;
-}
-
-.plantingModule .plantingTodayPanel .workspaceHeader > div:first-child {
-  min-width: 0;
-}
-
-.plantingModule .plantingTodayPanel .workspaceHeader .secondaryButton {
-  grid-column: 3;
-  grid-row: 1;
-  align-self: end;
-  white-space: nowrap;
-}
-
-.plantingModule .plantingTaskFilters {
-  grid-column: 2;
-  grid-row: 1;
-  display: grid !important;
-  grid-template-columns: 150px 150px !important;
-  gap: 8px !important;
-  align-items: end !important;
-  margin: 0 !important;
-  width: auto !important;
-}
-
-.plantingModule .plantingTaskFilters label {
-  min-width: 0 !important;
-  margin: 0 !important;
-  display: grid !important;
-  gap: 4px !important;
-  font-size: 0.72rem !important;
-}
-
-.plantingModule .plantingTaskFilters select {
-  min-width: 0 !important;
-  width: 100% !important;
-  min-height: 36px !important;
-}
-
-.plantingModule .plantingTaskGrid {
-  margin-top: 0 !important;
-}
-
-@media (max-width: 950px) {
-  .plantingModule .plantingTodayPanel .workspaceHeader {
-    grid-template-columns: 1fr !important;
-  }
-
-  .plantingModule .plantingTodayPanel .workspaceHeader .secondaryButton,
-  .plantingModule .plantingTaskFilters {
-    grid-column: 1 !important;
-    grid-row: auto !important;
-  }
-
-  .plantingModule .plantingTaskFilters {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    width: 100% !important;
-  }
-}
-
-@media (max-width: 600px) {
-  .plantingModule .plantingTaskFilters {
-    grid-template-columns: 1fr !important;
   }
 }
