@@ -7152,3 +7152,44 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+/* =========================================================
+   Planting Scheduler Schedule Panel Overflow Fix
+   Append below the previous Planting Scheduler layout patch.
+   ========================================================= */
+
+.plantingModule .plantingDirectoryPanel {
+  overflow: hidden;
+}
+
+.plantingModule .plantingDirectoryPanel .plantingFilterPanel,
+.plantingModule .plantingDirectoryPanel .customersFilterPanel {
+  grid-template-columns: 1fr !important;
+  gap: 9px !important;
+}
+
+.plantingModule .plantingDirectoryPanel .searchBox,
+.plantingModule .plantingDirectoryPanel label,
+.plantingModule .plantingDirectoryPanel input,
+.plantingModule .plantingDirectoryPanel select {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+.plantingModule .plantingDirectoryPanel .workspaceHeader {
+  gap: 10px;
+}
+
+.plantingModule .plantingDirectoryPanel .workspaceHeader .secondaryButton {
+  flex: 0 0 auto;
+}
+
+@media (min-width: 1450px) {
+  .plantingModule .plantingDirectoryPanel .plantingFilterPanel,
+  .plantingModule .plantingDirectoryPanel .customersFilterPanel {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .plantingModule .plantingDirectoryPanel .searchBox {
+    grid-column: 1 / -1;
+  }
+}
