@@ -23,6 +23,11 @@
   --shadow-strong: 0 18px 42px rgba(22, 27, 34, 0.09);
   --radius: 18px;
   --radius-sm: 12px;
+
+  --calendar: #7a8fbe;
+  --customers: #4d908e;
+  --orders: #7b6fb0;
+  --planting: #5f8f4e;
 }
 
 * {
@@ -215,7 +220,7 @@ label {
 }
 
 .modernNavLink.moduleNav.calendar {
-  background: #7a8fbe;
+  background: var(--calendar);
 }
 
 .modernNavLink.active {
@@ -604,7 +609,7 @@ label {
 
 .modernModuleIcon.calendar,
 .moduleCard.calendar .moduleIcon {
-  background: #7a8fbe;
+  background: var(--calendar);
 }
 
 .modernModuleBody {
@@ -2625,7 +2630,7 @@ input[type="number"] {
 }
 
 .modernModuleCard.calendar::before {
-  background: #7a8fbe;
+  background: var(--calendar);
 }
 
 .modulePage::before,
@@ -2679,7 +2684,7 @@ input[type="number"] {
 }
 
 .app:has(.calendarModule) .calendarModule::before {
-  background: #7a8fbe;
+  background: var(--calendar);
 }
 
 .app:has(.subscribePage) .subscribePage::before,
@@ -2742,7 +2747,7 @@ input[type="number"] {
 }
 
 .hubStatIcon.calendar {
-  background: #7a8fbe;
+  background: var(--calendar);
 }
 
 .hubStatText {
@@ -2902,7 +2907,7 @@ input[type="number"] {
 .dashboardRowIcon.pricing { background: #5f8aa0; }
 .dashboardRowIcon.grant { background: #957d68; }
 .dashboardRowIcon.lists { background: #aaa060; }
-.dashboardRowIcon.calendar { background: #7a8fbe; }
+.dashboardRowIcon.calendar { background: var(--calendar); }
 
 .dashboardRow h4 {
   margin: 0 0 4px;
@@ -3274,7 +3279,7 @@ input[type="number"] {
 
 .calendarEventDot.calendar,
 .calendarAgendaColor.calendar {
-  background: #7a8fbe;
+  background: var(--calendar);
 }
 
 .calendarEventDot.market,
@@ -3377,7 +3382,7 @@ input[type="number"] {
   }
 }
 .calendarAccent {
-  background: #7a8fbe;
+  background: var(--calendar);
 }
 
 /* Calendar module polish */
@@ -3652,7 +3657,7 @@ input[type="number"] {
 }
 
 .planModuleButton.calendar {
-  background: #7a8fbe;
+  background: var(--calendar);
 }
 
 .planModuleButton.selected {
@@ -4788,7 +4793,7 @@ input[type="number"] {
    ========================================================= */
 
 :root {
-  --customers: #6f8f72;
+  --customers: #4d908e;
 }
 
 .modernNavLink.moduleNav.customers {
@@ -6222,7 +6227,7 @@ input[type="number"] {
    ========================================================= */
 
 .planModuleButton.customers {
-  background: var(--customers, #6f8f72);
+  background: var(--customers, var(--customers));
 }
 
 .planModuleButton.customers.selected {
@@ -7338,4 +7343,136 @@ input[type="number"] {
   .plantingTaskGrid {
     grid-template-columns: 1fr !important;
   }
+}
+/* =========================================================
+   Module color cleanup
+   Keeps sidebar, module cards, stat icons, dashboard icons,
+   plan buttons, and page accents visually distinct.
+   ========================================================= */
+
+.modernNavLink.moduleNav.customers,
+.planModuleButton.customers {
+  background: var(--customers);
+}
+
+.modernNavLink.moduleNav.orders,
+.planModuleButton.orders {
+  background: var(--orders);
+}
+
+.modernNavLink.moduleNav.planting,
+.planModuleButton.planting {
+  background: var(--planting);
+}
+
+.modernNavLink.moduleNav.calendar,
+.planModuleButton.calendar {
+  background: var(--calendar);
+}
+
+.modernModuleIcon.customers,
+.moduleCard.customers .moduleIcon,
+.hubStatIcon.customers,
+.dashboardRowIcon.customers,
+.modernModuleIcon.orders,
+.moduleCard.orders .moduleIcon,
+.hubStatIcon.orders,
+.dashboardRowIcon.orders,
+.modernModuleIcon.planting,
+.moduleCard.planting .moduleIcon,
+.hubStatIcon.planting,
+.dashboardRowIcon.planting,
+.modernModuleIcon.calendar,
+.moduleCard.calendar .moduleIcon,
+.hubStatIcon.calendar,
+.dashboardRowIcon.calendar {
+  background: currentColor;
+}
+
+.modernModuleIcon.customers,
+.moduleCard.customers .moduleIcon,
+.hubStatIcon.customers,
+.dashboardRowIcon.customers {
+  color: #ffffff;
+  background: var(--customers);
+}
+
+.modernModuleIcon.orders,
+.moduleCard.orders .moduleIcon,
+.hubStatIcon.orders,
+.dashboardRowIcon.orders {
+  color: #ffffff;
+  background: var(--orders);
+}
+
+.modernModuleIcon.planting,
+.moduleCard.planting .moduleIcon,
+.hubStatIcon.planting,
+.dashboardRowIcon.planting {
+  color: #ffffff;
+  background: var(--planting);
+}
+
+.modernModuleIcon.calendar,
+.moduleCard.calendar .moduleIcon,
+.hubStatIcon.calendar,
+.dashboardRowIcon.calendar {
+  color: #ffffff;
+  background: var(--calendar);
+}
+
+.modernModuleCard.customers::before {
+  background: var(--customers);
+}
+
+.modernModuleCard.orders::before {
+  background: var(--orders);
+}
+
+.modernModuleCard.planting::before {
+  background: var(--planting);
+}
+
+.modernModuleCard.calendar::before {
+  background: var(--calendar);
+}
+
+.modernModuleFooter.customers,
+.moduleCard.customers .moduleFooter {
+  color: #3f7775;
+}
+
+.modernModuleFooter.orders,
+.moduleCard.orders .moduleFooter {
+  color: #665c9e;
+}
+
+.modernModuleFooter.planting,
+.moduleCard.planting .moduleFooter {
+  color: #4f7c40;
+}
+
+.modernModuleFooter.calendar,
+.moduleCard.calendar .moduleFooter {
+  color: #6479aa;
+}
+
+.app:has(.customersModule) .modulePage::before,
+.app:has(.customersModule) .customersModule::before {
+  background: var(--customers);
+}
+
+.app:has(.ordersModule) .modulePage::before,
+.app:has(.ordersModule) .ordersModule::before {
+  background: var(--orders);
+}
+
+.app:has(.plantingModule) .modulePage::before,
+.app:has(.plantingModule) .plantingModule::before {
+  background: var(--planting);
+}
+
+.app:has(.calendarModule) .calendarModule::before,
+.app:has(.calendarModule) .modulePage::before {
+  background: var(--calendar);
 }
