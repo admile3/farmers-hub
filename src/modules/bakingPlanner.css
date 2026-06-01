@@ -1,4 +1,7 @@
 .bakingPlanner {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   color: #121820;
 }
 
@@ -15,6 +18,19 @@
 
 .bakingPlanner button {
   border: 0;
+}
+
+.bakingPlanner .page,
+.bakingPlanner .hero,
+.bakingPlanner .hero-inner,
+.bakingPlanner .card,
+.bakingPlanner .panel,
+.bakingPlanner .soft-panel,
+.bakingPlanner .layout,
+.bakingPlanner .stack,
+.bakingPlanner .grid,
+.bakingPlanner .table-wrap {
+  min-width: 0;
 }
 
 .bakingPlanner .page {
@@ -134,6 +150,16 @@
   color: #121820;
 }
 
+.bakingPlanner .mobileTabShell {
+  position: relative;
+  margin-bottom: 18px;
+}
+
+.bakingPlanner .mobileTabArrow,
+.bakingPlanner .mobileSwipeHint {
+  display: none !important;
+}
+
 .bakingPlanner .tabs {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -160,6 +186,7 @@
   font-weight: 900;
   text-align: left;
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .bakingPlanner .tab:hover {
@@ -264,13 +291,21 @@
   font-weight: 900;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .bakingPlanner .btn:hover {
   transform: translateY(-1px);
   background: #285d31;
+}
+
+.bakingPlanner .btn:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .bakingPlanner .btn.outline {
@@ -360,11 +395,19 @@
 .bakingPlanner .field > select,
 .bakingPlanner .field > textarea {
   width: 100%;
+  min-height: 44px;
+  max-width: 100%;
   border: 1px solid rgba(22, 27, 34, 0.12);
   border-radius: 12px;
   background: #ffffff;
   padding: 12px 14px;
   outline: none;
+}
+
+.bakingPlanner textarea.text-field,
+.bakingPlanner .field > textarea {
+  min-height: 88px;
+  resize: vertical;
 }
 
 .bakingPlanner .text-field:focus,
@@ -517,6 +560,8 @@
   border-radius: 16px;
   background: #ffffff;
   margin-top: 16px;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .bakingPlanner table {
@@ -609,6 +654,7 @@
   padding: 16px;
   text-align: left;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .bakingPlanner .recipe-select.active {
@@ -727,6 +773,7 @@
   display: grid;
   gap: 10px;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .bakingPlanner .bakingModeCard.featured {
@@ -766,6 +813,7 @@
   text-align: left;
   text-decoration: underline;
   text-underline-offset: 3px;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .bakingPlanner .pullIngredientButton:hover {
@@ -793,11 +841,159 @@
   font-size: 1.5rem;
   line-height: 1;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .bakingPlanner .pantryEditActions {
   justify-content: flex-end;
   margin-top: 18px;
+}
+
+.bakingPlanner .bakingProductDirectoryPanel {
+  border-color: rgba(223, 160, 76, 0.28);
+  background: #fffaf2;
+}
+
+.bakingPlanner .bakingProductDirectoryToggle {
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  color: var(--text, #121820);
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.bakingPlanner .bakingProductDirectoryToggle input {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  accent-color: var(--sourdough, #dfa04c);
+  cursor: pointer;
+}
+
+.bakingPlanner .bakingProductDirectoryToggle span {
+  white-space: nowrap;
+}
+
+.bakingPlanner .bakingRecipeIngredientsPanel {
+  border-color: rgba(223, 160, 76, 0.22);
+}
+
+.bakingPlanner .bakingRecipeIngredientsPanel > .section-head {
+  align-items: flex-start;
+}
+
+.bakingPlanner .bakingQuickIngredientPanel {
+  background: #fffaf2;
+  border-color: rgba(223, 160, 76, 0.28);
+}
+
+.bakingPlanner .bakingIngredientRow {
+  grid-template-columns: minmax(260px, 1fr) minmax(120px, 0.35fr) auto;
+}
+
+.bakingPlanner .bakingPantryCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.bakingPlanner .bakingPantryCard {
+  min-width: 0;
+  background: #ffffff;
+  border: 1px solid rgba(22, 27, 34, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 10px 24px rgba(22, 27, 34, 0.05);
+  padding: 16px;
+  display: grid;
+  gap: 14px;
+}
+
+.bakingPlanner .bakingPantryCardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+}
+
+.bakingPlanner .bakingPantryCardTitle {
+  min-width: 0;
+}
+
+.bakingPlanner .bakingPantryCardTitle .eyebrow {
+  margin-bottom: 7px;
+}
+
+.bakingPlanner .bakingPantryCardTitle h3 {
+  margin: 0;
+  color: #121820;
+  font-size: 1.08rem;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.bakingPlanner .bakingPantryCardTitle p {
+  margin: 6px 0 0;
+}
+
+.bakingPlanner .bakingPantryCardActions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bakingPlanner .bakingPantryCardActions .btn {
+  min-height: 40px;
+  padding: 10px 14px;
+}
+
+.bakingPlanner .bakingPantrySummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.bakingPlanner .bakingPantrySummaryGrid .pill {
+  min-width: 0;
+  padding: 11px 12px;
+  overflow-wrap: anywhere;
+}
+
+.bakingPlanner .bakingPantrySummaryGrid .pill strong {
+  color: #121820;
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.bakingPlanner .bakingPantryNotes {
+  background: #fbfaf6;
+  border: 1px solid rgba(22, 27, 34, 0.08);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin: 0;
+}
+
+.bakingPlanner .bakingPantryNotes p {
+  margin: 4px 0 0;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.bakingPlanner .bakingMobilePantryCards,
+.bakingPlanner .bakingMobilePantryCard,
+.bakingPlanner .bakingMobileCardHeader,
+.bakingPlanner .bakingMobileFieldGrid,
+.bakingPlanner .bakingMobileMetricGrid {
+  display: none;
 }
 
 @media (max-width: 1500px) {
@@ -833,10 +1029,128 @@
   .bakingPlanner .grid.settingsGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .bakingPlanner .bakingPantrySummaryGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1100px) {
+  .bakingPlanner .hero-inner {
+    align-items: flex-start;
+  }
+
+  .bakingPlanner .hero-copy {
+    max-width: none;
+  }
+
+  .bakingPlanner .hero-stats {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .bakingPlanner .hero-stats div,
+  .bakingPlanner .hero-settings-card {
+    flex: 1 1 150px;
+  }
+
+  .bakingPlanner .tab {
+    min-height: 64px;
+  }
 }
 
 @media (max-width: 1050px) {
   .bakingPlanner .tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .bakingPlanner .page {
+    width: 100%;
+  }
+
+  .bakingPlanner .panel {
+    padding: 18px;
+  }
+
+  .bakingPlanner .soft-panel {
+    padding: 16px;
+  }
+
+  .bakingPlanner .section-head {
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .bakingPlanner .button-row,
+  .bakingPlanner .production-actions {
+    width: 100%;
+  }
+
+  .bakingPlanner .button-row .btn,
+  .bakingPlanner .production-actions .btn {
+    justify-content: center;
+  }
+
+  .bakingPlanner .recipe-row,
+  .bakingPlanner .editable-row,
+  .bakingPlanner .bakingIngredientRow {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .bakingPlanner .recipe-row .btn,
+  .bakingPlanner .editable-row .btn,
+  .bakingPlanner .bakingIngredientRow .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .bakingPlanner .hubStatGrid,
+  .bakingPlanner .production-stats-grid,
+  .bakingPlanner .starterStatsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .bakingPlanner .stat-card-content {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .bakingPlanner .icon-badge {
+    width: 44px;
+    height: 44px;
+  }
+
+  .bakingPlanner .stat-value,
+  .bakingPlanner .hubStatText strong {
+    font-size: 1.35rem;
+  }
+
+  .bakingPlanner .pantryEditOverlay,
+  .bakingPlanner .bakingModeOverlay {
+    padding: 14px;
+    align-items: start;
+    overflow: auto;
+  }
+
+  .bakingPlanner .pantryEditModal,
+  .bakingPlanner .bakingModeModal {
+    width: 100%;
+    max-height: none;
+    border-radius: 20px;
+    padding: 18px;
+    margin: 0;
+  }
+
+  .bakingPlanner .bakingPantryCards {
+    grid-template-columns: 1fr;
+  }
+
+  .bakingPlanner .bakingPantrySummaryGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -874,6 +1188,15 @@
   .bakingPlanner .span-two {
     grid-column: span 1;
   }
+
+  .bakingPlanner .bakingProductDirectoryToggle {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .bakingPlanner .bakingProductDirectoryToggle span {
+    white-space: normal;
+  }
 }
 
 @media (max-width: 760px) {
@@ -883,7 +1206,325 @@
 }
 
 @media (max-width: 700px) {
+  .bakingPlanner .hero {
+    margin-bottom: 12px;
+  }
+
+  .bakingPlanner .hero-inner {
+    padding: 16px;
+    border-radius: 16px;
+    gap: 14px;
+  }
+
+  .bakingPlanner .hero h1 {
+    font-size: clamp(1.72rem, 9.1vw, 2.35rem);
+    line-height: 0.98;
+  }
+
+  .bakingPlanner .hero p {
+    font-size: 0.9rem;
+    line-height: 1.42;
+  }
+
+  .bakingPlanner .hero-copy .button-row {
+    align-items: stretch;
+  }
+
+  .bakingPlanner .hero-copy .button-row .btn,
+  .bakingPlanner .hero-copy .button-row .pill {
+    width: 100%;
+  }
+
+  .bakingPlanner .hero-copy .button-row .pill {
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+
+  .bakingPlanner .hero-stats {
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px;
+  }
+
+  .bakingPlanner .hero-stats > div,
+  .bakingPlanner .hero-stats .hero-settings-card {
+    min-width: 0;
+    width: 100%;
+    min-height: 72px;
+    padding: 10px 9px;
+    border-radius: 14px;
+  }
+
+  .bakingPlanner .hero-stats > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .bakingPlanner .hero-stats .hero-settings-card {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .bakingPlanner .hero-stats p,
+  .bakingPlanner .hero-settings-card p {
+    margin-bottom: 4px;
+    font-size: 0.68rem;
+    line-height: 1.08;
+    letter-spacing: 0.01em;
+  }
+
+  .bakingPlanner .hero-stats strong,
+  .bakingPlanner .hero-settings-card strong {
+    font-size: 1.28rem;
+    line-height: 1;
+  }
+
+  .bakingPlanner .hero-settings-card svg {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+  }
+
+  .bakingPlanner .mobileTabShell {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) 24px;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(22, 27, 34, 0.07);
+    border-radius: 16px;
+    box-shadow: 0 12px 26px rgba(22, 27, 34, 0.05);
+    padding: 10px 8px;
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+
+  .bakingPlanner .mobileTabArrow {
+    display: grid !important;
+    place-items: center;
+    width: 24px;
+    height: 54px;
+    color: #64748b;
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .bakingPlanner .mobileTabShell .tabs {
+    display: flex !important;
+    grid-column: 2;
+    min-width: 0;
+    gap: 8px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 0 2px 2px;
+    margin: 0;
+  }
+
+  .bakingPlanner .mobileTabShell .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .bakingPlanner .mobileTabShell .tab {
+    flex: 0 0 138px;
+    min-height: 54px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    scroll-snap-align: center;
+    justify-content: center;
+    white-space: nowrap;
+    box-shadow: none;
+  }
+
+  .bakingPlanner .mobileTabShell .tab svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .bakingPlanner .layout,
+  .bakingPlanner .two-col,
+  .bakingPlanner .recipe-layout,
+  .bakingPlanner .starterLayout,
+  .bakingPlanner .two,
+  .bakingPlanner .three,
+  .bakingPlanner .four,
+  .bakingPlanner .grid.settingsGrid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .bakingPlanner .panel {
+    padding: 16px;
+  }
+
+  .bakingPlanner .card,
+  .bakingPlanner .soft-panel,
+  .bakingPlanner .recipe-row,
+  .bakingPlanner .recipe-select,
+  .bakingPlanner .table-wrap,
+  .bakingPlanner .progress-wrap,
+  .bakingPlanner .pill {
+    border-radius: 14px;
+  }
+
+  .bakingPlanner .section-head,
+  .bakingPlanner .production-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bakingPlanner .section-head h2,
+  .bakingPlanner .panel h2 {
+    font-size: 1.25rem;
+  }
+
+  .bakingPlanner .section-head p,
+  .bakingPlanner .panel p {
+    font-size: 0.9rem;
+  }
+
+  .bakingPlanner .btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+    padding: 11px 14px;
+  }
+
+  .bakingPlanner .production-date-field {
+    width: 100%;
+  }
+
+  .bakingPlanner .hubStatGrid,
+  .bakingPlanner .production-stats-grid,
   .bakingPlanner .starterStatsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .bakingPlanner .stat-card-content {
+    padding: 14px;
+  }
+
+  .bakingPlanner .table-wrap {
+    margin-top: 12px;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .bakingPlanner table {
+    min-width: 760px;
+  }
+
+  .bakingPlanner th,
+  .bakingPlanner td {
+    padding: 10px 12px;
+  }
+
+  .bakingPlanner .pullListWrap table,
+  .bakingPlanner .pullListTable {
+    min-width: 760px;
+  }
+
+  .bakingPlanner .pullListWrap {
+    display: block;
+  }
+
+  .bakingPlanner .bakingPantryCardTop {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bakingPlanner .bakingPantryCardActions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .bakingPlanner .bakingPantryCardActions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 430px) {
+  .bakingPlanner .hero-inner,
+  .bakingPlanner .panel,
+  .bakingPlanner .soft-panel,
+  .bakingPlanner .bakingPantryCard,
+  .bakingPlanner .pantryEditModal,
+  .bakingPlanner .bakingModeModal {
+    padding: 14px;
+  }
+
+  .bakingPlanner .hero-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 7px;
+  }
+
+  .bakingPlanner .hero-stats > div,
+  .bakingPlanner .hero-stats .hero-settings-card {
+    min-height: 66px;
+    padding: 9px 7px;
+  }
+
+  .bakingPlanner .hero-stats p,
+  .bakingPlanner .hero-settings-card p {
+    font-size: 0.62rem;
+  }
+
+  .bakingPlanner .hero-stats strong,
+  .bakingPlanner .hero-settings-card strong {
+    font-size: 1.14rem;
+  }
+
+  .bakingPlanner .mobileTabShell {
+    grid-template-columns: 20px minmax(0, 1fr) 20px;
+    gap: 4px;
+    padding: 8px 6px;
+  }
+
+  .bakingPlanner .mobileTabArrow {
+    width: 20px;
+    height: 50px;
+    font-size: 1.8rem;
+  }
+
+  .bakingPlanner .mobileTabShell .tab {
+    flex-basis: 128px;
+    min-height: 50px;
+    padding: 9px 10px;
+  }
+
+  .bakingPlanner .input-wrap {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .bakingPlanner .suffix {
+    min-width: 48px;
+    padding-inline: 10px;
+    text-align: center;
+  }
+
+  .bakingPlanner .pill,
+  .bakingPlanner .notice {
+    padding: 11px 12px;
+  }
+
+  .bakingPlanner .bakingPantryCards {
+    gap: 12px;
+  }
+
+  .bakingPlanner .bakingPantrySummaryGrid,
+  .bakingPlanner .bakingPantryCardActions {
     grid-template-columns: 1fr;
   }
 }
@@ -901,6 +1542,7 @@
   }
 
   .bakingPlanner .tabs,
+  .bakingPlanner .mobileTabShell,
   .bakingPlanner .hero-settings-card,
   .bakingPlanner .btn,
   .bakingPlanner .production-date-field,
@@ -1125,691 +1767,35 @@
     border-radius: 10px !important;
     font-size: 9px !important;
   }
-}
-/* =========================================================
-   Baking Planner Product Directory Styles
-   Append this to src/styles.css or bakingPlanner.css
-   ========================================================= */
 
-.bakingPlanner .bakingProductDirectoryPanel {
-  border-color: rgba(223, 160, 76, 0.28);
-  background: #fffaf2;
-}
-
-.bakingPlanner .bakingProductDirectoryToggle {
-  width: fit-content;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  color: var(--text, #121820);
-  font-size: 0.9rem;
-  font-weight: 900;
-}
-
-.bakingPlanner .bakingProductDirectoryToggle input {
-  width: 18px;
-  height: 18px;
-  min-height: 18px;
-  padding: 0;
-  accent-color: var(--sourdough, #dfa04c);
-  cursor: pointer;
-}
-
-.bakingPlanner .bakingProductDirectoryToggle span {
-  white-space: nowrap;
-}
-
-@media (max-width: 800px) {
-  .bakingPlanner .bakingProductDirectoryToggle {
-    width: 100%;
-  }
-
-  .bakingPlanner .bakingProductDirectoryToggle span {
-    white-space: normal;
-  }
-}
-/* =========================================================
-   Baking Planner Pantry-Linked Recipe Ingredients
-   Append this to bakingPlanner.css
-   ========================================================= */
-
-.bakingPlanner .bakingRecipeIngredientsPanel {
-  border-color: rgba(223, 160, 76, 0.22);
-}
-
-.bakingPlanner .bakingRecipeIngredientsPanel > .section-head {
-  align-items: flex-start;
-}
-
-.bakingPlanner .bakingQuickIngredientPanel {
-  background: #fffaf2;
-  border-color: rgba(223, 160, 76, 0.28);
-}
-
-.bakingPlanner .bakingIngredientRow {
-  grid-template-columns: minmax(260px, 1fr) minmax(120px, 0.35fr) auto;
-}
-
-@media (max-width: 900px) {
-  .bakingPlanner .bakingIngredientRow {
-    grid-template-columns: 1fr;
-  }
-
-  .bakingPlanner .bakingRecipeIngredientsPanel > .section-head .button-row {
-    width: 100%;
-  }
-
-  .bakingPlanner .bakingRecipeIngredientsPanel > .section-head .btn {
-    width: 100%;
-  }
-}
-/* =========================================================
-   Baking Planner Mobile Optimization Patch
-   Built from the current 1,205-line CSS file, preserving existing styles
-   ========================================================= */
-
-.bakingPlanner {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-}
-
-.bakingPlanner .page,
-.bakingPlanner .hero,
-.bakingPlanner .hero-inner,
-.bakingPlanner .card,
-.bakingPlanner .panel,
-.bakingPlanner .soft-panel,
-.bakingPlanner .layout,
-.bakingPlanner .stack,
-.bakingPlanner .grid,
-.bakingPlanner .table-wrap {
-  min-width: 0;
-}
-
-.bakingPlanner .btn,
-.bakingPlanner .tab,
-.bakingPlanner .hero-settings-card,
-.bakingPlanner .recipe-select,
-.bakingPlanner .bakingModeCard,
-.bakingPlanner .pullIngredientButton,
-.bakingPlanner .iconButton {
-  -webkit-tap-highlight-color: transparent;
-}
-
-.bakingPlanner .btn:disabled {
-  opacity: 0.62;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.bakingPlanner .text-field,
-.bakingPlanner .field > input,
-.bakingPlanner .field > select,
-.bakingPlanner .field > textarea,
-.bakingPlanner .input-wrap input {
-  min-height: 44px;
-  max-width: 100%;
-}
-
-.bakingPlanner textarea.text-field,
-.bakingPlanner .field > textarea {
-  min-height: 88px;
-  resize: vertical;
-}
-
-.bakingPlanner .bakingMobilePantryCards {
-  display: none;
-}
-
-.bakingPlanner .bakingMobilePantryCard {
-  background: #ffffff;
-  border: 1px solid rgba(22, 27, 34, 0.08);
-  border-radius: 16px;
-  box-shadow: 0 10px 24px rgba(22, 27, 34, 0.05);
-  padding: 16px;
-}
-
-.bakingPlanner .bakingMobileCardHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.bakingPlanner .bakingMobileCardHeader > div {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.bakingPlanner .bakingMobileCardHeader .eyebrow {
-  margin-bottom: 8px;
-}
-
-.bakingPlanner .bakingMobileFieldGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.bakingPlanner .bakingMobileMetricGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin: 14px 0;
-}
-
-.bakingPlanner .bakingMobileMetricGrid .pill {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-@media (max-width: 1100px) {
-  .bakingPlanner .hero-inner {
-    align-items: flex-start;
-  }
-
-  .bakingPlanner .hero-copy {
-    max-width: none;
-  }
-
-  .bakingPlanner .hero-stats {
-    flex-wrap: wrap;
-    justify-content: flex-start;
-  }
-
-  .bakingPlanner .hero-stats div,
-  .bakingPlanner .hero-settings-card {
-    flex: 1 1 150px;
-  }
-
-  .bakingPlanner .tab {
-    min-height: 64px;
-  }
-}
-
-@media (max-width: 900px) {
-  .bakingPlanner .page {
-    width: 100%;
-  }
-
-  .bakingPlanner .panel {
-    padding: 18px;
-  }
-
-  .bakingPlanner .soft-panel {
-    padding: 16px;
-  }
-
-  .bakingPlanner .section-head {
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-
-  .bakingPlanner .button-row,
-  .bakingPlanner .production-actions {
-    width: 100%;
-  }
-
-  .bakingPlanner .button-row .btn,
-  .bakingPlanner .production-actions .btn {
-    justify-content: center;
-  }
-
-  .bakingPlanner .recipe-row,
-  .bakingPlanner .editable-row,
-  .bakingPlanner .bakingIngredientRow {
-    grid-template-columns: 1fr;
-    gap: 12px;
-    padding: 16px;
-  }
-
-  .bakingPlanner .recipe-row .btn,
-  .bakingPlanner .editable-row .btn,
-  .bakingPlanner .bakingIngredientRow .btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .bakingPlanner .hubStatGrid,
-  .bakingPlanner .production-stats-grid,
-  .bakingPlanner .starterStatsGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  .bakingPlanner .stat-card-content {
-    padding: 16px;
-    gap: 12px;
-  }
-
-  .bakingPlanner .icon-badge {
-    width: 44px;
-    height: 44px;
-  }
-
-  .bakingPlanner .stat-value,
-  .bakingPlanner .hubStatText strong {
-    font-size: 1.35rem;
-  }
-
-  .bakingPlanner .pantryEditOverlay,
-  .bakingPlanner .bakingModeOverlay {
-    padding: 14px;
-    align-items: start;
-    overflow: auto;
-  }
-
-  .bakingPlanner .pantryEditModal,
-  .bakingPlanner .bakingModeModal {
-    width: 100%;
-    max-height: none;
-    border-radius: 20px;
-    padding: 18px;
-    margin: 0;
-  }
-}
-
-@media (max-width: 700px) {
-  .bakingPlanner .hero {
-    margin-bottom: 12px;
-  }
-
-  .bakingPlanner .hero-inner {
-    padding: 18px;
-    border-radius: 16px;
-    gap: 16px;
-  }
-
-  .bakingPlanner .hero h1 {
-    font-size: clamp(1.85rem, 10vw, 2.6rem);
-    line-height: 0.96;
-  }
-
-  .bakingPlanner .hero p {
-    font-size: 0.92rem;
-  }
-
-  .bakingPlanner .hero-copy .button-row {
-    align-items: stretch;
-  }
-
-  .bakingPlanner .hero-copy .button-row .btn,
-  .bakingPlanner .hero-copy .button-row .pill {
-    width: 100%;
-  }
-
-  .bakingPlanner .hero-copy .button-row .pill {
-    text-align: center;
-    overflow-wrap: anywhere;
-  }
-
-  .bakingPlanner .hero-stats {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-  }
-
-  .bakingPlanner .hero-stats div,
-  .bakingPlanner .hero-settings-card {
-    min-width: 0;
-    padding: 14px;
-  }
-
-  .bakingPlanner .hero-stats strong,
-  .bakingPlanner .hero-settings-card strong {
-    font-size: 1.45rem;
-  }
-
-  .bakingPlanner .tabs {
-    display: flex;
-    gap: 10px;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scroll-snap-type: x proximity;
-    padding: 2px 2px 10px;
-    margin-bottom: 12px;
-  }
-
-  .bakingPlanner .tab {
-    flex: 0 0 154px;
-    min-height: 58px;
-    scroll-snap-align: start;
-    padding: 12px;
-    border-radius: 14px;
-    white-space: nowrap;
-  }
-
-  .bakingPlanner .layout,
-  .bakingPlanner .two-col,
-  .bakingPlanner .recipe-layout,
-  .bakingPlanner .starterLayout,
-  .bakingPlanner .two,
-  .bakingPlanner .three,
-  .bakingPlanner .four,
-  .bakingPlanner .grid.settingsGrid {
-    grid-template-columns: 1fr !important;
-  }
-
-  .bakingPlanner .panel {
-    padding: 16px;
-  }
-
-  .bakingPlanner .card,
-  .bakingPlanner .soft-panel,
-  .bakingPlanner .recipe-row,
-  .bakingPlanner .recipe-select,
-  .bakingPlanner .table-wrap,
-  .bakingPlanner .progress-wrap,
-  .bakingPlanner .pill {
-    border-radius: 14px;
-  }
-
-  .bakingPlanner .section-head,
-  .bakingPlanner .production-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .bakingPlanner .section-head h2,
-  .bakingPlanner .panel h2 {
-    font-size: 1.25rem;
-  }
-
-  .bakingPlanner .section-head p,
-  .bakingPlanner .panel p {
-    font-size: 0.9rem;
-  }
-
-  .bakingPlanner .btn {
-    width: 100%;
-    justify-content: center;
-    min-height: 44px;
-    padding: 11px 14px;
-  }
-
-  .bakingPlanner .production-date-field {
-    width: 100%;
-  }
-
-  .bakingPlanner .hubStatGrid,
-  .bakingPlanner .production-stats-grid,
-  .bakingPlanner .starterStatsGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .bakingPlanner .stat-card-content {
-    padding: 14px;
-  }
-
-  .bakingPlanner .table-wrap {
-    margin-top: 12px;
-    max-width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .bakingPlanner table {
-    min-width: 760px;
-  }
-
-  .bakingPlanner th,
-  .bakingPlanner td {
-    padding: 10px 12px;
-  }
-
-  .bakingPlanner .pullListWrap table,
-  .bakingPlanner .pullListTable {
-    min-width: 760px;
-  }
-
-  .bakingPlanner .pullListWrap {
-    display: block;
-  }
-
-  .bakingPlanner .bakingMobilePantryCards {
-    display: grid;
-    gap: 14px;
-    margin-top: 14px;
-  }
-
-  .bakingPlanner .soft-panel:has(.bakingMobilePantryCards) > .table-wrap {
-    display: none;
-  }
-
-  .bakingPlanner .bakingMobileCardHeader {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .bakingPlanner .bakingMobileFieldGrid,
-  .bakingPlanner .bakingMobileMetricGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .bakingPlanner .bakingProductDirectoryToggle {
-    align-items: flex-start;
-  }
-}
-
-@media (max-width: 430px) {
-  .bakingPlanner .hero-inner,
-  .bakingPlanner .panel,
-  .bakingPlanner .soft-panel,
-  .bakingPlanner .bakingMobilePantryCard,
-  .bakingPlanner .pantryEditModal,
-  .bakingPlanner .bakingModeModal {
-    padding: 14px;
-  }
-
-  .bakingPlanner .hero-stats {
-    grid-template-columns: 1fr;
-  }
-
-  .bakingPlanner .tab {
-    flex-basis: 142px;
-  }
-
-  .bakingPlanner .input-wrap {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .bakingPlanner .suffix {
-    min-width: 48px;
-    padding-inline: 10px;
-    text-align: center;
-  }
-
-  .bakingPlanner .pill,
-  .bakingPlanner .notice {
-    padding: 11px 12px;
-  }
-}
-
-
-/* =========================================================
-   Mobile hero stats + tab scroll cleanup
-   Purpose: compact the hero stat cards and remove the confusing
-   moving swipe hint/double indicator under the tab row.
-   ========================================================= */
-
-.bakingPlanner .mobileTabShell {
-  position: relative;
-  margin-bottom: 18px;
-}
-
-.bakingPlanner .mobileTabArrow,
-.bakingPlanner .mobileSwipeHint {
-  display: none !important;
-}
-
-@media (max-width: 700px) {
-  .bakingPlanner .hero-inner {
-    padding: 16px;
-    gap: 14px;
-  }
-
-  .bakingPlanner .hero h1 {
-    font-size: clamp(1.72rem, 9.1vw, 2.35rem);
-    line-height: 0.98;
-  }
-
-  .bakingPlanner .hero p {
-    font-size: 0.9rem;
-    line-height: 1.42;
-  }
-
-  .bakingPlanner .hero-stats {
-    width: 100%;
+  .bakingPlanner .bakingPantryCards {
     display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
   }
 
-  .bakingPlanner .hero-stats > div,
-  .bakingPlanner .hero-stats .hero-settings-card {
-    min-width: 0;
-    width: 100%;
-    min-height: 72px;
-    padding: 10px 9px;
-    border-radius: 14px;
+  .bakingPlanner .bakingPantryCard {
+    box-shadow: none !important;
+    border-color: rgba(22, 27, 34, 0.14) !important;
+    padding: 9px !important;
+    break-inside: avoid;
   }
 
-  .bakingPlanner .hero-stats > div {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+  .bakingPlanner .bakingPantryCardActions {
+    display: none !important;
   }
 
-  .bakingPlanner .hero-stats .hero-settings-card {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 8px;
+  .bakingPlanner .bakingPantrySummaryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 5px !important;
   }
 
-  .bakingPlanner .hero-stats p,
-  .bakingPlanner .hero-settings-card p {
-    margin-bottom: 4px;
-    font-size: 0.68rem;
-    line-height: 1.08;
-    letter-spacing: 0.01em;
+  .bakingPlanner .bakingPantryCardTitle h3 {
+    font-size: 12px !important;
   }
 
-  .bakingPlanner .hero-stats strong,
-  .bakingPlanner .hero-settings-card strong {
-    font-size: 1.28rem;
-    line-height: 1;
-  }
-
-  .bakingPlanner .hero-settings-card svg {
-    width: 18px;
-    height: 18px;
-    flex: 0 0 auto;
-  }
-
-  .bakingPlanner .mobileTabShell {
-    display: grid;
-    grid-template-columns: 24px minmax(0, 1fr) 24px;
-    align-items: center;
-    gap: 6px;
-    background: rgba(255, 255, 255, 0.82);
-    border: 1px solid rgba(22, 27, 34, 0.07);
-    border-radius: 16px;
-    box-shadow: 0 12px 26px rgba(22, 27, 34, 0.05);
-    padding: 10px 8px;
-    margin-bottom: 14px;
-    overflow: hidden;
-  }
-
-  .bakingPlanner .mobileTabArrow {
-    display: grid !important;
-    place-items: center;
-    width: 24px;
-    height: 54px;
-    color: #64748b;
-    font-size: 2rem;
-    font-weight: 800;
-    line-height: 1;
-    pointer-events: none;
-    user-select: none;
-  }
-
-  .bakingPlanner .mobileTabShell .tabs {
-    display: flex !important;
-    grid-column: 2;
-    min-width: 0;
-    gap: 8px;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scroll-snap-type: x proximity;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding: 0 2px 2px;
-    margin: 0;
-  }
-
-  .bakingPlanner .mobileTabShell .tabs::-webkit-scrollbar {
-    display: none;
-  }
-
-  .bakingPlanner .mobileTabShell .tab {
-    flex: 0 0 138px;
-    min-height: 54px;
-    padding: 10px 12px;
-    border-radius: 14px;
-    scroll-snap-align: center;
-    justify-content: center;
-    white-space: nowrap;
-    box-shadow: none;
-  }
-
-  .bakingPlanner .mobileTabShell .tab svg {
-    width: 18px;
-    height: 18px;
-  }
-}
-
-@media (max-width: 430px) {
-  .bakingPlanner .hero-stats {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 7px;
-  }
-
-  .bakingPlanner .hero-stats > div,
-  .bakingPlanner .hero-stats .hero-settings-card {
-    min-height: 66px;
-    padding: 9px 7px;
-  }
-
-  .bakingPlanner .hero-stats p,
-  .bakingPlanner .hero-settings-card p {
-    font-size: 0.62rem;
-  }
-
-  .bakingPlanner .hero-stats strong,
-  .bakingPlanner .hero-settings-card strong {
-    font-size: 1.14rem;
-  }
-
-  .bakingPlanner .mobileTabShell {
-    grid-template-columns: 20px minmax(0, 1fr) 20px;
-    gap: 4px;
-    padding: 8px 6px;
-  }
-
-  .bakingPlanner .mobileTabArrow {
-    width: 20px;
-    height: 50px;
-    font-size: 1.8rem;
-  }
-
-  .bakingPlanner .mobileTabShell .tab {
-    flex-basis: 128px;
-    min-height: 50px;
-    padding: 9px 10px;
+  .bakingPlanner .bakingPantryNotes {
+    padding: 6px !important;
+    border-radius: 8px !important;
   }
 }
