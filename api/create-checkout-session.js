@@ -13,9 +13,12 @@ const PRICE_IDS = {
 };
 
 const VALID_MODULES = [
-  "baking",
   "spice",
+  "baking",
   "market",
+  "planting",
+  "customers",
+  "orders",
   "pricing",
   "permit-grants",
   "lists",
