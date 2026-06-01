@@ -7065,3 +7065,90 @@ input[type="number"] {
     flex: 1;
   }
 }
+/* =========================================================
+   Planting Scheduler Layout Refinement
+   Append this below the existing Planting Scheduler CSS.
+   Makes the builder the primary workspace and reduces the
+   oversized planting batch directory column.
+   ========================================================= */
+
+.plantingModule .plantingLayout {
+  grid-template-columns: minmax(360px, 0.72fr) minmax(680px, 1.28fr) !important;
+  align-items: start;
+}
+
+.plantingModule .plantingDirectoryPanel {
+  min-height: auto;
+}
+
+.plantingModule .plantingBatchList {
+  max-height: 620px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.plantingModule .plantingSideStack {
+  min-width: 0;
+}
+
+.plantingModule .plantingSideStack > .workspacePanel:first-child {
+  border-color: rgba(95, 143, 78, 0.22);
+  box-shadow: 0 14px 34px rgba(18, 24, 32, 0.08);
+}
+
+.plantingModule .plantingSideStack .compactFormGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.plantingModule .plantingEditorStack textarea {
+  min-height: 86px;
+}
+
+.plantingModule .plantingDatePreview {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.plantingModule .plantingTemplateList {
+  max-height: 260px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+@media (min-width: 1450px) {
+  .plantingModule .plantingLayout {
+    grid-template-columns: minmax(390px, 0.68fr) minmax(760px, 1.32fr) !important;
+  }
+
+  .plantingModule .plantingSideStack .compactFormGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .plantingModule .plantingSideStack .compactFormGrid .fullSpan {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 1250px) {
+  .plantingModule .plantingLayout {
+    grid-template-columns: 1fr !important;
+  }
+
+  .plantingModule .plantingSideStack .compactFormGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .plantingModule .plantingDirectoryPanel {
+    order: 2;
+  }
+
+  .plantingModule .plantingSideStack {
+    order: 1;
+  }
+}
+
+@media (max-width: 760px) {
+  .plantingModule .plantingSideStack .compactFormGrid,
+  .plantingModule .plantingDatePreview {
+    grid-template-columns: 1fr;
+  }
+}
