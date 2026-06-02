@@ -10798,3 +10798,6 @@ input[type="number"] {
 .permitGrantModule .farmModuleHeroText .eyebrow {
   color: var(--green) !important;
 }
+.calendarModule .farmModuleHero {
+  margin-bottom: 18px !important;
+}
