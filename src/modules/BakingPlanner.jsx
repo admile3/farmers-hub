@@ -645,6 +645,35 @@ function getSaltWeightValue(recipe) {
   return Number(recipe?.saltWeightG) || 0;
 }
 
+function getHydrationWeightValue(recipe) {
+  return Number(recipe?.hydrationWeightG) || 0;
+}
+
+function getInitialHydrationWeightValue(recipe) {
+  return Number(recipe?.initialHydrationWeightG) || 0;
+}
+
+function getBassinageWeightValue(recipe) {
+  return Number(recipe?.bassinageWeightG) || 0;
+}
+
+function getStarterWeightValue(recipe) {
+  return Number(recipe?.starterWeightG) || 0;
+}
+
+function getFlourPctValue(flour) {
+  return Number(flour?.pct) || 0;
+}
+
+function getFlourWeightValue(flour) {
+  return Number(flour?.grams) || 0;
+}
+
+function roundRecipeValue(value, digits = 1) {
+  const factor = Math.pow(10, digits);
+  return Math.round((Number(value) || 0) * factor) / factor;
+}
+
 function formatIngredientCompanion(value, mode) {
   if (mode === "weight") {
     return `${formatNumber(value, 2)}%`;
@@ -764,6 +793,22 @@ function normalizeRecipe(recipe) {
       notes: recipe.productDirectory?.notes || ""
     },
     ingredientMode: getRecipeIngredientMode(recipe),
+    hydrationWeightG:
+      recipe.hydrationWeightG !== undefined
+        ? Number(recipe.hydrationWeightG) || 0
+        : 0,
+    initialHydrationWeightG:
+      recipe.initialHydrationWeightG !== undefined
+        ? Number(recipe.initialHydrationWeightG) || 0
+        : 0,
+    bassinageWeightG:
+      recipe.bassinageWeightG !== undefined
+        ? Number(recipe.bassinageWeightG) || 0
+        : 0,
+    starterWeightG:
+      recipe.starterWeightG !== undefined
+        ? Number(recipe.starterWeightG) || 0
+        : 0,
     saltWeightG:
       recipe.saltWeightG !== undefined
         ? Number(recipe.saltWeightG) || 0
@@ -774,7 +819,11 @@ function normalizeRecipe(recipe) {
     useBassinage: Boolean(recipe.useBassinage),
     initialHydrationPct,
     bassinagePct,
-    flourTypes: recipe.flourTypes || [{ name: "Bread Flour", pct: 100 }],
+    flourTypes: (recipe.flourTypes || [{ name: "Bread Flour", pct: 100 }]).map((flour) => ({
+      ...flour,
+      pct: flour.pct !== undefined ? Number(flour.pct) || 0 : 0,
+      grams: flour.grams !== undefined ? Number(flour.grams) || 0 : 0
+    })),
     otherIngredients: (recipe.otherIngredients || []).map((ingredient) => ({
       ...ingredient,
       pct: ingredient.pct !== undefined ? Number(ingredient.pct) || 0 : 0,
@@ -802,10 +851,10 @@ function normalizeRecipe(recipe) {
 function calculateRecipePlan(rawRecipe, quantity, env, settings) {
   const recipe = normalizeRecipe(rawRecipe);
   const qty = Number(quantity) || 0;
-  const doughWeight = qty * recipe.preBakeUnitWeight;
-  const desiredBakedWeight = doughWeight * (1 - recipe.bakeLossPct / 100);
+  const ingredientMode = getRecipeIngredientMode(recipe);
+  const percentageMode = ingredientMode === "percentage";
 
-  const finalHydrationPct = recipe.useBassinage
+  const rawHydrationPct = recipe.useBassinage
     ? Number(recipe.initialHydrationPct || 0) + Number(recipe.bassinagePct || 0)
     : Number(recipe.hydrationPct) || 0;
 
@@ -814,68 +863,144 @@ function calculateRecipePlan(rawRecipe, quantity, env, settings) {
     settings.baselineHumidityPct
   );
   const altitudeAdj = altitudeBakeAdjustment(settings.altitudeFt);
-  const adjustedHydrationPct =
-    finalHydrationPct + humidityAdj + altitudeAdj.hydrationPct;
+  const hydrationAdjustmentPct = humidityAdj + altitudeAdj.hydrationPct;
 
-  const adjustedInitialHydrationPct = recipe.useBassinage
-    ? Number(recipe.initialHydrationPct || 0) + humidityAdj + altitudeAdj.hydrationPct
-    : adjustedHydrationPct;
-  const adjustedBassinagePct = recipe.useBassinage
-    ? Number(recipe.bassinagePct || 0)
-    : 0;
-
-  const ingredientMode = getRecipeIngredientMode(recipe);
-  const percentageMode = ingredientMode === "percentage";
-  const otherPct = recipe.otherIngredients.reduce(
+  const rawOtherPct = recipe.otherIngredients.reduce(
     (sum, item) => sum + getOtherIngredientPctValue(item),
     0
   );
-  const fixedSaltG = percentageMode ? 0 : getSaltWeightValue(recipe) * qty;
-  const fixedOtherG = percentageMode
-    ? 0
-    : recipe.otherIngredients.reduce(
-        (sum, item) => sum + getOtherIngredientWeightValue(item) * qty,
-        0
-      );
-  const fixedIngredientG = fixedSaltG + fixedOtherG;
 
-  const formulaTotalPct = percentageMode
-    ? 100 + adjustedHydrationPct + recipe.starterPct + recipe.saltPct + otherPct
-    : 100 + adjustedHydrationPct + recipe.starterPct;
+  const fallbackFormulaTotalPct =
+    100 + rawHydrationPct + Number(recipe.starterPct || 0) +
+    Number(recipe.saltPct || 0) + rawOtherPct;
+  const fallbackBaseFlourPerUnit =
+    fallbackFormulaTotalPct > 0
+      ? Number(recipe.preBakeUnitWeight || 0) / (fallbackFormulaTotalPct / 100)
+      : 0;
 
-  const baseFlourG = Math.max(
-    0,
-    (doughWeight - fixedIngredientG) / (formulaTotalPct / 100)
-  );
-  const starterG = (baseFlourG * recipe.starterPct) / 100;
-  const waterG = (baseFlourG * adjustedHydrationPct) / 100;
-  const initialWaterG = (baseFlourG * adjustedInitialHydrationPct) / 100;
-  const bassinageWaterG = (baseFlourG * adjustedBassinagePct) / 100;
-  const saltG = percentageMode
-    ? (baseFlourG * recipe.saltPct) / 100
-    : fixedSaltG;
-  const effectiveSaltPct =
-    baseFlourG > 0 ? (saltG / baseFlourG) * 100 : Number(recipe.saltPct) || 0;
+  let doughWeight = qty * recipe.preBakeUnitWeight;
+  let baseFlourG = 0;
+  let starterG = 0;
+  let waterG = 0;
+  let initialWaterG = 0;
+  let bassinageWaterG = 0;
+  let saltG = 0;
+  let adjustedHydrationPct = rawHydrationPct + hydrationAdjustmentPct;
+  let adjustedInitialHydrationPct = recipe.useBassinage
+    ? Number(recipe.initialHydrationPct || 0) + hydrationAdjustmentPct
+    : adjustedHydrationPct;
+  let adjustedBassinagePct = recipe.useBassinage ? Number(recipe.bassinagePct || 0) : 0;
+  let effectiveStarterPct = Number(recipe.starterPct) || 0;
+  let effectiveSaltPct = Number(recipe.saltPct) || 0;
+  let flourBreakdown = [];
+  let otherBreakdown = [];
 
-  const flourBreakdown = recipe.flourTypes.map((f) => ({
-    name: f.name,
-    grams: (baseFlourG * f.pct) / 100,
-    pct: f.pct
-  }));
+  if (percentageMode) {
+    const formulaTotalPct =
+      100 + adjustedHydrationPct + effectiveStarterPct + effectiveSaltPct + rawOtherPct;
 
-  const otherBreakdown = recipe.otherIngredients.map((item) => {
-    const grams = percentageMode
-      ? (baseFlourG * getOtherIngredientPctValue(item)) / 100
-      : getOtherIngredientWeightValue(item) * qty;
-    const pct =
-      baseFlourG > 0 ? (grams / baseFlourG) * 100 : getOtherIngredientPctValue(item);
+    baseFlourG = formulaTotalPct > 0 ? doughWeight / (formulaTotalPct / 100) : 0;
+    starterG = (baseFlourG * effectiveStarterPct) / 100;
+    waterG = (baseFlourG * adjustedHydrationPct) / 100;
+    initialWaterG = (baseFlourG * adjustedInitialHydrationPct) / 100;
+    bassinageWaterG = (baseFlourG * adjustedBassinagePct) / 100;
+    saltG = (baseFlourG * effectiveSaltPct) / 100;
 
-    return {
-      name: item.name,
-      grams,
-      pct
-    };
-  });
+    flourBreakdown = recipe.flourTypes.map((f) => ({
+      name: f.name,
+      grams: (baseFlourG * getFlourPctValue(f)) / 100,
+      pct: getFlourPctValue(f)
+    }));
+
+    otherBreakdown = recipe.otherIngredients.map((item) => {
+      const pct = getOtherIngredientPctValue(item);
+
+      return {
+        name: item.name,
+        grams: (baseFlourG * pct) / 100,
+        pct
+      };
+    });
+  } else {
+    const flourPerUnitRows = recipe.flourTypes.map((flour) => {
+      const fallbackGrams = (fallbackBaseFlourPerUnit * getFlourPctValue(flour)) / 100;
+      const grams = getFlourWeightValue(flour) || fallbackGrams;
+
+      return {
+        name: flour.name,
+        grams
+      };
+    });
+
+    const flourPerUnitTotal = flourPerUnitRows.reduce(
+      (sum, flour) => sum + (Number(flour.grams) || 0),
+      0
+    );
+    const hydrationPerUnitFallback = (fallbackBaseFlourPerUnit * Number(recipe.hydrationPct || 0)) / 100;
+    const initialHydrationPerUnitFallback =
+      (fallbackBaseFlourPerUnit * Number(recipe.initialHydrationPct || 0)) / 100;
+    const bassinagePerUnitFallback =
+      (fallbackBaseFlourPerUnit * Number(recipe.bassinagePct || 0)) / 100;
+    const starterPerUnitFallback = (fallbackBaseFlourPerUnit * Number(recipe.starterPct || 0)) / 100;
+    const saltPerUnitFallback = (fallbackBaseFlourPerUnit * Number(recipe.saltPct || 0)) / 100;
+
+    const baseInitialWaterPerUnit = recipe.useBassinage
+      ? getInitialHydrationWeightValue(recipe) || initialHydrationPerUnitFallback
+      : getHydrationWeightValue(recipe) || hydrationPerUnitFallback;
+    const baseBassinageWaterPerUnit = recipe.useBassinage
+      ? getBassinageWeightValue(recipe) || bassinagePerUnitFallback
+      : 0;
+    const waterAdjustmentPerUnit = (flourPerUnitTotal * hydrationAdjustmentPct) / 100;
+    const starterPerUnit = getStarterWeightValue(recipe) || starterPerUnitFallback;
+    const saltPerUnit = getSaltWeightValue(recipe) || saltPerUnitFallback;
+
+    const otherPerUnitRows = recipe.otherIngredients.map((item) => {
+      const fallbackGrams = (fallbackBaseFlourPerUnit * getOtherIngredientPctValue(item)) / 100;
+      const grams = getOtherIngredientWeightValue(item) || fallbackGrams;
+
+      return {
+        name: item.name,
+        grams
+      };
+    });
+
+    baseFlourG = flourPerUnitTotal * qty;
+    initialWaterG = (baseInitialWaterPerUnit + waterAdjustmentPerUnit) * qty;
+    bassinageWaterG = baseBassinageWaterPerUnit * qty;
+    waterG = initialWaterG + bassinageWaterG;
+    starterG = starterPerUnit * qty;
+    saltG = saltPerUnit * qty;
+    otherBreakdown = otherPerUnitRows.map((item) => {
+      const grams = item.grams * qty;
+      const pct = baseFlourG > 0 ? (grams / baseFlourG) * 100 : 0;
+
+      return {
+        name: item.name,
+        grams,
+        pct
+      };
+    });
+    flourBreakdown = flourPerUnitRows.map((flour) => {
+      const grams = flour.grams * qty;
+      const pct = baseFlourG > 0 ? (grams / baseFlourG) * 100 : 0;
+
+      return {
+        name: flour.name,
+        grams,
+        pct
+      };
+    });
+
+    const fixedOtherG = otherBreakdown.reduce((sum, item) => sum + item.grams, 0);
+    doughWeight = baseFlourG + waterG + starterG + saltG + fixedOtherG;
+    adjustedHydrationPct = baseFlourG > 0 ? (waterG / baseFlourG) * 100 : 0;
+    adjustedInitialHydrationPct = baseFlourG > 0 ? (initialWaterG / baseFlourG) * 100 : 0;
+    adjustedBassinagePct = baseFlourG > 0 ? (bassinageWaterG / baseFlourG) * 100 : 0;
+    effectiveStarterPct = baseFlourG > 0 ? (starterG / baseFlourG) * 100 : 0;
+    effectiveSaltPct = baseFlourG > 0 ? (saltG / baseFlourG) * 100 : 0;
+  }
+
+  const desiredBakedWeight = doughWeight * (1 - recipe.bakeLossPct / 100);
 
   const fermentationFactor = tempFermentationFactor(
     env.tempF,
@@ -912,6 +1037,7 @@ function calculateRecipePlan(rawRecipe, quantity, env, settings) {
     doughWeight,
     baseFlourG,
     starterG,
+    starterPct: effectiveStarterPct,
     waterG,
     initialWaterG,
     bassinageWaterG,
@@ -1853,6 +1979,9 @@ export default function BakingPlanner() {
     if (currentMode === nextMode) return;
 
     const previewPlan = calculateRecipePlan(selectedRecipe, 1, env, settings);
+    const flourByName = new Map(
+      previewPlan.flourBreakdown.map((flour) => [flour.name, flour])
+    );
     const otherByName = new Map(
       previewPlan.otherBreakdown.map((ingredient) => [ingredient.name, ingredient])
     );
@@ -1867,13 +1996,25 @@ export default function BakingPlanner() {
           return {
             ...normalized,
             ingredientMode: "weight",
-            saltWeightG: Math.round((previewPlan.saltG || 0) * 10) / 10,
+            hydrationWeightG: roundRecipeValue(previewPlan.waterG, 1),
+            initialHydrationWeightG: roundRecipeValue(previewPlan.initialWaterG, 1),
+            bassinageWeightG: roundRecipeValue(previewPlan.bassinageWaterG, 1),
+            starterWeightG: roundRecipeValue(previewPlan.starterG, 1),
+            saltWeightG: roundRecipeValue(previewPlan.saltG, 1),
+            flourTypes: normalized.flourTypes.map((flour) => {
+              const preview = flourByName.get(flour.name);
+
+              return {
+                ...flour,
+                grams: roundRecipeValue(preview?.grams || 0, 1)
+              };
+            }),
             otherIngredients: normalized.otherIngredients.map((ingredient) => {
               const preview = otherByName.get(ingredient.name);
 
               return {
                 ...ingredient,
-                grams: Math.round((preview?.grams || 0) * 10) / 10
+                grams: roundRecipeValue(preview?.grams || 0, 1)
               };
             })
           };
@@ -1882,13 +2023,25 @@ export default function BakingPlanner() {
         return {
           ...normalized,
           ingredientMode: "percentage",
-          saltPct: Math.round((previewPlan.saltPct || 0) * 100) / 100,
+          hydrationPct: roundRecipeValue(previewPlan.adjustedHydrationPct || 0, 2),
+          initialHydrationPct: roundRecipeValue(previewPlan.adjustedInitialHydrationPct || 0, 2),
+          bassinagePct: roundRecipeValue(previewPlan.adjustedBassinagePct || 0, 2),
+          starterPct: roundRecipeValue(previewPlan.starterPct || 0, 2),
+          saltPct: roundRecipeValue(previewPlan.saltPct || 0, 2),
+          flourTypes: normalized.flourTypes.map((flour) => {
+            const preview = flourByName.get(flour.name);
+
+            return {
+              ...flour,
+              pct: roundRecipeValue(preview?.pct || 0, 2)
+            };
+          }),
           otherIngredients: normalized.otherIngredients.map((ingredient) => {
             const preview = otherByName.get(ingredient.name);
 
             return {
               ...ingredient,
-              pct: Math.round((preview?.pct || 0) * 100) / 100
+              pct: roundRecipeValue(preview?.pct || 0, 2)
             };
           })
         };
@@ -2018,7 +2171,7 @@ export default function BakingPlanner() {
           itemIndex === index
             ? {
                 ...item,
-                [field]: field === "pct" ? Number(value) : value
+                [field]: field === "pct" || field === "grams" ? Number(value) : value
               }
             : item
         );
@@ -2035,7 +2188,7 @@ export default function BakingPlanner() {
         recipe.id === selectedRecipe.id
           ? {
               ...recipe,
-              flourTypes: [...recipe.flourTypes, { name: "New Flour", pct: 0 }]
+              flourTypes: [...recipe.flourTypes, { name: "New Flour", pct: 0, grams: 0 }]
             }
           : recipe
       )
@@ -2054,7 +2207,7 @@ export default function BakingPlanner() {
           ...recipe,
           flourTypes: flourTypes.length
             ? flourTypes
-            : [{ name: "Bread Flour", pct: 100 }]
+            : [{ name: "Bread Flour", pct: 100, grams: 0 }]
         };
       })
     );
@@ -2233,9 +2386,13 @@ export default function BakingPlanner() {
       bassinagePct: 0,
       batchMaxDoughG: settings.mixerCapacityG || 7000,
       ovenCapacityUnits: 12,
-      flourTypes: [{ name: "Bread Flour", pct: 100 }],
+      flourTypes: [{ name: "Bread Flour", pct: 100, grams: 0 }],
       hydrationPct: 70,
+      hydrationWeightG: 0,
+      initialHydrationWeightG: 0,
+      bassinageWeightG: 0,
       starterPct: 20,
+      starterWeightG: 0,
       starterHydrationPct: settings.starterHydrationPct || 100,
       ingredientMode: "percentage",
       saltPct: 2,
@@ -2925,6 +3082,29 @@ export default function BakingPlanner() {
                     )}
                   </div>
                   <div className="button-row">
+                    <label className="bakingModeSwitch">
+                      <span>Fixed Weights</span>
+                      <button
+                        type="button"
+                        className={
+                          getRecipeIngredientMode(selectedRecipe) === "weight"
+                            ? "bakingToggleSwitch active"
+                            : "bakingToggleSwitch"
+                        }
+                        onClick={() =>
+                          updateRecipeIngredientMode(
+                            getRecipeIngredientMode(selectedRecipe) === "weight"
+                              ? "percentage"
+                              : "weight"
+                          )
+                        }
+                        aria-pressed={getRecipeIngredientMode(selectedRecipe) === "weight"}
+                      >
+                        <span />
+                      </button>
+                      <span>Percentages</span>
+                    </label>
+
                     <Button
                       className={hasUnsavedChanges ? "dirtySaveButton" : ""}
                       onClick={savePlannerData}
@@ -3001,48 +3181,59 @@ export default function BakingPlanner() {
                     </div>
                   </label>
 
-                  <label className="field">
-                    <span>Ingredient Entry Mode</span>
-                    <select
-                      className="text-field"
-                      value={getRecipeIngredientMode(selectedRecipe)}
-                      onChange={(e) => updateRecipeIngredientMode(e.target.value)}
-                    >
-                      <option value="percentage">Baker's Percentages</option>
-                      <option value="weight">Fixed Weights Per Unit</option>
-                    </select>
-                  </label>
-
-                  <div className="field">
-                    <span>Mode Preview</span>
-                    <div className="pill">
-                      {getIngredientModeLabel(getRecipeIngredientMode(selectedRecipe))}
-                      {selectedRecipePreviewPlan
-                        ? ` • Salt ${
-                            getRecipeIngredientMode(selectedRecipe) === "weight"
-                              ? formatIngredientCompanion(selectedRecipePreviewPlan.saltPct, "weight")
-                              : formatIngredientCompanion(selectedRecipePreviewPlan.saltG, "percentage")
-                          }`
-                        : ""}
-                    </div>
-                  </div>
 
                   <NumberInput
-                    label="Base Hydration"
-                    value={selectedRecipe.hydrationPct}
-                    onChange={(v) =>
-                      updateRecipeField("hydrationPct", Number(v))
+                    label={
+                      selectedRecipePreviewPlan
+                        ? `${getRecipeIngredientMode(selectedRecipe) === "weight" ? "Base Water" : "Base Hydration"} (${
+                            getRecipeIngredientMode(selectedRecipe) === "weight"
+                              ? formatIngredientCompanion(selectedRecipePreviewPlan.adjustedHydrationPct, "weight")
+                              : formatIngredientCompanion(selectedRecipePreviewPlan.waterG, "percentage")
+                          })`
+                        : getRecipeIngredientMode(selectedRecipe) === "weight"
+                          ? "Base Water"
+                          : "Base Hydration"
                     }
-                    suffix="%"
+                    value={
+                      getRecipeIngredientMode(selectedRecipe) === "weight"
+                        ? selectedRecipe.hydrationWeightG || 0
+                        : selectedRecipe.hydrationPct
+                    }
+                    onChange={(v) =>
+                      updateRecipeField(
+                        getRecipeIngredientMode(selectedRecipe) === "weight"
+                          ? "hydrationWeightG"
+                          : "hydrationPct",
+                        Number(v)
+                      )
+                    }
+                    suffix={getRecipeIngredientMode(selectedRecipe) === "weight" ? "g" : "%"}
                   />
 
                   <NumberInput
-                    label={starterRecipeLabel}
-                    value={selectedRecipe.starterPct}
-                    onChange={(v) =>
-                      updateRecipeField("starterPct", Number(v))
+                    label={
+                      selectedRecipePreviewPlan
+                        ? `${starterRecipeLabel} (${
+                            getRecipeIngredientMode(selectedRecipe) === "weight"
+                              ? formatIngredientCompanion(selectedRecipePreviewPlan.starterPct, "weight")
+                              : formatIngredientCompanion(selectedRecipePreviewPlan.starterG, "percentage")
+                          })`
+                        : starterRecipeLabel
                     }
-                    suffix="%"
+                    value={
+                      getRecipeIngredientMode(selectedRecipe) === "weight"
+                        ? selectedRecipe.starterWeightG || 0
+                        : selectedRecipe.starterPct
+                    }
+                    onChange={(v) =>
+                      updateRecipeField(
+                        getRecipeIngredientMode(selectedRecipe) === "weight"
+                          ? "starterWeightG"
+                          : "starterPct",
+                        Number(v)
+                      )
+                    }
+                    suffix={getRecipeIngredientMode(selectedRecipe) === "weight" ? "g" : "%"}
                   />
 
                   <NumberInput
@@ -3106,21 +3297,57 @@ export default function BakingPlanner() {
                       {selectedRecipe.useBassinage ? (
                         <>
                           <NumberInput
-                            label="Initial Hydration"
-                            value={selectedRecipe.initialHydrationPct}
-                            onChange={(v) =>
-                              updateRecipeField("initialHydrationPct", Number(v))
+                            label={
+                              selectedRecipePreviewPlan
+                                ? `Initial Water (${
+                                    getRecipeIngredientMode(selectedRecipe) === "weight"
+                                      ? formatIngredientCompanion(selectedRecipePreviewPlan.adjustedInitialHydrationPct, "weight")
+                                      : formatIngredientCompanion(selectedRecipePreviewPlan.initialWaterG, "percentage")
+                                  })`
+                                : getRecipeIngredientMode(selectedRecipe) === "weight"
+                                  ? "Initial Water"
+                                  : "Initial Hydration"
                             }
-                            suffix="%"
+                            value={
+                              getRecipeIngredientMode(selectedRecipe) === "weight"
+                                ? selectedRecipe.initialHydrationWeightG || 0
+                                : selectedRecipe.initialHydrationPct
+                            }
+                            onChange={(v) =>
+                              updateRecipeField(
+                                getRecipeIngredientMode(selectedRecipe) === "weight"
+                                  ? "initialHydrationWeightG"
+                                  : "initialHydrationPct",
+                                Number(v)
+                              )
+                            }
+                            suffix={getRecipeIngredientMode(selectedRecipe) === "weight" ? "g" : "%"}
                           />
 
                           <NumberInput
-                            label="Bassinage Water"
-                            value={selectedRecipe.bassinagePct}
-                            onChange={(v) =>
-                              updateRecipeField("bassinagePct", Number(v))
+                            label={
+                              selectedRecipePreviewPlan
+                                ? `Bassinage Water (${
+                                    getRecipeIngredientMode(selectedRecipe) === "weight"
+                                      ? formatIngredientCompanion(selectedRecipePreviewPlan.adjustedBassinagePct, "weight")
+                                      : formatIngredientCompanion(selectedRecipePreviewPlan.bassinageWaterG, "percentage")
+                                  })`
+                                : "Bassinage Water"
                             }
-                            suffix="%"
+                            value={
+                              getRecipeIngredientMode(selectedRecipe) === "weight"
+                                ? selectedRecipe.bassinageWeightG || 0
+                                : selectedRecipe.bassinagePct
+                            }
+                            onChange={(v) =>
+                              updateRecipeField(
+                                getRecipeIngredientMode(selectedRecipe) === "weight"
+                                  ? "bassinageWeightG"
+                                  : "bassinagePct",
+                                Number(v)
+                              )
+                            }
+                            suffix={getRecipeIngredientMode(selectedRecipe) === "weight" ? "g" : "%"}
                           />
                         </>
                       ) : null}
@@ -3317,7 +3544,7 @@ export default function BakingPlanner() {
                     <div>
                       <h3>Flour Formula</h3>
                       <p className="muted small">
-                        These percentages should usually total 100%.
+                        Use the recipe entry mode to enter flour as percentages or fixed grams per finished unit. The alternate value is shown beside each field.
                       </p>
                     </div>
                     <Button onClick={addFlourType}>
@@ -3334,10 +3561,40 @@ export default function BakingPlanner() {
                           onChange={(v) => updateFlourType(index, "name", v)}
                         />
                         <NumberInput
-                          label="Percent"
-                          value={flour.pct}
-                          onChange={(v) => updateFlourType(index, "pct", v)}
-                          suffix="%"
+                          label={
+                            selectedRecipePreviewPlan?.flourBreakdown?.[index]
+                              ? `${
+                                  getRecipeIngredientMode(selectedRecipe) === "weight"
+                                    ? "Weight"
+                                    : "Percent"
+                                } (${
+                                  getRecipeIngredientMode(selectedRecipe) === "weight"
+                                    ? formatIngredientCompanion(
+                                        selectedRecipePreviewPlan.flourBreakdown[index].pct,
+                                        "weight"
+                                      )
+                                    : formatIngredientCompanion(
+                                        selectedRecipePreviewPlan.flourBreakdown[index].grams,
+                                        "percentage"
+                                      )
+                                })`
+                              : getRecipeIngredientMode(selectedRecipe) === "weight"
+                                ? "Weight"
+                                : "Percent"
+                          }
+                          value={
+                            getRecipeIngredientMode(selectedRecipe) === "weight"
+                              ? flour.grams || 0
+                              : flour.pct
+                          }
+                          onChange={(v) =>
+                            updateFlourType(
+                              index,
+                              getRecipeIngredientMode(selectedRecipe) === "weight" ? "grams" : "pct",
+                              v
+                            )
+                          }
+                          suffix={getRecipeIngredientMode(selectedRecipe) === "weight" ? "g" : "%"}
                         />
                         <Button
                           variant="outline"
@@ -3355,7 +3612,7 @@ export default function BakingPlanner() {
                     <div>
                       <h3>Added Ingredients</h3>
                       <p className="muted small">
-                        Add ingredients using the recipe's selected entry mode. Percent mode scales from flour weight. Weight mode uses fixed grams per finished unit and still shows the equivalent baker's percentage.
+                        Add ingredients using the recipe's selected entry mode. Percentage mode scales from flour weight. Fixed weight mode uses grams per finished unit and still shows the equivalent baker's percentage.
                       </p>
                     </div>
 
