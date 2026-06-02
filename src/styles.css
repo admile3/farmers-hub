@@ -10665,3 +10665,86 @@ input[type="number"] {
     width: 100% !important;
   }
 }
+.farmModuleHero {
+  position: relative !important;
+  display: block !important;
+  padding: 28px 28px 28px 28px !important;
+  border-radius: var(--radius) !important;
+  background: #ffffff !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
+  overflow: hidden !important;
+}
+
+.farmModuleHeroText {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  padding-right: 0 !important;
+}
+
+.farmModuleHeroText h2 {
+  margin: 7px 0 10px !important;
+  max-width: none !important;
+  color: var(--text) !important;
+  font-size: clamp(2rem, 3.35vw, 3.35rem) !important;
+  line-height: 1.02 !important;
+  letter-spacing: -0.055em !important;
+}
+
+.farmModuleHeroText p:not(.eyebrow) {
+  max-width: none !important;
+  width: calc(100% - 360px) !important;
+  color: var(--muted) !important;
+  font-size: 0.92rem !important;
+  line-height: 1.45 !important;
+}
+
+.farmModuleHeroActions {
+  position: absolute !important;
+  top: 50% !important;
+  right: 28px !important;
+  transform: translateY(-50%) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 12px !important;
+  width: max-content !important;
+}
+
+.farmHeroAction {
+  min-height: 46px !important;
+  padding: 0 20px !important;
+  border-radius: 999px !important;
+  font-size: 0.9rem !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 1100px) {
+  .farmModuleHeroText p:not(.eyebrow) {
+    width: 100% !important;
+  }
+
+  .farmModuleHeroActions {
+    position: static !important;
+    transform: none !important;
+    margin-top: 16px !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .farmModuleHero {
+    padding: 18px !important;
+  }
+
+  .farmModuleHeroActions {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .farmHeroAction {
+    width: 100% !important;
+  }
+}
