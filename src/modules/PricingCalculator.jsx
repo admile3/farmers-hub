@@ -100,14 +100,17 @@ function blankProduct() {
     description: "",
     retailPrice: "",
     wholesalePrice: "",
-    targetMargin: 70,
+    targetRetailMargin: 70,
+    targetWholesaleMargin: 50,
     batchIngredientCost: "",
     batchUnits: "",
     packagingCostPerUnit: "",
     laborHours: "",
     laborRate: "",
     overheadCost: "",
-    notes: ""
+    notes: "",
+    selectedVariantId: "",
+    selectedVariantName: ""
   };
 }
 
@@ -122,7 +125,8 @@ function sampleProduct() {
     description: "Example product. Edit or delete anytime.",
     retailPrice: 8,
     wholesalePrice: 5,
-    targetMargin: 70,
+    targetRetailMargin: 70,
+    targetWholesaleMargin: 50,
     batchIngredientCost: 32,
     batchUnits: 24,
     packagingCostPerUnit: 0.35,
@@ -133,16 +137,28 @@ function sampleProduct() {
   };
 }
 
-function numberOrBlank(value) {
-  if (value === "" || value === null || value === undefined) return "";
-  const number = Number(value);
-  return Number.isFinite(number) ? number : "";
-}
-
 function formatPackageSize(size, unit) {
   const amount = Number(size) || 0;
   if (!amount) return "";
   return `${Number(amount.toFixed(3)).toString()} ${unit || ""}`.trim();
+}
+
+function getTargetRetailMargin(product) {
+  return numberOrFallback(product?.targetRetailMargin, product?.targetMargin, 70);
+}
+
+function getTargetWholesaleMargin(product) {
+  return numberOrFallback(product?.targetWholesaleMargin, 50);
+}
+
+function numberOrFallback(...values) {
+  for (const value of values) {
+    if (value === "" || value === null || value === undefined) continue;
+    const number = Number(value);
+    if (Number.isFinite(number)) return number;
+  }
+
+  return "";
 }
 
 function buildSpiceDirectoryProducts(spiceRecipes = []) {
@@ -159,7 +175,10 @@ function buildSpiceDirectoryProducts(spiceRecipes = []) {
 
       if (listSizesAsUniqueProducts) {
         packageRows.forEach((packageItem, index) => {
-          const packageName = packageItem.name || formatPackageSize(packageItem.size, packageItem.unit) || `Size ${index + 1}`;
+          const packageName =
+            packageItem.name ||
+            formatPackageSize(packageItem.size, packageItem.unit) ||
+            `Size ${index + 1}`;
           const ingredientCost =
             Number(packageItem.ingredientCost) ||
             (Number(packageItem.packageOunces) || 0) * costPerOunce;
@@ -176,15 +195,16 @@ function buildSpiceDirectoryProducts(spiceRecipes = []) {
             name: `${recipe.name} - ${packageName}`,
             category: "Spices",
             status: "Active",
-            sku: "",
+            sku: packageItem.sku || "",
             unitLabel: packageName,
             description: recipe.notes || "",
-            retailPrice: "",
-            wholesalePrice: "",
-            targetMargin: 70,
+            retailPrice: packageItem.retailPrice || "",
+            wholesalePrice: packageItem.wholesalePrice || "",
+            targetRetailMargin: 70,
+            targetWholesaleMargin: 50,
             batchIngredientCost: ingredientCost,
             batchUnits: 1,
-            packagingCostPerUnit: "",
+            packagingCostPerUnit: packageItem.packagingCostPerUnit || "",
             laborHours: "",
             laborRate: "",
             overheadCost: "",
@@ -198,7 +218,10 @@ function buildSpiceDirectoryProducts(spiceRecipes = []) {
       }
 
       const variants = packageRows.map((packageItem, index) => {
-        const packageName = packageItem.name || formatPackageSize(packageItem.size, packageItem.unit) || `Size ${index + 1}`;
+        const packageName =
+          packageItem.name ||
+          formatPackageSize(packageItem.size, packageItem.unit) ||
+          `Size ${index + 1}`;
         const ingredientCost =
           Number(packageItem.ingredientCost) ||
           (Number(packageItem.packageOunces) || 0) * costPerOunce;
@@ -210,7 +233,11 @@ function buildSpiceDirectoryProducts(spiceRecipes = []) {
           unit: packageItem.unit,
           packageOunces: packageItem.packageOunces,
           ingredientCost,
-          costPerUnit: ingredientCost
+          costPerUnit: ingredientCost,
+          sku: packageItem.sku || "",
+          retailPrice: packageItem.retailPrice || "",
+          wholesalePrice: packageItem.wholesalePrice || "",
+          packagingCostPerUnit: packageItem.packagingCostPerUnit || ""
         };
       });
 
@@ -225,15 +252,16 @@ function buildSpiceDirectoryProducts(spiceRecipes = []) {
         name: recipe.name || "Untitled Spice Blend",
         category: "Spices",
         status: "Active",
-        sku: "",
+        sku: firstVariant?.sku || "",
         unitLabel: firstVariant?.name || "package",
         description: recipe.notes || "",
-        retailPrice: "",
-        wholesalePrice: "",
-        targetMargin: 70,
+        retailPrice: firstVariant?.retailPrice || "",
+        wholesalePrice: firstVariant?.wholesalePrice || "",
+        targetRetailMargin: 70,
+        targetWholesaleMargin: 50,
         batchIngredientCost: firstVariant?.ingredientCost || costPerOunce,
         batchUnits: 1,
-        packagingCostPerUnit: "",
+        packagingCostPerUnit: firstVariant?.packagingCostPerUnit || "",
         laborHours: "",
         laborRate: "",
         overheadCost: "",
@@ -241,6 +269,8 @@ function buildSpiceDirectoryProducts(spiceRecipes = []) {
         formulaCostPerOunce: costPerOunce,
         generatedVariants: variants,
         listSizesAsUniqueProducts,
+        selectedVariantId: firstVariant?.id || "",
+        selectedVariantName: firstVariant?.name || "",
         updatedAt: recipe.updatedAt || recipe.createdAt || ""
       });
     });
@@ -268,16 +298,20 @@ function buildBakingDirectoryProducts(bakingRecipes = []) {
         sourceRecipeId: recipe.id,
         isGeneratedProduct: true,
         name: productName,
-        category: recipe.category === "Loaf" || recipe.category === "Baguette" || recipe.category === "Pan Loaf"
-          ? "Bread"
-          : "Baked Goods",
+        category:
+          recipe.category === "Loaf" ||
+          recipe.category === "Baguette" ||
+          recipe.category === "Pan Loaf"
+            ? "Bread"
+            : "Baked Goods",
         status: "Active",
         sku: "",
         unitLabel: directory.sellingUnit || recipe.unitsLabel || "unit",
         description: directory.notes || "",
         retailPrice: "",
         wholesalePrice: "",
-        targetMargin: 70,
+        targetRetailMargin: 70,
+        targetWholesaleMargin: 50,
         batchIngredientCost,
         batchUnits: unitsPerBatch,
         packagingCostPerUnit: "",
@@ -297,6 +331,45 @@ function productSourceLabel(product) {
   return "Manual";
 }
 
+function applyVariantToProduct(product, variantId) {
+  const variants = Array.isArray(product?.generatedVariants)
+    ? product.generatedVariants
+    : [];
+
+  if (!variants.length) {
+    return {
+      ...blankProduct(),
+      ...product,
+      targetRetailMargin: getTargetRetailMargin(product),
+      targetWholesaleMargin: getTargetWholesaleMargin(product),
+      selectedVariantId: product?.selectedVariantId || "",
+      selectedVariantName: product?.selectedVariantName || ""
+    };
+  }
+
+  const variant =
+    variants.find((item) => item.id === variantId) ||
+    variants.find((item) => item.id === product?.selectedVariantId) ||
+    variants[0];
+
+  return {
+    ...blankProduct(),
+    ...product,
+    sku: variant.sku || product.sku || "",
+    unitLabel: variant.name || product.unitLabel || "package",
+    retailPrice: variant.retailPrice || product.retailPrice || "",
+    wholesalePrice: variant.wholesalePrice || product.wholesalePrice || "",
+    packagingCostPerUnit:
+      variant.packagingCostPerUnit || product.packagingCostPerUnit || "",
+    batchIngredientCost:
+      variant.ingredientCost || variant.costPerUnit || product.batchIngredientCost || "",
+    batchUnits: product.batchUnits || 1,
+    targetRetailMargin: getTargetRetailMargin(product),
+    targetWholesaleMargin: getTargetWholesaleMargin(product),
+    selectedVariantId: variant.id,
+    selectedVariantName: variant.name
+  };
+}
 
 function calculateProduct(product) {
   const batchIngredientCost = Number(product.batchIngredientCost) || 0;
@@ -307,7 +380,8 @@ function calculateProduct(product) {
   const overheadCost = Number(product.overheadCost) || 0;
   const retailPrice = Number(product.retailPrice) || 0;
   const wholesalePrice = Number(product.wholesalePrice) || 0;
-  const targetMargin = Number(product.targetMargin) || 0;
+  const targetRetailMargin = Number(getTargetRetailMargin(product)) || 0;
+  const targetWholesaleMargin = Number(getTargetWholesaleMargin(product)) || 0;
 
   const laborCost = laborHours * laborRate;
   const packagingTotal = packagingCostPerUnit * batchUnits;
@@ -323,9 +397,14 @@ function calculateProduct(product) {
   const wholesaleMargin =
     wholesalePrice > 0 ? (wholesaleProfitPerUnit / wholesalePrice) * 100 : 0;
 
-  const suggestedPrice =
-    targetMargin > 0 && targetMargin < 100
-      ? costPerUnit / (1 - targetMargin / 100)
+  const suggestedRetailPrice =
+    targetRetailMargin > 0 && targetRetailMargin < 100
+      ? costPerUnit / (1 - targetRetailMargin / 100)
+      : costPerUnit;
+
+  const suggestedWholesalePrice =
+    targetWholesaleMargin > 0 && targetWholesaleMargin < 100
+      ? costPerUnit / (1 - targetWholesaleMargin / 100)
       : costPerUnit;
 
   return {
@@ -337,7 +416,8 @@ function calculateProduct(product) {
     wholesaleProfitPerUnit,
     retailMargin,
     wholesaleMargin,
-    suggestedPrice
+    suggestedRetailPrice,
+    suggestedWholesalePrice
   };
 }
 
@@ -393,6 +473,7 @@ export default function PricingCalculator() {
   const [bakingProducts, setBakingProducts] = useState([]);
   const [expandedProductIds, setExpandedProductIds] = useState({});
   const [selectedProductId, setSelectedProductId] = useState("");
+  const [selectedVariantId, setSelectedVariantId] = useState("");
   const [form, setForm] = useState(blankProduct());
   const [queryText, setQueryText] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All categories");
@@ -407,7 +488,9 @@ export default function PricingCalculator() {
       ...product,
       sourceType: product.sourceType || "manual",
       sourceLabel: product.sourceLabel || "Manual",
-      generatedVariants: product.generatedVariants || []
+      generatedVariants: product.generatedVariants || [],
+      targetRetailMargin: getTargetRetailMargin(product),
+      targetWholesaleMargin: getTargetWholesaleMargin(product)
     }));
 
     return [...manualProducts, ...spiceProducts, ...bakingProducts];
@@ -417,14 +500,32 @@ export default function PricingCalculator() {
     return allDirectoryProducts.find((product) => product.id === selectedProductId) || null;
   }, [allDirectoryProducts, selectedProductId]);
 
+  const selectedProductVariants = useMemo(() => {
+    return Array.isArray(selectedProduct?.generatedVariants)
+      ? selectedProduct.generatedVariants
+      : [];
+  }, [selectedProduct]);
+
   const calculation = useMemo(() => calculateProduct(form), [form]);
 
   const filteredProducts = useMemo(() => {
     const search = normalize(queryText);
 
     return allDirectoryProducts.filter((product) => {
+      const variantNames = Array.isArray(product.generatedVariants)
+        ? product.generatedVariants.map((variant) => variant.name).join(" ")
+        : "";
+
       const matchesSearch = search
-        ? [product.name, product.category, product.sku, product.description, product.notes]
+        ? [
+            product.name,
+            product.category,
+            product.sku,
+            product.description,
+            product.notes,
+            product.unitLabel,
+            variantNames
+          ]
             .map(normalize)
             .some((value) => value.includes(search))
         : true;
@@ -442,15 +543,16 @@ export default function PricingCalculator() {
   const stats = useMemo(() => {
     const activeProducts = allDirectoryProducts.filter((product) => product.status === "Active");
     const productsWithPricing = allDirectoryProducts.filter((product) => {
-      const calc = calculateProduct(product);
-      return calc.costPerUnit > 0 && Number(product.retailPrice) > 0;
+      const productForCalc = applyVariantToProduct(product, product.selectedVariantId);
+      const calc = calculateProduct(productForCalc);
+      return calc.costPerUnit > 0 && Number(productForCalc.retailPrice) > 0;
     });
 
     const averageRetailMargin = productsWithPricing.length
-      ? productsWithPricing.reduce(
-          (sum, product) => sum + calculateProduct(product).retailMargin,
-          0
-        ) / productsWithPricing.length
+      ? productsWithPricing.reduce((sum, product) => {
+          const productForCalc = applyVariantToProduct(product, product.selectedVariantId);
+          return sum + calculateProduct(productForCalc).retailMargin;
+        }, 0) / productsWithPricing.length
       : 0;
 
     return {
@@ -493,6 +595,7 @@ export default function PricingCalculator() {
       setSpiceProducts([]);
       setBakingProducts([]);
       setSelectedProductId("");
+      setSelectedVariantId("");
       setForm(blankProduct());
     }
   }, [user]);
@@ -539,8 +642,17 @@ export default function PricingCalculator() {
   }
 
   function loadProduct(product, options = {}) {
+    const variantId =
+      options.variantId ||
+      product.selectedVariantId ||
+      product.generatedVariants?.[0]?.id ||
+      "";
+
+    const productForForm = applyVariantToProduct(product, variantId);
+
     setSelectedProductId(product.id || "");
-    setForm({ ...blankProduct(), ...product });
+    setSelectedVariantId(variantId);
+    setForm(productForForm);
     markSaved();
 
     if (!options.silent) {
@@ -549,8 +661,20 @@ export default function PricingCalculator() {
     }
   }
 
+  function changeVariant(variantId) {
+    if (!selectedProduct) return;
+
+    const productForForm = applyVariantToProduct(selectedProduct, variantId);
+
+    setSelectedVariantId(variantId);
+    setForm(productForForm);
+    markSaved();
+    setStatusMessage("Variant loaded.");
+  }
+
   function startNewProduct() {
     setSelectedProductId("");
+    setSelectedVariantId("");
     setForm(blankProduct());
     markProductsDirty();
     setStatusMessage("Started a new product.");
@@ -559,6 +683,7 @@ export default function PricingCalculator() {
 
   function loadSampleProduct() {
     setSelectedProductId("");
+    setSelectedVariantId("");
     setForm(sampleProduct());
     markProductsDirty();
     setStatusMessage("Sample product loaded. Edit it, then save when ready.");
@@ -586,7 +711,9 @@ export default function PricingCalculator() {
     const productToSave = {
       ...form,
       id:
-        form.isGeneratedProduct || String(selectedProductId).startsWith("spice-") || String(selectedProductId).startsWith("baking-")
+        form.isGeneratedProduct ||
+        String(selectedProductId).startsWith("spice-") ||
+        String(selectedProductId).startsWith("baking-")
           ? makeId()
           : selectedProductId || form.id || makeId(),
       name: form.name.trim(),
@@ -595,6 +722,10 @@ export default function PricingCalculator() {
       sourceType: form.isGeneratedProduct ? "manual" : form.sourceType || "manual",
       sourceLabel: form.isGeneratedProduct ? "Manual" : form.sourceLabel || "Manual",
       isGeneratedProduct: false,
+      selectedVariantId,
+      selectedVariantName: form.selectedVariantName || "",
+      targetRetailMargin: getTargetRetailMargin(form),
+      targetWholesaleMargin: getTargetWholesaleMargin(form),
       pricingSummary: calculation
     };
 
@@ -622,6 +753,7 @@ export default function PricingCalculator() {
       setStatusMessage("Generated products are managed in their source module.");
       return;
     }
+
     const confirmed = window.confirm(
       `Delete ${product?.name || "this product"}? This cannot be undone.`
     );
@@ -633,6 +765,7 @@ export default function PricingCalculator() {
 
       if (selectedProductId === productId) {
         setSelectedProductId("");
+        setSelectedVariantId("");
         setForm(blankProduct());
         markSaved();
       }
@@ -653,9 +786,24 @@ export default function PricingCalculator() {
   }
 
   const sectionCards = [
-    { title: "Product Directory", description: "Browse, filter, and load saved products.", icon: Package, ref: directoryRef },
-    { title: "Product Details", description: "Edit product names, categories, SKU, status, and notes.", icon: Tag, ref: detailsRef },
-    { title: "Pricing Analysis", description: "Review costs, prices, margins, and suggested pricing.", icon: Calculator, ref: pricingRef }
+    {
+      title: "Product Directory",
+      description: "Browse, filter, and load saved products.",
+      icon: Package,
+      ref: directoryRef
+    },
+    {
+      title: "Product Details",
+      description: "Edit product names, variants, categories, SKU, status, and notes.",
+      icon: Tag,
+      ref: detailsRef
+    },
+    {
+      title: "Pricing Analysis",
+      description: "Review costs, prices, margins, and suggested pricing.",
+      icon: Calculator,
+      ref: pricingRef
+    }
   ];
 
   if (!user) {
@@ -695,7 +843,8 @@ export default function PricingCalculator() {
           <h2>Build your product list and price each item with confidence.</h2>
           <p>
             Keep a central product directory for anything you sell, then select a
-            product to edit its cost breakdown, retail price, wholesale price, and margins.
+            product and package variant to edit its cost breakdown, retail price,
+            wholesale price, and margins.
           </p>
         </div>
 
@@ -706,17 +855,46 @@ export default function PricingCalculator() {
       </section>
 
       <section className="hubStatGrid pricingStatGrid">
-        <StatCard icon={Package} label="Products" value={loadingProducts ? "..." : allDirectoryProducts.length} sub="manual + module products" accent="pricing" />
-        <StatCard icon={Tag} label="Active" value={loadingProducts ? "..." : stats.activeCount} sub="currently available" accent="market" />
-        <StatCard icon={Target} label="Avg Margin" value={loadingProducts ? "..." : percent(stats.averageRetailMargin)} sub="retail margin" accent="spice" />
-        <StatCard icon={Calculator} label="Priced" value={loadingProducts ? "..." : stats.productsWithPricing} sub="cost + retail price" accent="sourdough" />
+        <StatCard
+          icon={Package}
+          label="Products"
+          value={loadingProducts ? "..." : allDirectoryProducts.length}
+          sub="manual + module products"
+          accent="pricing"
+        />
+        <StatCard
+          icon={Tag}
+          label="Active"
+          value={loadingProducts ? "..." : stats.activeCount}
+          sub="currently available"
+          accent="market"
+        />
+        <StatCard
+          icon={Target}
+          label="Avg Margin"
+          value={loadingProducts ? "..." : percent(stats.averageRetailMargin)}
+          sub="retail margin"
+          accent="spice"
+        />
+        <StatCard
+          icon={Calculator}
+          label="Priced"
+          value={loadingProducts ? "..." : stats.productsWithPricing}
+          sub="cost + retail price"
+          accent="sourdough"
+        />
       </section>
 
       <section className="toolGrid compactToolGrid">
         {sectionCards.map((card) => {
           const Icon = card.icon;
           return (
-            <button className="toolCard compactToolCard clickableToolCard" key={card.title} type="button" onClick={() => scrollToSection(card.ref)}>
+            <button
+              className="toolCard compactToolCard clickableToolCard"
+              key={card.title}
+              type="button"
+              onClick={() => scrollToSection(card.ref)}
+            >
               <Icon size={22} />
               <h3>{card.title}</h3>
               <p>{card.description}</p>
@@ -733,16 +911,29 @@ export default function PricingCalculator() {
           </div>
 
           <div className="formActions compactActions">
-            <button className="secondaryButton compactButton" type="button" onClick={loadProducts}>Refresh</button>
-            <button className="secondaryButton compactButton" type="button" onClick={loadSampleProduct}><Package size={15} />Load Sample</button>
-            <button className="primaryButton compactPrimary" type="button" onClick={startNewProduct}><Plus size={15} />New Product</button>
+            <button className="secondaryButton compactButton" type="button" onClick={loadProducts}>
+              Refresh
+            </button>
+            <button className="secondaryButton compactButton" type="button" onClick={loadSampleProduct}>
+              <Package size={15} />
+              Load Sample
+            </button>
+            <button className="primaryButton compactPrimary" type="button" onClick={startNewProduct}>
+              <Plus size={15} />
+              New Product
+            </button>
           </div>
         </div>
 
         <div className="customersFilterPanel">
           <div className="searchBox compactSearch customersSearchBox">
             <Search size={17} />
-            <input type="search" placeholder="Search products, SKU, category, notes, or description" value={queryText} onChange={(event) => setQueryText(event.target.value)} />
+            <input
+              type="search"
+              placeholder="Search products, variants, SKU, category, notes, or description"
+              value={queryText}
+              onChange={(event) => setQueryText(event.target.value)}
+            />
           </div>
 
           <label>
@@ -764,32 +955,59 @@ export default function PricingCalculator() {
 
         <div className="batchTable compactBatchTable pricingComparisonTable">
           <div className="pricingComparisonHeader">
-            <span>Product</span><span>Category</span><span>Retail</span><span>Wholesale</span><span>Cost</span><span>Margin</span><span>Actions</span>
+            <span>Product</span>
+            <span>Category</span>
+            <span>Retail</span>
+            <span>Wholesale</span>
+            <span>Cost</span>
+            <span>Margin</span>
+            <span>Actions</span>
           </div>
 
           {filteredProducts.length ? (
             filteredProducts.map((product) => {
-              const calc = calculateProduct(product);
+              const productForCalc = applyVariantToProduct(product, product.selectedVariantId);
+              const calc = calculateProduct(productForCalc);
+
               return (
                 <div className="pricingComparisonRow pricingDirectoryCompactRow" key={product.id}>
                   <span className="pricingProductCell">
-                    <button className="savedItemLink" type="button" onClick={() => loadProduct(product)}>{product.name || "Untitled Product"}</button>
+                    <button className="savedItemLink" type="button" onClick={() => loadProduct(product)}>
+                      {product.name || "Untitled Product"}
+                    </button>
                     <small>
                       {productSourceLabel(product)}
                       {product.sku ? ` • ${product.sku}` : ""}
-                      {product.generatedVariants?.length ? ` • ${product.generatedVariants.length} size variant${product.generatedVariants.length === 1 ? "" : "s"}` : ""}
+                      {product.generatedVariants?.length
+                        ? ` • ${product.generatedVariants.length} size variant${product.generatedVariants.length === 1 ? "" : "s"}`
+                        : ""}
                     </small>
                   </span>
                   <span>{product.category || "Other"}</span>
-                  <span className="pricingMetric">{money(product.retailPrice)}</span>
-                  <span className="pricingMetric">{money(product.wholesalePrice)}</span>
+                  <span className="pricingMetric">{money(productForCalc.retailPrice)}</span>
+                  <span className="pricingMetric">{money(productForCalc.wholesalePrice)}</span>
                   <span className="pricingMetric">{money(calc.costPerUnit)}</span>
-                  <span className="pricingMetric pricingPositive">{percent(calc.retailMargin)}<small>{money(calc.retailProfitPerUnit)} / unit</small></span>
+                  <span className="pricingMetric pricingPositive">
+                    {percent(calc.retailMargin)}
+                    <small>{money(calc.retailProfitPerUnit)} / unit</small>
+                  </span>
                   <span className="pricingDirectoryActions">
                     {!product.isGeneratedProduct ? (
-                      <button className="iconButton danger" type="button" onClick={() => removeProduct(product.id)} aria-label="Delete product"><Trash2 size={15} /></button>
+                      <button
+                        className="iconButton danger"
+                        type="button"
+                        onClick={() => removeProduct(product.id)}
+                        aria-label="Delete product"
+                      >
+                        <Trash2 size={15} />
+                      </button>
                     ) : null}
-                    <button className="iconButton" type="button" onClick={() => toggleProductExpanded(product.id)} aria-label="Toggle product details">
+                    <button
+                      className="iconButton"
+                      type="button"
+                      onClick={() => toggleProductExpanded(product.id)}
+                      aria-label="Toggle product details"
+                    >
                       {expandedProductIds[product.id] ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
                     </button>
                   </span>
@@ -810,7 +1028,7 @@ export default function PricingCalculator() {
                       </div>
                       <div>
                         <strong>Unit</strong>
-                        <span>{product.unitLabel || "unit"}</span>
+                        <span>{productForCalc.unitLabel || "unit"}</span>
                       </div>
                       <div className="pricingExpandedWide">
                         <strong>Notes</strong>
@@ -819,18 +1037,25 @@ export default function PricingCalculator() {
                       {product.isGeneratedProduct ? (
                         <div className="pricingExpandedWide">
                           <strong>Linked Item</strong>
-                          <span>This product is managed in {productSourceLabel(product)}. Saving edits here creates a manual product copy.</span>
+                          <span>
+                            This product is managed in {productSourceLabel(product)}. Saving edits here creates a manual product copy.
+                          </span>
                         </div>
                       ) : null}
                       {product.generatedVariants?.length ? (
                         <div className="pricingExpandedWide pricingVariantList">
                           <strong>Variant Sizes</strong>
                           {product.generatedVariants.map((variant) => (
-                            <div className="pricingVariantRow" key={variant.id}>
+                            <button
+                              className="pricingVariantRow savedItemLink"
+                              type="button"
+                              key={variant.id}
+                              onClick={() => loadProduct(product, { variantId: variant.id })}
+                            >
                               <span>{variant.name}</span>
                               <span>{formatPackageSize(variant.size, variant.unit)}</span>
                               <span>{money(variant.ingredientCost)}</span>
-                            </div>
+                            </button>
                           ))}
                         </div>
                       ) : null}
@@ -850,10 +1075,19 @@ export default function PricingCalculator() {
       <section className="spiceWorkspace compactWorkspace">
         <div className="workspacePanel compactPanel scrollAnchor" ref={detailsRef}>
           <div className="workspaceHeader compactPanelHeader">
-            <div><p className="eyebrow">Product</p><h3>Product Details</h3></div>
+            <div>
+              <p className="eyebrow">Product</p>
+              <h3>Product Details</h3>
+            </div>
             <div className="formActions compactActions">
-              <button className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`} type="button" onClick={saveCurrentProduct} disabled={saving}>
-                <Save size={15} />{saving ? "Saving..." : hasUnsavedChanges ? "Save Changes" : "Save Product"}
+              <button
+                className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`}
+                type="button"
+                onClick={saveCurrentProduct}
+                disabled={saving}
+              >
+                <Save size={15} />
+                {saving ? "Saving..." : hasUnsavedChanges ? "Save Changes" : "Save Product"}
               </button>
             </div>
           </div>
@@ -865,58 +1099,317 @@ export default function PricingCalculator() {
           ) : null}
 
           <div className="formGrid compactFormGrid">
-            <label>Product Name<input value={form.name} onChange={(event) => updateField("name", event.target.value)} placeholder="e.g., Sourdough Loaf, Soy Candle, Lavender Bouquet" /></label>
-            <label>SKU<input value={form.sku} onChange={(event) => updateField("sku", event.target.value)} placeholder="Optional" /></label>
-            <label>Category<select value={form.category} onChange={(event) => updateField("category", event.target.value)}>{categories.map((category) => <option key={category}>{category}</option>)}</select></label>
-            <label>Status<select value={form.status} onChange={(event) => updateField("status", event.target.value)}>{productStatuses.map((status) => <option key={status}>{status}</option>)}</select></label>
-            <label>Unit Label<input value={form.unitLabel} onChange={(event) => updateField("unitLabel", event.target.value)} placeholder="each, jar, bunch, lb, dozen, tray" /></label>
-            <NumberInput label="Target Margin %" value={form.targetMargin} onChange={(value) => updateField("targetMargin", value)} placeholder="70" step="0.1" />
-            <label className="fullSpan">Description<input value={form.description} onChange={(event) => updateField("description", event.target.value)} placeholder="Short internal product description" /></label>
-            <label className="fullSpan">Notes<input value={form.notes} onChange={(event) => updateField("notes", event.target.value)} placeholder="Packaging notes, seasonal availability, wholesale details, allergens, or production notes" /></label>
+            <label>
+              Product Name
+              <input
+                value={form.name}
+                onChange={(event) => updateField("name", event.target.value)}
+                placeholder="e.g., Sourdough Loaf, Soy Candle, Lavender Bouquet"
+              />
+            </label>
+
+            <label>
+              SKU
+              <input
+                value={form.sku}
+                onChange={(event) => updateField("sku", event.target.value)}
+                placeholder="Optional"
+              />
+            </label>
+
+            {selectedProductVariants.length ? (
+              <label>
+                Variant
+                <select value={selectedVariantId} onChange={(event) => changeVariant(event.target.value)}>
+                  {selectedProductVariants.map((variant) => (
+                    <option key={variant.id} value={variant.id}>
+                      {variant.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+
+            <label>
+              Category
+              <select value={form.category} onChange={(event) => updateField("category", event.target.value)}>
+                {categories.map((category) => <option key={category}>{category}</option>)}
+              </select>
+            </label>
+
+            <label>
+              Status
+              <select value={form.status} onChange={(event) => updateField("status", event.target.value)}>
+                {productStatuses.map((status) => <option key={status}>{status}</option>)}
+              </select>
+            </label>
+
+            <label>
+              Unit Label
+              <input
+                value={form.unitLabel}
+                onChange={(event) => updateField("unitLabel", event.target.value)}
+                placeholder="each, jar, bunch, lb, dozen, tray"
+              />
+            </label>
+
+            <NumberInput
+              label="Target Retail Margin %"
+              value={form.targetRetailMargin}
+              onChange={(value) => updateField("targetRetailMargin", value)}
+              placeholder="70"
+              step="0.1"
+            />
+
+            <NumberInput
+              label="Target Wholesale Margin %"
+              value={form.targetWholesaleMargin}
+              onChange={(value) => updateField("targetWholesaleMargin", value)}
+              placeholder="50"
+              step="0.1"
+            />
+
+            <label className="fullSpan">
+              Description
+              <input
+                value={form.description}
+                onChange={(event) => updateField("description", event.target.value)}
+                placeholder="Short internal product description"
+              />
+            </label>
+
+            <label className="fullSpan">
+              Notes
+              <input
+                value={form.notes}
+                onChange={(event) => updateField("notes", event.target.value)}
+                placeholder="Packaging notes, seasonal availability, wholesale details, allergens, or production notes"
+              />
+            </label>
           </div>
         </div>
 
         <div className="workspacePanel compactPanel">
-          <div className="workspaceHeader compactPanelHeader"><div><p className="eyebrow">Selected</p><h3>{selectedProduct ? selectedProduct.name : form.name || "Unsaved Product"}</h3></div></div>
-          <div className="hubStatGrid pricingStatGrid">
-            <StatCard icon={DollarSign} label="Retail" value={money(form.retailPrice)} sub={`per ${form.unitLabel || "unit"}`} accent="pricing" />
-            <StatCard icon={Target} label="Cost" value={money(calculation.costPerUnit)} sub="estimated per unit" accent="sourdough" />
-            <StatCard icon={Calculator} label="Margin" value={percent(calculation.retailMargin)} sub="retail margin" accent="market" />
-            <StatCard icon={Package} label="Suggested" value={money(calculation.suggestedPrice)} sub={`${form.targetMargin || 0}% target`} accent="spice" />
+          <div className="workspaceHeader compactPanelHeader">
+            <div>
+              <p className="eyebrow">Selected</p>
+              <h3>{selectedProduct ? selectedProduct.name : form.name || "Unsaved Product"}</h3>
+              {form.selectedVariantName ? <p className="importExportText">{form.selectedVariantName}</p> : null}
+            </div>
           </div>
-          <div className="placeholderBox compactPlaceholder"><strong>Pricing clarity:</strong> enter material, packaging, labor, and overhead costs below. Farmers Hub will calculate estimated cost per unit, suggested price, and profit margins.</div>
+
+          <div className="hubStatGrid pricingStatGrid">
+            <StatCard
+              icon={DollarSign}
+              label="Retail"
+              value={money(form.retailPrice)}
+              sub={`per ${form.unitLabel || "unit"}`}
+              accent="pricing"
+            />
+            <StatCard
+              icon={DollarSign}
+              label="Wholesale"
+              value={money(form.wholesalePrice)}
+              sub={`per ${form.unitLabel || "unit"}`}
+              accent="sourdough"
+            />
+            <StatCard
+              icon={Target}
+              label="Cost"
+              value={money(calculation.costPerUnit)}
+              sub="estimated per unit"
+              accent="market"
+            />
+            <StatCard
+              icon={Package}
+              label="Suggested Retail"
+              value={money(calculation.suggestedRetailPrice)}
+              sub={`${form.targetRetailMargin || 0}% target`}
+              accent="spice"
+            />
+            <StatCard
+              icon={Package}
+              label="Suggested Wholesale"
+              value={money(calculation.suggestedWholesalePrice)}
+              sub={`${form.targetWholesaleMargin || 0}% target`}
+              accent="pricing"
+            />
+            <StatCard
+              icon={Calculator}
+              label="Retail Margin"
+              value={percent(calculation.retailMargin)}
+              sub={`${money(calculation.retailProfitPerUnit)} profit`}
+              accent="market"
+            />
+            <StatCard
+              icon={Calculator}
+              label="Wholesale Margin"
+              value={percent(calculation.wholesaleMargin)}
+              sub={`${money(calculation.wholesaleProfitPerUnit)} profit`}
+              accent="sourdough"
+            />
+          </div>
+
+          <div className="placeholderBox compactPlaceholder">
+            <strong>Pricing clarity:</strong> select a package variant, then enter material, packaging, labor, and overhead costs below. Farmers Hub will calculate estimated cost per unit, suggested retail price, suggested wholesale price, and profit margins.
+          </div>
         </div>
       </section>
 
       <section className="workspacePanel compactPanel scrollAnchor" ref={pricingRef}>
         <div className="workspaceHeader compactPanelHeader">
-          <div><p className="eyebrow">Pricing</p><h3>Pricing Analysis</h3></div>
+          <div>
+            <p className="eyebrow">Pricing</p>
+            <h3>Pricing Analysis</h3>
+          </div>
+
           <div className="formActions compactActions">
-            <label>Select Product<select value={selectedProductId} onChange={(event) => { const product = allDirectoryProducts.find((item) => item.id === event.target.value); if (product) loadProduct(product); }}><option value="">Unsaved or new product</option>{allDirectoryProducts.map((product) => <option key={product.id} value={product.id}>{product.name || "Untitled Product"} ({productSourceLabel(product)})</option>)}</select></label>
-            <button className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`} type="button" onClick={saveCurrentProduct} disabled={saving}><Save size={15} />{saving ? "Saving..." : hasUnsavedChanges ? "Save Changes" : "Save Product"}</button>
+            <label>
+              Select Product
+              <select
+                value={selectedProductId}
+                onChange={(event) => {
+                  const product = allDirectoryProducts.find((item) => item.id === event.target.value);
+                  if (product) loadProduct(product);
+                  if (!event.target.value) {
+                    setSelectedProductId("");
+                    setSelectedVariantId("");
+                    setForm(blankProduct());
+                  }
+                }}
+              >
+                <option value="">Unsaved or new product</option>
+                {allDirectoryProducts.map((product) => (
+                  <option key={product.id} value={product.id}>
+                    {product.name || "Untitled Product"} ({productSourceLabel(product)})
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {selectedProductVariants.length ? (
+              <label>
+                Select Variant
+                <select value={selectedVariantId} onChange={(event) => changeVariant(event.target.value)}>
+                  {selectedProductVariants.map((variant) => (
+                    <option key={variant.id} value={variant.id}>
+                      {variant.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+
+            <button
+              className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`}
+              type="button"
+              onClick={saveCurrentProduct}
+              disabled={saving}
+            >
+              <Save size={15} />
+              {saving ? "Saving..." : hasUnsavedChanges ? "Save Changes" : "Save Product"}
+            </button>
           </div>
         </div>
 
         <div className="formGrid compactFormGrid">
-          <MoneyInput label="Batch Ingredient / Material Cost" value={form.batchIngredientCost} onChange={(value) => updateField("batchIngredientCost", value)} placeholder="32.00" />
-          <NumberInput label="Units Produced Per Batch" value={form.batchUnits} onChange={(value) => updateField("batchUnits", value)} placeholder="24" step="1" />
-          <MoneyInput label="Packaging Cost / Unit" value={form.packagingCostPerUnit} onChange={(value) => updateField("packagingCostPerUnit", value)} placeholder="0.35" />
-          <NumberInput label="Labor Hours Per Batch" value={form.laborHours} onChange={(value) => updateField("laborHours", value)} placeholder="1.5" step="0.01" />
-          <MoneyInput label="Labor Rate / Hour" value={form.laborRate} onChange={(value) => updateField("laborRate", value)} placeholder="18.00" />
-          <MoneyInput label="Overhead / Fees Per Batch" value={form.overheadCost} onChange={(value) => updateField("overheadCost", value)} placeholder="6.00" />
-          <MoneyInput label="Retail Price" value={form.retailPrice} onChange={(value) => updateField("retailPrice", value)} placeholder="8.00" />
-          <MoneyInput label="Wholesale Price" value={form.wholesalePrice} onChange={(value) => updateField("wholesalePrice", value)} placeholder="5.00" />
+          <MoneyInput
+            label="Batch Ingredient / Material Cost"
+            value={form.batchIngredientCost}
+            onChange={(value) => updateField("batchIngredientCost", value)}
+            placeholder="32.00"
+          />
+          <NumberInput
+            label="Units Produced Per Batch"
+            value={form.batchUnits}
+            onChange={(value) => updateField("batchUnits", value)}
+            placeholder="24"
+            step="1"
+          />
+          <MoneyInput
+            label="Packaging Cost / Unit"
+            value={form.packagingCostPerUnit}
+            onChange={(value) => updateField("packagingCostPerUnit", value)}
+            placeholder="0.35"
+          />
+          <NumberInput
+            label="Labor Hours Per Batch"
+            value={form.laborHours}
+            onChange={(value) => updateField("laborHours", value)}
+            placeholder="1.5"
+            step="0.01"
+          />
+          <MoneyInput
+            label="Labor Rate / Hour"
+            value={form.laborRate}
+            onChange={(value) => updateField("laborRate", value)}
+            placeholder="18.00"
+          />
+          <MoneyInput
+            label="Overhead / Fees Per Batch"
+            value={form.overheadCost}
+            onChange={(value) => updateField("overheadCost", value)}
+            placeholder="6.00"
+          />
+          <MoneyInput
+            label="Retail Price"
+            value={form.retailPrice}
+            onChange={(value) => updateField("retailPrice", value)}
+            placeholder="8.00"
+          />
+          <MoneyInput
+            label="Wholesale Price"
+            value={form.wholesalePrice}
+            onChange={(value) => updateField("wholesalePrice", value)}
+            placeholder="5.00"
+          />
         </div>
 
         <div className="grid four">
-          <div className="workspacePanel compactPanel"><p className="eyebrow">Total Batch Cost</p><h3>{money(calculation.totalBatchCost)}</h3><p className="importExportText">Materials + packaging + labor + overhead.</p></div>
-          <div className="workspacePanel compactPanel"><p className="eyebrow">Cost Per Unit</p><h3>{money(calculation.costPerUnit)}</h3><p className="importExportText">Estimated cost for one {form.unitLabel || "unit"}.</p></div>
-          <div className="workspacePanel compactPanel"><p className="eyebrow">Suggested Retail</p><h3>{money(calculation.suggestedPrice)}</h3><p className="importExportText">Based on {form.targetMargin || 0}% target margin.</p></div>
-          <div className="workspacePanel compactPanel"><p className="eyebrow">Retail Margin</p><h3>{percent(calculation.retailMargin)}</h3><p className="importExportText">{money(calculation.retailProfitPerUnit)} profit per unit.</p></div>
+          <div className="workspacePanel compactPanel">
+            <p className="eyebrow">Total Batch Cost</p>
+            <h3>{money(calculation.totalBatchCost)}</h3>
+            <p className="importExportText">Materials + packaging + labor + overhead.</p>
+          </div>
+
+          <div className="workspacePanel compactPanel">
+            <p className="eyebrow">Cost Per Unit</p>
+            <h3>{money(calculation.costPerUnit)}</h3>
+            <p className="importExportText">Estimated cost for one {form.unitLabel || "unit"}.</p>
+          </div>
+
+          <div className="workspacePanel compactPanel">
+            <p className="eyebrow">Suggested Retail</p>
+            <h3>{money(calculation.suggestedRetailPrice)}</h3>
+            <p className="importExportText">Based on {form.targetRetailMargin || 0}% target retail margin.</p>
+          </div>
+
+          <div className="workspacePanel compactPanel">
+            <p className="eyebrow">Suggested Wholesale</p>
+            <h3>{money(calculation.suggestedWholesalePrice)}</h3>
+            <p className="importExportText">Based on {form.targetWholesaleMargin || 0}% target wholesale margin.</p>
+          </div>
+
+          <div className="workspacePanel compactPanel">
+            <p className="eyebrow">Retail Margin</p>
+            <h3>{percent(calculation.retailMargin)}</h3>
+            <p className="importExportText">{money(calculation.retailProfitPerUnit)} retail profit per unit.</p>
+          </div>
+
+          <div className="workspacePanel compactPanel">
+            <p className="eyebrow">Wholesale Margin</p>
+            <h3>{percent(calculation.wholesaleMargin)}</h3>
+            <p className="importExportText">{money(calculation.wholesaleProfitPerUnit)} wholesale profit per unit.</p>
+          </div>
         </div>
       </section>
 
-      {showBackToTop ? <button className="backToTopButton" type="button" onClick={scrollToTop}><ArrowUp size={18} />Top</button> : null}
+      {showBackToTop ? (
+        <button className="backToTopButton" type="button" onClick={scrollToTop}>
+          <ArrowUp size={18} />
+          Top
+        </button>
+      ) : null}
     </div>
   );
 }
