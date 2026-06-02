@@ -1049,8 +1049,10 @@ export default function PricingCalculator() {
             <span>Wholesale</span>
             <span>Cost</span>
             <span>Margin</span>
-            <span>Variant</span>
-            <span>Actions</span>
+            <span className="pricingVariantActionsHeader">
+              <span>Variant</span>
+              <span>Actions</span>
+            </span>
           </div>
 
           {filteredProducts.length ? (
@@ -1092,43 +1094,45 @@ export default function PricingCalculator() {
                     <small>{money(calc.retailProfitPerUnit)} / unit</small>
                   </span>
 
-                  <span className="pricingDirectoryVariantCell">
-                    {product.generatedVariants?.length ? (
-                      <select
-                        className="pricingDirectoryVariantSelect"
-                        value={directoryVariantId}
-                        onChange={(event) => changeDirectoryVariant(product.id, event.target.value)}
-                      >
-                        {product.generatedVariants.map((variant) => (
-                          <option key={variant.id} value={variant.id}>
-                            {variant.name}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <span className="mutedText">Single unit</span>
-                    )}
-                  </span>
+                  <span className="pricingVariantActionsCell">
+                    <span className="pricingDirectoryVariantCell">
+                      {product.generatedVariants?.length ? (
+                        <select
+                          className="pricingDirectoryVariantSelect"
+                          value={directoryVariantId}
+                          onChange={(event) => changeDirectoryVariant(product.id, event.target.value)}
+                        >
+                          {product.generatedVariants.map((variant) => (
+                            <option key={variant.id} value={variant.id}>
+                              {variant.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span className="mutedText">Single unit</span>
+                      )}
+                    </span>
 
-                  <span className="pricingDirectoryActions">
-                    {!product.isGeneratedProduct ? (
+                    <span className="pricingDirectoryActions">
+                      {!product.isGeneratedProduct ? (
+                        <button
+                          className="iconButton danger"
+                          type="button"
+                          onClick={() => removeProduct(product.id)}
+                          aria-label="Delete product"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      ) : null}
                       <button
-                        className="iconButton danger"
+                        className="iconButton"
                         type="button"
-                        onClick={() => removeProduct(product.id)}
-                        aria-label="Delete product"
+                        onClick={() => toggleProductExpanded(product.id)}
+                        aria-label="Toggle product details"
                       >
-                        <Trash2 size={15} />
+                        {expandedProductIds[product.id] ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
                       </button>
-                    ) : null}
-                    <button
-                      className="iconButton"
-                      type="button"
-                      onClick={() => toggleProductExpanded(product.id)}
-                      aria-label="Toggle product details"
-                    >
-                      {expandedProductIds[product.id] ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-                    </button>
+                    </span>
                   </span>
 
                   {expandedProductIds[product.id] ? (
