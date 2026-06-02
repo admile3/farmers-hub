@@ -9873,3 +9873,69 @@ input[type="number"] {
     min-width: 760px;
   }
 }
+/* Final Products & Pricing directory width fix */
+.pricingPage .pricingComparisonTable {
+  overflow-x: visible !important;
+}
+
+.pricingPage .pricingComparisonHeader,
+.pricingPage .pricingComparisonRow.pricingDirectoryCompactRow {
+  min-width: 0 !important;
+  width: 100% !important;
+  grid-template-columns:
+    minmax(190px, 1.35fr)
+    minmax(76px, 0.55fr)
+    minmax(64px, 0.38fr)
+    minmax(78px, 0.42fr)
+    minmax(64px, 0.38fr)
+    minmax(82px, 0.5fr)
+    minmax(180px, 0.8fr) !important;
+  gap: 8px !important;
+}
+
+.pricingPage .pricingMetric {
+  white-space: nowrap;
+  font-size: 0.82rem;
+}
+
+.pricingPage .pricingVariantActionsHeader,
+.pricingPage .pricingVariantActionsCell {
+  display: grid !important;
+  grid-template-columns: minmax(120px, 1fr) 42px !important;
+  gap: 8px !important;
+  align-items: center !important;
+}
+
+.pricingPage .pricingDirectoryVariantSelect {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.pricingPage .pricingDirectoryActions {
+  justify-content: flex-end !important;
+}
+
+@media (max-width: 900px) {
+  .pricingPage .pricingComparisonHeader {
+    display: none !important;
+  }
+
+  .pricingPage .pricingComparisonTable {
+    overflow-x: visible !important;
+  }
+
+  .pricingPage .pricingComparisonRow.pricingDirectoryCompactRow {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .pricingPage .pricingComparisonRow.pricingDirectoryCompactRow > span {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .pricingPage .pricingVariantActionsCell {
+    grid-template-columns: 1fr auto !important;
+  }
+}
