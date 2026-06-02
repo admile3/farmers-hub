@@ -10313,3 +10313,23 @@ input[type="number"] {
     width: 100% !important;
   }
 }
+.heroActionButton {
+  height: 48px;
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: 14px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  font-size: 0.95rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.heroActionButton svg {
+  width: 18px;
+  height: 18px;
+}
