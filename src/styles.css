@@ -10984,3 +10984,207 @@ input[type="number"] {
     align-items: stretch;
   }
 }
+/* =========================================================
+   Priority 1: Shared stat card system
+   Paste at the very bottom of src/styles.css
+   ========================================================= */
+
+.hubStatGrid,
+.farmStatGrid,
+.dashboardOverviewGrid,
+.pricingStatGrid,
+.marketPrepStatsGrid,
+.customersStatGrid,
+.ordersStatGrid,
+.plantingStatGrid,
+.calendarStatGrid,
+.spiceStatGrid,
+.listsStatGrid,
+.spiceBatchStatGrid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  margin: 0 0 18px !important;
+}
+
+.hubStatCard,
+.farmStatCard {
+  min-height: 76px !important;
+  padding: 14px 16px !important;
+  border-radius: 16px !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
+
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.hubStatIcon,
+.farmStatIcon {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 13px !important;
+
+  display: grid !important;
+  place-items: center !important;
+  flex: 0 0 auto !important;
+
+  color: #ffffff !important;
+}
+
+.hubStatIcon svg,
+.farmStatIcon svg {
+  width: 19px !important;
+  height: 19px !important;
+}
+
+.hubStatText,
+.farmStatText {
+  min-width: 0 !important;
+}
+
+.hubStatText span,
+.farmStatLabel {
+  display: block !important;
+  margin: 0 0 3px !important;
+
+  color: var(--muted) !important;
+  font-size: 0.7rem !important;
+  font-weight: 900 !important;
+  line-height: 1.05 !important;
+  letter-spacing: 0.07em !important;
+  text-transform: uppercase !important;
+}
+
+.hubStatText strong,
+.farmStatValue {
+  display: inline !important;
+  margin: 0 6px 0 0 !important;
+
+  color: var(--text) !important;
+  font-size: 1.42rem !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  letter-spacing: -0.03em !important;
+}
+
+.hubStatText p,
+.farmStatSubtext {
+  display: inline !important;
+  margin: 0 !important;
+
+  color: var(--muted) !important;
+  font-size: 0.8rem !important;
+  line-height: 1.2 !important;
+}
+
+/* Module-specific stat grid counts */
+.dashboardOverviewGrid {
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+}
+
+.plantingStatGrid,
+.permitStatsGrid {
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+}
+
+.spiceBatchStatGrid,
+.marketPrepStatsGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+/* Mobile/tablet stat behavior */
+@media (max-width: 1300px) {
+  .dashboardOverviewGrid,
+  .plantingStatGrid,
+  .permitStatsGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 1050px) {
+  .hubStatGrid,
+  .farmStatGrid,
+  .dashboardOverviewGrid,
+  .pricingStatGrid,
+  .marketPrepStatsGrid,
+  .customersStatGrid,
+  .ordersStatGrid,
+  .plantingStatGrid,
+  .calendarStatGrid,
+  .spiceStatGrid,
+  .listsStatGrid,
+  .spiceBatchStatGrid,
+  .permitStatsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 9px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .hubStatCard,
+  .farmStatCard {
+    min-height: 64px !important;
+    padding: 11px 12px !important;
+    border-radius: 14px !important;
+    gap: 9px !important;
+  }
+
+  .hubStatIcon,
+  .farmStatIcon {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 11px !important;
+  }
+
+  .hubStatIcon svg,
+  .farmStatIcon svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .hubStatText strong,
+  .farmStatValue {
+    display: block !important;
+    margin: 0 !important;
+    font-size: 1.08rem !important;
+  }
+
+  .hubStatText p,
+  .farmStatSubtext {
+    display: block !important;
+    margin-top: 2px !important;
+    font-size: 0.7rem !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .hubStatGrid,
+  .farmStatGrid,
+  .dashboardOverviewGrid,
+  .pricingStatGrid,
+  .marketPrepStatsGrid,
+  .customersStatGrid,
+  .ordersStatGrid,
+  .plantingStatGrid,
+  .calendarStatGrid,
+  .spiceStatGrid,
+  .listsStatGrid,
+  .spiceBatchStatGrid,
+  .permitStatsGrid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .hubStatCard,
+  .farmStatCard {
+    min-width: 0 !important;
+  }
+
+  .hubStatText p,
+  .farmStatSubtext {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+}
