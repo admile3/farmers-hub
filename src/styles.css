@@ -9939,3 +9939,37 @@ input[type="number"] {
     grid-template-columns: 1fr auto !important;
   }
 }
+.marketWeatherGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.marketWeatherGrid div {
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: #ffffff;
+  padding: 10px;
+}
+
+.marketWeatherGrid span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.marketWeatherGrid strong {
+  color: var(--text);
+  font-size: 0.92rem;
+}
+
+@media (max-width: 800px) {
+  .marketWeatherGrid {
+    grid-template-columns: 1fr;
+  }
+}
