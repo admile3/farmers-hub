@@ -711,8 +711,8 @@ export default function Orders() {
   if (!user) {
     return (
       <div className="ordersModule modulePage">
-        <section className="moduleHero compactHero plantingCalendarHero ordersHero">
-          <div className="plantingHeroText ordersHeroText">
+        <section className="farmModuleHero ordersHero">
+          <div className="farmModuleHeroText ordersHeroText">
             <p className="eyebrow">Orders</p>
             <h2>Sign in to manage customer orders.</h2>
             <p>
@@ -721,8 +721,8 @@ export default function Orders() {
             </p>
           </div>
 
-          <div className="plantingHeroActions ordersHeroActions">
-            <button className="primaryButton" type="button" onClick={loginWithGoogle}>
+          <div className="farmModuleHeroActions ordersHeroActions">
+            <button className="primaryButton farmHeroAction" type="button" onClick={loginWithGoogle}>
               Sign in with Google
             </button>
           </div>
@@ -742,8 +742,8 @@ export default function Orders() {
         </div>
       ) : null}
 
-      <section className="moduleHero compactHero plantingCalendarHero ordersHero">
-        <div className="plantingHeroText ordersHeroText">
+      <section className="farmModuleHero ordersHero">
+        <div className="farmModuleHeroText ordersHeroText">
           <p className="eyebrow">Orders</p>
           <h2>Manage customer orders from request to fulfillment.</h2>
           <p>
@@ -752,8 +752,8 @@ export default function Orders() {
           </p>
         </div>
 
-        <div className="plantingHeroActions ordersHeroActions">
-          <button className="primaryButton compactPrimary" type="button" onClick={startNewOrder}>
+        <div className="farmModuleHeroActions ordersHeroActions">
+          <button className="primaryButton compactPrimary farmHeroAction" type="button" onClick={startNewOrder}>
             <Plus size={16} />
             New Order
           </button>
