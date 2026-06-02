@@ -9813,26 +9813,63 @@ input[type="number"] {
 .pricingComparisonHeader,
 .pricingDirectoryCompactRow {
   grid-template-columns:
-    minmax(260px, 1.7fr)
-    minmax(110px, 0.7fr)
-    minmax(100px, 0.7fr)
-    minmax(120px, 0.8fr)
-    minmax(100px, 0.7fr)
-    minmax(130px, 0.9fr)
-    minmax(250px, 1.1fr);
+    minmax(220px, 1.4fr)
+    minmax(85px, 0.55fr)
+    minmax(72px, 0.42fr)
+    minmax(86px, 0.48fr)
+    minmax(70px, 0.4fr)
+    minmax(92px, 0.52fr)
+    minmax(190px, 0.9fr);
   align-items: center;
+  column-gap: 12px;
+}
+
+.pricingMetric {
+  white-space: nowrap;
 }
 
 .pricingVariantActionsHeader,
 .pricingVariantActionsCell {
   display: grid;
-  grid-template-columns: minmax(150px, 1fr) 72px;
+  grid-template-columns: minmax(130px, 1fr) 48px;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+}
+
+.pricingDirectoryVariantSelect {
+  width: 100%;
+  min-width: 0;
 }
 
 .pricingDirectoryActions {
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 1100px) {
+  .pricingComparisonHeader,
+  .pricingDirectoryCompactRow {
+    grid-template-columns:
+      minmax(180px, 1.3fr)
+      minmax(80px, 0.55fr)
+      minmax(68px, 0.42fr)
+      minmax(78px, 0.46fr)
+      minmax(66px, 0.4fr)
+      minmax(84px, 0.5fr)
+      minmax(170px, 0.85fr);
+    column-gap: 8px;
+  }
+}
+
+@media (max-width: 820px) {
+  .pricingComparisonTable {
+    overflow-x: auto;
+  }
+
+  .pricingComparisonHeader,
+  .pricingDirectoryCompactRow {
+    min-width: 760px;
+  }
 }
