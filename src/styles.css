@@ -10109,3 +10109,71 @@ input[type="number"] {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
+/* =========================================================
+   Orders hero: keep action button inside hero bubble
+   ========================================================= */
+
+.ordersModule .ordersHero {
+  position: relative !important;
+  display: block !important;
+  margin-bottom: 16px !important;
+  padding: 28px 220px 28px 28px !important;
+  border-radius: var(--radius) !important;
+  background: #ffffff !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
+  overflow: hidden !important;
+}
+
+.ordersModule .ordersHero > .ordersHeroText {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.ordersModule .ordersHero h2,
+.ordersModule .ordersHero p:not(.eyebrow) {
+  max-width: none !important;
+}
+
+.ordersModule .ordersHeroActions {
+  position: absolute !important;
+  top: 50% !important;
+  right: 28px !important;
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  width: auto !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+}
+
+.ordersModule .ordersHeroActions .primaryButton {
+  width: fit-content !important;
+  min-height: 42px !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 760px) {
+  .ordersModule .ordersHero {
+    padding: 18px !important;
+  }
+
+  .ordersModule .ordersHeroActions {
+    position: static !important;
+    transform: none !important;
+    justify-content: flex-start !important;
+    margin-top: 16px !important;
+    width: 100% !important;
+  }
+
+  .ordersModule .ordersHeroActions .primaryButton {
+    width: 100% !important;
+  }
+}
