@@ -22,6 +22,7 @@ import {
 } from "../services/marketPrepService.js";
 import { getProducts } from "../services/productService.js";
 import { getSpiceRecipes } from "../services/spiceKitchenService.js";
+import { getMarketWeatherForecast } from "../services/weatherService.js";
 
 const marketCategories = [
   "Produce",
@@ -107,7 +108,9 @@ function createBlankPlan() {
     marketName: "Farmers Market",
     marketDate: todayISO(),
     location: "",
+    zipCode: "",
     weatherNotes: "",
+    weatherForecast: null,
     products: []
   };
 }
@@ -276,6 +279,45 @@ function buildBakingProductOptions(bakingRecipes = []) {
     });
 }
 
+function WeatherPreview({ forecast }) {
+  if (!forecast) return null;
+
+  if (!forecast.available) {
+    return <p>{forecast.message}</p>;
+  }
+
+  return (
+    <div className="marketWeatherGrid">
+      <div>
+        <span>Location</span>
+        <strong>{forecast.locationName}</strong>
+      </div>
+      <div>
+        <span>Conditions</span>
+        <strong>{forecast.conditions}</strong>
+      </div>
+      <div>
+        <span>Temp</span>
+        <strong>
+          {forecast.highTemp}°F / {forecast.lowTemp}°F
+        </strong>
+      </div>
+      <div>
+        <span>Rain Chance</span>
+        <strong>{forecast.precipitationChance ?? "N/A"}%</strong>
+      </div>
+      <div>
+        <span>Humidity</span>
+        <strong>{forecast.humidity ? `${forecast.humidity}%` : "N/A"}</strong>
+      </div>
+      <div>
+        <span>Wind</span>
+        <strong>{forecast.windSpeedMax} mph</strong>
+      </div>
+    </div>
+  );
+}
+
 export default function MarketPrepPlanner() {
   const { user, loginWithGoogle } = useAuth();
   const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } = useUnsavedChanges();
@@ -289,7 +331,9 @@ export default function MarketPrepPlanner() {
   const [marketName, setMarketName] = useState("Farmers Market");
   const [marketDate, setMarketDate] = useState(todayISO());
   const [location, setLocation] = useState("");
+  const [zipCode, setZipCode] = useState("");
   const [weatherNotes, setWeatherNotes] = useState("");
+  const [weatherForecast, setWeatherForecast] = useState(null);
   const [products, setProducts] = useState([]);
   const [savedPlans, setSavedPlans] = useState([]);
   const [productOptions, setProductOptions] = useState([]);
@@ -297,6 +341,7 @@ export default function MarketPrepPlanner() {
   const [statusMessage, setStatusMessage] = useState("");
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [loadingProducts, setLoadingProducts] = useState(false);
+  const [loadingWeather, setLoadingWeather] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
 
@@ -330,7 +375,7 @@ export default function MarketPrepPlanner() {
   }, []);
 
   useEffect(() => {
-    if (!statusMessage) return;
+    if (!statusMessage) return undefined;
 
     const timer = window.setTimeout(() => {
       setStatusMessage("");
@@ -464,7 +509,9 @@ export default function MarketPrepPlanner() {
     setMarketName(plan.marketName || "Farmers Market");
     setMarketDate(plan.marketDate || todayISO());
     setLocation(plan.location || "");
+    setZipCode(plan.zipCode || "");
     setWeatherNotes(plan.weatherNotes || "");
+    setWeatherForecast(plan.weatherForecast || null);
     setProducts(Array.isArray(plan.products) ? plan.products : []);
     setStatusMessage("Loaded saved market plan.");
     scrollToSection(setupRef);
@@ -477,7 +524,9 @@ export default function MarketPrepPlanner() {
     setMarketName(blank.marketName);
     setMarketDate(blank.marketDate);
     setLocation(blank.location);
+    setZipCode(blank.zipCode);
     setWeatherNotes(blank.weatherNotes);
+    setWeatherForecast(blank.weatherForecast);
     setProducts(blank.products);
     setStatusMessage("Started a new empty market plan.");
     scrollToTop();
@@ -498,6 +547,30 @@ export default function MarketPrepPlanner() {
     scrollToSection(packListRef);
   }
 
+  async function loadWeatherForecast() {
+    if (!zipCode || !marketDate) {
+      setStatusMessage("Enter a zip code and market date first.");
+      return;
+    }
+
+    setLoadingWeather(true);
+
+    try {
+      const forecast = await getMarketWeatherForecast(zipCode, marketDate);
+      setWeatherForecast(forecast);
+      if (!forecast.available) setStatusMessage(forecast.message);
+    } catch (error) {
+      console.error(error);
+      setWeatherForecast({
+        available: false,
+        message: "Could not load weather forecast."
+      });
+      setStatusMessage("Could not load weather forecast.");
+    } finally {
+      setLoadingWeather(false);
+    }
+  }
+
   async function savePlan() {
     if (!user) {
       setStatusMessage("Sign in from the Farmers Hub sidebar to save market plans.");
@@ -511,7 +584,9 @@ export default function MarketPrepPlanner() {
       marketName,
       marketDate,
       location,
+      zipCode,
       weatherNotes,
+      weatherForecast,
       products,
       totals
     };
@@ -543,7 +618,9 @@ export default function MarketPrepPlanner() {
         setMarketName(blank.marketName);
         setMarketDate(blank.marketDate);
         setLocation(blank.location);
+        setZipCode(blank.zipCode);
         setWeatherNotes(blank.weatherNotes);
+        setWeatherForecast(blank.weatherForecast);
         setProducts(blank.products);
       }
 
@@ -798,7 +875,10 @@ export default function MarketPrepPlanner() {
               <input
                 type="date"
                 value={marketDate}
-                onChange={(event) => setMarketDate(event.target.value)}
+                onChange={(event) => {
+                  setMarketDate(event.target.value);
+                  setWeatherForecast(null);
+                }}
               />
             </label>
 
@@ -812,6 +892,18 @@ export default function MarketPrepPlanner() {
             </label>
 
             <label>
+              Market Zip Code
+              <input
+                value={zipCode}
+                onChange={(event) => {
+                  setZipCode(event.target.value);
+                  setWeatherForecast(null);
+                }}
+                placeholder="e.g., 40508"
+              />
+            </label>
+
+            <label className="fullSpan">
               Weather / Demand Notes
               <input
                 value={weatherNotes}
@@ -819,6 +911,25 @@ export default function MarketPrepPlanner() {
                 placeholder="e.g., Hot day, holiday weekend, rain possible"
               />
             </label>
+          </div>
+
+          <div className="placeholderBox compactPlaceholder marketPrepNoPrint">
+            <strong>Weather Preview</strong>
+            <p>
+              Forecast data is only available for nearby dates. For markets farther out,
+              save the zip code and refresh weather closer to market day.
+            </p>
+
+            <button
+              className="secondaryButton compactButton"
+              type="button"
+              onClick={loadWeatherForecast}
+              disabled={loadingWeather}
+            >
+              {loadingWeather ? "Checking Weather..." : "Check Weather"}
+            </button>
+
+            <WeatherPreview forecast={weatherForecast} />
           </div>
 
           <div className="hubStatGrid marketPrepStatsGrid marketPrepNoPrint">
@@ -851,6 +962,7 @@ export default function MarketPrepPlanner() {
               </>
             ) : null}{" "}
             on <strong>{marketDate}</strong>
+            {zipCode ? ` • ${zipCode}` : ""}
             {weatherNotes ? ` • ${weatherNotes}` : ""}
           </div>
 
@@ -869,6 +981,13 @@ export default function MarketPrepPlanner() {
               <div>
                 <span>Location</span>
                 <strong>{location}</strong>
+              </div>
+            ) : null}
+
+            {zipCode ? (
+              <div>
+                <span>Zip Code</span>
+                <strong>{zipCode}</strong>
               </div>
             ) : null}
 
@@ -933,7 +1052,7 @@ export default function MarketPrepPlanner() {
 
             <div className="formActions compactActions">
               <button className="secondaryButton compactButton" type="button" onClick={loadProductOptions}>
-                Refresh Products
+                {loadingProducts ? "Refreshing..." : "Refresh Products"}
               </button>
             </div>
           </div>
@@ -1142,6 +1261,7 @@ export default function MarketPrepPlanner() {
           <p>
             {marketDate}
             {location ? ` • ${location}` : ""}
+            {zipCode ? ` • ${zipCode}` : ""}
             {weatherNotes ? ` • ${weatherNotes}` : ""}
           </p>
         </div>
@@ -1395,6 +1515,7 @@ export default function MarketPrepPlanner() {
           <p>
             {marketDate || "No date selected"}
             {location ? ` • ${location}` : ""}
+            {zipCode ? ` • ${zipCode}` : ""}
             {weatherNotes ? ` • ${weatherNotes}` : ""}
           </p>
         </header>
@@ -1415,8 +1536,20 @@ export default function MarketPrepPlanner() {
               <strong>{location || "No location listed"}</strong>
             </div>
             <div>
+              <span>Zip Code</span>
+              <strong>{zipCode || "No zip code listed"}</strong>
+            </div>
+            <div>
               <span>Weather / Demand Notes</span>
               <strong>{weatherNotes || "No notes listed"}</strong>
+            </div>
+            <div>
+              <span>Forecast</span>
+              <strong>
+                {weatherForecast?.available
+                  ? `${weatherForecast.conditions}, ${weatherForecast.highTemp}°F / ${weatherForecast.lowTemp}°F`
+                  : weatherForecast?.message || "No forecast saved"}
+              </strong>
             </div>
           </div>
         </section>
