@@ -10748,3 +10748,37 @@ input[type="number"] {
     width: 100% !important;
   }
 }
+.permitGrantModule .farmModuleHero {
+  min-height: 182px !important;
+  padding: 28px !important;
+  align-content: center !important;
+}
+
+.permitGrantModule .farmModuleHeroText .eyebrow {
+  font-size: 0.72rem !important;
+  line-height: 1 !important;
+  margin: 0 0 7px !important;
+}
+
+.permitGrantModule .farmModuleHeroText h2 {
+  font-size: clamp(2rem, 3.35vw, 3.35rem) !important;
+  line-height: 1.02 !important;
+  letter-spacing: -0.055em !important;
+  margin: 7px 0 10px !important;
+}
+
+.permitGrantModule .farmModuleHeroText p:not(.eyebrow) {
+  font-size: 0.92rem !important;
+  line-height: 1.45 !important;
+}
+
+.permitGrantModule .farmModuleHeroActions {
+  top: 50% !important;
+  right: 28px !important;
+}
+
+.permitGrantModule .farmHeroAction {
+  min-height: 46px !important;
+  padding: 0 20px !important;
+  font-size: 0.9rem !important;
+}
