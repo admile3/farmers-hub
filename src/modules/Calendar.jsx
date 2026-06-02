@@ -707,7 +707,7 @@ export default function Calendar() {
   if (!user) {
     return (
       <div className="calendarModule">
-        <section className="farmModuleHero calendarHero">
+        <section className="farmModuleHero">
           <div className="farmModuleHeroText">
             <p className="eyebrow">Calendar</p>
             <h2>Sign in to view your vendor calendar.</h2>
@@ -719,7 +719,7 @@ export default function Calendar() {
 
           <div className="farmModuleHeroActions">
             <button
-              className="primaryButton compactPrimary farmHeroAction calendarAddButton"
+              className="primaryButton compactPrimary farmHeroAction"
               type="button"
               onClick={loginWithGoogle}
             >
@@ -743,8 +743,8 @@ export default function Calendar() {
         </div>
       ) : null}
 
-      <section className="moduleHero compactHero calendarHero">
-        <div>
+      <section className="farmModuleHero">
+        <div className="farmModuleHeroText">
           <p className="eyebrow">Calendar</p>
           <h2>See every dated vendor task in one place.</h2>
           <p>
@@ -755,7 +755,7 @@ export default function Calendar() {
 
         <div className="farmModuleHeroActions">
           <button
-            className="primaryButton compactPrimary farmHeroAction calendarAddButton"
+            className="primaryButton compactPrimary farmHeroAction"
             type="button"
             onClick={() => openNewEvent()}
           >
