@@ -9790,3 +9790,23 @@ input[type="number"] {
     font-size: 0.64rem !important;
   }
 }
+.pricingComparisonHeader,
+.pricingDirectoryCompactRow {
+  grid-template-columns: minmax(260px, 1.8fr) 0.7fr 0.7fr 0.8fr 0.7fr 0.9fr minmax(160px, 0.9fr) 110px;
+}
+
+.pricingDirectoryVariantSelect {
+  width: 100%;
+  min-width: 140px;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+  font-weight: 700;
+}
+
+.pricingDirectoryActions {
+  justify-content: flex-end;
+  align-items: center;
+}
