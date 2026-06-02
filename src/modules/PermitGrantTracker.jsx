@@ -507,8 +507,8 @@ export default function PermitGrantTracker() {
         </div>
       ) : null}
 
-      <section className="moduleHero compactHero noActionHero">
-        <div>
+      <section className="moduleHero compactHero permitGrantHeroBubble">
+        <div className="permitGrantHeroText">
           <p className="eyebrow">Permits & Grants</p>
           <h2>Track permits, grants, licenses, insurance, and renewal deadlines.</h2>
           <p>
@@ -516,23 +516,23 @@ export default function PermitGrantTracker() {
             deadlines, and reminders in one place.
           </p>
         </div>
-      </section>
 
-      <section className="formActions compactActions permitGrantTopActions">
-        <button
-          className="secondaryButton compactButton"
-          type="button"
-          onClick={loadSampleRecords}
-          disabled={saving}
-        >
-          <FileText size={15} />
-          Load Sample Records
-        </button>
+        <div className="permitGrantHeroActions">
+          <button
+            className="secondaryButton compactButton"
+            type="button"
+            onClick={loadSampleRecords}
+            disabled={saving}
+          >
+            <FileText size={15} />
+            Load Sample Records
+          </button>
 
-        <button className="primaryButton compactPrimary" type="button" onClick={openNewRecord}>
-          <Plus size={15} />
-          Add Record
-        </button>
+          <button className="primaryButton compactPrimary" type="button" onClick={openNewRecord}>
+            <Plus size={15} />
+            Add Record
+          </button>
+        </div>
       </section>
 
       <section className="hubStatGrid">
