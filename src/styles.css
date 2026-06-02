@@ -9819,23 +9819,20 @@ input[type="number"] {
     minmax(120px, 0.8fr)
     minmax(100px, 0.7fr)
     minmax(130px, 0.9fr)
-    minmax(160px, 0.9fr)
-    90px;
+    minmax(250px, 1.1fr);
   align-items: center;
+}
+
+.pricingVariantActionsHeader,
+.pricingVariantActionsCell {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) 72px;
+  align-items: center;
+  gap: 12px;
 }
 
 .pricingDirectoryActions {
   display: flex;
-  align-items: center;
   justify-content: flex-end;
-  gap: 8px;
-}
-
-.pricingDirectoryVariantCell {
-  min-width: 0;
-}
-
-.pricingDirectoryVariantSelect {
-  width: 100%;
-  min-width: 140px;
+  align-items: center;
 }
