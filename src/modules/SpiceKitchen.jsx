@@ -797,8 +797,8 @@ export default function SpiceKitchen() {
   if (!user) {
     return (
       <div className="modulePage spicePage compactSpicePage">
-        <section className="moduleHero compactHero">
-          <div>
+        <section className="farmModuleHero spiceKitchenHero">
+          <div className="farmModuleHeroText">
             <p className="eyebrow">Spice Kitchen</p>
             <h2>Sign in to build and save spice blends.</h2>
             <p>
@@ -807,9 +807,15 @@ export default function SpiceKitchen() {
             </p>
           </div>
 
-          <button className="primaryButton" onClick={loginWithGoogle}>
-            Sign in with Google
-          </button>
+          <div className="farmModuleHeroActions">
+            <button
+              className="primaryButton compactPrimary farmHeroAction"
+              type="button"
+              onClick={loginWithGoogle}
+            >
+              Sign in with Google
+            </button>
+          </div>
         </section>
       </div>
     );
@@ -817,8 +823,8 @@ export default function SpiceKitchen() {
 
   return (
     <div className="modulePage spicePage compactSpicePage">
-      <section className="moduleHero compactHero noActionHero">
-        <div>
+      <section className="farmModuleHero spiceKitchenHero">
+        <div className="farmModuleHeroText">
           <p className="eyebrow">Spice Kitchen</p>
           <h2>Build, scale, and organize seasoning recipes.</h2>
           <p>
