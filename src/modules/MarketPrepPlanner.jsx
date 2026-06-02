@@ -3,12 +3,18 @@ import {
   ArrowUp,
   CalendarDays,
   ClipboardList,
+  CloudRain,
+  CloudSun,
+  Droplets,
+  MapPin,
   PackageCheck,
   Plus,
   Printer,
   Save,
   Sprout,
-  Trash2
+  Thermometer,
+  Trash2,
+  Wind
 } from "lucide-react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
@@ -279,41 +285,64 @@ function buildBakingProductOptions(bakingRecipes = []) {
     });
 }
 
+function WeatherMetricCard({ icon: Icon, label, value, detail }) {
+  return (
+    <div className="marketWeatherCard">
+      <div className="marketWeatherIcon">
+        <Icon size={18} />
+      </div>
+      <div>
+        <span>{label}</span>
+        <strong>{value}</strong>
+        {detail ? <small>{detail}</small> : null}
+      </div>
+    </div>
+  );
+}
+
 function WeatherPreview({ forecast }) {
   if (!forecast) return null;
 
   if (!forecast.available) {
-    return <p>{forecast.message}</p>;
+    return <p className="marketWeatherUnavailable">{forecast.message}</p>;
   }
 
   return (
     <div className="marketWeatherGrid">
-      <div>
-        <span>Location</span>
-        <strong>{forecast.locationName}</strong>
-      </div>
-      <div>
-        <span>Conditions</span>
-        <strong>{forecast.conditions}</strong>
-      </div>
-      <div>
-        <span>Temp</span>
-        <strong>
-          {forecast.highTemp}°F / {forecast.lowTemp}°F
-        </strong>
-      </div>
-      <div>
-        <span>Rain Chance</span>
-        <strong>{forecast.precipitationChance ?? "N/A"}%</strong>
-      </div>
-      <div>
-        <span>Humidity</span>
-        <strong>{forecast.humidity ? `${forecast.humidity}%` : "N/A"}</strong>
-      </div>
-      <div>
-        <span>Wind</span>
-        <strong>{forecast.windSpeedMax} mph</strong>
-      </div>
+      <WeatherMetricCard
+        icon={MapPin}
+        label="Location"
+        value={forecast.locationName || "Forecast location"}
+      />
+      <WeatherMetricCard
+        icon={CloudSun}
+        label="Conditions"
+        value={forecast.conditions || "Forecast available"}
+      />
+      <WeatherMetricCard
+        icon={Thermometer}
+        label="Temp"
+        value={`${forecast.highTemp}°F / ${forecast.lowTemp}°F`}
+        detail="High / low"
+      />
+      <WeatherMetricCard
+        icon={CloudRain}
+        label="Rain Chance"
+        value={`${forecast.precipitationChance ?? "N/A"}%`}
+        detail={forecast.precipitationSum ? `${forecast.precipitationSum} in expected` : "Daily max"}
+      />
+      <WeatherMetricCard
+        icon={Droplets}
+        label="Humidity"
+        value={forecast.humidity ? `${forecast.humidity}%` : "N/A"}
+        detail="Daily average"
+      />
+      <WeatherMetricCard
+        icon={Wind}
+        label="Wind"
+        value={`${forecast.windSpeedMax ?? "N/A"} mph`}
+        detail="Max gust estimate"
+      />
     </div>
   );
 }
@@ -913,21 +942,26 @@ export default function MarketPrepPlanner() {
             </label>
           </div>
 
-          <div className="placeholderBox compactPlaceholder marketPrepNoPrint">
-            <strong>Weather Preview</strong>
-            <p>
-              Forecast data is only available for nearby dates. For markets farther out,
-              save the zip code and refresh weather closer to market day.
-            </p>
+          <div className="placeholderBox compactPlaceholder marketPrepNoPrint marketWeatherPanel">
+            <div className="marketWeatherHeader">
+              <div>
+                <strong>Weather Preview</strong>
+                <p>
+                  Forecast data is only available for nearby dates. For markets farther out,
+                  save the zip code and refresh weather closer to market day.
+                </p>
+              </div>
 
-            <button
-              className="secondaryButton compactButton"
-              type="button"
-              onClick={loadWeatherForecast}
-              disabled={loadingWeather}
-            >
-              {loadingWeather ? "Checking Weather..." : "Check Weather"}
-            </button>
+              <button
+                className="secondaryButton compactButton marketWeatherButton"
+                type="button"
+                onClick={loadWeatherForecast}
+                disabled={loadingWeather}
+              >
+                <CloudSun size={15} />
+                {loadingWeather ? "Checking..." : "Check Weather"}
+              </button>
+            </div>
 
             <WeatherPreview forecast={weatherForecast} />
           </div>
