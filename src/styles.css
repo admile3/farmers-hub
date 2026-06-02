@@ -10177,3 +10177,56 @@ input[type="number"] {
     width: 100% !important;
   }
 }
+/* =========================================================
+   Products & Pricing hero: keep action button inside hero bubble
+   ========================================================= */
+
+.pricingPage .moduleHero.compactHero {
+  position: relative !important;
+  display: block !important;
+  margin-bottom: 16px !important;
+  padding: 28px 220px 28px 28px !important;
+  border-radius: var(--radius) !important;
+  background: #ffffff !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
+  overflow: hidden !important;
+}
+
+.pricingPage .moduleHero.compactHero > div:first-child {
+  width: 100% !important;
+  max-width: none !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.pricingPage .moduleHero.compactHero h2,
+.pricingPage .moduleHero.compactHero p:not(.eyebrow) {
+  max-width: none !important;
+}
+
+.pricingPage .moduleHero.compactHero > .primaryButton {
+  position: absolute !important;
+  top: 50% !important;
+  right: 28px !important;
+  transform: translateY(-50%) !important;
+  width: fit-content !important;
+  min-height: 42px !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 760px) {
+  .pricingPage .moduleHero.compactHero {
+    padding: 18px !important;
+  }
+
+  .pricingPage .moduleHero.compactHero > .primaryButton {
+    position: static !important;
+    transform: none !important;
+    margin-top: 16px !important;
+    width: 100% !important;
+  }
+}
