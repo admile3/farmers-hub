@@ -329,8 +329,8 @@ export default function Lists() {
   if (!user) {
     return (
       <div className="listsModule modulePage compactSpicePage">
-        <section className="moduleHero compactHero listsHeroBubble">
-          <div className="listsHeroText">
+        <section className="farmModuleHero listsHero">
+          <div className="farmModuleHeroText">
             <p className="eyebrow">Lists</p>
             <h2>Create reusable checklists for your vendor workflows.</h2>
             <p>
@@ -339,8 +339,8 @@ export default function Lists() {
             </p>
           </div>
 
-          <div className="listsHeroActions">
-            <button className="primaryButton" onClick={loginWithGoogle}>
+          <div className="farmModuleHeroActions">
+            <button className="primaryButton farmHeroAction" onClick={loginWithGoogle}>
               Sign in with Google
             </button>
           </div>
@@ -351,7 +351,7 @@ export default function Lists() {
 
   if (selectedList) {
     return (
-      <div className="listsModule">
+      <div className="listsModule modulePage">
         {statusMessage ? (
           <div className="floatingStatus success">
             <span>ⓘ</span>
@@ -475,7 +475,7 @@ export default function Lists() {
   }
 
   return (
-    <div className="listsModule">
+    <div className="listsModule modulePage">
       {statusMessage ? (
         <div className="floatingStatus success">
           <span>ⓘ</span>
@@ -487,8 +487,8 @@ export default function Lists() {
         </div>
       ) : null}
 
-      <section className="moduleHero compactHero listsHeroBubble">
-        <div className="listsHeroText">
+      <section className="farmModuleHero listsHero">
+        <div className="farmModuleHeroText">
           <p className="eyebrow">Lists</p>
           <h2>Create reusable checklists for your vendor workflows.</h2>
           <p>
@@ -497,9 +497,9 @@ export default function Lists() {
           </p>
         </div>
 
-        <div className="listsHeroActions">
+        <div className="farmModuleHeroActions">
           <button
-            className="primaryButton compactPrimary"
+            className="primaryButton compactPrimary farmHeroAction"
             type="button"
             onClick={() => setIsNewListOpen(true)}
           >
