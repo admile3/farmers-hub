@@ -10794,3 +10794,7 @@ input[type="number"] {
   text-transform: uppercase !important;
   margin: 0 0 7px !important;
 }
+.farmModuleHeroText .eyebrow,
+.permitGrantModule .farmModuleHeroText .eyebrow {
+  color: var(--green) !important;
+}
