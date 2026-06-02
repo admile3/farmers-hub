@@ -477,8 +477,8 @@ export default function PermitGrantTracker() {
   if (!user) {
     return (
       <div className="modulePage permitGrantModule compactSpicePage">
-        <section className="moduleHero compactHero">
-          <div>
+        <section className="farmModuleHero permitGrantHero">
+          <div className="farmModuleHeroText">
             <p className="eyebrow">Permits & Grants</p>
             <h2>Sign in to save permits, grants, licenses, insurance, and renewals.</h2>
             <p>
@@ -487,9 +487,11 @@ export default function PermitGrantTracker() {
             </p>
           </div>
 
-          <button className="primaryButton" onClick={loginWithGoogle}>
-            Sign in with Google
-          </button>
+          <div className="farmModuleHeroActions">
+            <button className="primaryButton farmHeroAction" type="button" onClick={loginWithGoogle}>
+              Sign in with Google
+            </button>
+          </div>
         </section>
       </div>
     );
@@ -507,8 +509,8 @@ export default function PermitGrantTracker() {
         </div>
       ) : null}
 
-      <section className="moduleHero compactHero permitGrantHeroBubble">
-        <div className="permitGrantHeroText">
+      <section className="farmModuleHero permitGrantHero">
+        <div className="farmModuleHeroText">
           <p className="eyebrow">Permits & Grants</p>
           <h2>Track permits, grants, licenses, insurance, and renewal deadlines.</h2>
           <p>
@@ -517,9 +519,9 @@ export default function PermitGrantTracker() {
           </p>
         </div>
 
-        <div className="permitGrantHeroActions">
+        <div className="farmModuleHeroActions">
           <button
-            className="secondaryButton compactButton"
+            className="secondaryButton farmHeroAction"
             type="button"
             onClick={loadSampleRecords}
             disabled={saving}
@@ -528,7 +530,7 @@ export default function PermitGrantTracker() {
             Load Sample Records
           </button>
 
-          <button className="primaryButton compactPrimary" type="button" onClick={openNewRecord}>
+          <button className="primaryButton farmHeroAction" type="button" onClick={openNewRecord}>
             <Plus size={15} />
             Add Record
           </button>
