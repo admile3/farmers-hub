@@ -10,6 +10,8 @@ import {
   Sprout,
   Trash2
 } from "lucide-react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebase";
 import { useAuth } from "../AuthContext.jsx";
 import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import StatCard from "../components/StatCard.jsx";
@@ -18,6 +20,8 @@ import {
   getMarketPrepPlans,
   saveMarketPrepPlan
 } from "../services/marketPrepService.js";
+import { getProducts } from "../services/productService.js";
+import { getSpiceRecipes } from "../services/spiceKitchenService.js";
 
 const marketCategories = [
   "Produce",
@@ -116,6 +120,45 @@ function createSampleProducts() {
   }));
 }
 
+function formatPackageSize(size, unit) {
+  const amount = Number(size) || 0;
+  if (!amount) return "";
+  return `${Number(amount.toFixed(3)).toString()} ${unit || ""}`.trim();
+}
+
+function cleanNumber(value, fallback = "") {
+  if (value === "" || value === null || value === undefined) return fallback;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function inferAmountUnit(unitLabel = "") {
+  const clean = String(unitLabel).toLowerCase();
+
+  if (clean.includes("oz")) return "oz";
+  if (clean.includes("lb")) return "lb";
+  if (clean.includes("dozen")) return "dozen";
+  if (clean.includes("tray")) return "tray";
+  if (clean.includes("loaf")) return "loaf";
+  if (clean.includes("pouch")) return "pouch";
+  if (clean.includes("bag")) return "bag";
+  if (clean.includes("bunch")) return "bunch";
+  if (clean.includes("jar")) return "jar";
+
+  return "each";
+}
+
+function inferUnitAmount(option = {}) {
+  if (Number(option.unitAmount)) return Number(option.unitAmount);
+  if (Number(option.packageOunces)) return Number(option.packageOunces);
+  if (Number(option.size)) return Number(option.size);
+
+  const unitLabel = String(option.unitLabel || option.name || "");
+  const match = unitLabel.match(/(\d+(\.\d+)?)/);
+
+  return match ? Number(match[1]) : 1;
+}
+
 function getProductTotals(product) {
   const plannedUnits = Number(product.plannedUnits) || 0;
   const unitAmount = Number(product.unitAmount) || 0;
@@ -146,6 +189,93 @@ function productSummaryLine(product) {
   )}`;
 }
 
+function buildManualProductOptions(products = []) {
+  return products.map((product) => ({
+    id: `manual-${product.id}`,
+    sourceType: "manual",
+    sourceLabel: "Products & Pricing",
+    sourceProductId: product.id,
+    label: `${product.name || "Untitled Product"} (${product.unitLabel || "unit"})`,
+    name: product.name || "Untitled Product",
+    category: product.category || "Other",
+    unitLabel: product.unitLabel || "unit",
+    unitAmount: inferUnitAmount(product),
+    amountUnit: product.amountUnit || inferAmountUnit(product.unitLabel),
+    notes: product.notes || product.description || ""
+  }));
+}
+
+function buildSpiceProductOptions(spiceRecipes = []) {
+  const options = [];
+
+  spiceRecipes
+    .filter((recipe) => recipe?.listInProductDirectory)
+    .forEach((recipe) => {
+      const packages = Array.isArray(recipe.productPackages)
+        ? recipe.productPackages
+        : [];
+
+      packages.forEach((packageItem, index) => {
+        const packageName =
+          packageItem.name ||
+          formatPackageSize(packageItem.size, packageItem.unit) ||
+          `Package ${index + 1}`;
+
+        const packageOunces =
+          cleanNumber(packageItem.packageOunces, "") ||
+          (String(packageItem.unit || "").toLowerCase().includes("oz")
+            ? cleanNumber(packageItem.size, "")
+            : "");
+
+        options.push({
+          id: `spice-${recipe.id}-${index}`,
+          sourceType: "spice",
+          sourceLabel: "Spice Kitchen",
+          sourceProductId: recipe.id,
+          sourceVariantIndex: index,
+          label: `${recipe.name || "Untitled Spice Blend"} - ${packageName}`,
+          name: recipe.name || "Untitled Spice Blend",
+          category: "Spices",
+          unitLabel: packageName,
+          unitAmount: packageOunces || cleanNumber(packageItem.size, 1),
+          amountUnit: packageOunces ? "oz" : packageItem.unit || inferAmountUnit(packageName),
+          notes: recipe.notes || ""
+        });
+      });
+    });
+
+  return options;
+}
+
+function buildBakingProductOptions(bakingRecipes = []) {
+  return bakingRecipes
+    .filter((recipe) => recipe?.listInProductDirectory)
+    .map((recipe) => {
+      const directory = recipe.productDirectory || {};
+      const productName = directory.productName || recipe.name || "Untitled Baking Product";
+      const unitLabel = directory.sellingUnit || recipe.unitsLabel || "unit";
+
+      return {
+        id: `baking-${recipe.id}`,
+        sourceType: "baking",
+        sourceLabel: "Baking Planner",
+        sourceProductId: recipe.id,
+        label: `${productName} (${unitLabel})`,
+        name: productName,
+        category:
+          recipe.category === "Loaf" ||
+          recipe.category === "Baguette" ||
+          recipe.category === "Pan Loaf"
+            ? "Bread"
+            : "Baked Goods",
+        unitLabel,
+        unitAmount: cleanNumber(directory.unitAmount, 1),
+        amountUnit: directory.amountUnit || inferAmountUnit(unitLabel),
+        notes: directory.notes || ""
+      };
+    });
+}
+
 export default function MarketPrepPlanner() {
   const { user, loginWithGoogle } = useAuth();
   const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } = useUnsavedChanges();
@@ -162,8 +292,11 @@ export default function MarketPrepPlanner() {
   const [weatherNotes, setWeatherNotes] = useState("");
   const [products, setProducts] = useState([]);
   const [savedPlans, setSavedPlans] = useState([]);
+  const [productOptions, setProductOptions] = useState([]);
+  const [selectedProductOptionId, setSelectedProductOptionId] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [loadingPlans, setLoadingPlans] = useState(false);
+  const [loadingProducts, setLoadingProducts] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
 
@@ -275,11 +408,53 @@ export default function MarketPrepPlanner() {
     }
   }
 
+  async function loadProductOptions() {
+    if (!user) return;
+
+    setLoadingProducts(true);
+
+    try {
+      const [manualProducts, spiceRecipes, bakingSnapshot] = await Promise.all([
+        getProducts(user.uid).catch((error) => {
+          console.error(error);
+          return [];
+        }),
+        getSpiceRecipes(user.uid).catch((error) => {
+          console.error(error);
+          return [];
+        }),
+        getDoc(doc(db, "users", user.uid, "bakingPlanner", "main")).catch((error) => {
+          console.error(error);
+          return null;
+        })
+      ]);
+
+      const bakingRecipes = bakingSnapshot?.exists?.()
+        ? bakingSnapshot.data()?.recipes || []
+        : [];
+
+      const options = [
+        ...buildManualProductOptions(manualProducts),
+        ...buildSpiceProductOptions(spiceRecipes),
+        ...buildBakingProductOptions(bakingRecipes)
+      ].sort((a, b) => a.label.localeCompare(b.label));
+
+      setProductOptions(options);
+    } catch (error) {
+      console.error(error);
+      setStatusMessage("Could not load products from linked modules.");
+    } finally {
+      setLoadingProducts(false);
+    }
+  }
+
   useEffect(() => {
     if (user) {
       loadSavedPlans();
+      loadProductOptions();
     } else {
       setSavedPlans([]);
+      setProductOptions([]);
     }
   }, [user]);
 
@@ -404,6 +579,29 @@ export default function MarketPrepPlanner() {
     setProducts((current) => current.filter((product) => product.id !== id));
   }
 
+  function applyProductOption(optionId) {
+    setSelectedProductOptionId(optionId);
+
+    if (!optionId) return;
+
+    const option = productOptions.find((item) => item.id === optionId);
+    if (!option) return;
+
+    setNewProduct((current) => ({
+      ...current,
+      name: option.name,
+      category: option.category || "Other",
+      unitLabel: option.unitLabel || "",
+      unitAmount: option.unitAmount || 1,
+      amountUnit: option.amountUnit || inferAmountUnit(option.unitLabel),
+      notes: option.notes || "",
+      sourceType: option.sourceType,
+      sourceLabel: option.sourceLabel,
+      sourceProductId: option.sourceProductId,
+      sourceVariantIndex: option.sourceVariantIndex ?? ""
+    }));
+  }
+
   function addProduct(event) {
     markMarketPrepDirty();
     event.preventDefault();
@@ -430,6 +628,10 @@ export default function MarketPrepPlanner() {
         amountUnit: newProduct.amountUnit.trim(),
         bufferPct: Number(newProduct.bufferPct) || 0,
         notes: newProduct.notes.trim(),
+        sourceType: newProduct.sourceType || "",
+        sourceLabel: newProduct.sourceLabel || "",
+        sourceProductId: newProduct.sourceProductId || "",
+        sourceVariantIndex: newProduct.sourceVariantIndex ?? "",
         packed: false
       }
     ]);
@@ -444,6 +646,7 @@ export default function MarketPrepPlanner() {
       bufferPct: 0,
       notes: ""
     });
+    setSelectedProductOptionId("");
 
     setStatusMessage("Product added to market plan.");
     scrollToSection(packListRef);
@@ -553,29 +756,17 @@ export default function MarketPrepPlanner() {
             </div>
 
             <div className="formActions compactActions marketPrepNoPrint">
-              <button
-                className="secondaryButton compactButton"
-                type="button"
-                onClick={startNewPlan}
-              >
+              <button className="secondaryButton compactButton" type="button" onClick={startNewPlan}>
                 <Plus size={15} />
                 New Plan
               </button>
 
-              <button
-                className="secondaryButton compactButton"
-                type="button"
-                onClick={loadSampleProducts}
-              >
+              <button className="secondaryButton compactButton" type="button" onClick={loadSampleProducts}>
                 <Sprout size={15} />
                 Load Sample Products
               </button>
 
-              <button
-                className="secondaryButton compactButton"
-                type="button"
-                onClick={printPlan}
-              >
+              <button className="secondaryButton compactButton" type="button" onClick={printPlan}>
                 <Printer size={15} />
                 Print
               </button>
@@ -631,29 +822,9 @@ export default function MarketPrepPlanner() {
           </div>
 
           <div className="hubStatGrid marketPrepStatsGrid marketPrepNoPrint">
-            <StatCard
-              icon={PackageCheck}
-              label="Products"
-              value={totals.productCount}
-              sub="Line items in this plan"
-              accent="market"
-            />
-
-            <StatCard
-              icon={ClipboardList}
-              label="Planned Units"
-              value={totals.plannedUnits}
-              sub="Total units before buffers"
-              accent="pricing"
-            />
-
-            <StatCard
-              icon={Sprout}
-              label="Buffered Items"
-              value={totals.lineItemsWithBuffer}
-              sub="Products with extra prep added"
-              accent="sourdough"
-            />
+            <StatCard icon={PackageCheck} label="Products" value={totals.productCount} sub="Line items in this plan" accent="market" />
+            <StatCard icon={ClipboardList} label="Planned Units" value={totals.plannedUnits} sub="Total units before buffers" accent="pricing" />
+            <StatCard icon={Sprout} label="Buffered Items" value={totals.lineItemsWithBuffer} sub="Products with extra prep added" accent="sourdough" />
           </div>
 
           <div className="marketPrepMobileSummary marketPrepNoPrint">
@@ -720,19 +891,13 @@ export default function MarketPrepPlanner() {
 
           <div className="savedList compactSavedList">
             {loadingPlans ? (
-              <div className="placeholderBox compactPlaceholder">
-                Loading saved plans...
-              </div>
+              <div className="placeholderBox compactPlaceholder">Loading saved plans...</div>
             ) : savedPlans.length ? (
               savedPlans.map((plan) => (
                 <div className="savedItem compactSavedItem" key={plan.id}>
                   <div>
                     <h4>
-                      <button
-                        type="button"
-                        className="savedItemLink"
-                        onClick={() => hydratePlan(plan)}
-                      >
+                      <button type="button" className="savedItemLink" onClick={() => hydratePlan(plan)}>
                         {plan.marketName || "Market Plan"}
                       </button>
                     </h4>
@@ -752,9 +917,7 @@ export default function MarketPrepPlanner() {
                 </div>
               ))
             ) : (
-              <div className="placeholderBox compactPlaceholder">
-                No saved market plans yet.
-              </div>
+              <div className="placeholderBox compactPlaceholder">No saved market plans yet.</div>
             )}
           </div>
         </div>
@@ -767,9 +930,32 @@ export default function MarketPrepPlanner() {
               <p className="eyebrow">Add Product</p>
               <h3>Product Forecast</h3>
             </div>
+
+            <div className="formActions compactActions">
+              <button className="secondaryButton compactButton" type="button" onClick={loadProductOptions}>
+                Refresh Products
+              </button>
+            </div>
           </div>
 
           <form className="formGrid compactFormGrid marketPrepAddProductForm" onSubmit={addProduct}>
+            <label className="fullSpan">
+              Select Existing Product / Variant
+              <select
+                value={selectedProductOptionId}
+                onChange={(event) => applyProductOption(event.target.value)}
+              >
+                <option value="">
+                  {loadingProducts ? "Loading products..." : "Choose a product or enter one manually"}
+                </option>
+                {productOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label} • {option.sourceLabel}
+                  </option>
+                ))}
+              </select>
+            </label>
+
             <label>
               Product / Item
               <input
@@ -929,20 +1115,12 @@ export default function MarketPrepPlanner() {
           </div>
 
           <div className="formActions compactActions marketPrepNoPrint">
-            <button
-              className="secondaryButton compactButton"
-              type="button"
-              onClick={loadSampleProducts}
-            >
+            <button className="secondaryButton compactButton" type="button" onClick={loadSampleProducts}>
               <Sprout size={15} />
               Load Samples
             </button>
 
-            <button
-              className="secondaryButton compactButton"
-              type="button"
-              onClick={printPlan}
-            >
+            <button className="secondaryButton compactButton" type="button" onClick={printPlan}>
               <Printer size={15} />
               Print
             </button>
@@ -1005,9 +1183,7 @@ export default function MarketPrepPlanner() {
                       Product
                       <input
                         value={product.name}
-                        onChange={(event) =>
-                          updateProduct(product.id, "name", event.target.value)
-                        }
+                        onChange={(event) => updateProduct(product.id, "name", event.target.value)}
                       />
                     </label>
 
@@ -1015,9 +1191,7 @@ export default function MarketPrepPlanner() {
                       Category
                       <select
                         value={product.category}
-                        onChange={(event) =>
-                          updateProduct(product.id, "category", event.target.value)
-                        }
+                        onChange={(event) => updateProduct(product.id, "category", event.target.value)}
                       >
                         {marketCategories.map((category) => (
                           <option key={category}>{category}</option>
@@ -1029,9 +1203,7 @@ export default function MarketPrepPlanner() {
                       Unit
                       <input
                         value={product.unitLabel}
-                        onChange={(event) =>
-                          updateProduct(product.id, "unitLabel", event.target.value)
-                        }
+                        onChange={(event) => updateProduct(product.id, "unitLabel", event.target.value)}
                       />
                     </label>
 
@@ -1040,9 +1212,7 @@ export default function MarketPrepPlanner() {
                       <input
                         type="number"
                         value={product.plannedUnits}
-                        onChange={(event) =>
-                          updateProduct(product.id, "plannedUnits", event.target.value)
-                        }
+                        onChange={(event) => updateProduct(product.id, "plannedUnits", event.target.value)}
                       />
                     </label>
 
@@ -1052,9 +1222,7 @@ export default function MarketPrepPlanner() {
                         type="number"
                         step="0.0001"
                         value={product.unitAmount}
-                        onChange={(event) =>
-                          updateProduct(product.id, "unitAmount", event.target.value)
-                        }
+                        onChange={(event) => updateProduct(product.id, "unitAmount", event.target.value)}
                       />
                     </label>
 
@@ -1062,9 +1230,7 @@ export default function MarketPrepPlanner() {
                       Amount Unit
                       <input
                         value={product.amountUnit}
-                        onChange={(event) =>
-                          updateProduct(product.id, "amountUnit", event.target.value)
-                        }
+                        onChange={(event) => updateProduct(product.id, "amountUnit", event.target.value)}
                       />
                     </label>
 
@@ -1073,9 +1239,7 @@ export default function MarketPrepPlanner() {
                       <input
                         type="number"
                         value={product.bufferPct}
-                        onChange={(event) =>
-                          updateProduct(product.id, "bufferPct", event.target.value)
-                        }
+                        onChange={(event) => updateProduct(product.id, "bufferPct", event.target.value)}
                       />
                     </label>
 
@@ -1083,9 +1247,7 @@ export default function MarketPrepPlanner() {
                       Notes
                       <input
                         value={product.notes}
-                        onChange={(event) =>
-                          updateProduct(product.id, "notes", event.target.value)
-                        }
+                        onChange={(event) => updateProduct(product.id, "notes", event.target.value)}
                       />
                     </label>
                   </div>
@@ -1142,18 +1304,14 @@ export default function MarketPrepPlanner() {
                   <span>
                     <input
                       value={product.name}
-                      onChange={(event) =>
-                        updateProduct(product.id, "name", event.target.value)
-                      }
+                      onChange={(event) => updateProduct(product.id, "name", event.target.value)}
                     />
                   </span>
 
                   <span>
                     <select
                       value={product.category}
-                      onChange={(event) =>
-                        updateProduct(product.id, "category", event.target.value)
-                      }
+                      onChange={(event) => updateProduct(product.id, "category", event.target.value)}
                     >
                       {marketCategories.map((category) => (
                         <option key={category}>{category}</option>
@@ -1164,9 +1322,7 @@ export default function MarketPrepPlanner() {
                   <span>
                     <input
                       value={product.unitLabel}
-                      onChange={(event) =>
-                        updateProduct(product.id, "unitLabel", event.target.value)
-                      }
+                      onChange={(event) => updateProduct(product.id, "unitLabel", event.target.value)}
                     />
                   </span>
 
@@ -1174,9 +1330,7 @@ export default function MarketPrepPlanner() {
                     <input
                       type="number"
                       value={product.plannedUnits}
-                      onChange={(event) =>
-                        updateProduct(product.id, "plannedUnits", event.target.value)
-                      }
+                      onChange={(event) => updateProduct(product.id, "plannedUnits", event.target.value)}
                     />
                   </span>
 
@@ -1186,15 +1340,11 @@ export default function MarketPrepPlanner() {
                         type="number"
                         step="0.0001"
                         value={product.unitAmount}
-                        onChange={(event) =>
-                          updateProduct(product.id, "unitAmount", event.target.value)
-                        }
+                        onChange={(event) => updateProduct(product.id, "unitAmount", event.target.value)}
                       />
                       <input
                         value={product.amountUnit}
-                        onChange={(event) =>
-                          updateProduct(product.id, "amountUnit", event.target.value)
-                        }
+                        onChange={(event) => updateProduct(product.id, "amountUnit", event.target.value)}
                       />
                     </div>
                   </span>
@@ -1213,9 +1363,7 @@ export default function MarketPrepPlanner() {
                   <span>
                     <input
                       value={product.notes}
-                      onChange={(event) =>
-                        updateProduct(product.id, "notes", event.target.value)
-                      }
+                      onChange={(event) => updateProduct(product.id, "notes", event.target.value)}
                     />
                   </span>
 
