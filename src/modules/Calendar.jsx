@@ -707,8 +707,8 @@ export default function Calendar() {
   if (!user) {
     return (
       <div className="calendarModule">
-        <section className="moduleHero compactHero calendarHero">
-          <div>
+        <section className="farmModuleHero calendarHero">
+          <div className="farmModuleHeroText">
             <p className="eyebrow">Calendar</p>
             <h2>Sign in to view your vendor calendar.</h2>
             <p>
@@ -717,13 +717,15 @@ export default function Calendar() {
             </p>
           </div>
 
-          <button
-            className="primaryButton calendarAddButton"
-            type="button"
-            onClick={loginWithGoogle}
-          >
-            Sign in with Google
-          </button>
+          <div className="farmModuleHeroActions">
+            <button
+              className="primaryButton compactPrimary farmHeroAction calendarAddButton"
+              type="button"
+              onClick={loginWithGoogle}
+            >
+              Sign in with Google
+            </button>
+          </div>
         </section>
       </div>
     );
@@ -751,14 +753,16 @@ export default function Calendar() {
           </p>
         </div>
 
-        <button
-          className="primaryButton calendarAddButton"
-          type="button"
-          onClick={() => openNewEvent()}
-        >
-          <Plus size={16} />
-          Add Event
-        </button>
+        <div className="farmModuleHeroActions">
+          <button
+            className="primaryButton compactPrimary farmHeroAction calendarAddButton"
+            type="button"
+            onClick={() => openNewEvent()}
+          >
+            <Plus size={16} />
+            Add Event
+          </button>
+        </div>
       </section>
 
       <section className="hubStatGrid calendarStatGrid">
