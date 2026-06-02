@@ -2036,3 +2036,114 @@
     border-width: 2px;
   }
 }
+
+/* =========================================================
+   Dynamic full-width hero layout override
+   Generated for: hero uses available width before stacking
+   Purpose:
+   - Prevent the Baking Planner hero card from shrinking to half width
+     on condensed desktop/tablet screens.
+   - Keep the hero full-width, then stack cleanly only when necessary.
+   ========================================================= */
+
+.bakingPlanner .hero {
+  width: 100% !important;
+  max-width: none !important;
+  display: block !important;
+  container-type: normal !important;
+}
+
+.bakingPlanner .hero-inner {
+  width: 100% !important;
+  max-width: none !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 390px) !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  flex-wrap: initial !important;
+}
+
+.bakingPlanner .hero-copy {
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  flex: initial !important;
+}
+
+.bakingPlanner .hero h1 {
+  max-width: 820px !important;
+  font-size: clamp(2.15rem, 4.2vw, 3.2rem) !important;
+  line-height: 0.98 !important;
+}
+
+.bakingPlanner .hero p {
+  max-width: 760px !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+}
+
+.bakingPlanner .hero-actions,
+.bakingPlanner .hero-stats {
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  flex: initial !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+}
+
+.bakingPlanner .hero-stats > div,
+.bakingPlanner .hero-stats .hero-settings-card {
+  min-width: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+@media (max-width: 1080px) {
+  .bakingPlanner .hero-inner {
+    grid-template-columns: 1fr !important;
+  }
+
+  .bakingPlanner .hero-actions,
+  .bakingPlanner .hero-stats {
+    width: 100% !important;
+  }
+
+  .bakingPlanner .hero h1 {
+    max-width: 860px !important;
+    font-size: clamp(2rem, 5vw, 3rem) !important;
+  }
+
+  .bakingPlanner .hero p {
+    max-width: 820px !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .bakingPlanner .hero h1 {
+    font-size: clamp(1.72rem, 9.1vw, 2.35rem) !important;
+    line-height: 0.98 !important;
+  }
+
+  .bakingPlanner .hero p {
+    font-size: 0.9rem !important;
+    line-height: 1.42 !important;
+  }
+
+  .bakingPlanner .hero-actions,
+  .bakingPlanner .hero-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .bakingPlanner .hero-actions,
+  .bakingPlanner .hero-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+  }
+}
