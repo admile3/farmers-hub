@@ -329,8 +329,8 @@ export default function Lists() {
   if (!user) {
     return (
       <div className="listsModule modulePage compactSpicePage">
-        <section className="moduleHero compactHero">
-          <div>
+        <section className="moduleHero compactHero listsHeroBubble">
+          <div className="listsHeroText">
             <p className="eyebrow">Lists</p>
             <h2>Create reusable checklists for your vendor workflows.</h2>
             <p>
@@ -339,9 +339,11 @@ export default function Lists() {
             </p>
           </div>
 
-          <button className="primaryButton" onClick={loginWithGoogle}>
-            Sign in with Google
-          </button>
+          <div className="listsHeroActions">
+            <button className="primaryButton" onClick={loginWithGoogle}>
+              Sign in with Google
+            </button>
+          </div>
         </section>
       </div>
     );
@@ -485,8 +487,8 @@ export default function Lists() {
         </div>
       ) : null}
 
-      <section className="moduleHero compactHero noActionHero">
-        <div>
+      <section className="moduleHero compactHero listsHeroBubble">
+        <div className="listsHeroText">
           <p className="eyebrow">Lists</p>
           <h2>Create reusable checklists for your vendor workflows.</h2>
           <p>
@@ -494,17 +496,17 @@ export default function Lists() {
             into reusable workflow lists.
           </p>
         </div>
-      </section>
 
-      <section className="moduleActionBar">
-        <button
-          className="primaryButton compactPrimary"
-          type="button"
-          onClick={() => setIsNewListOpen(true)}
-        >
-          <ListPlus size={18} />
-          New List
-        </button>
+        <div className="listsHeroActions">
+          <button
+            className="primaryButton compactPrimary"
+            type="button"
+            onClick={() => setIsNewListOpen(true)}
+          >
+            <ListPlus size={18} />
+            New List
+          </button>
+        </div>
       </section>
 
       <section className="permitFilterBar listsFilterBar">
