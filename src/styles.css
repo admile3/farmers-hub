@@ -10801,3 +10801,186 @@ input[type="number"] {
 .calendarModule .farmModuleHero {
   margin-bottom: 18px !important;
 }
+/* =========================================================
+   Farmers Hub shared design system foundation
+   Paste at the very bottom of src/styles.css
+   ========================================================= */
+
+.farmModuleHero {
+  position: relative !important;
+  display: block !important;
+  min-height: 182px !important;
+  padding: 28px !important;
+  border-radius: var(--radius) !important;
+  background: #ffffff !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
+  overflow: hidden !important;
+  margin-bottom: 18px !important;
+}
+
+.farmModuleHeroText {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  padding-right: 0 !important;
+}
+
+.farmModuleHeroText .eyebrow {
+  color: var(--green) !important;
+  font-size: 0.72rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  margin: 0 0 7px !important;
+}
+
+.farmModuleHeroText h2 {
+  margin: 7px 0 10px !important;
+  max-width: none !important;
+  color: var(--text) !important;
+  font-size: clamp(2rem, 3.35vw, 3.35rem) !important;
+  line-height: 1.02 !important;
+  letter-spacing: -0.055em !important;
+}
+
+.farmModuleHeroText p:not(.eyebrow) {
+  width: calc(100% - 360px) !important;
+  max-width: none !important;
+  color: var(--muted) !important;
+  font-size: 0.92rem !important;
+  line-height: 1.45 !important;
+}
+
+.farmModuleHeroActions {
+  position: absolute !important;
+  top: 50% !important;
+  right: 28px !important;
+  transform: translateY(-50%) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 12px !important;
+  width: max-content !important;
+  max-width: 340px !important;
+}
+
+.farmHeroAction {
+  min-height: 46px !important;
+  padding: 0 20px !important;
+  border-radius: 999px !important;
+  font-size: 0.9rem !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
+}
+
+/* Shared page spacing */
+.modulePage,
+.spicePage,
+.marketPrepPage,
+.pricingPage,
+.permitGrantModule,
+.listsModule,
+.calendarModule,
+.customersModule,
+.ordersModule,
+.plantingModule {
+  gap: 16px;
+}
+
+/* Shared panel/card foundation */
+.farmPanel,
+.workspacePanel,
+.calendarPanel,
+.dashboardPanel,
+.toolCard,
+.listCard,
+.savedItem,
+.permitRecordCard,
+.marketPrepMobilePackCard {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--shadow) !important;
+}
+
+/* Shared section headers */
+.workspaceHeader,
+.farmPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+/* Shared action rows */
+.farmActionRow,
+.formActions,
+.compactActions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+/* Shared clickable card behavior */
+.toolCard,
+.listCard,
+.savedItem,
+.permitRecordCard,
+.marketPrepMobilePackCard {
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.clickableToolCard:hover,
+.listCard:hover,
+.savedItem:hover,
+.permitRecordCard:hover,
+.marketPrepMobilePackCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-strong) !important;
+  border-color: var(--border-strong) !important;
+}
+
+/* Shared mobile behavior */
+@media (max-width: 1100px) {
+  .farmModuleHero {
+    min-height: 0 !important;
+  }
+
+  .farmModuleHeroText p:not(.eyebrow) {
+    width: 100% !important;
+  }
+
+  .farmModuleHeroActions {
+    position: static !important;
+    transform: none !important;
+    margin-top: 16px !important;
+    max-width: none !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .farmModuleHero {
+    padding: 18px !important;
+  }
+
+  .farmModuleHeroActions {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .farmHeroAction {
+    width: 100% !important;
+  }
+
+  .workspaceHeader,
+  .farmPanelHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
