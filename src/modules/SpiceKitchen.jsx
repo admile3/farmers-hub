@@ -97,6 +97,17 @@ function round(value, places = 2) {
   return Number(value || 0).toFixed(places);
 }
 
+function formatCurrency(value) {
+  if (value === "" || value === null || value === undefined) return "";
+  return toNumber(value).toFixed(2);
+}
+
+function cleanCurrencyInput(value) {
+  if (value === "" || value === null || value === undefined) return "";
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed.toFixed(2) : "";
+}
+
 function formatParts(value) {
   const number = toNumber(value);
   return Number(number.toFixed(2)).toString();
@@ -108,6 +119,23 @@ function ouncesToGrams(ounces) {
 
 function gramsToOunces(grams) {
   return grams / 28.3495;
+}
+
+function convertAmountToOunces(amount, unit) {
+  const number = toNumber(amount);
+
+  if (unit === "oz") return number;
+  if (unit === "g") return gramsToOunces(number);
+  if (unit === "lb") return number * 16;
+
+  return number;
+}
+
+function formatLibraryCostLabel(cost, amount, unit) {
+  const cleanAmount = toNumber(amount);
+  const amountLabel = cleanAmount === 1 ? unit : `${formatParts(cleanAmount)} ${unit}`;
+
+  return `$${round(cost, 2)} / ${amountLabel}`;
 }
 
 function getIngredientCostPerOunce(ingredient) {
@@ -154,6 +182,8 @@ export default function SpiceKitchen() {
   const [targetAmount, setTargetAmount] = useState("");
   const [targetUnit, setTargetUnit] = useState("oz");
   const [overagePercent, setOveragePercent] = useState("");
+  const [libraryCostAmount, setLibraryCostAmount] = useState("1");
+  const [libraryCostUnit, setLibraryCostUnit] = useState("oz");
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [quickIngredient, setQuickIngredient] = useState(emptyIngredient);
   const [statusMessage, setStatusMessage] = useState("");
@@ -408,6 +438,11 @@ export default function SpiceKitchen() {
     setIngredientForm((current) => ({ ...current, [field]: value }));
   }
 
+  function updateQuickIngredientField(field, value) {
+    markSpiceDirty();
+    setQuickIngredient((current) => ({ ...current, [field]: value }));
+  }
+
   function updateRecipeField(field, value) {
     markSpiceDirty();
     setRecipeForm((current) => ({ ...current, [field]: value }));
@@ -421,7 +456,7 @@ export default function SpiceKitchen() {
       name: ingredientForm.name.trim(),
       category: ingredientForm.category,
       supplier: ingredientForm.supplier.trim(),
-      cost: ingredientForm.cost,
+      cost: cleanCurrencyInput(ingredientForm.cost),
       costUnit: ingredientForm.costUnit,
       notes: ingredientForm.notes.trim()
     };
@@ -456,7 +491,7 @@ export default function SpiceKitchen() {
       name: ingredient.name || "",
       category: ingredient.category || "Other",
       supplier: ingredient.supplier || "",
-      cost: ingredient.cost || "",
+      cost: cleanCurrencyInput(ingredient.cost),
       costUnit: ingredient.costUnit || "oz",
       notes: ingredient.notes || ""
     });
@@ -563,7 +598,7 @@ export default function SpiceKitchen() {
       name: quickIngredient.name.trim(),
       category: quickIngredient.category,
       supplier: quickIngredient.supplier.trim(),
-      cost: quickIngredient.cost,
+      cost: cleanCurrencyInput(quickIngredient.cost),
       costUnit: quickIngredient.costUnit,
       notes: quickIngredient.notes.trim()
     };
@@ -893,13 +928,9 @@ export default function SpiceKitchen() {
                   Ingredient Name
                   <input
                     value={quickIngredient.name}
-                    onChange={(event) => {
-                      markSpiceDirty();
-                      setQuickIngredient((current) => ({
-                        ...current,
-                        name: event.target.value
-                      }));
-                    }}
+                    onChange={(event) =>
+                      updateQuickIngredientField("name", event.target.value)
+                    }
                     placeholder="e.g., Smoked paprika"
                   />
                 </label>
@@ -908,13 +939,9 @@ export default function SpiceKitchen() {
                   Category
                   <select
                     value={quickIngredient.category}
-                    onChange={(event) => {
-                      markSpiceDirty();
-                      setQuickIngredient((current) => ({
-                        ...current,
-                        category: event.target.value
-                      }));
-                    }}
+                    onChange={(event) =>
+                      updateQuickIngredientField("category", event.target.value)
+                    }
                   >
                     {ingredientCategories.map((category) => (
                       <option key={category}>{category}</option>
@@ -928,13 +955,15 @@ export default function SpiceKitchen() {
                     type="number"
                     step="0.0001"
                     value={quickIngredient.cost}
-                    onChange={(event) => {
-                      markSpiceDirty();
-                      setQuickIngredient((current) => ({
-                        ...current,
-                        cost: event.target.value
-                      }));
-                    }}
+                    onChange={(event) =>
+                      updateQuickIngredientField("cost", event.target.value)
+                    }
+                    onBlur={(event) =>
+                      updateQuickIngredientField(
+                        "cost",
+                        cleanCurrencyInput(event.target.value)
+                      )
+                    }
                     placeholder="e.g., 2.50"
                   />
                 </label>
@@ -943,13 +972,9 @@ export default function SpiceKitchen() {
                   Per
                   <select
                     value={quickIngredient.costUnit}
-                    onChange={(event) => {
-                      markSpiceDirty();
-                      setQuickIngredient((current) => ({
-                        ...current,
-                        costUnit: event.target.value
-                      }));
-                    }}
+                    onChange={(event) =>
+                      updateQuickIngredientField("costUnit", event.target.value)
+                    }
                   >
                     <option value="oz">oz</option>
                     <option value="g">g</option>
@@ -1384,6 +1409,9 @@ export default function SpiceKitchen() {
                   step="0.0001"
                   value={ingredientForm.cost}
                   onChange={(event) => updateIngredientField("cost", event.target.value)}
+                  onBlur={(event) =>
+                    updateIngredientField("cost", cleanCurrencyInput(event.target.value))
+                  }
                   placeholder="e.g., 2.50"
                 />
               </label>
@@ -1466,7 +1494,7 @@ export default function SpiceKitchen() {
                           {ingredient.category}
                           {ingredient.supplier ? ` • ${ingredient.supplier}` : ""}
                           {ingredient.cost
-                            ? ` • $${ingredient.cost} / ${ingredient.costUnit}`
+                            ? ` • $${formatCurrency(ingredient.cost)} / ${ingredient.costUnit}`
                             : ""}
                         </p>
                       </div>
@@ -1520,7 +1548,7 @@ export default function SpiceKitchen() {
                           <strong>Cost</strong>
                           <span>
                             {ingredient.cost
-                              ? `$${ingredient.cost} / ${ingredient.costUnit}`
+                              ? `$${formatCurrency(ingredient.cost)} / ${ingredient.costUnit}`
                               : "Not listed"}
                           </span>
                         </div>
@@ -1551,6 +1579,34 @@ export default function SpiceKitchen() {
               <p className="eyebrow">Saved Recipes</p>
               <h3>Recipe Library</h3>
             </div>
+
+            <div className="recipeLibraryHeaderTools">
+              <div className="libraryCostControl">
+                <label>
+                  Cost For
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={libraryCostAmount}
+                    onChange={(event) => setLibraryCostAmount(event.target.value)}
+                    placeholder="1"
+                  />
+                </label>
+
+                <label>
+                  Unit
+                  <select
+                    value={libraryCostUnit}
+                    onChange={(event) => setLibraryCostUnit(event.target.value)}
+                  >
+                    <option value="oz">oz</option>
+                    <option value="g">g</option>
+                    <option value="lb">lb</option>
+                  </select>
+                </label>
+              </div>
+            </div>
           </div>
 
           <div className="recipeLibrary compactSavedList spiceRecipeLibraryTall">
@@ -1561,6 +1617,12 @@ export default function SpiceKitchen() {
                   (a, b) => toNumber(b.parts) - toNumber(a.parts)
                 );
                 const formulaCostPerOunce = getRecipeFormulaCostPerOunce(recipe);
+                const libraryCostOunces = convertAmountToOunces(
+                  libraryCostAmount,
+                  libraryCostUnit
+                );
+                const libraryCostPreview = formulaCostPerOunce * libraryCostOunces;
+                const showLibraryCostPreview = libraryCostOunces > 0;
 
                 return (
                   <div
@@ -1569,7 +1631,7 @@ export default function SpiceKitchen() {
                   >
                     <div className="savedItem recipeItem compactSavedItem expandableSavedItem">
                       <div>
-                        <h4>
+                        <h4 className="recipeTitleWithCost">
                           <button
                             type="button"
                             className="savedItemLink"
@@ -1577,6 +1639,16 @@ export default function SpiceKitchen() {
                           >
                             {recipe.name}
                           </button>
+
+                          {showLibraryCostPreview ? (
+                            <span className="recipeQuickCostBadge">
+                              {formatLibraryCostLabel(
+                                libraryCostPreview,
+                                libraryCostAmount,
+                                libraryCostUnit
+                              )}
+                            </span>
+                          ) : null}
                         </h4>
                         <p>
                           {recipe.category} • {recipe.ingredients?.length || 0} ingredients
