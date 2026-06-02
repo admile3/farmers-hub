@@ -1869,3 +1869,170 @@
     grid-column: span 1;
   }
 }
+
+/* =========================================================
+   Pantry card separation + condensed hero layout fixes
+   Purpose:
+   - Make each saved pantry ingredient card read as a distinct bubble.
+   - Prevent the hero copy from collapsing into a skinny column on
+     narrower desktop/tablet layouts.
+   ========================================================= */
+
+.bakingPlanner .hero {
+  container-type: inline-size;
+}
+
+.bakingPlanner .hero-inner {
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.bakingPlanner .hero-copy {
+  flex: 1 1 520px;
+  max-width: none;
+  min-width: min(100%, 360px);
+}
+
+.bakingPlanner .hero-actions,
+.bakingPlanner .hero-stats {
+  flex: 1 1 360px;
+  min-width: min(100%, 320px);
+  justify-content: flex-end;
+}
+
+.bakingPlanner .hero-stats > div,
+.bakingPlanner .hero-stats .hero-settings-card {
+  flex: 1 1 120px;
+}
+
+.bakingPlanner .bakingPantryCards {
+  gap: 22px;
+}
+
+.bakingPlanner .bakingPantryCard {
+  border: 2px solid rgba(52, 64, 84, 0.16);
+  box-shadow: 0 16px 34px rgba(22, 27, 34, 0.08);
+  background: linear-gradient(180deg, #ffffff 0%, #fffdf8 100%);
+  position: relative;
+}
+
+.bakingPlanner .bakingPantryCard::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 6px;
+  border-radius: 16px 0 0 16px;
+  background: rgba(223, 160, 76, 0.72);
+}
+
+.bakingPlanner .bakingPantryCard > * {
+  position: relative;
+  z-index: 1;
+}
+
+.bakingPlanner .bakingPantrySummaryGrid .pill {
+  border-color: rgba(52, 64, 84, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(22, 27, 34, 0.02);
+}
+
+@container (max-width: 980px) {
+  .bakingPlanner .hero-inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bakingPlanner .hero-copy,
+  .bakingPlanner .hero-actions,
+  .bakingPlanner .hero-stats {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .bakingPlanner .hero h1 {
+    max-width: 760px;
+    font-size: clamp(2rem, 7vw, 3rem);
+    line-height: 0.98;
+  }
+
+  .bakingPlanner .hero p {
+    max-width: 760px;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .bakingPlanner .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .bakingPlanner .hero-stats > div,
+  .bakingPlanner .hero-stats .hero-settings-card {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@container (max-width: 620px) {
+  .bakingPlanner .hero-inner {
+    padding: 18px;
+  }
+
+  .bakingPlanner .hero h1 {
+    font-size: clamp(1.75rem, 9vw, 2.35rem);
+    line-height: 1;
+  }
+
+  .bakingPlanner .hero-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .bakingPlanner .hero-stats > div,
+  .bakingPlanner .hero-stats .hero-settings-card {
+    padding: 10px 9px;
+    min-height: 72px;
+  }
+
+  .bakingPlanner .hero-stats p,
+  .bakingPlanner .hero-settings-card p {
+    font-size: 0.68rem;
+    line-height: 1.08;
+  }
+
+  .bakingPlanner .hero-stats strong,
+  .bakingPlanner .hero-settings-card strong {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 1180px) {
+  .bakingPlanner .hero-inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bakingPlanner .hero-copy,
+  .bakingPlanner .hero-actions,
+  .bakingPlanner .hero-stats {
+    max-width: none;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .bakingPlanner .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .bakingPlanner .bakingPantryCards {
+    gap: 18px;
+  }
+
+  .bakingPlanner .bakingPantryCard {
+    border-width: 2px;
+  }
+}
