@@ -929,8 +929,8 @@ export default function PricingCalculator() {
   if (!user) {
     return (
       <div className="modulePage pricingPage compactSpicePage">
-        <section className="moduleHero compactHero">
-          <div>
+        <section className="farmModuleHero pricingHero">
+          <div className="farmModuleHeroText">
             <p className="eyebrow">Products & Pricing</p>
             <h2>Sign in to save your product list.</h2>
             <p>
@@ -939,9 +939,11 @@ export default function PricingCalculator() {
             </p>
           </div>
 
-          <button className="primaryButton" onClick={loginWithGoogle}>
-            Sign in with Google
-          </button>
+          <div className="farmModuleHeroActions">
+            <button className="primaryButton farmHeroAction" type="button" onClick={loginWithGoogle}>
+              Sign in with Google
+            </button>
+          </div>
         </section>
       </div>
     );
@@ -957,8 +959,8 @@ export default function PricingCalculator() {
         </div>
       ) : null}
 
-      <section className="moduleHero compactHero">
-        <div>
+      <section className="farmModuleHero pricingHero">
+        <div className="farmModuleHeroText">
           <p className="eyebrow">Products & Pricing</p>
           <h2>Build your product list and price each item with confidence.</h2>
           <p>
@@ -968,10 +970,12 @@ export default function PricingCalculator() {
           </p>
         </div>
 
-        <button className="primaryButton" type="button" onClick={startNewProduct}>
-          <Plus size={18} />
-          Add Product
-        </button>
+        <div className="farmModuleHeroActions">
+          <button className="primaryButton compactPrimary farmHeroAction" type="button" onClick={startNewProduct}>
+            <Plus size={18} />
+            Add Product
+          </button>
+        </div>
       </section>
 
       <section className="hubStatGrid pricingStatGrid">
