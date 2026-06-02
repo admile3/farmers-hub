@@ -243,6 +243,8 @@ const blankPantryItem = {
   quantityOnHand: "",
   onHandUnit: "lb",
   lowStockThreshold: "",
+  lowStockAlertMode: "weight",
+  lowStockPackageThreshold: "",
   notes: ""
 };
 
@@ -281,9 +283,15 @@ function normalizePantryItem(item = {}) {
     item.quantityOnHand === "" ? "" : Number(item.quantityOnHand) || 0;
   const lowStockThreshold =
     item.lowStockThreshold === "" ? "" : Number(item.lowStockThreshold) || 0;
+  const lowStockAlertMode = item.lowStockAlertMode === "package" ? "package" : "weight";
+  const lowStockPackageThreshold =
+    item.lowStockPackageThreshold === "" ? "" : Number(item.lowStockPackageThreshold) || 0;
   const packageGrams = convertToGrams(packageSize, packageUnit);
   const quantityOnHandGrams = convertToGrams(quantityOnHand, onHandUnit);
-  const lowStockThresholdGrams = convertToGrams(lowStockThreshold, onHandUnit);
+  const lowStockThresholdGrams =
+    lowStockAlertMode === "package"
+      ? packageGrams * (Number(lowStockPackageThreshold) || 0)
+      : convertToGrams(lowStockThreshold, onHandUnit);
   const costPerGram =
     packageGrams > 0 && Number(packageCost) > 0
       ? Number(packageCost) / packageGrams
@@ -300,6 +308,8 @@ function normalizePantryItem(item = {}) {
     quantityOnHand,
     onHandUnit,
     lowStockThreshold,
+    lowStockAlertMode,
+    lowStockPackageThreshold,
     packageGrams,
     quantityOnHandGrams,
     lowStockThresholdGrams,
@@ -307,6 +317,28 @@ function normalizePantryItem(item = {}) {
     costPerOunce: costPerGram * 28.349523125,
     costPerPound: costPerGram * 453.59237
   };
+}
+
+function formatLowStockAlert(item) {
+  if (!item?.trackInventory) return "None";
+
+  if (item.lowStockAlertMode === "package") {
+    const threshold = Number(item.lowStockPackageThreshold) || 0;
+    if (threshold <= 0) return "None";
+    const label = threshold === 1 ? "package" : "packages";
+    return `Below ${formatNumber(threshold, 2)} ${label}`;
+  }
+
+  return Number(item.lowStockThresholdGrams) > 0
+    ? formatSmartWeight(item.lowStockThresholdGrams)
+    : "None";
+}
+
+function getRemainingPackageCount(item) {
+  const packageGrams = Number(item?.packageGrams) || 0;
+  const onHand = Number(item?.quantityOnHandGrams) || 0;
+
+  return packageGrams > 0 ? onHand / packageGrams : 0;
 }
 
 function normalizeIngredientName(value) {
@@ -344,7 +376,7 @@ function getInventoryStatus(row) {
   if (!item?.trackInventory) {
     return {
       status: "not-tracked",
-      label: "Inventory not tracked",
+      label: "Current inventory not tracked",
       className: "muted tiny"
     };
   }
@@ -352,6 +384,10 @@ function getInventoryStatus(row) {
   const onHand = Number(item.quantityOnHandGrams) || 0;
   const needed = Number(row.grams) || 0;
   const lowThreshold = Number(item.lowStockThresholdGrams) || 0;
+  const lowPackageThreshold = Number(item.lowStockPackageThreshold) || 0;
+  const remainingAfterPull = onHand - needed;
+  const remainingPackagesAfterPull =
+    Number(item.packageGrams) > 0 ? remainingAfterPull / Number(item.packageGrams) : 0;
 
   if (needed > onHand) {
     return {
@@ -361,17 +397,29 @@ function getInventoryStatus(row) {
     };
   }
 
-  if (lowThreshold > 0 && onHand - needed <= lowThreshold) {
+  if (
+    item.lowStockAlertMode === "package" &&
+    lowPackageThreshold > 0 &&
+    remainingPackagesAfterPull <= lowPackageThreshold
+  ) {
     return {
       status: "low",
-      label: `Low after pull, ${formatSmartWeight(onHand - needed)} left`,
+      label: `Low after pull, ${formatNumber(remainingPackagesAfterPull, 2)} package${remainingPackagesAfterPull === 1 ? "" : "s"} left`,
+      className: "warning-text tiny"
+    };
+  }
+
+  if (item.lowStockAlertMode !== "package" && lowThreshold > 0 && remainingAfterPull <= lowThreshold) {
+    return {
+      status: "low",
+      label: `Low after pull, ${formatSmartWeight(remainingAfterPull)} left`,
       className: "warning-text tiny"
     };
   }
 
   return {
     status: "ok",
-    label: `${formatSmartWeight(onHand - needed)} left after pull`,
+    label: `${formatSmartWeight(remainingAfterPull)} left after pull`,
     className: "muted tiny"
   };
 }
@@ -382,12 +430,12 @@ function formatSmartWeight(value, label = "") {
   let base = formatGrams(grams);
 
   if (grams >= 453.59237) {
-    base = `${formatGrams(grams)}/${(grams / 453.59237).toLocaleString("en-US", {
+    base = `${(grams / 453.59237).toLocaleString("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
-    })}lb`;
+    })} lb (${formatGrams(grams)})`;
   } else if (grams > GRAMS_PER_OUNCE) {
-    base = `${formatGrams(grams)}/${formatOunces(grams)}oz`;
+    base = `${formatOunces(grams)} oz (${formatGrams(grams)})`;
   }
 
   return label ? `${base} ${label}` : base;
@@ -1591,12 +1639,21 @@ export default function BakingPlanner() {
     .filter(({ inventory }) => inventory.status === "short" || inventory.status === "low");
 
   const lowStockPantryItems = pantryItems
-    .filter((item) => item.trackInventory && Number(item.lowStockThresholdGrams) > 0)
-    .filter(
-      (item) =>
-        Number(item.quantityOnHandGrams) > 0 &&
-        Number(item.quantityOnHandGrams) <= Number(item.lowStockThresholdGrams)
-    );
+    .filter((item) => item.trackInventory)
+    .filter((item) => {
+      const onHand = Number(item.quantityOnHandGrams) || 0;
+      if (onHand <= 0) return false;
+
+      if (item.lowStockAlertMode === "package") {
+        const threshold = Number(item.lowStockPackageThreshold) || 0;
+        return threshold > 0 && getRemainingPackageCount(item) <= threshold;
+      }
+
+      return (
+        Number(item.lowStockThresholdGrams) > 0 &&
+        onHand <= Number(item.lowStockThresholdGrams)
+      );
+    });
 
   const planCostRows = useMemo(() => {
     return plans.map((plan) => ({
@@ -2359,14 +2416,40 @@ export default function BakingPlanner() {
                 </select>
               </label>
 
-              <NumberInput
-                label="Low Stock Alert"
-                value={activePantryEditItem.lowStockThreshold}
-                onChange={(value) =>
-                  updatePantryItem(activePantryEditItem.id, "lowStockThreshold", Number(value))
-                }
-                min={0}
-              />
+              <label className="field">
+                <span>Low Stock Alert Mode</span>
+                <select
+                  className="text-field"
+                  value={activePantryEditItem.lowStockAlertMode || "weight"}
+                  onChange={(event) =>
+                    updatePantryItem(activePantryEditItem.id, "lowStockAlertMode", event.target.value)
+                  }
+                >
+                  <option value="weight">By remaining weight</option>
+                  <option value="package">By remaining package count</option>
+                </select>
+              </label>
+
+              {activePantryEditItem.lowStockAlertMode === "package" ? (
+                <NumberInput
+                  label="Alert Below Packages"
+                  value={activePantryEditItem.lowStockPackageThreshold}
+                  onChange={(value) =>
+                    updatePantryItem(activePantryEditItem.id, "lowStockPackageThreshold", Number(value))
+                  }
+                  min={0}
+                  step="0.25"
+                />
+              ) : (
+                <NumberInput
+                  label="Low Stock Alert"
+                  value={activePantryEditItem.lowStockThreshold}
+                  onChange={(value) =>
+                    updatePantryItem(activePantryEditItem.id, "lowStockThreshold", Number(value))
+                  }
+                  min={0}
+                />
+              )}
 
               <label className="field span-two">
                 <span>Notes</span>
@@ -3677,14 +3760,40 @@ export default function BakingPlanner() {
                       </select>
                     </label>
 
-                    <NumberInput
-                      label="Low Stock Alert"
-                      value={pantryDraft.lowStockThreshold}
-                      onChange={(value) =>
-                        updatePantryDraft("lowStockThreshold", Number(value))
-                      }
-                      min={0}
-                    />
+                    <label className="field">
+                      <span>Low Stock Alert Mode</span>
+                      <select
+                        className="text-field"
+                        value={pantryDraft.lowStockAlertMode || "weight"}
+                        onChange={(event) =>
+                          updatePantryDraft("lowStockAlertMode", event.target.value)
+                        }
+                      >
+                        <option value="weight">By remaining weight</option>
+                        <option value="package">By remaining package count</option>
+                      </select>
+                    </label>
+
+                    {pantryDraft.lowStockAlertMode === "package" ? (
+                      <NumberInput
+                        label="Alert Below Packages"
+                        value={pantryDraft.lowStockPackageThreshold}
+                        onChange={(value) =>
+                          updatePantryDraft("lowStockPackageThreshold", Number(value))
+                        }
+                        min={0}
+                        step="0.25"
+                      />
+                    ) : (
+                      <NumberInput
+                        label="Low Stock Alert"
+                        value={pantryDraft.lowStockThreshold}
+                        onChange={(value) =>
+                          updatePantryDraft("lowStockThreshold", Number(value))
+                        }
+                        min={0}
+                      />
+                    )}
 
                     <label className="field span-two">
                       <span>Notes</span>
@@ -3724,7 +3833,7 @@ export default function BakingPlanner() {
                       <h3>Saved Pantry Items</h3>
                       <p className="muted small">
                         Edit package sizes, units, source, and costs here. Cost
-                        per gram, ounce, and pound updates automatically.
+                        per ounce and pound updates automatically.
                       </p>
                     </div>
                     <span className="pill">
@@ -3744,10 +3853,11 @@ export default function BakingPlanner() {
                         const inventoryLabel = item.trackInventory
                           ? formatSmartWeight(item.quantityOnHandGrams)
                           : "Not tracked";
-                        const lowAlertLabel =
-                          item.trackInventory && Number(item.lowStockThresholdGrams) > 0
-                            ? formatSmartWeight(item.lowStockThresholdGrams)
-                            : "None";
+                        const lowAlertLabel = formatLowStockAlert(item);
+                        const packageCountLabel =
+                          item.trackInventory && Number(item.packageGrams) > 0
+                            ? `${formatNumber(getRemainingPackageCount(item), 2)} package${getRemainingPackageCount(item) === 1 ? "" : "s"}`
+                            : "N/A";
                         const sourceLabel = item.source || "No source saved";
 
                         return (
@@ -3800,16 +3910,17 @@ export default function BakingPlanner() {
                                 <span className="muted tiny">Cost / oz</span>
                               </div>
 
-                              <div className="pill">
-                                <strong>{formatMoney(item.costPerGram, 4)}</strong>
+
+                              <div className="pill weightPill">
+                                <strong>{inventoryLabel}</strong>
                                 <br />
-                                <span className="muted tiny">Cost / g</span>
+                                <span className="muted tiny">Current Inventory</span>
                               </div>
 
                               <div className="pill">
-                                <strong>{inventoryLabel}</strong>
+                                <strong>{packageCountLabel}</strong>
                                 <br />
-                                <span className="muted tiny">Inventory</span>
+                                <span className="muted tiny">Remaining Packages</span>
                               </div>
 
                               <div className="pill">
@@ -3943,7 +4054,7 @@ export default function BakingPlanner() {
                               <th>Amount</th>
                               <th>Pantry Match</th>
                               <th>Package Pull</th>
-                              <th>Inventory</th>
+                              <th>Current Inventory</th>
                               <th>Cost</th>
                             </tr>
                           </thead>
@@ -4105,7 +4216,7 @@ export default function BakingPlanner() {
 
                       {lowStockPantryItems.map((item) => (
                         <p key={`low-${item.id}`} className="notice warning-box">
-                          <strong>{item.name}</strong> is at or below its low-stock alert. Current amount: {formatSmartWeight(item.quantityOnHandGrams)}.
+                          <strong>{item.name}</strong> is at or below its low-stock alert. Current amount: {formatSmartWeight(item.quantityOnHandGrams)}{item.lowStockAlertMode === "package" && Number(item.packageGrams) > 0 ? ` (${formatNumber(getRemainingPackageCount(item), 2)} packages)` : ""}.
                         </p>
                       ))}
                     </div>
