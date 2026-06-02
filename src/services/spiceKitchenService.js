@@ -78,6 +78,15 @@ export async function updateSpiceRecipe(userId, recipeId, updates) {
   });
 }
 
+export async function updateSpiceRecipeProductPackage(userId, recipeId, productPackages) {
+  const docRef = doc(db, "users", userId, "spiceRecipes", recipeId);
+
+  await updateDoc(docRef, {
+    productPackages,
+    updatedAt: serverTimestamp()
+  });
+}
+
 export async function deleteSpiceRecipe(userId, recipeId) {
   const docRef = doc(db, "users", userId, "spiceRecipes", recipeId);
   await deleteDoc(docRef);
