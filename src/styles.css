@@ -10607,3 +10607,61 @@ input[type="number"] {
     justify-self: stretch !important;
   }
 }
+.farmModuleHero {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) max-content !important;
+  gap: 28px !important;
+  align-items: center !important;
+  padding: 28px !important;
+  border-radius: var(--radius) !important;
+  background: #ffffff !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
+}
+
+.farmModuleHeroText {
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+.farmModuleHeroText h2 {
+  max-width: none !important;
+}
+
+.farmModuleHeroText p:not(.eyebrow) {
+  max-width: 1180px !important;
+}
+
+.farmModuleHeroActions {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 12px !important;
+  width: max-content !important;
+}
+
+.farmHeroAction {
+  min-height: 46px !important;
+  padding: 0 20px !important;
+  border-radius: 999px !important;
+  font-size: 0.9rem !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 900px) {
+  .farmModuleHero {
+    grid-template-columns: 1fr !important;
+    padding: 18px !important;
+  }
+
+  .farmModuleHeroActions {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .farmHeroAction {
+    width: 100% !important;
+  }
+}
