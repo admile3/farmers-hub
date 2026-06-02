@@ -1799,3 +1799,73 @@
     border-radius: 8px !important;
   }
 }
+
+/* Pantry card readability fixes */
+.bakingPlanner .bakingPantrySummaryGrid .weightPill {
+  grid-column: span 2;
+}
+
+.bakingPlanner .bakingPantrySummaryGrid .pill strong {
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+}
+
+.bakingPlanner .bakingPantrySummaryGrid .weightPill strong {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 700px) {
+  .bakingPlanner .bakingPantrySummaryGrid .weightPill {
+    grid-column: span 1;
+  }
+}
+
+
+/* =========================================================
+   Pantry cards, no per-gram display + weight readability fix
+   Generated for: low-stock mode + current inventory labels
+   ========================================================= */
+.bakingPlanner .bakingPantryCards {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
+}
+
+.bakingPlanner .bakingPantrySummaryGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.bakingPlanner .bakingPantrySummaryGrid .pill {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.bakingPlanner .bakingPantrySummaryGrid .pill strong {
+  display: block;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+}
+
+.bakingPlanner .bakingPantrySummaryGrid .weightPill {
+  grid-column: span 2;
+}
+
+.bakingPlanner .bakingPantrySummaryGrid .weightPill strong {
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+@media (min-width: 1180px) {
+  .bakingPlanner .bakingPantrySummaryGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .bakingPlanner .bakingPantrySummaryGrid,
+  .bakingPlanner .bakingPantrySummaryGrid .weightPill {
+    grid-template-columns: 1fr;
+    grid-column: span 1;
+  }
+}
