@@ -277,8 +277,8 @@ export default function Customers() {
         </div>
       ) : null}
 
-      <section className="moduleHero compactHero customersCalendarHero">
-        <div className="customersHeroText">
+      <section className="farmModuleHero customersModuleHero">
+        <div className="farmModuleHeroText">
           <p className="eyebrow">Customer CRM</p>
           <h2>Customers</h2>
           <p>
@@ -287,8 +287,12 @@ export default function Customers() {
           </p>
         </div>
 
-        <div className="customersHeroActions">
-          <button className="primaryButton compactPrimary" type="button" onClick={openNewCustomer}>
+        <div className="farmModuleHeroActions">
+          <button
+            className="primaryButton compactPrimary farmHeroAction"
+            type="button"
+            onClick={openNewCustomer}
+          >
             <Plus size={18} />
             Add Customer
           </button>
