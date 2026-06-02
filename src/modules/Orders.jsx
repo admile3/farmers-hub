@@ -218,9 +218,7 @@ function buildSpiceOrderProducts(spiceRecipes = []) {
             id: listSizesAsUniqueProducts
               ? `spice-${recipe.id}-${index}`
               : `spice-${recipe.id}-variant-${index}`,
-            name: listSizesAsUniqueProducts
-              ? `${recipe.name} - ${packageName}`
-              : `${recipe.name} - ${packageName}`,
+            name: `${recipe.name} - ${packageName}`,
             parentName: recipe.name || "",
             category: "Spices",
             unitLabel: packageName,
@@ -350,19 +348,19 @@ export default function Orders() {
         ? bakingSnapshot.data()?.recipes || []
         : [];
 
-      const normalizedManualProducts = (Array.isArray(manualProducts) ? manualProducts : []).map(
-        (product) => ({
-          id: product.id,
-          name: product.name || "Untitled Product",
-          parentName: "",
-          category: product.category || "Other",
-          unitLabel: product.unitLabel || "each",
-          sourceLabel: product.sourceLabel || "Products & Pricing",
-          retailPrice: product.retailPrice || "",
-          wholesalePrice: product.wholesalePrice || "",
-          costPerUnit: product.pricingSummary?.costPerUnit || ""
-        })
-      );
+      const normalizedManualProducts = (
+        Array.isArray(manualProducts) ? manualProducts : []
+      ).map((product) => ({
+        id: product.id,
+        name: product.name || "Untitled Product",
+        parentName: "",
+        category: product.category || "Other",
+        unitLabel: product.unitLabel || "each",
+        sourceLabel: product.sourceLabel || "Products & Pricing",
+        retailPrice: product.retailPrice || "",
+        wholesalePrice: product.wholesalePrice || "",
+        costPerUnit: product.pricingSummary?.costPerUnit || ""
+      }));
 
       setOrders(Array.isArray(savedOrders) ? savedOrders : []);
       setCustomers(Array.isArray(savedCustomers) ? savedCustomers : []);
@@ -683,7 +681,7 @@ export default function Orders() {
     const overdueOrders = activeOrders.filter(
       (order) => orderDateStatus(order.dueDate) === "overdue"
     );
-    const dueTodayOrders = activeOrders.filter(
+    const dueTodayOrdersCount = activeOrders.filter(
       (order) => orderDateStatus(order.dueDate) === "today"
     );
     const committedOrders = activeOrders.filter(orderIsCommitted);
@@ -695,7 +693,7 @@ export default function Orders() {
       active: activeOrders.length,
       draft: draftOrders.length,
       overdue: overdueOrders.length,
-      dueToday: dueTodayOrders.length,
+      dueToday: dueTodayOrdersCount.length,
       committedValue
     };
   }, [orders]);
@@ -713,8 +711,8 @@ export default function Orders() {
   if (!user) {
     return (
       <div className="ordersModule modulePage">
-        <section className="moduleHero compactHero">
-          <div>
+        <section className="moduleHero compactHero plantingCalendarHero ordersHero">
+          <div className="plantingHeroText ordersHeroText">
             <p className="eyebrow">Orders</p>
             <h2>Sign in to manage customer orders.</h2>
             <p>
@@ -723,9 +721,11 @@ export default function Orders() {
             </p>
           </div>
 
-          <button className="primaryButton" type="button" onClick={loginWithGoogle}>
-            Sign in with Google
-          </button>
+          <div className="plantingHeroActions ordersHeroActions">
+            <button className="primaryButton" type="button" onClick={loginWithGoogle}>
+              Sign in with Google
+            </button>
+          </div>
         </section>
       </div>
     );
@@ -742,8 +742,8 @@ export default function Orders() {
         </div>
       ) : null}
 
-      <section className="moduleHero compactHero">
-        <div>
+      <section className="moduleHero compactHero plantingCalendarHero ordersHero">
+        <div className="plantingHeroText ordersHeroText">
           <p className="eyebrow">Orders</p>
           <h2>Manage customer orders from request to fulfillment.</h2>
           <p>
@@ -752,10 +752,12 @@ export default function Orders() {
           </p>
         </div>
 
-        <button className="primaryButton" type="button" onClick={startNewOrder}>
-          <Plus size={18} />
-          New Order
-        </button>
+        <div className="plantingHeroActions ordersHeroActions">
+          <button className="primaryButton compactPrimary" type="button" onClick={startNewOrder}>
+            <Plus size={16} />
+            New Order
+          </button>
+        </div>
       </section>
 
       <section className="hubStatGrid ordersStatGrid">
@@ -793,7 +795,11 @@ export default function Orders() {
         <div className="workspaceHeader compactPanelHeader">
           <div>
             <p className="eyebrow">Due Today</p>
-            <h3>{loading ? "Checking today's orders..." : `${stats.dueToday} order${stats.dueToday === 1 ? "" : "s"} due today`}</h3>
+            <h3>
+              {loading
+                ? "Checking today's orders..."
+                : `${stats.dueToday} order${stats.dueToday === 1 ? "" : "s"} due today`}
+            </h3>
           </div>
 
           <button className="secondaryButton compactButton" type="button" onClick={loadData}>
@@ -813,7 +819,9 @@ export default function Orders() {
               >
                 <strong>{order.orderNumber || "Untitled Order"}</strong>
                 <span>{orderCustomerDisplay(order)}</span>
-                <small>{order.status || "Draft"} • {money(order.totals?.total || 0)}</small>
+                <small>
+                  {order.status || "Draft"} • {money(order.totals?.total || 0)}
+                </small>
               </button>
             ))}
           </div>
@@ -907,462 +915,462 @@ export default function Orders() {
       {editorOpen ? (
         <div className="ordersEditorOverlay" role="dialog" aria-modal="true">
           <div className="workspacePanel compactPanel ordersEditorPanel ordersEditorModal">
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Editor</p>
-              <h3>{form.id ? form.orderNumber || "Edit Order" : "New Order"}</h3>
-            </div>
-
-            <div className="formActions compactActions">
-              <button
-                className="secondaryButton compactButton"
-                type="button"
-                onClick={() => setEditorOpen(false)}
-              >
-                <X size={15} />
-                Close
-              </button>
-
-              <button
-                className="primaryButton compactPrimary"
-                type="button"
-                onClick={handleSaveOrder}
-                disabled={saving}
-              >
-                <Save size={15} />
-                {saving ? "Saving..." : "Save Order"}
-              </button>
-            </div>
-          </div>
-
-          <div className="formGrid compactFormGrid">
-            <label>
-              Order Number
-              <input
-                value={form.orderNumber}
-                onChange={(event) => updateOrderField("orderNumber", event.target.value)}
-                placeholder="ORD-000001"
-              />
-            </label>
-
-            <label>
-              Status
-              <select
-                value={form.status}
-                onChange={(event) => updateOrderField("status", event.target.value)}
-              >
-                {ORDER_STATUSES.map((status) => (
-                  <option key={status}>{status}</option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Order Date
-              <input
-                type="date"
-                value={form.orderDate}
-                onChange={(event) => updateOrderField("orderDate", event.target.value)}
-              />
-            </label>
-
-            <label>
-              Due / Fulfillment Date
-              <input
-                type="date"
-                value={form.dueDate}
-                onChange={(event) => updateOrderField("dueDate", event.target.value)}
-              />
-            </label>
-
-            <label>
-              Fulfillment
-              <select
-                value={form.fulfillmentType}
-                onChange={(event) =>
-                  updateOrderField("fulfillmentType", event.target.value)
-                }
-              >
-                {FULFILLMENT_TYPES.map((type) => (
-                  <option key={type}>{type}</option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Pricing
-              <select
-                value={form.pricingMode}
-                onChange={(event) => updatePricingMode(event.target.value)}
-              >
-                <option value="retail">Retail pricing</option>
-                <option value="wholesale">Wholesale pricing</option>
-              </select>
-            </label>
-          </div>
-
-          <div className="ordersSubPanel">
             <div className="workspaceHeader compactPanelHeader">
               <div>
-                <p className="eyebrow">Customer</p>
-                <h3>Customer Info</h3>
+                <p className="eyebrow">Editor</p>
+                <h3>{form.id ? form.orderNumber || "Edit Order" : "New Order"}</h3>
               </div>
-              <Users size={20} />
-            </div>
 
-            <div className="ordersCustomerModeGrid">
-              {CUSTOMER_MODES.map((mode) => (
+              <div className="formActions compactActions">
                 <button
-                  key={mode.value}
+                  className="secondaryButton compactButton"
                   type="button"
-                  className={`ordersChoiceButton ${
-                    form.customerMode === mode.value ? "selected" : ""
-                  }`}
-                  onClick={() => updateCustomerMode(mode.value)}
+                  onClick={() => setEditorOpen(false)}
                 >
-                  {mode.label}
+                  <X size={15} />
+                  Close
                 </button>
-              ))}
+
+                <button
+                  className="primaryButton compactPrimary"
+                  type="button"
+                  onClick={handleSaveOrder}
+                  disabled={saving}
+                >
+                  <Save size={15} />
+                  {saving ? "Saving..." : "Save Order"}
+                </button>
+              </div>
             </div>
 
-            {form.customerMode === "saved" ? (
+            <div className="formGrid compactFormGrid">
               <label>
-                Saved Customer
+                Order Number
+                <input
+                  value={form.orderNumber}
+                  onChange={(event) => updateOrderField("orderNumber", event.target.value)}
+                  placeholder="ORD-000001"
+                />
+              </label>
+
+              <label>
+                Status
                 <select
-                  value={form.customerId}
-                  onChange={(event) => selectSavedCustomer(event.target.value)}
+                  value={form.status}
+                  onChange={(event) => updateOrderField("status", event.target.value)}
                 >
-                  <option value="">Select saved customer...</option>
-                  {customers.map((customer) => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.businessName
-                        ? `${customer.businessName} (${customer.name || "contact"})`
-                        : customer.name || "Unnamed Customer"}
-                    </option>
+                  {ORDER_STATUSES.map((status) => (
+                    <option key={status}>{status}</option>
                   ))}
                 </select>
               </label>
-            ) : null}
 
-            <div className="formGrid compactFormGrid">
               <label>
-                Customer Name
+                Order Date
                 <input
-                  value={form.customerSnapshot.name}
-                  disabled={form.customerMode === "saved" && Boolean(form.customerId)}
-                  onChange={(event) => updateCustomerSnapshot("name", event.target.value)}
-                  placeholder="Customer or contact name"
+                  type="date"
+                  value={form.orderDate}
+                  onChange={(event) => updateOrderField("orderDate", event.target.value)}
                 />
               </label>
 
               <label>
-                Business Name
+                Due / Fulfillment Date
                 <input
-                  value={form.customerSnapshot.businessName}
-                  disabled={form.customerMode === "saved" && Boolean(form.customerId)}
+                  type="date"
+                  value={form.dueDate}
+                  onChange={(event) => updateOrderField("dueDate", event.target.value)}
+                />
+              </label>
+
+              <label>
+                Fulfillment
+                <select
+                  value={form.fulfillmentType}
                   onChange={(event) =>
-                    updateCustomerSnapshot("businessName", event.target.value)
+                    updateOrderField("fulfillmentType", event.target.value)
                   }
-                  placeholder="Optional"
-                />
+                >
+                  {FULFILLMENT_TYPES.map((type) => (
+                    <option key={type}>{type}</option>
+                  ))}
+                </select>
               </label>
 
               <label>
-                Email
-                <input
-                  type="email"
-                  value={form.customerSnapshot.email}
-                  disabled={form.customerMode === "saved" && Boolean(form.customerId)}
-                  onChange={(event) => updateCustomerSnapshot("email", event.target.value)}
-                  placeholder="name@example.com"
-                />
-              </label>
-
-              <label>
-                Phone
-                <input
-                  value={form.customerSnapshot.phone}
-                  disabled={form.customerMode === "saved" && Boolean(form.customerId)}
-                  onChange={(event) => updateCustomerSnapshot("phone", event.target.value)}
-                  placeholder="Optional"
-                />
-              </label>
-
-              {form.customerMode === "quickAdd" ? (
-                <>
-                  <label>
-                    Customer Type
-                    <select
-                      value={form.customerSnapshot.customerType}
-                      onChange={(event) =>
-                        updateCustomerSnapshot("customerType", event.target.value)
-                      }
-                    >
-                      {CUSTOMER_TYPES.map((type) => (
-                        <option key={type}>{type}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label>
-                    Preferred Contact
-                    <input
-                      value={form.customerSnapshot.preferredContact}
-                      onChange={(event) =>
-                        updateCustomerSnapshot("preferredContact", event.target.value)
-                      }
-                      placeholder="Email, Phone, Text"
-                    />
-                  </label>
-                </>
-              ) : null}
-
-              <label className="fullSpan">
-                Customer / Order Notes
-                <input
-                  value={form.customerSnapshot.notes || ""}
-                  disabled={form.customerMode === "saved" && Boolean(form.customerId)}
-                  onChange={(event) => updateCustomerSnapshot("notes", event.target.value)}
-                  placeholder="Preferences, allergies, delivery notes, or context"
-                />
+                Pricing
+                <select
+                  value={form.pricingMode}
+                  onChange={(event) => updatePricingMode(event.target.value)}
+                >
+                  <option value="retail">Retail pricing</option>
+                  <option value="wholesale">Wholesale pricing</option>
+                </select>
               </label>
             </div>
 
-            {form.customerMode === "quickAdd" ? (
-              <p className="ordersHelperText">
-                This customer will be saved to the Customers module when the order is saved.
-              </p>
-            ) : null}
-
-            {form.customerMode === "oneTime" ? (
-              <p className="ordersHelperText">
-                This customer will only be stored on this order and will not be added to Customers.
-              </p>
-            ) : null}
-          </div>
-
-          <div className="ordersSubPanel">
-            <div className="workspaceHeader compactPanelHeader">
-              <div>
-                <p className="eyebrow">Products</p>
-                <h3>Line Items</h3>
+            <div className="ordersSubPanel">
+              <div className="workspaceHeader compactPanelHeader">
+                <div>
+                  <p className="eyebrow">Customer</p>
+                  <h3>Customer Info</h3>
+                </div>
+                <Users size={20} />
               </div>
 
-              <button className="secondaryButton compactButton" type="button" onClick={addLineItem}>
-                <Plus size={15} />
-                Add Line
-              </button>
-            </div>
+              <div className="ordersCustomerModeGrid">
+                {CUSTOMER_MODES.map((mode) => (
+                  <button
+                    key={mode.value}
+                    type="button"
+                    className={`ordersChoiceButton ${
+                      form.customerMode === mode.value ? "selected" : ""
+                    }`}
+                    onClick={() => updateCustomerMode(mode.value)}
+                  >
+                    {mode.label}
+                  </button>
+                ))}
+              </div>
 
-            <div className="ordersLineHeader">
-              <span>Item</span>
-              <span>Qty</span>
-              <span>Unit</span>
-              <span>Price</span>
-              <span>Total</span>
-              <span></span>
-            </div>
+              {form.customerMode === "saved" ? (
+                <label>
+                  Saved Customer
+                  <select
+                    value={form.customerId}
+                    onChange={(event) => selectSavedCustomer(event.target.value)}
+                  >
+                    <option value="">Select saved customer...</option>
+                    {customers.map((customer) => (
+                      <option key={customer.id} value={customer.id}>
+                        {customer.businessName
+                          ? `${customer.businessName} (${customer.name || "contact"})`
+                          : customer.name || "Unnamed Customer"}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
 
-            <div className="ordersLineList">
-              {form.lineItems.map((item) => (
-                <div className="ordersLineRow" key={item.id}>
-                  <div className="ordersLineProduct">
-                    <div className="ordersLineMode">
-                      <button
-                        type="button"
-                        className={item.productId ? "selected" : ""}
-                        onClick={() =>
-                          updateLineItem(item.id, "productId", products[0]?.id || "")
-                        }
-                        disabled={!products.length}
-                      >
-                        Product
-                      </button>
-                      <button
-                        type="button"
-                        className={!item.productId ? "selected" : ""}
-                        onClick={() => updateLineItem(item.id, "productId", "")}
-                      >
-                        Manual
-                      </button>
-                    </div>
+              <div className="formGrid compactFormGrid">
+                <label>
+                  Customer Name
+                  <input
+                    value={form.customerSnapshot.name}
+                    disabled={form.customerMode === "saved" && Boolean(form.customerId)}
+                    onChange={(event) => updateCustomerSnapshot("name", event.target.value)}
+                    placeholder="Customer or contact name"
+                  />
+                </label>
 
-                    {item.productId ? (
+                <label>
+                  Business Name
+                  <input
+                    value={form.customerSnapshot.businessName}
+                    disabled={form.customerMode === "saved" && Boolean(form.customerId)}
+                    onChange={(event) =>
+                      updateCustomerSnapshot("businessName", event.target.value)
+                    }
+                    placeholder="Optional"
+                  />
+                </label>
+
+                <label>
+                  Email
+                  <input
+                    type="email"
+                    value={form.customerSnapshot.email}
+                    disabled={form.customerMode === "saved" && Boolean(form.customerId)}
+                    onChange={(event) => updateCustomerSnapshot("email", event.target.value)}
+                    placeholder="name@example.com"
+                  />
+                </label>
+
+                <label>
+                  Phone
+                  <input
+                    value={form.customerSnapshot.phone}
+                    disabled={form.customerMode === "saved" && Boolean(form.customerId)}
+                    onChange={(event) => updateCustomerSnapshot("phone", event.target.value)}
+                    placeholder="Optional"
+                  />
+                </label>
+
+                {form.customerMode === "quickAdd" ? (
+                  <>
+                    <label>
+                      Customer Type
                       <select
-                        value={item.productId}
+                        value={form.customerSnapshot.customerType}
                         onChange={(event) =>
-                          updateLineItem(item.id, "productId", event.target.value)
+                          updateCustomerSnapshot("customerType", event.target.value)
                         }
                       >
-                        {products.map((product) => (
-                          <option key={product.id} value={product.id}>
-                            {product.name} ({product.sourceLabel})
-                          </option>
+                        {CUSTOMER_TYPES.map((type) => (
+                          <option key={type}>{type}</option>
                         ))}
                       </select>
-                    ) : (
+                    </label>
+
+                    <label>
+                      Preferred Contact
                       <input
-                        value={item.productName}
+                        value={form.customerSnapshot.preferredContact}
                         onChange={(event) =>
-                          updateLineItem(item.id, "productName", event.target.value)
+                          updateCustomerSnapshot("preferredContact", event.target.value)
                         }
-                        placeholder="Manual item name"
+                        placeholder="Email, Phone, Text"
                       />
-                    )}
+                    </label>
+                  </>
+                ) : null}
+
+                <label className="fullSpan">
+                  Customer / Order Notes
+                  <input
+                    value={form.customerSnapshot.notes || ""}
+                    disabled={form.customerMode === "saved" && Boolean(form.customerId)}
+                    onChange={(event) => updateCustomerSnapshot("notes", event.target.value)}
+                    placeholder="Preferences, allergies, delivery notes, or context"
+                  />
+                </label>
+              </div>
+
+              {form.customerMode === "quickAdd" ? (
+                <p className="ordersHelperText">
+                  This customer will be saved to the Customers module when the order is saved.
+                </p>
+              ) : null}
+
+              {form.customerMode === "oneTime" ? (
+                <p className="ordersHelperText">
+                  This customer will only be stored on this order and will not be added to Customers.
+                </p>
+              ) : null}
+            </div>
+
+            <div className="ordersSubPanel">
+              <div className="workspaceHeader compactPanelHeader">
+                <div>
+                  <p className="eyebrow">Products</p>
+                  <h3>Line Items</h3>
+                </div>
+
+                <button className="secondaryButton compactButton" type="button" onClick={addLineItem}>
+                  <Plus size={15} />
+                  Add Line
+                </button>
+              </div>
+
+              <div className="ordersLineHeader">
+                <span>Item</span>
+                <span>Qty</span>
+                <span>Unit</span>
+                <span>Price</span>
+                <span>Total</span>
+                <span></span>
+              </div>
+
+              <div className="ordersLineList">
+                {form.lineItems.map((item) => (
+                  <div className="ordersLineRow" key={item.id}>
+                    <div className="ordersLineProduct">
+                      <div className="ordersLineMode">
+                        <button
+                          type="button"
+                          className={item.productId ? "selected" : ""}
+                          onClick={() =>
+                            updateLineItem(item.id, "productId", products[0]?.id || "")
+                          }
+                          disabled={!products.length}
+                        >
+                          Product
+                        </button>
+                        <button
+                          type="button"
+                          className={!item.productId ? "selected" : ""}
+                          onClick={() => updateLineItem(item.id, "productId", "")}
+                        >
+                          Manual
+                        </button>
+                      </div>
+
+                      {item.productId ? (
+                        <select
+                          value={item.productId}
+                          onChange={(event) =>
+                            updateLineItem(item.id, "productId", event.target.value)
+                          }
+                        >
+                          {products.map((product) => (
+                            <option key={product.id} value={product.id}>
+                              {product.name} ({product.sourceLabel})
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          value={item.productName}
+                          onChange={(event) =>
+                            updateLineItem(item.id, "productName", event.target.value)
+                          }
+                          placeholder="Manual item name"
+                        />
+                      )}
+                    </div>
+
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={item.quantity}
+                      onChange={(event) =>
+                        updateLineItem(item.id, "quantity", event.target.value)
+                      }
+                    />
+
+                    <input
+                      value={item.unitLabel}
+                      onChange={(event) =>
+                        updateLineItem(item.id, "unitLabel", event.target.value)
+                      }
+                      placeholder="each"
+                    />
+
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={item.unitPrice}
+                      onChange={(event) =>
+                        updateLineItem(item.id, "unitPrice", event.target.value)
+                      }
+                      placeholder="0.00"
+                    />
+
+                    <span className="ordersLineTotal">
+                      {money((Number(item.quantity) || 0) * (Number(item.unitPrice) || 0))}
+                    </span>
+
+                    <button
+                      className="iconButton danger"
+                      type="button"
+                      onClick={() => removeLineItem(item.id)}
+                      aria-label="Remove line item"
+                    >
+                      <Trash2 size={15} />
+                    </button>
                   </div>
+                ))}
+              </div>
+            </div>
 
+            <div className="ordersSubPanel">
+              <div className="workspaceHeader compactPanelHeader">
+                <div>
+                  <p className="eyebrow">Totals</p>
+                  <h3>Order Summary</h3>
+                </div>
+                <DollarSign size={20} />
+              </div>
+
+              <div className="ordersTotalsGrid">
+                <label>
+                  Discount $
                   <input
                     type="number"
                     step="0.01"
-                    value={item.quantity}
+                    value={form.discountAmount}
                     onChange={(event) =>
-                      updateLineItem(item.id, "quantity", event.target.value)
-                    }
-                  />
-
-                  <input
-                    value={item.unitLabel}
-                    onChange={(event) =>
-                      updateLineItem(item.id, "unitLabel", event.target.value)
-                    }
-                    placeholder="each"
-                  />
-
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={item.unitPrice}
-                    onChange={(event) =>
-                      updateLineItem(item.id, "unitPrice", event.target.value)
+                      updateOrderField("discountAmount", event.target.value)
                     }
                     placeholder="0.00"
                   />
+                </label>
 
-                  <span className="ordersLineTotal">
-                    {money((Number(item.quantity) || 0) * (Number(item.unitPrice) || 0))}
-                  </span>
+                <label>
+                  Service / Delivery Fee $
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={form.serviceFee}
+                    onChange={(event) =>
+                      updateOrderField("serviceFee", event.target.value)
+                    }
+                    placeholder="0.00"
+                  />
+                </label>
 
-                  <button
-                    className="iconButton danger"
-                    type="button"
-                    onClick={() => removeLineItem(item.id)}
-                    aria-label="Remove line item"
-                  >
-                    <Trash2 size={15} />
-                  </button>
+                <label>
+                  Tax %
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={form.taxRate}
+                    onChange={(event) => updateOrderField("taxRate", event.target.value)}
+                    placeholder="0"
+                  />
+                </label>
+
+                <label>
+                  Deposit Paid $
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={form.depositPaid}
+                    onChange={(event) =>
+                      updateOrderField("depositPaid", event.target.value)
+                    }
+                    placeholder="0.00"
+                  />
+                </label>
+
+                <div>
+                  <span>Subtotal</span>
+                  <strong>{money(totals.subtotal)}</strong>
                 </div>
-              ))}
-            </div>
-          </div>
 
-          <div className="ordersSubPanel">
-            <div className="workspaceHeader compactPanelHeader">
-              <div>
-                <p className="eyebrow">Totals</p>
-                <h3>Order Summary</h3>
-              </div>
-              <DollarSign size={20} />
-            </div>
+                <div>
+                  <span>Service Fee</span>
+                  <strong>{money(totals.serviceFee)}</strong>
+                </div>
 
-            <div className="ordersTotalsGrid">
-              <label>
-                Discount $
-                <input
-                  type="number"
-                  step="0.01"
-                  value={form.discountAmount}
-                  onChange={(event) =>
-                    updateOrderField("discountAmount", event.target.value)
-                  }
-                  placeholder="0.00"
-                />
-              </label>
+                <div>
+                  <span>Tax</span>
+                  <strong>{money(totals.taxAmount)}</strong>
+                </div>
 
-              <label>
-                Service / Delivery Fee $
-                <input
-                  type="number"
-                  step="0.01"
-                  value={form.serviceFee}
-                  onChange={(event) =>
-                    updateOrderField("serviceFee", event.target.value)
-                  }
-                  placeholder="0.00"
-                />
-              </label>
+                <div>
+                  <span>Total</span>
+                  <strong>{money(totals.total)}</strong>
+                </div>
 
-              <label>
-                Tax %
-                <input
-                  type="number"
-                  step="0.01"
-                  value={form.taxRate}
-                  onChange={(event) => updateOrderField("taxRate", event.target.value)}
-                  placeholder="0"
-                />
-              </label>
-
-              <label>
-                Deposit Paid $
-                <input
-                  type="number"
-                  step="0.01"
-                  value={form.depositPaid}
-                  onChange={(event) =>
-                    updateOrderField("depositPaid", event.target.value)
-                  }
-                  placeholder="0.00"
-                />
-              </label>
-
-              <div>
-                <span>Subtotal</span>
-                <strong>{money(totals.subtotal)}</strong>
+                <div className="ordersBalanceDue">
+                  <span>Balance Due</span>
+                  <strong>{money(totals.balanceDue)}</strong>
+                </div>
               </div>
 
-              <div>
-                <span>Service Fee</span>
-                <strong>{money(totals.serviceFee)}</strong>
+              <div className="formGrid compactFormGrid">
+                <label className="fullSpan">
+                  Customer Notes
+                  <textarea
+                    value={form.customerNotes}
+                    onChange={(event) => updateOrderField("customerNotes", event.target.value)}
+                    placeholder="Notes visible to the customer, packing slip, or invoice later"
+                  />
+                </label>
+
+                <label className="fullSpan">
+                  Internal Notes
+                  <textarea
+                    value={form.internalNotes}
+                    onChange={(event) => updateOrderField("internalNotes", event.target.value)}
+                    placeholder="Internal production notes, delivery notes, or reminders"
+                  />
+                </label>
               </div>
-
-              <div>
-                <span>Tax</span>
-                <strong>{money(totals.taxAmount)}</strong>
-              </div>
-
-              <div>
-                <span>Total</span>
-                <strong>{money(totals.total)}</strong>
-              </div>
-
-              <div className="ordersBalanceDue">
-                <span>Balance Due</span>
-                <strong>{money(totals.balanceDue)}</strong>
-              </div>
-            </div>
-
-            <div className="formGrid compactFormGrid">
-              <label className="fullSpan">
-                Customer Notes
-                <textarea
-                  value={form.customerNotes}
-                  onChange={(event) => updateOrderField("customerNotes", event.target.value)}
-                  placeholder="Notes visible to the customer, packing slip, or invoice later"
-                />
-              </label>
-
-              <label className="fullSpan">
-                Internal Notes
-                <textarea
-                  value={form.internalNotes}
-                  onChange={(event) => updateOrderField("internalNotes", event.target.value)}
-                  placeholder="Internal production notes, delivery notes, or reminders"
-                />
-              </label>
             </div>
           </div>
         </div>
-      </div>
       ) : null}
     </div>
   );
