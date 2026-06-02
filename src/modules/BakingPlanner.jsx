@@ -2492,7 +2492,7 @@ export default function BakingPlanner() {
                 humidity, and altitude, then generate a practical production
                 sheet for your bake day.
               </p>
-              <div className="button-row" style={{ marginTop: "14px" }}>
+              <div className="button-row heroButtonRow" style={{ marginTop: "14px" }}>
                 <Button
                   variant="outline"
                   className={hasUnsavedChanges ? "dirtySaveButton" : ""}
@@ -2501,31 +2501,17 @@ export default function BakingPlanner() {
                 >
                   <Cloud size={16} /> {cloudLoading ? "Syncing..." : hasUnsavedChanges ? "Save Changes" : "Save / Sync"}
                 </Button>
-                <span className="pill">
+                <Button
+                  variant="outline"
+                  className={activeTab === "settings" ? "activeHeroSettingsButton" : ""}
+                  onClick={() => setActiveTab("settings")}
+                >
+                  <Settings size={16} /> Settings
+                </Button>
+                <span className="pill heroCloudStatus">
                   {user?.displayName || user?.email || "Local user"} • {cloudStatus}
                 </span>
               </div>
-            </div>
-            <div className="hero-stats hero-actions">
-              <div>
-                <p>Products</p>
-                <strong>{recipes.length}</strong>
-              </div>
-              <div>
-                <p>Planned Units</p>
-                <strong>{round(totals.units)}</strong>
-              </div>
-              <button
-                className={activeTab === "settings" ? "hero-settings-card active" : "hero-settings-card"}
-                type="button"
-                onClick={() => setActiveTab("settings")}
-              >
-                <Settings size={18} />
-                <span>
-                  <p>Settings</p>
-                  <strong>Open</strong>
-                </span>
-              </button>
             </div>
           </div>
         </header>
