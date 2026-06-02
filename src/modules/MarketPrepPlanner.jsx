@@ -792,8 +792,8 @@ export default function MarketPrepPlanner() {
   if (!user) {
     return (
       <div className="modulePage marketPrepPage compactSpicePage" onChangeCapture={markMarketPrepDirty}>
-        <section className="moduleHero compactHero">
-          <div>
+        <section className="farmModuleHero marketPrepHero">
+          <div className="farmModuleHeroText">
             <p className="eyebrow">Market Prep Planner</p>
             <h2>Sign in to save market prep plans.</h2>
             <p>
@@ -802,9 +802,11 @@ export default function MarketPrepPlanner() {
             </p>
           </div>
 
-          <button className="primaryButton" onClick={loginWithGoogle}>
-            Sign in with Google
-          </button>
+          <div className="farmModuleHeroActions">
+            <button className="primaryButton compactPrimary farmHeroAction" onClick={loginWithGoogle}>
+              Sign in with Google
+            </button>
+          </div>
         </section>
       </div>
     );
@@ -812,8 +814,8 @@ export default function MarketPrepPlanner() {
 
   return (
     <div className="modulePage marketPrepPage compactSpicePage" onChangeCapture={markMarketPrepDirty}>
-      <section className="moduleHero compactHero noActionHero">
-        <div>
+      <section className="farmModuleHero marketPrepHero marketPrepNoPrint">
+        <div className="farmModuleHeroText">
           <p className="eyebrow">Market Prep Planner</p>
           <h2>Plan packing, prep quantities, and inventory before market day.</h2>
           <p>
@@ -821,6 +823,33 @@ export default function MarketPrepPlanner() {
             estimate product quantities, add buffers, save plans, and print a working
             prep sheet.
           </p>
+        </div>
+
+        <div className="farmModuleHeroActions marketPrepHeroActions">
+          <button className="secondaryButton compactButton farmHeroAction" type="button" onClick={startNewPlan}>
+            <Plus size={15} />
+            New Plan
+          </button>
+
+          <button className="secondaryButton compactButton farmHeroAction" type="button" onClick={loadSampleProducts}>
+            <Sprout size={15} />
+            Load Samples
+          </button>
+
+          <button className="secondaryButton compactButton farmHeroAction" type="button" onClick={printPlan}>
+            <Printer size={15} />
+            Print
+          </button>
+
+          <button
+            className={`primaryButton compactPrimary farmHeroAction ${hasUnsavedChanges ? "dirtySaveButton" : ""}`}
+            type="button"
+            onClick={savePlan}
+            disabled={saving}
+          >
+            <Save size={15} />
+            {saving ? "Saving..." : "Save"}
+          </button>
         </div>
       </section>
 
@@ -861,32 +890,6 @@ export default function MarketPrepPlanner() {
               <h3>Market Details</h3>
             </div>
 
-            <div className="formActions compactActions marketPrepNoPrint">
-              <button className="secondaryButton compactButton" type="button" onClick={startNewPlan}>
-                <Plus size={15} />
-                New Plan
-              </button>
-
-              <button className="secondaryButton compactButton" type="button" onClick={loadSampleProducts}>
-                <Sprout size={15} />
-                Load Sample Products
-              </button>
-
-              <button className="secondaryButton compactButton" type="button" onClick={printPlan}>
-                <Printer size={15} />
-                Print
-              </button>
-
-              <button
-                className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`}
-                type="button"
-                onClick={savePlan}
-                disabled={saving}
-              >
-                <Save size={15} />
-                {saving ? "Saving..." : "Save"}
-              </button>
-            </div>
           </div>
 
           <div className="formGrid compactFormGrid marketPrepNoPrint">
