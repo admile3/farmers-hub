@@ -23,7 +23,10 @@ import {
   getProducts,
   saveProduct
 } from "../services/productService.js";
-import { getSpiceRecipes } from "../services/spiceKitchenService.js";
+import {
+  getSpiceRecipes,
+  updateSpiceRecipeProductPackage
+} from "../services/spiceKitchenService.js";
 import StatCard from "../components/StatCard.jsx";
 
 const categories = [
@@ -60,6 +63,12 @@ function round(value, digits = 2) {
 
 function money(value) {
   return `$${round(value).toFixed(2)}`;
+}
+
+function moneyValue(value) {
+  if (value === "" || value === null || value === undefined) return "";
+  const number = Number(value);
+  return Number.isFinite(number) ? number.toFixed(2) : "";
 }
 
 function percent(value) {
@@ -143,14 +152,6 @@ function formatPackageSize(size, unit) {
   return `${Number(amount.toFixed(3)).toString()} ${unit || ""}`.trim();
 }
 
-function getTargetRetailMargin(product) {
-  return numberOrFallback(product?.targetRetailMargin, product?.targetMargin, 70);
-}
-
-function getTargetWholesaleMargin(product) {
-  return numberOrFallback(product?.targetWholesaleMargin, 50);
-}
-
 function numberOrFallback(...values) {
   for (const value of values) {
     if (value === "" || value === null || value === undefined) continue;
@@ -159,6 +160,14 @@ function numberOrFallback(...values) {
   }
 
   return "";
+}
+
+function getTargetRetailMargin(product) {
+  return numberOrFallback(product?.targetRetailMargin, product?.targetMargin, 70);
+}
+
+function getTargetWholesaleMargin(product) {
+  return numberOrFallback(product?.targetWholesaleMargin, 50);
 }
 
 function buildSpiceDirectoryProducts(spiceRecipes = []) {
@@ -198,16 +207,16 @@ function buildSpiceDirectoryProducts(spiceRecipes = []) {
             sku: packageItem.sku || "",
             unitLabel: packageName,
             description: recipe.notes || "",
-            retailPrice: packageItem.retailPrice || "",
-            wholesalePrice: packageItem.wholesalePrice || "",
-            targetRetailMargin: 70,
-            targetWholesaleMargin: 50,
-            batchIngredientCost: ingredientCost,
-            batchUnits: 1,
-            packagingCostPerUnit: packageItem.packagingCostPerUnit || "",
-            laborHours: "",
-            laborRate: "",
-            overheadCost: "",
+            retailPrice: moneyValue(packageItem.retailPrice),
+            wholesalePrice: moneyValue(packageItem.wholesalePrice),
+            targetRetailMargin: numberOrFallback(packageItem.targetRetailMargin, 70),
+            targetWholesaleMargin: numberOrFallback(packageItem.targetWholesaleMargin, 50),
+            batchIngredientCost: moneyValue(ingredientCost),
+            batchUnits: numberOrFallback(packageItem.batchUnits, 1),
+            packagingCostPerUnit: moneyValue(packageItem.packagingCostPerUnit),
+            laborHours: packageItem.laborHours || "",
+            laborRate: moneyValue(packageItem.laborRate),
+            overheadCost: moneyValue(packageItem.overheadCost),
             notes: "Generated from Spice Kitchen.",
             generatedVariants: [],
             updatedAt: recipe.updatedAt || recipe.createdAt || ""
@@ -228,16 +237,23 @@ function buildSpiceDirectoryProducts(spiceRecipes = []) {
 
         return {
           id: `spice-${recipe.id}-variant-${index}`,
+          packageIndex: index,
           name: packageName,
           size: packageItem.size,
           unit: packageItem.unit,
           packageOunces: packageItem.packageOunces,
-          ingredientCost,
-          costPerUnit: ingredientCost,
+          ingredientCost: moneyValue(ingredientCost),
+          costPerUnit: moneyValue(ingredientCost),
           sku: packageItem.sku || "",
-          retailPrice: packageItem.retailPrice || "",
-          wholesalePrice: packageItem.wholesalePrice || "",
-          packagingCostPerUnit: packageItem.packagingCostPerUnit || ""
+          retailPrice: moneyValue(packageItem.retailPrice),
+          wholesalePrice: moneyValue(packageItem.wholesalePrice),
+          targetRetailMargin: numberOrFallback(packageItem.targetRetailMargin, 70),
+          targetWholesaleMargin: numberOrFallback(packageItem.targetWholesaleMargin, 50),
+          packagingCostPerUnit: moneyValue(packageItem.packagingCostPerUnit),
+          batchUnits: numberOrFallback(packageItem.batchUnits, 1),
+          laborHours: packageItem.laborHours || "",
+          laborRate: moneyValue(packageItem.laborRate),
+          overheadCost: moneyValue(packageItem.overheadCost)
         };
       });
 
@@ -257,14 +273,14 @@ function buildSpiceDirectoryProducts(spiceRecipes = []) {
         description: recipe.notes || "",
         retailPrice: firstVariant?.retailPrice || "",
         wholesalePrice: firstVariant?.wholesalePrice || "",
-        targetRetailMargin: 70,
-        targetWholesaleMargin: 50,
-        batchIngredientCost: firstVariant?.ingredientCost || costPerOunce,
-        batchUnits: 1,
+        targetRetailMargin: firstVariant?.targetRetailMargin || 70,
+        targetWholesaleMargin: firstVariant?.targetWholesaleMargin || 50,
+        batchIngredientCost: firstVariant?.ingredientCost || moneyValue(costPerOunce),
+        batchUnits: firstVariant?.batchUnits || 1,
         packagingCostPerUnit: firstVariant?.packagingCostPerUnit || "",
-        laborHours: "",
-        laborRate: "",
-        overheadCost: "",
+        laborHours: firstVariant?.laborHours || "",
+        laborRate: firstVariant?.laborRate || "",
+        overheadCost: firstVariant?.overheadCost || "",
         notes: "Generated from Spice Kitchen. Package sizes are shown as variants.",
         formulaCostPerOunce: costPerOunce,
         generatedVariants: variants,
@@ -312,7 +328,7 @@ function buildBakingDirectoryProducts(bakingRecipes = []) {
         wholesalePrice: "",
         targetRetailMargin: 70,
         targetWholesaleMargin: 50,
-        batchIngredientCost,
+        batchIngredientCost: moneyValue(batchIngredientCost),
         batchUnits: unitsPerBatch,
         packagingCostPerUnit: "",
         laborHours,
@@ -340,6 +356,12 @@ function applyVariantToProduct(product, variantId) {
     return {
       ...blankProduct(),
       ...product,
+      batchIngredientCost: moneyValue(product?.batchIngredientCost),
+      packagingCostPerUnit: moneyValue(product?.packagingCostPerUnit),
+      laborRate: moneyValue(product?.laborRate),
+      overheadCost: moneyValue(product?.overheadCost),
+      retailPrice: moneyValue(product?.retailPrice),
+      wholesalePrice: moneyValue(product?.wholesalePrice),
       targetRetailMargin: getTargetRetailMargin(product),
       targetWholesaleMargin: getTargetWholesaleMargin(product),
       selectedVariantId: product?.selectedVariantId || "",
@@ -357,15 +379,29 @@ function applyVariantToProduct(product, variantId) {
     ...product,
     sku: variant.sku || product.sku || "",
     unitLabel: variant.name || product.unitLabel || "package",
-    retailPrice: variant.retailPrice || product.retailPrice || "",
-    wholesalePrice: variant.wholesalePrice || product.wholesalePrice || "",
-    packagingCostPerUnit:
-      variant.packagingCostPerUnit || product.packagingCostPerUnit || "",
-    batchIngredientCost:
-      variant.ingredientCost || variant.costPerUnit || product.batchIngredientCost || "",
-    batchUnits: product.batchUnits || 1,
-    targetRetailMargin: getTargetRetailMargin(product),
-    targetWholesaleMargin: getTargetWholesaleMargin(product),
+    retailPrice: moneyValue(variant.retailPrice || product.retailPrice),
+    wholesalePrice: moneyValue(variant.wholesalePrice || product.wholesalePrice),
+    packagingCostPerUnit: moneyValue(
+      variant.packagingCostPerUnit || product.packagingCostPerUnit
+    ),
+    batchIngredientCost: moneyValue(
+      variant.ingredientCost || variant.costPerUnit || product.batchIngredientCost
+    ),
+    batchUnits: variant.batchUnits || product.batchUnits || 1,
+    laborHours: variant.laborHours || product.laborHours || "",
+    laborRate: moneyValue(variant.laborRate || product.laborRate),
+    overheadCost: moneyValue(variant.overheadCost || product.overheadCost),
+    targetRetailMargin: numberOrFallback(
+      variant.targetRetailMargin,
+      product.targetRetailMargin,
+      product.targetMargin,
+      70
+    ),
+    targetWholesaleMargin: numberOrFallback(
+      variant.targetWholesaleMargin,
+      product.targetWholesaleMargin,
+      50
+    ),
     selectedVariantId: variant.id,
     selectedVariantName: variant.name
   };
@@ -433,6 +469,7 @@ function MoneyInput({ label, value, onChange, placeholder = "0.00" }) {
           value={value}
           onWheel={(event) => event.currentTarget.blur()}
           onChange={(event) => onChange(event.target.value)}
+          onBlur={(event) => onChange(moneyValue(event.target.value))}
           placeholder={placeholder}
         />
       </div>
@@ -469,9 +506,11 @@ export default function PricingCalculator() {
   const pricingRef = useRef(null);
 
   const [products, setProducts] = useState([]);
+  const [spiceRecipes, setSpiceRecipes] = useState([]);
   const [spiceProducts, setSpiceProducts] = useState([]);
   const [bakingProducts, setBakingProducts] = useState([]);
   const [expandedProductIds, setExpandedProductIds] = useState({});
+  const [directoryVariantSelections, setDirectoryVariantSelections] = useState({});
   const [selectedProductId, setSelectedProductId] = useState("");
   const [selectedVariantId, setSelectedVariantId] = useState("");
   const [form, setForm] = useState(blankProduct());
@@ -543,14 +582,24 @@ export default function PricingCalculator() {
   const stats = useMemo(() => {
     const activeProducts = allDirectoryProducts.filter((product) => product.status === "Active");
     const productsWithPricing = allDirectoryProducts.filter((product) => {
-      const productForCalc = applyVariantToProduct(product, product.selectedVariantId);
+      const variantId =
+        directoryVariantSelections[product.id] ||
+        product.selectedVariantId ||
+        product.generatedVariants?.[0]?.id ||
+        "";
+      const productForCalc = applyVariantToProduct(product, variantId);
       const calc = calculateProduct(productForCalc);
       return calc.costPerUnit > 0 && Number(productForCalc.retailPrice) > 0;
     });
 
     const averageRetailMargin = productsWithPricing.length
       ? productsWithPricing.reduce((sum, product) => {
-          const productForCalc = applyVariantToProduct(product, product.selectedVariantId);
+          const variantId =
+            directoryVariantSelections[product.id] ||
+            product.selectedVariantId ||
+            product.generatedVariants?.[0]?.id ||
+            "";
+          const productForCalc = applyVariantToProduct(product, variantId);
           return sum + calculateProduct(productForCalc).retailMargin;
         }, 0) / productsWithPricing.length
       : 0;
@@ -560,7 +609,7 @@ export default function PricingCalculator() {
       averageRetailMargin,
       productsWithPricing: productsWithPricing.length
     };
-  }, [allDirectoryProducts]);
+  }, [allDirectoryProducts, directoryVariantSelections]);
 
   function markProductsDirty() {
     markUnsaved({
@@ -592,6 +641,7 @@ export default function PricingCalculator() {
       loadProducts();
     } else {
       setProducts([]);
+      setSpiceRecipes([]);
       setSpiceProducts([]);
       setBakingProducts([]);
       setSelectedProductId("");
@@ -606,7 +656,7 @@ export default function PricingCalculator() {
     setLoadingProducts(true);
 
     try {
-      const [saved, spiceRecipes, bakingSnapshot] = await Promise.all([
+      const [saved, spiceRecipeRows, bakingSnapshot] = await Promise.all([
         getProducts(user.uid),
         getSpiceRecipes(user.uid).catch((error) => {
           console.error(error);
@@ -623,7 +673,8 @@ export default function PricingCalculator() {
         : [];
 
       setProducts(Array.isArray(saved) ? saved : []);
-      setSpiceProducts(buildSpiceDirectoryProducts(spiceRecipes));
+      setSpiceRecipes(Array.isArray(spiceRecipeRows) ? spiceRecipeRows : []);
+      setSpiceProducts(buildSpiceDirectoryProducts(spiceRecipeRows));
       setBakingProducts(buildBakingDirectoryProducts(bakingRecipes));
     } catch (error) {
       console.error(error);
@@ -644,6 +695,7 @@ export default function PricingCalculator() {
   function loadProduct(product, options = {}) {
     const variantId =
       options.variantId ||
+      directoryVariantSelections[product.id] ||
       product.selectedVariantId ||
       product.generatedVariants?.[0]?.id ||
       "";
@@ -667,9 +719,20 @@ export default function PricingCalculator() {
     const productForForm = applyVariantToProduct(selectedProduct, variantId);
 
     setSelectedVariantId(variantId);
+    setDirectoryVariantSelections((current) => ({
+      ...current,
+      [selectedProduct.id]: variantId
+    }));
     setForm(productForForm);
     markSaved();
     setStatusMessage("Variant loaded.");
+  }
+
+  function changeDirectoryVariant(productId, variantId) {
+    setDirectoryVariantSelections((current) => ({
+      ...current,
+      [productId]: variantId
+    }));
   }
 
   function startNewProduct() {
@@ -695,6 +758,52 @@ export default function PricingCalculator() {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
+  async function saveSpiceKitchenVariant() {
+    const recipeId = form.sourceRecipeId;
+    const recipe = spiceRecipes.find((item) => item.id === recipeId);
+
+    if (!recipe) {
+      setStatusMessage("Could not find the linked Spice Kitchen recipe.");
+      return false;
+    }
+
+    const packageRows = Array.isArray(recipe.productPackages)
+      ? recipe.productPackages
+      : [];
+
+    const variant = selectedProductVariants.find((item) => item.id === selectedVariantId);
+    const packageIndex =
+      typeof variant?.packageIndex === "number"
+        ? variant.packageIndex
+        : Number(form.sourceVariantIndex);
+
+    if (!Number.isInteger(packageIndex) || !packageRows[packageIndex]) {
+      setStatusMessage("Could not find the selected package variant.");
+      return false;
+    }
+
+    const updatedPackages = packageRows.map((packageItem, index) => {
+      if (index !== packageIndex) return packageItem;
+
+      return {
+        ...packageItem,
+        sku: form.sku || packageItem.sku || "",
+        retailPrice: Number(form.retailPrice) || 0,
+        wholesalePrice: Number(form.wholesalePrice) || 0,
+        targetRetailMargin: Number(form.targetRetailMargin) || 70,
+        targetWholesaleMargin: Number(form.targetWholesaleMargin) || 50,
+        packagingCostPerUnit: Number(form.packagingCostPerUnit) || 0,
+        batchUnits: Number(form.batchUnits) || 1,
+        laborHours: Number(form.laborHours) || 0,
+        laborRate: Number(form.laborRate) || 0,
+        overheadCost: Number(form.overheadCost) || 0
+      };
+    });
+
+    await updateSpiceRecipeProductPackage(user.uid, recipeId, updatedPackages);
+    return true;
+  }
+
   async function saveCurrentProduct() {
     if (!user) {
       setStatusMessage("Sign in from the Farmers Hub sidebar to save products.");
@@ -708,28 +817,39 @@ export default function PricingCalculator() {
 
     setSaving(true);
 
-    const productToSave = {
-      ...form,
-      id:
-        form.isGeneratedProduct ||
-        String(selectedProductId).startsWith("spice-") ||
-        String(selectedProductId).startsWith("baking-")
-          ? makeId()
-          : selectedProductId || form.id || makeId(),
-      name: form.name.trim(),
-      category: form.category || "Other",
-      status: form.status || "Active",
-      sourceType: form.isGeneratedProduct ? "manual" : form.sourceType || "manual",
-      sourceLabel: form.isGeneratedProduct ? "Manual" : form.sourceLabel || "Manual",
-      isGeneratedProduct: false,
-      selectedVariantId,
-      selectedVariantName: form.selectedVariantName || "",
-      targetRetailMargin: getTargetRetailMargin(form),
-      targetWholesaleMargin: getTargetWholesaleMargin(form),
-      pricingSummary: calculation
-    };
-
     try {
+      if (form.isGeneratedProduct && form.sourceType === "spice") {
+        const savedLinkedVariant = await saveSpiceKitchenVariant();
+
+        if (savedLinkedVariant) {
+          markSaved();
+          setStatusMessage("Spice Kitchen package pricing saved.");
+          await loadProducts();
+        }
+
+        return;
+      }
+
+      const productToSave = {
+        ...form,
+        id:
+          form.isGeneratedProduct ||
+          String(selectedProductId).startsWith("baking-")
+            ? makeId()
+            : selectedProductId || form.id || makeId(),
+        name: form.name.trim(),
+        category: form.category || "Other",
+        status: form.status || "Active",
+        sourceType: form.isGeneratedProduct ? "manual" : form.sourceType || "manual",
+        sourceLabel: form.isGeneratedProduct ? "Manual" : form.sourceLabel || "Manual",
+        isGeneratedProduct: false,
+        selectedVariantId,
+        selectedVariantName: form.selectedVariantName || "",
+        targetRetailMargin: getTargetRetailMargin(form),
+        targetWholesaleMargin: getTargetWholesaleMargin(form),
+        pricingSummary: calculation
+      };
+
       const savedId = await saveProduct(user.uid, productToSave);
       setSelectedProductId(savedId);
       setForm((current) => ({ ...current, id: savedId }));
@@ -966,13 +1086,22 @@ export default function PricingCalculator() {
 
           {filteredProducts.length ? (
             filteredProducts.map((product) => {
-              const productForCalc = applyVariantToProduct(product, product.selectedVariantId);
+              const directoryVariantId =
+                directoryVariantSelections[product.id] ||
+                product.selectedVariantId ||
+                product.generatedVariants?.[0]?.id ||
+                "";
+              const productForCalc = applyVariantToProduct(product, directoryVariantId);
               const calc = calculateProduct(productForCalc);
 
               return (
                 <div className="pricingComparisonRow pricingDirectoryCompactRow" key={product.id}>
                   <span className="pricingProductCell">
-                    <button className="savedItemLink" type="button" onClick={() => loadProduct(product)}>
+                    <button
+                      className="savedItemLink"
+                      type="button"
+                      onClick={() => loadProduct(product, { variantId: directoryVariantId })}
+                    >
                       {product.name || "Untitled Product"}
                     </button>
                     <small>
@@ -982,6 +1111,19 @@ export default function PricingCalculator() {
                         ? ` • ${product.generatedVariants.length} size variant${product.generatedVariants.length === 1 ? "" : "s"}`
                         : ""}
                     </small>
+                    {product.generatedVariants?.length ? (
+                      <select
+                        className="pricingDirectoryVariantSelect"
+                        value={directoryVariantId}
+                        onChange={(event) => changeDirectoryVariant(product.id, event.target.value)}
+                      >
+                        {product.generatedVariants.map((variant) => (
+                          <option key={variant.id} value={variant.id}>
+                            {variant.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : null}
                   </span>
                   <span>{product.category || "Other"}</span>
                   <span className="pricingMetric">{money(productForCalc.retailPrice)}</span>
@@ -1038,7 +1180,7 @@ export default function PricingCalculator() {
                         <div className="pricingExpandedWide">
                           <strong>Linked Item</strong>
                           <span>
-                            This product is managed in {productSourceLabel(product)}. Saving edits here creates a manual product copy.
+                            This product is managed in {productSourceLabel(product)}. Saving edits here updates the linked package variant.
                           </span>
                         </div>
                       ) : null}
@@ -1094,7 +1236,7 @@ export default function PricingCalculator() {
 
           {form.isGeneratedProduct ? (
             <div className="placeholderBox compactPlaceholder linkedProductNotice">
-              <strong>Linked product:</strong> this product is generated from {productSourceLabel(form)}. Saving edits here will create a manual product copy. To change the source recipe or package variants, edit it in the source module.
+              <strong>Linked product:</strong> this product is generated from {productSourceLabel(form)}. Saving edits here will update the linked source package variant.
             </div>
           ) : null}
 
@@ -1199,55 +1341,13 @@ export default function PricingCalculator() {
           </div>
 
           <div className="hubStatGrid pricingStatGrid">
-            <StatCard
-              icon={DollarSign}
-              label="Retail"
-              value={money(form.retailPrice)}
-              sub={`per ${form.unitLabel || "unit"}`}
-              accent="pricing"
-            />
-            <StatCard
-              icon={DollarSign}
-              label="Wholesale"
-              value={money(form.wholesalePrice)}
-              sub={`per ${form.unitLabel || "unit"}`}
-              accent="sourdough"
-            />
-            <StatCard
-              icon={Target}
-              label="Cost"
-              value={money(calculation.costPerUnit)}
-              sub="estimated per unit"
-              accent="market"
-            />
-            <StatCard
-              icon={Package}
-              label="Suggested Retail"
-              value={money(calculation.suggestedRetailPrice)}
-              sub={`${form.targetRetailMargin || 0}% target`}
-              accent="spice"
-            />
-            <StatCard
-              icon={Package}
-              label="Suggested Wholesale"
-              value={money(calculation.suggestedWholesalePrice)}
-              sub={`${form.targetWholesaleMargin || 0}% target`}
-              accent="pricing"
-            />
-            <StatCard
-              icon={Calculator}
-              label="Retail Margin"
-              value={percent(calculation.retailMargin)}
-              sub={`${money(calculation.retailProfitPerUnit)} profit`}
-              accent="market"
-            />
-            <StatCard
-              icon={Calculator}
-              label="Wholesale Margin"
-              value={percent(calculation.wholesaleMargin)}
-              sub={`${money(calculation.wholesaleProfitPerUnit)} profit`}
-              accent="sourdough"
-            />
+            <StatCard icon={DollarSign} label="Retail" value={money(form.retailPrice)} sub={`per ${form.unitLabel || "unit"}`} accent="pricing" />
+            <StatCard icon={DollarSign} label="Wholesale" value={money(form.wholesalePrice)} sub={`per ${form.unitLabel || "unit"}`} accent="sourdough" />
+            <StatCard icon={Target} label="Cost" value={money(calculation.costPerUnit)} sub="estimated per unit" accent="market" />
+            <StatCard icon={Package} label="Suggested Retail" value={money(calculation.suggestedRetailPrice)} sub={`${form.targetRetailMargin || 0}% target`} accent="spice" />
+            <StatCard icon={Package} label="Suggested Wholesale" value={money(calculation.suggestedWholesalePrice)} sub={`${form.targetWholesaleMargin || 0}% target`} accent="pricing" />
+            <StatCard icon={Calculator} label="Retail Margin" value={percent(calculation.retailMargin)} sub={`${money(calculation.retailProfitPerUnit)} profit`} accent="market" />
+            <StatCard icon={Calculator} label="Wholesale Margin" value={percent(calculation.wholesaleMargin)} sub={`${money(calculation.wholesaleProfitPerUnit)} profit`} accent="sourdough" />
           </div>
 
           <div className="placeholderBox compactPlaceholder">
@@ -1313,94 +1413,23 @@ export default function PricingCalculator() {
         </div>
 
         <div className="formGrid compactFormGrid">
-          <MoneyInput
-            label="Batch Ingredient / Material Cost"
-            value={form.batchIngredientCost}
-            onChange={(value) => updateField("batchIngredientCost", value)}
-            placeholder="32.00"
-          />
-          <NumberInput
-            label="Units Produced Per Batch"
-            value={form.batchUnits}
-            onChange={(value) => updateField("batchUnits", value)}
-            placeholder="24"
-            step="1"
-          />
-          <MoneyInput
-            label="Packaging Cost / Unit"
-            value={form.packagingCostPerUnit}
-            onChange={(value) => updateField("packagingCostPerUnit", value)}
-            placeholder="0.35"
-          />
-          <NumberInput
-            label="Labor Hours Per Batch"
-            value={form.laborHours}
-            onChange={(value) => updateField("laborHours", value)}
-            placeholder="1.5"
-            step="0.01"
-          />
-          <MoneyInput
-            label="Labor Rate / Hour"
-            value={form.laborRate}
-            onChange={(value) => updateField("laborRate", value)}
-            placeholder="18.00"
-          />
-          <MoneyInput
-            label="Overhead / Fees Per Batch"
-            value={form.overheadCost}
-            onChange={(value) => updateField("overheadCost", value)}
-            placeholder="6.00"
-          />
-          <MoneyInput
-            label="Retail Price"
-            value={form.retailPrice}
-            onChange={(value) => updateField("retailPrice", value)}
-            placeholder="8.00"
-          />
-          <MoneyInput
-            label="Wholesale Price"
-            value={form.wholesalePrice}
-            onChange={(value) => updateField("wholesalePrice", value)}
-            placeholder="5.00"
-          />
+          <MoneyInput label="Batch Ingredient / Material Cost" value={form.batchIngredientCost} onChange={(value) => updateField("batchIngredientCost", value)} placeholder="32.00" />
+          <NumberInput label="Units Produced Per Batch" value={form.batchUnits} onChange={(value) => updateField("batchUnits", value)} placeholder="24" step="1" />
+          <MoneyInput label="Packaging Cost / Unit" value={form.packagingCostPerUnit} onChange={(value) => updateField("packagingCostPerUnit", value)} placeholder="0.35" />
+          <NumberInput label="Labor Hours Per Batch" value={form.laborHours} onChange={(value) => updateField("laborHours", value)} placeholder="1.5" step="0.01" />
+          <MoneyInput label="Labor Rate / Hour" value={form.laborRate} onChange={(value) => updateField("laborRate", value)} placeholder="18.00" />
+          <MoneyInput label="Overhead / Fees Per Batch" value={form.overheadCost} onChange={(value) => updateField("overheadCost", value)} placeholder="6.00" />
+          <MoneyInput label="Retail Price" value={form.retailPrice} onChange={(value) => updateField("retailPrice", value)} placeholder="8.00" />
+          <MoneyInput label="Wholesale Price" value={form.wholesalePrice} onChange={(value) => updateField("wholesalePrice", value)} placeholder="5.00" />
         </div>
 
         <div className="grid four">
-          <div className="workspacePanel compactPanel">
-            <p className="eyebrow">Total Batch Cost</p>
-            <h3>{money(calculation.totalBatchCost)}</h3>
-            <p className="importExportText">Materials + packaging + labor + overhead.</p>
-          </div>
-
-          <div className="workspacePanel compactPanel">
-            <p className="eyebrow">Cost Per Unit</p>
-            <h3>{money(calculation.costPerUnit)}</h3>
-            <p className="importExportText">Estimated cost for one {form.unitLabel || "unit"}.</p>
-          </div>
-
-          <div className="workspacePanel compactPanel">
-            <p className="eyebrow">Suggested Retail</p>
-            <h3>{money(calculation.suggestedRetailPrice)}</h3>
-            <p className="importExportText">Based on {form.targetRetailMargin || 0}% target retail margin.</p>
-          </div>
-
-          <div className="workspacePanel compactPanel">
-            <p className="eyebrow">Suggested Wholesale</p>
-            <h3>{money(calculation.suggestedWholesalePrice)}</h3>
-            <p className="importExportText">Based on {form.targetWholesaleMargin || 0}% target wholesale margin.</p>
-          </div>
-
-          <div className="workspacePanel compactPanel">
-            <p className="eyebrow">Retail Margin</p>
-            <h3>{percent(calculation.retailMargin)}</h3>
-            <p className="importExportText">{money(calculation.retailProfitPerUnit)} retail profit per unit.</p>
-          </div>
-
-          <div className="workspacePanel compactPanel">
-            <p className="eyebrow">Wholesale Margin</p>
-            <h3>{percent(calculation.wholesaleMargin)}</h3>
-            <p className="importExportText">{money(calculation.wholesaleProfitPerUnit)} wholesale profit per unit.</p>
-          </div>
+          <div className="workspacePanel compactPanel"><p className="eyebrow">Total Batch Cost</p><h3>{money(calculation.totalBatchCost)}</h3><p className="importExportText">Materials + packaging + labor + overhead.</p></div>
+          <div className="workspacePanel compactPanel"><p className="eyebrow">Cost Per Unit</p><h3>{money(calculation.costPerUnit)}</h3><p className="importExportText">Estimated cost for one {form.unitLabel || "unit"}.</p></div>
+          <div className="workspacePanel compactPanel"><p className="eyebrow">Suggested Retail</p><h3>{money(calculation.suggestedRetailPrice)}</h3><p className="importExportText">Based on {form.targetRetailMargin || 0}% target retail margin.</p></div>
+          <div className="workspacePanel compactPanel"><p className="eyebrow">Suggested Wholesale</p><h3>{money(calculation.suggestedWholesalePrice)}</h3><p className="importExportText">Based on {form.targetWholesaleMargin || 0}% target wholesale margin.</p></div>
+          <div className="workspacePanel compactPanel"><p className="eyebrow">Retail Margin</p><h3>{percent(calculation.retailMargin)}</h3><p className="importExportText">{money(calculation.retailProfitPerUnit)} retail profit per unit.</p></div>
+          <div className="workspacePanel compactPanel"><p className="eyebrow">Wholesale Margin</p><h3>{percent(calculation.wholesaleMargin)}</h3><p className="importExportText">{money(calculation.wholesaleProfitPerUnit)} wholesale profit per unit.</p></div>
         </div>
       </section>
 
