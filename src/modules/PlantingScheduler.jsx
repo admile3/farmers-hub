@@ -632,8 +632,8 @@ export default function PlantingScheduler() {
   if (!user) {
     return (
       <div className="plantingModule modulePage plantingSchedulerResponsive">
-        <section className="moduleHero compactHero plantingSchedulerHero plantingCalendarHero">
-          <div className="plantingHeroText">
+        <section className="farmModuleHero plantingFarmHero">
+          <div className="farmModuleHeroText">
             <p className="eyebrow">Planting Scheduler</p>
             <h2>Sign in to schedule plantings.</h2>
             <p>
@@ -642,8 +642,8 @@ export default function PlantingScheduler() {
             </p>
           </div>
 
-          <div className="plantingHeroActions">
-            <button className="primaryButton" type="button" onClick={loginWithGoogle}>
+          <div className="farmModuleHeroActions">
+            <button className="primaryButton farmHeroAction farmHeroPrimary" type="button" onClick={loginWithGoogle}>
               Sign in with Google
             </button>
           </div>
@@ -663,8 +663,8 @@ export default function PlantingScheduler() {
         </div>
       ) : null}
 
-      <section className="moduleHero compactHero plantingSchedulerHero plantingCalendarHero">
-        <div className="plantingHeroText">
+      <section className="farmModuleHero plantingFarmHero">
+        <div className="farmModuleHeroText">
           <p className="eyebrow">Planting Scheduler</p>
           <h2>Plan crops, plantings, growing tasks, and harvest windows.</h2>
           <p>
@@ -674,13 +674,13 @@ export default function PlantingScheduler() {
           </p>
         </div>
 
-        <div className="plantingHeroActions">
-          <button className="secondaryButton compactButton" type="button" onClick={startNewTemplate}>
+        <div className="farmModuleHeroActions">
+          <button className="secondaryButton compactButton farmHeroAction farmHeroSecondary" type="button" onClick={startNewTemplate}>
             <Leaf size={16} />
             New Template
           </button>
 
-          <button className="primaryButton compactPrimary" type="button" onClick={startNewBatch}>
+          <button className="primaryButton compactPrimary farmHeroAction farmHeroPrimary" type="button" onClick={startNewBatch}>
             <Plus size={16} />
             New Planting
           </button>
@@ -1061,7 +1061,7 @@ export default function PlantingScheduler() {
                 </div>
 
                 <div className="formActions compactActions">
-                  <button className="secondaryButton compactButton" type="button" onClick={startNewTemplate}>
+                  <button className="secondaryButton compactButton farmHeroAction farmHeroSecondary" type="button" onClick={startNewTemplate}>
                     <Plus size={15} />
                     New Template
                   </button>
