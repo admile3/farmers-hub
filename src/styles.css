@@ -11188,3 +11188,12 @@ input[type="number"] {
     white-space: nowrap !important;
   }
 }
+.calendarModule .farmModuleHero {
+  margin-bottom: 32px !important;
+}
+
+.calendarModule .farmStatGrid,
+.calendarModule .dashboardOverviewGrid,
+.calendarModule .calendarStatsGrid {
+  margin-top: 0 !important;
+}
