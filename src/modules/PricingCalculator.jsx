@@ -975,34 +975,10 @@ export default function PricingCalculator() {
       </section>
 
       <section className="hubStatGrid pricingStatGrid">
-        <StatCard
-          icon={Package}
-          label="Products"
-          value={loadingProducts ? "..." : allDirectoryProducts.length}
-          sub="manual + module products"
-          accent="pricing"
-        />
-        <StatCard
-          icon={Tag}
-          label="Active"
-          value={loadingProducts ? "..." : stats.activeCount}
-          sub="currently available"
-          accent="market"
-        />
-        <StatCard
-          icon={Target}
-          label="Avg Margin"
-          value={loadingProducts ? "..." : percent(stats.averageRetailMargin)}
-          sub="retail margin"
-          accent="spice"
-        />
-        <StatCard
-          icon={Calculator}
-          label="Priced"
-          value={loadingProducts ? "..." : stats.productsWithPricing}
-          sub="cost + retail price"
-          accent="sourdough"
-        />
+        <StatCard icon={Package} label="Products" value={loadingProducts ? "..." : allDirectoryProducts.length} sub="manual + module products" accent="pricing" />
+        <StatCard icon={Tag} label="Active" value={loadingProducts ? "..." : stats.activeCount} sub="currently available" accent="market" />
+        <StatCard icon={Target} label="Avg Margin" value={loadingProducts ? "..." : percent(stats.averageRetailMargin)} sub="retail margin" accent="spice" />
+        <StatCard icon={Calculator} label="Priced" value={loadingProducts ? "..." : stats.productsWithPricing} sub="cost + retail price" accent="sourdough" />
       </section>
 
       <section className="toolGrid compactToolGrid">
@@ -1031,17 +1007,9 @@ export default function PricingCalculator() {
           </div>
 
           <div className="formActions compactActions">
-            <button className="secondaryButton compactButton" type="button" onClick={loadProducts}>
-              Refresh
-            </button>
-            <button className="secondaryButton compactButton" type="button" onClick={loadSampleProduct}>
-              <Package size={15} />
-              Load Sample
-            </button>
-            <button className="primaryButton compactPrimary" type="button" onClick={startNewProduct}>
-              <Plus size={15} />
-              New Product
-            </button>
+            <button className="secondaryButton compactButton" type="button" onClick={loadProducts}>Refresh</button>
+            <button className="secondaryButton compactButton" type="button" onClick={loadSampleProduct}><Package size={15} />Load Sample</button>
+            <button className="primaryButton compactPrimary" type="button" onClick={startNewProduct}><Plus size={15} />New Product</button>
           </div>
         </div>
 
@@ -1081,6 +1049,7 @@ export default function PricingCalculator() {
             <span>Wholesale</span>
             <span>Cost</span>
             <span>Margin</span>
+            <span>Variant</span>
             <span>Actions</span>
           </div>
 
@@ -1111,6 +1080,19 @@ export default function PricingCalculator() {
                         ? ` • ${product.generatedVariants.length} size variant${product.generatedVariants.length === 1 ? "" : "s"}`
                         : ""}
                     </small>
+                  </span>
+
+                  <span>{product.category || "Other"}</span>
+                  <span className="pricingMetric">{money(productForCalc.retailPrice)}</span>
+                  <span className="pricingMetric">{money(productForCalc.wholesalePrice)}</span>
+                  <span className="pricingMetric">{money(calc.costPerUnit)}</span>
+
+                  <span className="pricingMetric pricingPositive">
+                    {percent(calc.retailMargin)}
+                    <small>{money(calc.retailProfitPerUnit)} / unit</small>
+                  </span>
+
+                  <span className="pricingDirectoryVariantCell">
                     {product.generatedVariants?.length ? (
                       <select
                         className="pricingDirectoryVariantSelect"
@@ -1123,16 +1105,11 @@ export default function PricingCalculator() {
                           </option>
                         ))}
                       </select>
-                    ) : null}
+                    ) : (
+                      <span className="mutedText">Single unit</span>
+                    )}
                   </span>
-                  <span>{product.category || "Other"}</span>
-                  <span className="pricingMetric">{money(productForCalc.retailPrice)}</span>
-                  <span className="pricingMetric">{money(productForCalc.wholesalePrice)}</span>
-                  <span className="pricingMetric">{money(calc.costPerUnit)}</span>
-                  <span className="pricingMetric pricingPositive">
-                    {percent(calc.retailMargin)}
-                    <small>{money(calc.retailProfitPerUnit)} / unit</small>
-                  </span>
+
                   <span className="pricingDirectoryActions">
                     {!product.isGeneratedProduct ? (
                       <button
