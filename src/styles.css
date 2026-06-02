@@ -9973,3 +9973,107 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+/* Market Prep Planner weather preview refresh */
+.marketWeatherPanel {
+  padding: 16px !important;
+}
+
+.marketWeatherHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.marketWeatherHeader p {
+  margin: 6px 0 0;
+}
+
+.marketWeatherButton {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.marketWeatherGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 0;
+}
+
+.marketWeatherCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 12px;
+  min-width: 0;
+}
+
+.marketWeatherIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(69, 128, 85, 0.12);
+  color: var(--green);
+  flex: 0 0 auto;
+}
+
+.marketWeatherCard span {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.marketWeatherCard strong {
+  display: block;
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.marketWeatherCard small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.marketWeatherUnavailable {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+@media (max-width: 980px) {
+  .marketWeatherGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .marketWeatherHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .marketWeatherButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .marketWeatherGrid {
+    grid-template-columns: 1fr;
+  }
+}
