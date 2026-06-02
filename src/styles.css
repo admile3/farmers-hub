@@ -10333,3 +10333,199 @@ input[type="number"] {
   width: 18px;
   height: 18px;
 }
+/* =========================================================
+   Farmers Hub shared module template system
+   Add this at the very bottom of src/styles.css.
+   This is intentionally stronger than older module-specific hero rules.
+   ========================================================= */
+
+.farmhubModuleHero,
+.moduleHero.compactHero.farmhubModuleHero,
+.moduleHero.compactHero.plantingSchedulerHero,
+.moduleHero.compactHero.plantingCalendarHero,
+.moduleHero.compactHero.customersCalendarHero,
+.moduleHero.compactHero.ordersHero,
+.moduleHero.compactHero.permitGrantHeroBubble,
+.moduleHero.compactHero.listsHeroBubble,
+.pricingPage .moduleHero.compactHero,
+.calendarHero {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 20px !important;
+  width: 100% !important;
+  margin: 0 0 14px !important;
+  padding: 24px 28px !important;
+  border-radius: var(--radius) !important;
+  background: #ffffff !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
+  overflow: hidden !important;
+}
+
+.farmhubModuleHeroText,
+.farmhubModuleHero > div:first-child,
+.moduleHero.compactHero.plantingSchedulerHero > div:first-child,
+.moduleHero.compactHero.plantingCalendarHero > div:first-child,
+.moduleHero.compactHero.customersCalendarHero > div:first-child,
+.moduleHero.compactHero.ordersHero > div:first-child,
+.moduleHero.compactHero.permitGrantHeroBubble > div:first-child,
+.moduleHero.compactHero.listsHeroBubble > div:first-child,
+.pricingPage .moduleHero.compactHero > div:first-child,
+.calendarHero > div:first-child {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.farmhubModuleHero h2,
+.moduleHero.compactHero.plantingSchedulerHero h2,
+.moduleHero.compactHero.plantingCalendarHero h2,
+.moduleHero.compactHero.customersCalendarHero h2,
+.moduleHero.compactHero.ordersHero h2,
+.moduleHero.compactHero.permitGrantHeroBubble h2,
+.moduleHero.compactHero.listsHeroBubble h2,
+.pricingPage .moduleHero.compactHero h2,
+.calendarHero h2 {
+  max-width: none !important;
+  margin: 6px 0 8px !important;
+  font-size: clamp(2rem, 3.2vw, 3.35rem) !important;
+  line-height: 1.02 !important;
+  letter-spacing: -0.055em !important;
+}
+
+.farmhubModuleHero p:not(.eyebrow),
+.moduleHero.compactHero.plantingSchedulerHero p:not(.eyebrow),
+.moduleHero.compactHero.plantingCalendarHero p:not(.eyebrow),
+.moduleHero.compactHero.customersCalendarHero p:not(.eyebrow),
+.moduleHero.compactHero.ordersHero p:not(.eyebrow),
+.moduleHero.compactHero.permitGrantHeroBubble p:not(.eyebrow),
+.moduleHero.compactHero.listsHeroBubble p:not(.eyebrow),
+.pricingPage .moduleHero.compactHero p:not(.eyebrow),
+.calendarHero p:not(.eyebrow) {
+  max-width: 920px !important;
+  margin: 0 !important;
+  color: var(--muted) !important;
+  font-size: 0.94rem !important;
+  line-height: 1.45 !important;
+}
+
+.farmhubModuleHeroActions,
+.plantingHeroActions,
+.customersHeroActions,
+.ordersHeroActions,
+.permitGrantHeroActions,
+.listsHeroActions,
+.pricingPage .moduleHero.compactHero > .primaryButton,
+.calendarAddButton {
+  position: static !important;
+  inset: auto !important;
+  transform: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  width: auto !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+}
+
+.farmhubHeroButton,
+.farmhubModuleHeroActions .primaryButton,
+.farmhubModuleHeroActions .secondaryButton,
+.plantingHeroActions .primaryButton,
+.plantingHeroActions .secondaryButton,
+.customersHeroActions .primaryButton,
+.customersHeroActions .secondaryButton,
+.ordersHeroActions .primaryButton,
+.ordersHeroActions .secondaryButton,
+.permitGrantHeroActions .primaryButton,
+.permitGrantHeroActions .secondaryButton,
+.listsHeroActions .primaryButton,
+.listsHeroActions .secondaryButton,
+.pricingPage .moduleHero.compactHero > .primaryButton,
+.calendarAddButton {
+  width: auto !important;
+  min-width: 0 !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  padding: 0 18px !important;
+  border-radius: 999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  font-size: 0.88rem !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  letter-spacing: 0 !important;
+  white-space: nowrap !important;
+  box-shadow: none !important;
+}
+
+.farmhubHeroButton svg,
+.farmhubModuleHeroActions button svg,
+.plantingHeroActions button svg,
+.customersHeroActions button svg,
+.ordersHeroActions button svg,
+.permitGrantHeroActions button svg,
+.listsHeroActions button svg,
+.pricingPage .moduleHero.compactHero > .primaryButton svg,
+.calendarAddButton svg {
+  width: 16px !important;
+  height: 16px !important;
+  flex: 0 0 auto !important;
+}
+
+@media (max-width: 900px) {
+  .farmhubModuleHero,
+  .moduleHero.compactHero.farmhubModuleHero,
+  .moduleHero.compactHero.plantingSchedulerHero,
+  .moduleHero.compactHero.plantingCalendarHero,
+  .moduleHero.compactHero.customersCalendarHero,
+  .moduleHero.compactHero.ordersHero,
+  .moduleHero.compactHero.permitGrantHeroBubble,
+  .moduleHero.compactHero.listsHeroBubble,
+  .pricingPage .moduleHero.compactHero,
+  .calendarHero {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    padding: 18px !important;
+  }
+
+  .farmhubModuleHeroActions,
+  .plantingHeroActions,
+  .customersHeroActions,
+  .ordersHeroActions,
+  .permitGrantHeroActions,
+  .listsHeroActions,
+  .pricingPage .moduleHero.compactHero > .primaryButton,
+  .calendarAddButton {
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+  }
+
+  .farmhubHeroButton,
+  .farmhubModuleHeroActions .primaryButton,
+  .farmhubModuleHeroActions .secondaryButton,
+  .plantingHeroActions .primaryButton,
+  .plantingHeroActions .secondaryButton,
+  .customersHeroActions .primaryButton,
+  .customersHeroActions .secondaryButton,
+  .ordersHeroActions .primaryButton,
+  .ordersHeroActions .secondaryButton,
+  .permitGrantHeroActions .primaryButton,
+  .permitGrantHeroActions .secondaryButton,
+  .listsHeroActions .primaryButton,
+  .listsHeroActions .secondaryButton,
+  .pricingPage .moduleHero.compactHero > .primaryButton,
+  .calendarAddButton {
+    width: 100% !important;
+  }
+}
