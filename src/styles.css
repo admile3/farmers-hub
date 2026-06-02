@@ -10077,3 +10077,35 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+.spicePage .recipeLibraryHeaderTools {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.spicePage .libraryCostControl {
+  display: grid;
+  grid-template-columns: 80px 82px;
+  gap: 8px;
+  align-items: end;
+}
+
+.spicePage .recipeTitleWithCost {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.spicePage .recipeQuickCostBadge {
+  border: 1px solid rgba(199, 99, 67, 0.22);
+  background: #fff4ef;
+  color: var(--spice);
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.74rem;
+  font-weight: 900;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
