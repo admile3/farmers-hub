@@ -96,7 +96,10 @@ function todayISO() {
 function parseLocalDate(dateString) {
   if (!dateString) return null;
 
-  const [year, month, day] = dateString.split("-").map(Number);
+  const [year, month, day] = String(dateString).split("-").map(Number);
+
+  if (!year || !month || !day) return null;
+
   return new Date(year, month - 1, day);
 }
 
@@ -119,8 +122,25 @@ function formatDate(dateString) {
   });
 }
 
+function parseInventoryNumber(value) {
+  if (value === "" || value === null || value === undefined) return 0;
+
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  const directNumber = Number(value);
+  if (Number.isFinite(directNumber)) return directNumber;
+
+  const match = String(value).match(/-?\d+(\.\d+)?/);
+  if (!match) return 0;
+
+  const parsed = Number(match[0]);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function formatNumber(value) {
-  const number = Number(value) || 0;
+  const number = parseInventoryNumber(value);
 
   return number.toLocaleString("en-US", {
     minimumFractionDigits: 0,
@@ -129,7 +149,7 @@ function formatNumber(value) {
 }
 
 function formatCurrency(value) {
-  const number = Number(value) || 0;
+  const number = parseInventoryNumber(value);
 
   return number.toLocaleString("en-US", {
     style: "currency",
@@ -142,32 +162,74 @@ function formatCurrency(value) {
 function cleanCurrencyInput(value) {
   if (value === "" || value === null || value === undefined) return "";
 
-  const number = Number(value);
+  const number = parseInventoryNumber(value);
   return Number.isFinite(number) ? number.toFixed(2) : "";
 }
 
 function cleanNumber(value) {
   if (value === "" || value === null || value === undefined) return "";
-  const number = Number(value);
+  const number = parseInventoryNumber(value);
   return Number.isFinite(number) ? number : "";
 }
 
-function getItemComputedStatus(item) {
-  const quantity = Number(item.quantityOnHand) || 0;
-  const reorderPoint = Number(item.reorderPoint) || 0;
+function isArchived(item) {
+  return item.status === "Archived";
+}
+
+function isOutOfStock(item) {
+  return !isArchived(item) && parseInventoryNumber(item.quantityOnHand) <= 0;
+}
+
+function isLowStock(item) {
+  const quantity = parseInventoryNumber(item.quantityOnHand);
+  const reorderPoint = parseInventoryNumber(item.reorderPoint);
+
+  return !isArchived(item) && quantity > 0 && reorderPoint > 0 && quantity <= reorderPoint;
+}
+
+function isExpiringSoon(item) {
+  const quantity = parseInventoryNumber(item.quantityOnHand);
   const bestByDays = daysUntil(item.bestByDate);
 
-  if (item.status === "Archived") return "Archived";
-  if (quantity <= 0) return "Out of Stock";
-  if (bestByDays !== null && bestByDays >= 0 && bestByDays <= 14) return "Expiring Soon";
-  if (reorderPoint > 0 && quantity <= reorderPoint) return "Low Stock";
+  return (
+    !isArchived(item) &&
+    quantity > 0 &&
+    bestByDays !== null &&
+    bestByDays >= 0 &&
+    bestByDays <= 14
+  );
+}
+
+function isInStock(item) {
+  return !isArchived(item) && !isOutOfStock(item);
+}
+
+function getItemComputedStatus(item) {
+  if (isArchived(item)) return "Archived";
+  if (isOutOfStock(item)) return "Out of Stock";
+  if (isLowStock(item) && isExpiringSoon(item)) return "Low Stock + Expiring Soon";
+  if (isLowStock(item)) return "Low Stock";
+  if (isExpiringSoon(item)) return "Expiring Soon";
 
   return item.status || "In Stock";
+}
+
+function getItemStatusList(item) {
+  if (isArchived(item)) return ["Archived"];
+  if (isOutOfStock(item)) return ["Out of Stock"];
+
+  const statuses = [];
+
+  if (isLowStock(item)) statuses.push("Low Stock");
+  if (isExpiringSoon(item)) statuses.push("Expiring Soon");
+
+  return statuses.length ? statuses : ["In Stock"];
 }
 
 function getStatusClass(status) {
   return String(status || "")
     .toLowerCase()
+    .replaceAll("+", "")
     .replaceAll(" ", "-");
 }
 
@@ -176,15 +238,15 @@ function getStatusLabel(item) {
 }
 
 function getInventoryValue(item) {
-  return (Number(item.quantityOnHand) || 0) * (Number(item.costPerUnit) || 0);
+  return parseInventoryNumber(item.quantityOnHand) * parseInventoryNumber(item.costPerUnit);
 }
 
 function getWholesaleValue(item) {
-  return (Number(item.quantityOnHand) || 0) * (Number(item.wholesalePrice) || 0);
+  return parseInventoryNumber(item.quantityOnHand) * parseInventoryNumber(item.wholesalePrice);
 }
 
 function getRetailValue(item) {
-  return (Number(item.quantityOnHand) || 0) * (Number(item.retailPrice) || 0);
+  return parseInventoryNumber(item.quantityOnHand) * parseInventoryNumber(item.retailPrice);
 }
 
 function InventoryDetail({ label, value }) {
@@ -194,6 +256,18 @@ function InventoryDetail({ label, value }) {
     <div>
       <span>{label}</span>
       <strong>{value}</strong>
+    </div>
+  );
+}
+
+function ItemStatusPills({ item }) {
+  return (
+    <div className="inventoryStatusPillStack">
+      {getItemStatusList(item).map((status) => (
+        <span className={`inventoryStatusPill ${getStatusClass(status)}`} key={status}>
+          {status}
+        </span>
+      ))}
     </div>
   );
 }
@@ -263,21 +337,11 @@ export default function Inventory() {
   }, [user]);
 
   const inventorySummary = useMemo(() => {
-    const activeItems = inventoryItems.filter(
-      (item) => getItemComputedStatus(item) !== "Archived"
-    );
+    const activeItems = inventoryItems.filter((item) => !isArchived(item));
 
-    const lowStockItems = activeItems.filter(
-      (item) => getItemComputedStatus(item) === "Low Stock"
-    );
-
-    const outOfStockItems = activeItems.filter(
-      (item) => getItemComputedStatus(item) === "Out of Stock"
-    );
-
-    const expiringSoonItems = activeItems.filter(
-      (item) => getItemComputedStatus(item) === "Expiring Soon"
-    );
+    const lowStockItems = activeItems.filter((item) => isLowStock(item));
+    const outOfStockItems = activeItems.filter((item) => isOutOfStock(item));
+    const expiringSoonItems = activeItems.filter((item) => isExpiringSoon(item));
 
     const totalValue = activeItems.reduce(
       (sum, item) => sum + getInventoryValue(item),
@@ -310,10 +374,21 @@ export default function Inventory() {
 
     return inventoryItems
       .filter((item) => {
-        const computedStatus = getItemComputedStatus(item);
-
         if (categoryFilter !== "All" && item.category !== categoryFilter) return false;
-        if (statusFilter !== "All" && computedStatus !== statusFilter) return false;
+
+        if (statusFilter !== "All") {
+          if (statusFilter === "Low Stock" && !isLowStock(item)) return false;
+          if (statusFilter === "Out of Stock" && !isOutOfStock(item)) return false;
+          if (statusFilter === "Expiring Soon" && !isExpiringSoon(item)) return false;
+          if (statusFilter === "Archived" && !isArchived(item)) return false;
+          if (
+            statusFilter === "In Stock" &&
+            (!isInStock(item) || isLowStock(item) || isExpiringSoon(item))
+          ) {
+            return false;
+          }
+        }
+
         if (locationFilter !== "All" && item.storageLocation !== locationFilter) return false;
 
         if (!search) return true;
@@ -330,16 +405,17 @@ export default function Inventory() {
         );
       })
       .sort((a, b) => {
-        const statusOrder = {
-          "Out of Stock": 0,
-          "Low Stock": 1,
-          "Expiring Soon": 2,
-          "In Stock": 3,
-          Archived: 4
+        const statusOrder = (item) => {
+          if (isOutOfStock(item)) return 0;
+          if (isLowStock(item) && isExpiringSoon(item)) return 1;
+          if (isLowStock(item)) return 2;
+          if (isExpiringSoon(item)) return 3;
+          if (isArchived(item)) return 5;
+          return 4;
         };
 
-        const statusA = statusOrder[getItemComputedStatus(a)] ?? 99;
-        const statusB = statusOrder[getItemComputedStatus(b)] ?? 99;
+        const statusA = statusOrder(a);
+        const statusB = statusOrder(b);
 
         if (statusA !== statusB) return statusA - statusB;
 
@@ -349,9 +425,22 @@ export default function Inventory() {
 
   const lowStockItems = useMemo(() => {
     return inventoryItems
-      .filter((item) =>
-        ["Low Stock", "Out of Stock"].includes(getItemComputedStatus(item))
-      )
+      .filter((item) => isOutOfStock(item) || isLowStock(item))
+      .sort((a, b) => {
+        if (isOutOfStock(a) && !isOutOfStock(b)) return -1;
+        if (!isOutOfStock(a) && isOutOfStock(b)) return 1;
+
+        const quantityA = parseInventoryNumber(a.quantityOnHand);
+        const quantityB = parseInventoryNumber(b.quantityOnHand);
+        const reorderA = parseInventoryNumber(a.reorderPoint);
+        const reorderB = parseInventoryNumber(b.reorderPoint);
+        const ratioA = reorderA > 0 ? quantityA / reorderA : 0;
+        const ratioB = reorderB > 0 ? quantityB / reorderB : 0;
+
+        if (ratioA !== ratioB) return ratioA - ratioB;
+
+        return String(a.name || "").localeCompare(String(b.name || ""));
+      })
       .slice(0, 6);
   }, [inventoryItems]);
 
@@ -361,7 +450,7 @@ export default function Inventory() {
         ...item,
         days: daysUntil(item.bestByDate)
       }))
-      .filter((item) => item.days !== null && item.days >= 0 && item.days <= 30)
+      .filter((item) => isExpiringSoon(item))
       .sort((a, b) => a.days - b.days)
       .slice(0, 6);
   }, [inventoryItems]);
@@ -429,6 +518,9 @@ export default function Inventory() {
       return;
     }
 
+    const quantityOnHand = cleanNumber(itemForm.quantityOnHand);
+    const isZeroQuantity = parseInventoryNumber(quantityOnHand) <= 0;
+
     const cleanItem = {
       id: itemForm.id || editingItemId || "",
       name: itemForm.name.trim(),
@@ -440,7 +532,7 @@ export default function Inventory() {
       recipeName: itemForm.recipeName || "",
       variantId: itemForm.variantId || "",
       variantName: itemForm.variantName || "",
-      quantityOnHand: cleanNumber(itemForm.quantityOnHand),
+      quantityOnHand,
       unit: itemForm.unit.trim() || "each",
       parLevel: cleanNumber(itemForm.parLevel),
       reorderPoint: cleanNumber(itemForm.reorderPoint),
@@ -448,8 +540,8 @@ export default function Inventory() {
       costPerUnit: cleanNumber(itemForm.costPerUnit),
       wholesalePrice: cleanNumber(itemForm.wholesalePrice),
       retailPrice: cleanNumber(itemForm.retailPrice),
-      bestByDate: itemForm.bestByDate,
-      status: itemForm.status,
+      bestByDate: isZeroQuantity ? "" : itemForm.bestByDate,
+      status: isZeroQuantity ? "Out of Stock" : itemForm.status,
       notes: itemForm.notes.trim()
     };
 
@@ -483,6 +575,29 @@ export default function Inventory() {
     }
   }
 
+  async function quickSaveQuantityChange(item, change) {
+    if (!user || !item?.id) return;
+
+    const currentQuantity = parseInventoryNumber(item.quantityOnHand);
+    const nextQuantity = Math.max(0, currentQuantity + change);
+
+    const updatedItem = {
+      ...item,
+      quantityOnHand: nextQuantity,
+      bestByDate: nextQuantity <= 0 ? "" : item.bestByDate,
+      status: nextQuantity <= 0 ? "Out of Stock" : item.status
+    };
+
+    try {
+      await saveInventoryItem(user.uid, updatedItem);
+      await loadInventoryItems();
+      showStatus("Inventory quantity updated.", "success");
+    } catch (error) {
+      console.error(error);
+      showStatus("Could not adjust inventory quantity.", "error");
+    }
+  }
+
   async function removeItem(itemId) {
     if (!user || !itemId) return;
 
@@ -506,16 +621,6 @@ export default function Inventory() {
       console.error(error);
       showStatus("Could not delete inventory item.", "error");
     }
-  }
-
-  function adjustQuantity(item, change) {
-    const currentQuantity = Number(item.quantityOnHand) || 0;
-    const nextQuantity = Math.max(0, currentQuantity + change);
-
-    openEditItem({
-      ...item,
-      quantityOnHand: nextQuantity
-    });
   }
 
   if (!user) {
@@ -662,7 +767,10 @@ export default function Inventory() {
                     <strong>{item.name}</strong>
                     <p>
                       {formatNumber(item.quantityOnHand)} {item.unit}
-                      {item.reorderPoint !== "" ? ` • Reorder at ${item.reorderPoint}` : ""}
+                      {item.reorderPoint !== "" && item.reorderPoint !== null
+                        ? ` • Reorder at ${formatNumber(item.reorderPoint)} ${item.unit || ""}`
+                        : ""}
+                      {isExpiringSoon(item) ? " • Also expiring soon" : ""}
                     </p>
                   </div>
                 </button>
@@ -702,6 +810,7 @@ export default function Inventory() {
                         : item.days === 1
                           ? " • Tomorrow"
                           : ` • ${item.days} days`}
+                      {isLowStock(item) ? " • Also low stock" : ""}
                     </p>
                   </div>
                 </button>
@@ -802,8 +911,6 @@ export default function Inventory() {
 
             {filteredItems.length ? (
               filteredItems.map((item) => {
-                const status = getStatusLabel(item);
-
                 return (
                   <div className="inventoryTableRow" key={item.id}>
                     <span className="inventoryNameCell">
@@ -824,10 +931,18 @@ export default function Inventory() {
                         {formatNumber(item.quantityOnHand)} {item.unit || "each"}
                       </strong>
                       <div className="inventoryAdjustButtons">
-                        <button type="button" title="Subtract 1" onClick={() => adjustQuantity(item, -1)}>
+                        <button
+                          type="button"
+                          title="Subtract 1"
+                          onClick={() => quickSaveQuantityChange(item, -1)}
+                        >
                           -1
                         </button>
-                        <button type="button" title="Add 1" onClick={() => adjustQuantity(item, 1)}>
+                        <button
+                          type="button"
+                          title="Add 1"
+                          onClick={() => quickSaveQuantityChange(item, 1)}
+                        >
                           +1
                         </button>
                       </div>
@@ -850,9 +965,7 @@ export default function Inventory() {
                     <span>{formatCurrency(getRetailValue(item))}</span>
 
                     <span>
-                      <span className={`inventoryStatusPill ${getStatusClass(status)}`}>
-                        {status}
-                      </span>
+                      <ItemStatusPills item={item} />
                     </span>
 
                     <span className="inventoryActions">
@@ -1079,24 +1192,24 @@ export default function Inventory() {
                   <InventoryDetail
                     label="Inventory Value"
                     value={formatCurrency(
-                      (Number(itemForm.quantityOnHand) || 0) *
-                        (Number(itemForm.costPerUnit) || 0)
+                      parseInventoryNumber(itemForm.quantityOnHand) *
+                        parseInventoryNumber(itemForm.costPerUnit)
                     )}
                   />
 
                   <InventoryDetail
                     label="Wholesale Value"
                     value={formatCurrency(
-                      (Number(itemForm.quantityOnHand) || 0) *
-                        (Number(itemForm.wholesalePrice) || 0)
+                      parseInventoryNumber(itemForm.quantityOnHand) *
+                        parseInventoryNumber(itemForm.wholesalePrice)
                     )}
                   />
 
                   <InventoryDetail
                     label="Retail Value"
                     value={formatCurrency(
-                      (Number(itemForm.quantityOnHand) || 0) *
-                        (Number(itemForm.retailPrice) || 0)
+                      parseInventoryNumber(itemForm.quantityOnHand) *
+                        parseInventoryNumber(itemForm.retailPrice)
                     )}
                   />
 
