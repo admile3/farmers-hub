@@ -12106,3 +12106,34 @@ input[type="number"] {
   margin-top: 0.15rem !important;
   white-space: normal !important;
 }
+.inventoryMiniItem {
+  display: grid !important;
+  grid-template-columns: 14px 1fr !important;
+  align-items: center !important;
+  gap: 0.65rem !important;
+}
+
+.inventoryStatusDot {
+  display: inline-block !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 999px !important;
+  flex: 0 0 8px !important;
+}
+
+.inventoryStatusDot.low-stock,
+.inventoryStatusDot.expiring-soon {
+  background: #f0a23a !important;
+}
+
+.inventoryStatusDot.low-stock-expiring-soon {
+  background: #d66343 !important;
+}
+
+.inventoryStatusDot.out-of-stock {
+  background: #b83f35 !important;
+}
+
+.inventoryStatusDot.in-stock {
+  background: #6fa86f !important;
+}
