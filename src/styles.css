@@ -11696,3 +11696,32 @@ input[type="number"] {
     min-width: 720px;
   }
 }
+.spiceInventoryModal {
+  max-width: 760px;
+}
+
+.spiceInventoryModal .inventoryDetailGrid {
+  margin-bottom: 1rem;
+}
+
+.spiceInventoryModal .productPackageRow {
+  grid-template-columns: minmax(180px, 1fr) 110px 140px;
+  align-items: center;
+}
+
+.spiceInventoryModal .productPackageRow small {
+  display: block;
+  color: var(--mutedText);
+  font-size: 0.78rem;
+  margin-top: 0.15rem;
+}
+
+@media (max-width: 640px) {
+  .spiceInventoryModal .productPackageRow {
+    grid-template-columns: 1fr;
+  }
+
+  .spiceInventoryModal .inventoryDetailGrid {
+    grid-template-columns: 1fr;
+  }
+}
