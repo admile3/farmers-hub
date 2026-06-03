@@ -15,6 +15,7 @@ import {
   ChefHat,
   Settings,
   BookOpen,
+  CircleHelp,
   ClipboardList,
   FlaskConical,
   Save,
@@ -28,6 +29,8 @@ import { db } from "../firebase";
 import { useAuth } from "../AuthContext.jsx";
 import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import StatCard from "../components/StatCard.jsx";
+import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
+import BakingPlannerGuideContent from "../components/BakingPlannerGuideContent.jsx";
 import { addQuantityToMatchedInventoryItem } from "../services/inventoryService.js";
 
 function Card({ children, className = "" }) {
@@ -1499,6 +1502,7 @@ export default function BakingPlanner() {
   const [productionCompletionRows, setProductionCompletionRows] = useState([]);
   const [productionCompletionNotes, setProductionCompletionNotes] = useState("");
   const [savingProductionCompletion, setSavingProductionCompletion] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   function markBakingDirty() {
     markUnsaved({
@@ -1575,6 +1579,14 @@ export default function BakingPlanner() {
 
     loadCloudData();
   }, [user]);
+
+  useEffect(() => {
+    const guideHidden = localStorage.getItem("hideModuleGuide_bakingPlanner") === "true";
+
+    if (settings.bakingPlannerMode && !guideHidden) {
+      setShowGuide(true);
+    }
+  }, [settings.bakingPlannerMode]);
 
   const productionRecipes = useMemo(() => {
     return productionItems
@@ -2745,49 +2757,34 @@ export default function BakingPlanner() {
   return (
     <div className="bakingPlanner" onChangeCapture={markBakingDirty}>
       {!cloudLoading && !settings.bakingPlannerMode ? (
-        <div className="bakingModeOverlay" role="dialog" aria-modal="true">
-          <div className="bakingModeModal">
-            <p className="eyebrow">Baking Planner Setup</p>
-            <h2>Choose your baking workflow.</h2>
-            <p>
-              Pick the setup that matches how you bake. You can change this later
-              in Settings.
-            </p>
+        <ModuleGuideModal
+          isOpen={!settings.bakingPlannerMode}
+          moduleKey="bakingPlanner"
+          title="How to Use Baking Planner"
+          onClose={() => setBakingPlannerMode("basic")}
+        >
+          <BakingPlannerGuideContent
+            selectedMode={settings.bakingPlannerMode}
+            onSelectMode={(mode) => setBakingPlannerMode(mode)}
+          />
+        </ModuleGuideModal>
+      ) : null}
 
-            <div className="bakingModeGrid">
-              <button
-                type="button"
-                className="bakingModeCard"
-                onClick={() => setBakingPlannerMode("basic")}
-              >
-                <strong>Basic</strong>
-                <span>
-                  Best for small operations, simple loaves, cookies, muffins, and
-                  straightforward production planning.
-                </span>
-                <small>
-                  Shows core recipe, dough weight, hydration, starter, salt, timing,
-                  and bake-day planning fields.
-                </small>
-              </button>
-
-              <button
-                type="button"
-                className="bakingModeCard featured"
-                onClick={() => setBakingPlannerMode("advanced")}
-              >
-                <strong>Advanced / Professional</strong>
-                <span>
-                  Best for bakers who use detailed fermentation and mixing methods.
-                </span>
-                <small>
-                  Adds straight mix, autolyse, fermentolyse, saltolyse, bassinage,
-                  initial hydration, and bassinage water fields.
-                </small>
-              </button>
-            </div>
-          </div>
-        </div>
+      {settings.bakingPlannerMode ? (
+        <ModuleGuideModal
+          isOpen={showGuide}
+          moduleKey="bakingPlanner"
+          title="How to Use Baking Planner"
+          onClose={() => setShowGuide(false)}
+        >
+          <BakingPlannerGuideContent
+            selectedMode={settings.bakingPlannerMode}
+            onSelectMode={(mode) => {
+              setBakingPlannerMode(mode);
+              setShowGuide(false);
+            }}
+          />
+        </ModuleGuideModal>
       ) : null}
 
       {activePantryEditItem ? (
@@ -3105,6 +3102,12 @@ export default function BakingPlanner() {
                   onClick={() => setActiveTab("settings")}
                 >
                   <Settings size={16} /> Settings
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowGuide(true)}
+                >
+                  <CircleHelp size={16} /> Guide
                 </Button>
                 <span className="pill heroCloudStatus">
                   {user?.displayName || user?.email || "Local user"} • {cloudStatus}
