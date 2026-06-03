@@ -12701,3 +12701,62 @@ input[type="number"] {
 .moduleGuideBody {
   touch-action: pan-y;
 }
+/* =========================================================
+   Market Prep Planner Guide Content
+   Add this to the bottom of src/styles.css
+   ========================================================= */
+
+.app:has(.marketPrepPage) .moduleGuideStepNumber {
+  background: #f1f8f2;
+  color: var(--market);
+}
+
+.app:has(.marketPrepPage) .moduleGuideIntro {
+  border-color: rgba(113, 155, 112, 0.24);
+  background: #f7fbf5;
+}
+
+.app:has(.marketPrepPage) .moduleGuideTip {
+  border-color: rgba(113, 155, 112, 0.24);
+  background: #f7fbf5;
+  color: #4f7c40;
+}
+
+.app:has(.marketPrepPage) .moduleGuideTip p {
+  color: #4f7c40;
+}
+
+.marketPrepGuideContent .guideMiniPanel svg {
+  color: var(--market);
+}
+
+.marketPrepGuideActionRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.marketPrepGuideActionRow span {
+  min-height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 10px;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.marketPrepGuideActionRow svg {
+  color: var(--market);
+}
+
+@media (max-width: 700px) {
+  .marketPrepGuideActionRow {
+    grid-template-columns: 1fr;
+  }
+}
