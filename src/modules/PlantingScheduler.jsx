@@ -1346,7 +1346,15 @@ export default function PlantingScheduler() {
           </div>
         </div>
       </section>
+
+      <ModuleGuideModal
+        isOpen={showGuide}
+        moduleKey="plantingScheduler"
+        title="How to Use Planting Scheduler"
+        onClose={() => setShowGuide(false)}
+      >
+        <PlantingSchedulerGuideContent />
+      </ModuleGuideModal>
     </div>
   );
 }
-
