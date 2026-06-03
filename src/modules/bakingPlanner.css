@@ -2383,3 +2383,133 @@
     width: 100%;
   }
 }
+
+/* =========================================================
+   Baking Planner Module Guide
+   Add this to the bottom of src/modules/bakingPlanner.css
+   ========================================================= */
+
+.bakingPlanner .bakingGuideModeMiniGrid,
+.bakingPlanner .bakingGuideModeGrid,
+.bakingGuideModeMiniGrid,
+.bakingGuideModeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.bakingPlanner .bakingGuideModeMiniCard,
+.bakingPlanner .bakingGuideModeCard,
+.bakingGuideModeMiniCard,
+.bakingGuideModeCard {
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: #ffffff;
+  color: var(--text);
+  text-align: left;
+  padding: 13px;
+  display: grid;
+  gap: 6px;
+}
+
+.bakingPlanner .bakingGuideModeMiniCard.featured,
+.bakingPlanner .bakingGuideModeCard.featured,
+.bakingGuideModeMiniCard.featured,
+.bakingGuideModeCard.featured {
+  border-color: rgba(223, 160, 76, 0.36);
+  background: #fff8eb;
+}
+
+.bakingPlanner .bakingGuideModeMiniCard strong,
+.bakingPlanner .bakingGuideModeCard strong,
+.bakingGuideModeMiniCard strong,
+.bakingGuideModeCard strong {
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.bakingPlanner .bakingGuideModeMiniCard span,
+.bakingPlanner .bakingGuideModeCard span,
+.bakingGuideModeMiniCard span,
+.bakingGuideModeCard span {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+.bakingPlanner .bakingGuideModeSelector,
+.bakingGuideModeSelector {
+  border: 1px solid rgba(223, 160, 76, 0.28);
+  border-radius: 20px;
+  background: #fff8eb;
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.bakingPlanner .bakingGuideModeSelector h3,
+.bakingGuideModeSelector h3 {
+  margin: 5px 0 6px;
+  color: var(--text);
+  font-size: 1.25rem;
+}
+
+.bakingPlanner .bakingGuideModeSelector p,
+.bakingGuideModeSelector p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.bakingPlanner .bakingGuideModeCard,
+.bakingGuideModeCard {
+  cursor: pointer;
+  transition:
+    transform 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    background 0.16s ease;
+}
+
+.bakingPlanner .bakingGuideModeCard:hover,
+.bakingGuideModeCard:hover {
+  transform: translateY(-1px);
+  border-color: rgba(223, 160, 76, 0.45);
+  box-shadow: var(--shadow);
+}
+
+.bakingPlanner .bakingGuideModeCard.selected,
+.bakingGuideModeCard.selected {
+  border-color: rgba(223, 160, 76, 0.75);
+  background: #fff3d8;
+  box-shadow: 0 10px 26px rgba(223, 160, 76, 0.16);
+}
+
+.app:has(.bakingPlanner) .moduleGuideStepNumber {
+  background: #fff8eb;
+  color: #c77e27;
+}
+
+.app:has(.bakingPlanner) .moduleGuideIntro {
+  border-color: rgba(223, 160, 76, 0.22);
+  background: #fffaf1;
+}
+
+.app:has(.bakingPlanner) .moduleGuideTip {
+  border-color: rgba(223, 160, 76, 0.24);
+  background: #fff8eb;
+  color: #8a5a1f;
+}
+
+.app:has(.bakingPlanner) .moduleGuideTip p {
+  color: #8a5a1f;
+}
+
+@media (max-width: 700px) {
+  .bakingPlanner .bakingGuideModeMiniGrid,
+  .bakingPlanner .bakingGuideModeGrid,
+  .bakingGuideModeMiniGrid,
+  .bakingGuideModeGrid {
+    grid-template-columns: 1fr;
+  }
+}
