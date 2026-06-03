@@ -230,7 +230,8 @@ function getStatusClass(status) {
   return String(status || "")
     .toLowerCase()
     .replaceAll("+", "")
-    .replaceAll(" ", "-");
+    .replaceAll(" ", "-")
+    .replace(/-+/g, "-");
 }
 
 function getStatusLabel(item) {
