@@ -82,8 +82,8 @@ const blankInventoryItem = {
   reorderPoint: "",
   storageLocation: "",
   costPerUnit: "",
-  retailPrice: "",
   wholesalePrice: "",
+  retailPrice: "",
   bestByDate: "",
   status: "In Stock",
   notes: ""
@@ -179,12 +179,12 @@ function getInventoryValue(item) {
   return (Number(item.quantityOnHand) || 0) * (Number(item.costPerUnit) || 0);
 }
 
-function getRetailValue(item) {
-  return (Number(item.quantityOnHand) || 0) * (Number(item.retailPrice) || 0);
-}
-
 function getWholesaleValue(item) {
   return (Number(item.quantityOnHand) || 0) * (Number(item.wholesalePrice) || 0);
+}
+
+function getRetailValue(item) {
+  return (Number(item.quantityOnHand) || 0) * (Number(item.retailPrice) || 0);
 }
 
 function InventoryDetail({ label, value }) {
@@ -284,13 +284,13 @@ export default function Inventory() {
       0
     );
 
-    const totalRetailValue = activeItems.reduce(
-      (sum, item) => sum + getRetailValue(item),
+    const totalWholesaleValue = activeItems.reduce(
+      (sum, item) => sum + getWholesaleValue(item),
       0
     );
 
-    const totalWholesaleValue = activeItems.reduce(
-      (sum, item) => sum + getWholesaleValue(item),
+    const totalRetailValue = activeItems.reduce(
+      (sum, item) => sum + getRetailValue(item),
       0
     );
 
@@ -300,8 +300,8 @@ export default function Inventory() {
       outOfStockItems: outOfStockItems.length,
       expiringSoonItems: expiringSoonItems.length,
       totalValue,
-      totalRetailValue,
-      totalWholesaleValue
+      totalWholesaleValue,
+      totalRetailValue
     };
   }, [inventoryItems]);
 
@@ -401,8 +401,8 @@ export default function Inventory() {
       reorderPoint: item.reorderPoint ?? "",
       storageLocation: item.storageLocation || "",
       costPerUnit: cleanCurrencyInput(item.costPerUnit),
-      retailPrice: cleanCurrencyInput(item.retailPrice),
       wholesalePrice: cleanCurrencyInput(item.wholesalePrice),
+      retailPrice: cleanCurrencyInput(item.retailPrice),
       bestByDate: item.bestByDate || "",
       status: item.status || "In Stock",
       notes: item.notes || ""
@@ -446,8 +446,8 @@ export default function Inventory() {
       reorderPoint: cleanNumber(itemForm.reorderPoint),
       storageLocation: itemForm.storageLocation.trim(),
       costPerUnit: cleanNumber(itemForm.costPerUnit),
-      retailPrice: cleanNumber(itemForm.retailPrice),
       wholesalePrice: cleanNumber(itemForm.wholesalePrice),
+      retailPrice: cleanNumber(itemForm.retailPrice),
       bestByDate: itemForm.bestByDate,
       status: itemForm.status,
       notes: itemForm.notes.trim()
@@ -581,7 +581,15 @@ export default function Inventory() {
         </div>
       </section>
 
-      <section className="hubStatGrid inventoryStatGrid">
+      <section
+        className="hubStatGrid inventoryStatGrid inventoryStatGridForced"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(6, minmax(0, 1fr))",
+          gap: "0.65rem",
+          alignItems: "stretch"
+        }}
+      >
         <StatCard
           icon={PackageCheck}
           label="Active Items"
@@ -616,18 +624,18 @@ export default function Inventory() {
 
         <StatCard
           icon={DollarSign}
-          label="Retail Value"
-          value={formatCurrency(inventorySummary.totalRetailValue)}
-          sub="potential retail"
-          accent="market"
-        />
-
-        <StatCard
-          icon={DollarSign}
           label="Wholesale Value"
           value={formatCurrency(inventorySummary.totalWholesaleValue)}
           sub="potential wholesale"
           accent="sourdough"
+        />
+
+        <StatCard
+          icon={DollarSign}
+          label="Retail Value"
+          value={formatCurrency(inventorySummary.totalRetailValue)}
+          sub="potential retail"
+          accent="market"
         />
       </section>
 
@@ -786,8 +794,8 @@ export default function Inventory() {
               <span>Location</span>
               <span>Best By</span>
               <span>Cost</span>
-              <span>Retail</span>
               <span>Wholesale</span>
+              <span>Retail</span>
               <span>Status</span>
               <span></span>
             </div>
@@ -816,10 +824,10 @@ export default function Inventory() {
                         {formatNumber(item.quantityOnHand)} {item.unit || "each"}
                       </strong>
                       <div className="inventoryAdjustButtons">
-                        <button type="button" onClick={() => adjustQuantity(item, -1)}>
+                        <button type="button" title="Subtract 1" onClick={() => adjustQuantity(item, -1)}>
                           -1
                         </button>
-                        <button type="button" onClick={() => adjustQuantity(item, 1)}>
+                        <button type="button" title="Add 1" onClick={() => adjustQuantity(item, 1)}>
                           +1
                         </button>
                       </div>
@@ -838,8 +846,8 @@ export default function Inventory() {
                     </span>
 
                     <span>{formatCurrency(getInventoryValue(item))}</span>
-                    <span>{formatCurrency(getRetailValue(item))}</span>
                     <span>{formatCurrency(getWholesaleValue(item))}</span>
+                    <span>{formatCurrency(getRetailValue(item))}</span>
 
                     <span>
                       <span className={`inventoryStatusPill ${getStatusClass(status)}`}>
@@ -1001,20 +1009,6 @@ export default function Inventory() {
               </label>
 
               <label>
-                Retail Price
-                <input
-                  type="number"
-                  step="0.01"
-                  value={itemForm.retailPrice}
-                  onChange={(event) => updateItemField("retailPrice", event.target.value)}
-                  onBlur={(event) =>
-                    updateItemField("retailPrice", cleanCurrencyInput(event.target.value))
-                  }
-                  placeholder="e.g., 12.00"
-                />
-              </label>
-
-              <label>
                 Wholesale Price
                 <input
                   type="number"
@@ -1025,6 +1019,20 @@ export default function Inventory() {
                     updateItemField("wholesalePrice", cleanCurrencyInput(event.target.value))
                   }
                   placeholder="e.g., 7.50"
+                />
+              </label>
+
+              <label>
+                Retail Price
+                <input
+                  type="number"
+                  step="0.01"
+                  value={itemForm.retailPrice}
+                  onChange={(event) => updateItemField("retailPrice", event.target.value)}
+                  onBlur={(event) =>
+                    updateItemField("retailPrice", cleanCurrencyInput(event.target.value))
+                  }
+                  placeholder="e.g., 12.00"
                 />
               </label>
 
@@ -1077,18 +1085,18 @@ export default function Inventory() {
                   />
 
                   <InventoryDetail
-                    label="Retail Value"
-                    value={formatCurrency(
-                      (Number(itemForm.quantityOnHand) || 0) *
-                        (Number(itemForm.retailPrice) || 0)
-                    )}
-                  />
-
-                  <InventoryDetail
                     label="Wholesale Value"
                     value={formatCurrency(
                       (Number(itemForm.quantityOnHand) || 0) *
                         (Number(itemForm.wholesalePrice) || 0)
+                    )}
+                  />
+
+                  <InventoryDetail
+                    label="Retail Value"
+                    value={formatCurrency(
+                      (Number(itemForm.quantityOnHand) || 0) *
+                        (Number(itemForm.retailPrice) || 0)
                     )}
                   />
 
