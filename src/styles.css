@@ -12682,3 +12682,22 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+/* =========================================================
+   Module Guide scroll containment fix
+   Add this to src/styles.css if ModuleGuideModal styles live there.
+   If you copied the modal styles into a module CSS file, add it there too.
+   ========================================================= */
+
+.moduleGuideOverlay {
+  overscroll-behavior: contain;
+  touch-action: none;
+}
+
+.moduleGuideModal,
+.moduleGuideBody {
+  overscroll-behavior: contain;
+}
+
+.moduleGuideBody {
+  touch-action: pan-y;
+}
