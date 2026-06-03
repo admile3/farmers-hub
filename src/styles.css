@@ -11598,3 +11598,47 @@ input[type="number"] {
     grid-column: auto !important;
   }
 }
+.inventoryDirectoryCard {
+  padding-top: 1rem;
+}
+
+.inventoryDirectoryHeader {
+  margin-bottom: 0.65rem;
+}
+
+.inventoryDirectoryTools {
+  margin-top: 0.25rem;
+  gap: 0.65rem;
+  align-items: end;
+}
+
+.inventoryDirectoryTools .inventorySearchWrap,
+.inventoryDirectoryTools .filterGroup {
+  margin-top: 0;
+}
+
+@media (max-width: 900px) {
+  .inventoryDirectoryTools {
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+  }
+
+  .inventoryDirectoryTools .inventorySearchWrap {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 620px) {
+  .inventoryDirectoryTools {
+    grid-template-columns: 1fr;
+  }
+
+  .inventoryTableWrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .inventoryTable {
+    min-width: 720px;
+  }
+}
