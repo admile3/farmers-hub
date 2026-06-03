@@ -12137,3 +12137,10 @@ input[type="number"] {
 .inventoryStatusDot.in-stock {
   background: #6fa86f !important;
 }
+.inventoryStatusDot.low-stock--expiring-soon {
+  display: inline-block !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 999px !important;
+  background: #d66343 !important;
+}
