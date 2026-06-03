@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { X } from "lucide-react";
 
 export default function ModuleGuideModal({
@@ -8,6 +9,25 @@ export default function ModuleGuideModal({
   children,
   onClose
 }) {
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    const previousPaddingRight = document.body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    document.body.style.overflow = "hidden";
+
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.paddingRight = previousPaddingRight;
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   function handleClose() {
@@ -24,8 +44,19 @@ export default function ModuleGuideModal({
     }
   }
 
+  function handleOverlayWheel(event) {
+    if (event.target === event.currentTarget) {
+      event.preventDefault();
+    }
+  }
+
   return (
-    <div className="moduleGuideOverlay" role="dialog" aria-modal="true">
+    <div
+      className="moduleGuideOverlay"
+      role="dialog"
+      aria-modal="true"
+      onWheel={handleOverlayWheel}
+    >
       <div className="moduleGuideModal">
         <div className="moduleGuideHeader">
           <div>
