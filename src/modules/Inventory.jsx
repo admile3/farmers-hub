@@ -361,13 +361,7 @@ export default function Inventory() {
         ...item,
         days: daysUntil(item.bestByDate)
       }))
-      .filter(
-  (item) =>
-    Number(item.quantityOnHand) > 0 &&
-    item.days !== null &&
-    item.days >= 0 &&
-    item.days <= 30
-)
+      .filter((item) => item.days !== null && item.days >= 0 && item.days <= 30)
       .sort((a, b) => a.days - b.days)
       .slice(0, 6);
   }, [inventoryItems]);
@@ -454,8 +448,8 @@ export default function Inventory() {
       costPerUnit: cleanNumber(itemForm.costPerUnit),
       wholesalePrice: cleanNumber(itemForm.wholesalePrice),
       retailPrice: cleanNumber(itemForm.retailPrice),
-      bestByDate: Number(itemForm.quantityOnHand) <= 0 ? "" : itemForm.bestByDate,
-status: Number(itemForm.quantityOnHand) <= 0 ? "Out of Stock" : itemForm.status,
+      bestByDate: itemForm.bestByDate,
+      status: itemForm.status,
       notes: itemForm.notes.trim()
     };
 
