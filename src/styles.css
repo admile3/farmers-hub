@@ -12924,3 +12924,54 @@ input[type="number"] {
 .customersGuideSecondaryTip p {
   color: var(--green-dark);
 }
+/* =========================================================
+   Orders Guide Content
+   ========================================================= */
+
+.ordersGuideChoiceGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ordersGuideChoiceGrid span {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fbfaf6;
+  color: var(--text);
+  padding: 8px 10px;
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.ordersGuideStatusFlow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ordersGuideStatusFlow span {
+  border-radius: 999px;
+  background: #eef4ff;
+  color: #284a82;
+  padding: 8px 10px;
+  font-size: 0.76rem;
+  font-weight: 950;
+}
+
+.ordersGuideRows .guideRecipeRows div:not(.guideRecipeHeader) span,
+.ordersGuideRows div:not(.guideRecipeHeader) span {
+  color: var(--green-dark);
+}
+
+.ordersGuideTip {
+  border-color: rgba(58, 120, 82, 0.2);
+  background: #f4fbf6;
+}
+
+@media (max-width: 650px) {
+  .ordersGuideChoiceGrid {
+    grid-template-columns: 1fr;
+  }
+}
