@@ -172,6 +172,15 @@ function cleanNumber(value) {
   return Number.isFinite(number) ? number : "";
 }
 
+function cleanWholeNumberInput(value) {
+  if (value === "" || value === null || value === undefined) return "";
+
+  const number = parseInventoryNumber(value);
+  if (!Number.isFinite(number)) return "";
+
+  return String(Math.max(0, Math.round(number)));
+}
+
 function isArchived(item) {
   return item.status === "Archived";
 }
@@ -281,6 +290,9 @@ export default function Inventory() {
   const [editingItemId, setEditingItemId] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [addMode, setAddMode] = useState("existing");
+  const [existingItemSearch, setExistingItemSearch] = useState("");
+  const [selectedExistingItemId, setSelectedExistingItemId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -465,10 +477,54 @@ export default function Inventory() {
     ).sort();
   }, [inventoryItems]);
 
+  const allStorageLocationOptions = useMemo(() => {
+    return Array.from(new Set([...storageLocations, ...uniqueLocations])).sort((a, b) => {
+      const aBaseIndex = storageLocations.indexOf(a);
+      const bBaseIndex = storageLocations.indexOf(b);
+
+      if (aBaseIndex !== -1 && bBaseIndex !== -1) return aBaseIndex - bBaseIndex;
+      if (aBaseIndex !== -1) return -1;
+      if (bBaseIndex !== -1) return 1;
+
+      return a.localeCompare(b);
+    });
+  }, [uniqueLocations]);
+
+  const existingItemOptions = useMemo(() => {
+    const search = existingItemSearch.trim().toLowerCase();
+
+    return inventoryItems
+      .filter((item) => {
+        if (!item?.id) return false;
+        if (!search) return true;
+
+        return (
+          item.name?.toLowerCase().includes(search) ||
+          item.category?.toLowerCase().includes(search) ||
+          item.sourceModule?.toLowerCase().includes(search) ||
+          item.storageLocation?.toLowerCase().includes(search)
+        );
+      })
+      .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
+  }, [inventoryItems, existingItemSearch]);
+
+  function resetModalState() {
+    setItemForm(blankInventoryItem);
+    setEditingItemId(null);
+    setSelectedItem(null);
+    setIsFormOpen(false);
+    setAddMode(inventoryItems.length ? "existing" : "new");
+    setExistingItemSearch("");
+    setSelectedExistingItemId("");
+  }
+
   function openNewItem() {
     setItemForm(blankInventoryItem);
     setEditingItemId(null);
     setSelectedItem(null);
+    setAddMode(inventoryItems.length ? "existing" : "new");
+    setExistingItemSearch("");
+    setSelectedExistingItemId("");
     setIsFormOpen(true);
   }
 
@@ -499,7 +555,19 @@ export default function Inventory() {
 
     setEditingItemId(item.id || null);
     setSelectedItem(item);
+    setSelectedExistingItemId(item.id || "");
+    setAddMode("existing");
     setIsFormOpen(true);
+  }
+
+  function chooseExistingItem(itemId) {
+    const item = inventoryItems.find((inventoryItem) => inventoryItem.id === itemId);
+
+    setSelectedExistingItemId(itemId);
+
+    if (!item) return;
+
+    openEditItem(item);
   }
 
   function updateItemField(field, value) {
@@ -566,6 +634,9 @@ export default function Inventory() {
       setItemForm(blankInventoryItem);
       setEditingItemId(null);
       setSelectedItem(null);
+      setSelectedExistingItemId("");
+      setExistingItemSearch("");
+      setAddMode(inventoryItems.length ? "existing" : "new");
       setIsFormOpen(false);
       markSaved();
       showStatus(editingItemId ? "Inventory item updated." : "Inventory item saved.", "success");
@@ -613,9 +684,7 @@ export default function Inventory() {
       await deleteInventoryItem(user.uid, itemId);
 
       if (editingItemId === itemId) {
-        setItemForm(blankInventoryItem);
-        setEditingItemId(null);
-        setIsFormOpen(false);
+        resetModalState();
       }
 
       if (selectedItem?.id === itemId) {
@@ -1002,275 +1071,346 @@ export default function Inventory() {
           <div className="inventoryModal">
             <div className="inventoryModalHeader">
               <div>
-                <p className="eyebrow">{editingItemId ? "Edit Item" : "New Item"}</p>
-                <h3>{editingItemId ? "Update Inventory Item" : "Add Inventory Item"}</h3>
+                <p className="eyebrow">{editingItemId ? "Edit Item" : "Add Inventory"}</p>
+                <h3>
+                  {editingItemId
+                    ? "Update Existing Inventory Item"
+                    : "Add Inventory Item"}
+                </h3>
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setIsFormOpen(false);
-                  setItemForm(blankInventoryItem);
-                  setEditingItemId(null);
-                  setSelectedItem(null);
-                }}
-              >
+              <button type="button" onClick={resetModalState}>
                 <X size={20} />
               </button>
             </div>
 
-            <form className="inventoryModalForm" onSubmit={saveItem}>
-              <label className="fullSpan">
-                Item Name *
-                <input
-                  value={itemForm.name}
-                  onChange={(event) => updateItemField("name", event.target.value)}
-                  placeholder="e.g., Broccoli microgreens, 1 oz spice pouch, 8 oz deli cups"
-                />
-              </label>
-
-              <label>
-                Category
-                <select
-                  value={itemForm.category}
-                  onChange={(event) => updateItemField("category", event.target.value)}
-                >
-                  {inventoryCategories.map((category) => (
-                    <option key={category}>{category}</option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Source
-                <select
-                  value={itemForm.sourceModule}
-                  onChange={(event) => updateItemField("sourceModule", event.target.value)}
-                >
-                  {sourceModules.map((source) => (
-                    <option key={source}>{source}</option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Quantity On Hand
-                <input
-                  type="number"
-                  step="1"
-                  min="0"
-                  value={itemForm.quantityOnHand}
-                  onChange={(event) =>
-                    updateItemField("quantityOnHand", event.target.value)
-                  }
-                  placeholder="e.g., 24"
-                />
-              </label>
-
-              <label>
-                Unit
-                <input
-                  value={itemForm.unit}
-                  onChange={(event) => updateItemField("unit", event.target.value)}
-                  placeholder="e.g., each, oz, lb, tray, bag"
-                />
-              </label>
-
-              <label>
-                Par Level
-                <input
-                  type="number"
-                  step="1"
-                  min="0"
-                  value={itemForm.parLevel}
-                  onChange={(event) => updateItemField("parLevel", event.target.value)}
-                  placeholder="Ideal stock level"
-                />
-              </label>
-
-              <label>
-                Reorder Point
-                <input
-                  type="number"
-                  step="1"
-                  min="0"
-                  value={itemForm.reorderPoint}
-                  onChange={(event) => updateItemField("reorderPoint", event.target.value)}
-                  placeholder="Warn when at or below"
-                />
-              </label>
-
-              <label>
-                Storage Location
-                <select
-                  value={itemForm.storageLocation || ""}
-                  onChange={(event) =>
-                    updateItemField("storageLocation", event.target.value)
-                  }
-                >
-                  <option value="">Select location</option>
-                  {storageLocations.map((location) => (
-                    <option value={location} key={location}>
-                      {location}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Cost Per Unit
-                <input
-                  type="number"
-                  step="0.01"
-                  value={itemForm.costPerUnit}
-                  onChange={(event) => updateItemField("costPerUnit", event.target.value)}
-                  onBlur={(event) =>
-                    updateItemField("costPerUnit", cleanCurrencyInput(event.target.value))
-                  }
-                  placeholder="e.g., 0.14"
-                />
-              </label>
-
-              <label>
-                Wholesale Price
-                <input
-                  type="number"
-                  step="0.01"
-                  value={itemForm.wholesalePrice}
-                  onChange={(event) => updateItemField("wholesalePrice", event.target.value)}
-                  onBlur={(event) =>
-                    updateItemField("wholesalePrice", cleanCurrencyInput(event.target.value))
-                  }
-                  placeholder="e.g., 7.50"
-                />
-              </label>
-
-              <label>
-                Retail Price
-                <input
-                  type="number"
-                  step="0.01"
-                  value={itemForm.retailPrice}
-                  onChange={(event) => updateItemField("retailPrice", event.target.value)}
-                  onBlur={(event) =>
-                    updateItemField("retailPrice", cleanCurrencyInput(event.target.value))
-                  }
-                  placeholder="e.g., 12.00"
-                />
-              </label>
-
-              <label>
-                Best By / Expiration
-                <input
-                  type="date"
-                  value={itemForm.bestByDate}
-                  onChange={(event) => updateItemField("bestByDate", event.target.value)}
-                />
-              </label>
-
-              <label>
-                Status
-                <select
-                  value={itemForm.status}
-                  onChange={(event) => updateItemField("status", event.target.value)}
-                >
-                  {inventoryStatuses.map((status) => (
-                    <option key={status}>{status}</option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="fullSpan">
-                Notes
-                <textarea
-                  value={itemForm.notes}
-                  onChange={(event) => updateItemField("notes", event.target.value)}
-                  placeholder="Storage instructions, vendor notes, batch notes, reorder notes..."
-                />
-              </label>
-
-              {selectedItem ? (
-                <div className="inventoryDetailGrid fullSpan">
-                  <InventoryDetail
-                    label="Computed Status"
-                    value={getItemComputedStatus({
-                      ...selectedItem,
-                      ...itemForm
-                    })}
-                  />
-
-                  <InventoryDetail
-                    label="Inventory Value"
-                    value={formatCurrency(
-                      parseInventoryNumber(itemForm.quantityOnHand) *
-                        parseInventoryNumber(itemForm.costPerUnit)
-                    )}
-                  />
-
-                  <InventoryDetail
-                    label="Wholesale Value"
-                    value={formatCurrency(
-                      parseInventoryNumber(itemForm.quantityOnHand) *
-                        parseInventoryNumber(itemForm.wholesalePrice)
-                    )}
-                  />
-
-                  <InventoryDetail
-                    label="Retail Value"
-                    value={formatCurrency(
-                      parseInventoryNumber(itemForm.quantityOnHand) *
-                        parseInventoryNumber(itemForm.retailPrice)
-                    )}
-                  />
-
-                  <InventoryDetail
-                    label="Days Until Best By"
-                    value={
-                      daysUntil(itemForm.bestByDate) === null
-                        ? ""
-                        : daysUntil(itemForm.bestByDate)
-                    }
-                  />
-                </div>
-              ) : null}
-
-              <div className="inventoryModalActions fullSpan">
-                {editingItemId ? (
+            {!editingItemId ? (
+              <div className="inventoryAddModePanel">
+                <div className="inventoryAddModeTabs">
                   <button
-                    className="dangerButton"
+                    className={addMode === "existing" ? "active" : ""}
                     type="button"
-                    onClick={() => removeItem(editingItemId)}
+                    onClick={() => {
+                      setAddMode("existing");
+                      setItemForm(blankInventoryItem);
+                      setSelectedExistingItemId("");
+                    }}
+                    disabled={!inventoryItems.length}
                   >
-                    <Trash2 size={15} />
-                    Delete
+                    Existing Product
                   </button>
+
+                  <button
+                    className={addMode === "new" ? "active" : ""}
+                    type="button"
+                    onClick={() => {
+                      setAddMode("new");
+                      setItemForm(blankInventoryItem);
+                      setSelectedExistingItemId("");
+                    }}
+                  >
+                    New Product
+                  </button>
+                </div>
+
+                {addMode === "existing" ? (
+                  <div className="inventoryExistingPicker">
+                    <label className="fullSpan">
+                      Select Existing Product
+                      <select
+                        value={selectedExistingItemId}
+                        onChange={(event) => chooseExistingItem(event.target.value)}
+                      >
+                        <option value="">Choose an existing inventory item</option>
+                        {existingItemOptions.map((item) => (
+                          <option value={item.id} key={item.id}>
+                            {item.name} {item.category ? `• ${item.category}` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <div className="searchBox compactSearch inventorySearchBox">
+                      <Search size={17} />
+                      <input
+                        value={existingItemSearch}
+                        onChange={(event) => setExistingItemSearch(event.target.value)}
+                        placeholder="Search existing products..."
+                      />
+                    </div>
+
+                    {!inventoryItems.length ? (
+                      <div className="placeholderBox compactPlaceholder fullSpan">
+                        No inventory products exist yet. Choose New Product to create the first one.
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {(editingItemId || addMode === "new") ? (
+              <form className="inventoryModalForm" onSubmit={saveItem}>
+                <label className="fullSpan">
+                  Item Name *
+                  <input
+                    value={itemForm.name}
+                    onChange={(event) => updateItemField("name", event.target.value)}
+                    placeholder="e.g., Broccoli microgreens, 1 oz spice pouch, 8 oz deli cups"
+                  />
+                </label>
+
+                <label>
+                  Category
+                  <select
+                    value={itemForm.category}
+                    onChange={(event) => updateItemField("category", event.target.value)}
+                  >
+                    {inventoryCategories.map((category) => (
+                      <option key={category}>{category}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  Source
+                  <select
+                    value={itemForm.sourceModule}
+                    onChange={(event) => updateItemField("sourceModule", event.target.value)}
+                  >
+                    {sourceModules.map((source) => (
+                      <option key={source}>{source}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  Quantity On Hand
+                  <input
+                    type="number"
+                    step="1"
+                    min="0"
+                    value={itemForm.quantityOnHand}
+                    onChange={(event) =>
+                      updateItemField("quantityOnHand", cleanWholeNumberInput(event.target.value))
+                    }
+                    onBlur={(event) =>
+                      updateItemField("quantityOnHand", cleanWholeNumberInput(event.target.value))
+                    }
+                    placeholder="e.g., 24"
+                  />
+                </label>
+
+                <label>
+                  Unit
+                  <input
+                    value={itemForm.unit}
+                    onChange={(event) => updateItemField("unit", event.target.value)}
+                    placeholder="e.g., each, oz, lb, tray, bag"
+                  />
+                </label>
+
+                <label>
+                  Par Level
+                  <input
+                    type="number"
+                    step="1"
+                    min="0"
+                    value={itemForm.parLevel}
+                    onChange={(event) =>
+                      updateItemField("parLevel", cleanWholeNumberInput(event.target.value))
+                    }
+                    onBlur={(event) =>
+                      updateItemField("parLevel", cleanWholeNumberInput(event.target.value))
+                    }
+                    placeholder="Ideal stock level"
+                  />
+                </label>
+
+                <label>
+                  Reorder Point
+                  <input
+                    type="number"
+                    step="1"
+                    min="0"
+                    value={itemForm.reorderPoint}
+                    onChange={(event) =>
+                      updateItemField("reorderPoint", cleanWholeNumberInput(event.target.value))
+                    }
+                    onBlur={(event) =>
+                      updateItemField("reorderPoint", cleanWholeNumberInput(event.target.value))
+                    }
+                    placeholder="Warn when at or below"
+                  />
+                </label>
+
+                <label>
+                  Storage Location
+                  <select
+                    value={itemForm.storageLocation || ""}
+                    onChange={(event) =>
+                      updateItemField("storageLocation", event.target.value)
+                    }
+                  >
+                    <option value="">Select location</option>
+                    {allStorageLocationOptions.map((location) => (
+                      <option value={location} key={location}>
+                        {location}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  Cost Per Unit
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={itemForm.costPerUnit}
+                    onChange={(event) => updateItemField("costPerUnit", event.target.value)}
+                    onBlur={(event) =>
+                      updateItemField("costPerUnit", cleanCurrencyInput(event.target.value))
+                    }
+                    placeholder="e.g., 0.14"
+                  />
+                </label>
+
+                <label>
+                  Wholesale Price
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={itemForm.wholesalePrice}
+                    onChange={(event) => updateItemField("wholesalePrice", event.target.value)}
+                    onBlur={(event) =>
+                      updateItemField("wholesalePrice", cleanCurrencyInput(event.target.value))
+                    }
+                    placeholder="e.g., 7.50"
+                  />
+                </label>
+
+                <label>
+                  Retail Price
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={itemForm.retailPrice}
+                    onChange={(event) => updateItemField("retailPrice", event.target.value)}
+                    onBlur={(event) =>
+                      updateItemField("retailPrice", cleanCurrencyInput(event.target.value))
+                    }
+                    placeholder="e.g., 12.00"
+                  />
+                </label>
+
+                <label>
+                  Best By / Expiration
+                  <input
+                    type="date"
+                    value={itemForm.bestByDate}
+                    onChange={(event) => updateItemField("bestByDate", event.target.value)}
+                  />
+                </label>
+
+                <label>
+                  Status
+                  <select
+                    value={itemForm.status}
+                    onChange={(event) => updateItemField("status", event.target.value)}
+                  >
+                    {inventoryStatuses.map((status) => (
+                      <option key={status}>{status}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="fullSpan">
+                  Notes
+                  <textarea
+                    value={itemForm.notes}
+                    onChange={(event) => updateItemField("notes", event.target.value)}
+                    placeholder="Storage instructions, vendor notes, batch notes, reorder notes..."
+                  />
+                </label>
+
+                {selectedItem ? (
+                  <div className="inventoryDetailGrid fullSpan">
+                    <InventoryDetail
+                      label="Computed Status"
+                      value={getItemComputedStatus({
+                        ...selectedItem,
+                        ...itemForm
+                      })}
+                    />
+
+                    <InventoryDetail
+                      label="Inventory Value"
+                      value={formatCurrency(
+                        parseInventoryNumber(itemForm.quantityOnHand) *
+                          parseInventoryNumber(itemForm.costPerUnit)
+                      )}
+                    />
+
+                    <InventoryDetail
+                      label="Wholesale Value"
+                      value={formatCurrency(
+                        parseInventoryNumber(itemForm.quantityOnHand) *
+                          parseInventoryNumber(itemForm.wholesalePrice)
+                      )}
+                    />
+
+                    <InventoryDetail
+                      label="Retail Value"
+                      value={formatCurrency(
+                        parseInventoryNumber(itemForm.quantityOnHand) *
+                          parseInventoryNumber(itemForm.retailPrice)
+                      )}
+                    />
+
+                    <InventoryDetail
+                      label="Days Until Best By"
+                      value={
+                        daysUntil(itemForm.bestByDate) === null
+                          ? ""
+                          : daysUntil(itemForm.bestByDate)
+                      }
+                    />
+                  </div>
                 ) : null}
 
-                <button
-                  className="secondaryButton compactButton"
-                  type="button"
-                  onClick={() => {
-                    setIsFormOpen(false);
-                    setItemForm(blankInventoryItem);
-                    setEditingItemId(null);
-                    setSelectedItem(null);
-                  }}
-                >
-                  Cancel
-                </button>
+                <div className="inventoryModalActions fullSpan">
+                  {editingItemId ? (
+                    <button
+                      className="dangerButton"
+                      type="button"
+                      onClick={() => removeItem(editingItemId)}
+                    >
+                      <Trash2 size={15} />
+                      Delete
+                    </button>
+                  ) : null}
 
-                <button
-                  className={`primaryButton compactPrimary ${
-                    hasUnsavedChanges ? "dirtySaveButton" : ""
-                  }`}
-                  type="submit"
-                  disabled={saving}
-                >
-                  <Save size={15} />
-                  {saving ? "Saving..." : editingItemId ? "Save Changes" : "Save Item"}
-                </button>
-              </div>
-            </form>
+                  <button
+                    className="secondaryButton compactButton"
+                    type="button"
+                    onClick={resetModalState}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    className={`primaryButton compactPrimary ${
+                      hasUnsavedChanges ? "dirtySaveButton" : ""
+                    }`}
+                    type="submit"
+                    disabled={saving}
+                  >
+                    <Save size={15} />
+                    {saving ? "Saving..." : editingItemId ? "Save Changes" : "Save Item"}
+                  </button>
+                </div>
+              </form>
+            ) : null}
           </div>
         </div>
       ) : null}
