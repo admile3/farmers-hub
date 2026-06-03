@@ -699,6 +699,7 @@ export default function SpiceKitchen() {
           const packageOunces = convertPackageSizeToOunces(item.size, item.unit);
 
           return {
+            ...item,
             name: item.name.trim(),
             size: toNumber(item.size),
             unit: item.unit,
@@ -823,27 +824,27 @@ export default function SpiceKitchen() {
   }
 
   async function saveBatchToInventory() {
-  if (!user || !selectedRecipe) return;
+    if (!user || !selectedRecipe) return;
 
-  const activeAllocations = inventoryPackages
-    .map((packageItem) => ({
-      packageItem,
-      quantity: toNumber(inventoryAllocations[packageItem.id])
-    }))
-    .filter((item) => item.quantity > 0);
+    const activeAllocations = inventoryPackages
+      .map((packageItem) => ({
+        packageItem,
+        quantity: toNumber(inventoryAllocations[packageItem.id])
+      }))
+      .filter((item) => item.quantity > 0);
 
-  if (remainingInventoryOunces < -0.01) {
-    showStatus("You allocated more ounces than the batch produced.", "error");
-    return;
-  }
+    if (remainingInventoryOunces < -0.01) {
+      showStatus("You allocated more ounces than the batch produced.", "error");
+      return;
+    }
 
-  setSavingInventory(true);
+    setSavingInventory(true);
 
-  try {
-    const inventoryUpdates = activeAllocations.map(({ packageItem, quantity }) => {
-      const costPerUnit =
-        Number(packageItem.ingredientCost) ||
-        packageItem.packageOunces * getRecipeFormulaCostPerOunce(selectedRecipe);
+    try {
+      const inventoryUpdates = activeAllocations.map(({ packageItem, quantity }) => {
+        const costPerUnit =
+          Number(packageItem.ingredientCost) ||
+          packageItem.packageOunces * getRecipeFormulaCostPerOunce(selectedRecipe);
 
       return addQuantityToMatchedInventoryItem({
         userId: user.uid,
@@ -865,6 +866,8 @@ export default function SpiceKitchen() {
           quantityOnHand: 0,
           unit: "packages",
           costPerUnit,
+          retailPrice: Number(packageItem.retailPrice) || "",
+          wholesalePrice: Number(packageItem.wholesalePrice) || "",
           status: "In Stock",
           notes: `Added from Spice Kitchen batch calculator. Package size: ${round(
             packageItem.packageOunces,
@@ -897,6 +900,8 @@ export default function SpiceKitchen() {
             quantityOnHand: 0,
             unit: "oz",
             costPerUnit: getRecipeFormulaCostPerOunce(selectedRecipe),
+            retailPrice: "",
+            wholesalePrice: "",
             status: "In Stock",
             notes:
               "Unallocated finished seasoning saved from Spice Kitchen batch calculator."
@@ -2026,16 +2031,20 @@ export default function SpiceKitchen() {
               {inventoryPackages.map((packageItem) => {
                 const quantity = toNumber(inventoryAllocations[packageItem.id]);
                 const usedOunces = quantity * packageItem.packageOunces;
+                const availableCount = Math.floor(
+                  Math.max(0, remainingInventoryOunces + usedOunces) /
+                    packageItem.packageOunces
+                );
 
                 return (
                   <div className="productPackageRow" key={packageItem.id}>
                     <span>
-  <strong>{packageItem.displayName}</strong>
-  <small>
-    {round(packageItem.packageOunces, 3)} oz each •{" "}
-    {Math.floor(Math.max(0, remainingInventoryOunces) / packageItem.packageOunces)} available
-  </small>
-</span>
+                      <strong>{packageItem.displayName}</strong>
+                      <small>
+                        {round(packageItem.packageOunces, 3)} oz each •{" "}
+                        {availableCount} available
+                      </small>
+                    </span>
 
                     <input
                       type="number"
@@ -2056,14 +2065,15 @@ export default function SpiceKitchen() {
 
             {remainingInventoryOunces > 0.01 ? (
               <div className="placeholderBox compactPlaceholder">
-                You still have {round(remainingInventoryOunces, 2)} oz unallocated. You can
-                save a partial allocation or adjust the package counts.
+                You still have {round(remainingInventoryOunces, 2)} oz unallocated. This
+                amount will be saved as Unallocated Bulk inventory.
               </div>
             ) : null}
 
             {remainingInventoryOunces < -0.01 ? (
               <div className="placeholderBox compactPlaceholder">
-                You still have {round(remainingInventoryOunces, 2)} oz unallocated. This amount will be saved as Unallocated Bulk inventory.
+                You allocated {round(Math.abs(remainingInventoryOunces), 2)} oz more than
+                the batch produced. Reduce package counts before saving.
               </div>
             ) : null}
 
