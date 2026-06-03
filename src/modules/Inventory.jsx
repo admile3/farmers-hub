@@ -1,15 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
-  Archive,
   CalendarClock,
-  CheckCircle2,
   DollarSign,
   Edit3,
   Filter,
-  Layers3,
-  MapPin,
-  Package,
   PackageCheck,
   Plus,
   Save,
@@ -75,12 +70,20 @@ const blankInventoryItem = {
   name: "",
   category: "Finished Goods",
   sourceModule: "Manual",
+  productId: "",
+  productName: "",
+  recipeId: "",
+  recipeName: "",
+  variantId: "",
+  variantName: "",
   quantityOnHand: "",
   unit: "each",
   parLevel: "",
   reorderPoint: "",
   storageLocation: "",
   costPerUnit: "",
+  retailPrice: "",
+  wholesalePrice: "",
   bestByDate: "",
   status: "In Stock",
   notes: ""
@@ -130,8 +133,17 @@ function formatCurrency(value) {
 
   return number.toLocaleString("en-US", {
     style: "currency",
-    currency: "USD"
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
   });
+}
+
+function cleanCurrencyInput(value) {
+  if (value === "" || value === null || value === undefined) return "";
+
+  const number = Number(value);
+  return Number.isFinite(number) ? number.toFixed(2) : "";
 }
 
 function cleanNumber(value) {
@@ -165,6 +177,14 @@ function getStatusLabel(item) {
 
 function getInventoryValue(item) {
   return (Number(item.quantityOnHand) || 0) * (Number(item.costPerUnit) || 0);
+}
+
+function getRetailValue(item) {
+  return (Number(item.quantityOnHand) || 0) * (Number(item.retailPrice) || 0);
+}
+
+function getWholesaleValue(item) {
+  return (Number(item.quantityOnHand) || 0) * (Number(item.wholesalePrice) || 0);
 }
 
 function InventoryDetail({ label, value }) {
@@ -264,12 +284,24 @@ export default function Inventory() {
       0
     );
 
+    const totalRetailValue = activeItems.reduce(
+      (sum, item) => sum + getRetailValue(item),
+      0
+    );
+
+    const totalWholesaleValue = activeItems.reduce(
+      (sum, item) => sum + getWholesaleValue(item),
+      0
+    );
+
     return {
       activeItems: activeItems.length,
       lowStockItems: lowStockItems.length,
       outOfStockItems: outOfStockItems.length,
       expiringSoonItems: expiringSoonItems.length,
-      totalValue
+      totalValue,
+      totalRetailValue,
+      totalWholesaleValue
     };
   }, [inventoryItems]);
 
@@ -291,6 +323,9 @@ export default function Inventory() {
           item.category?.toLowerCase().includes(search) ||
           item.sourceModule?.toLowerCase().includes(search) ||
           item.storageLocation?.toLowerCase().includes(search) ||
+          item.variantName?.toLowerCase().includes(search) ||
+          item.productName?.toLowerCase().includes(search) ||
+          item.recipeName?.toLowerCase().includes(search) ||
           item.notes?.toLowerCase().includes(search)
         );
       })
@@ -354,12 +389,20 @@ export default function Inventory() {
       name: item.name || "",
       category: item.category || "Finished Goods",
       sourceModule: item.sourceModule || "Manual",
+      productId: item.productId || "",
+      productName: item.productName || "",
+      recipeId: item.recipeId || "",
+      recipeName: item.recipeName || "",
+      variantId: item.variantId || "",
+      variantName: item.variantName || "",
       quantityOnHand: item.quantityOnHand ?? "",
       unit: item.unit || "each",
       parLevel: item.parLevel ?? "",
       reorderPoint: item.reorderPoint ?? "",
       storageLocation: item.storageLocation || "",
-      costPerUnit: item.costPerUnit ?? "",
+      costPerUnit: cleanCurrencyInput(item.costPerUnit),
+      retailPrice: cleanCurrencyInput(item.retailPrice),
+      wholesalePrice: cleanCurrencyInput(item.wholesalePrice),
       bestByDate: item.bestByDate || "",
       status: item.status || "In Stock",
       notes: item.notes || ""
@@ -391,12 +434,20 @@ export default function Inventory() {
       name: itemForm.name.trim(),
       category: itemForm.category,
       sourceModule: itemForm.sourceModule,
+      productId: itemForm.productId || "",
+      productName: itemForm.productName || "",
+      recipeId: itemForm.recipeId || "",
+      recipeName: itemForm.recipeName || "",
+      variantId: itemForm.variantId || "",
+      variantName: itemForm.variantName || "",
       quantityOnHand: cleanNumber(itemForm.quantityOnHand),
       unit: itemForm.unit.trim() || "each",
       parLevel: cleanNumber(itemForm.parLevel),
       reorderPoint: cleanNumber(itemForm.reorderPoint),
       storageLocation: itemForm.storageLocation.trim(),
       costPerUnit: cleanNumber(itemForm.costPerUnit),
+      retailPrice: cleanNumber(itemForm.retailPrice),
+      wholesalePrice: cleanNumber(itemForm.wholesalePrice),
       bestByDate: itemForm.bestByDate,
       status: itemForm.status,
       notes: itemForm.notes.trim()
@@ -559,8 +610,24 @@ export default function Inventory() {
           icon={DollarSign}
           label="Inventory Value"
           value={formatCurrency(inventorySummary.totalValue)}
-          sub="estimated on hand"
+          sub="estimated cost"
           accent="pricing"
+        />
+
+        <StatCard
+          icon={DollarSign}
+          label="Retail Value"
+          value={formatCurrency(inventorySummary.totalRetailValue)}
+          sub="potential retail"
+          accent="market"
+        />
+
+        <StatCard
+          icon={DollarSign}
+          label="Wholesale Value"
+          value={formatCurrency(inventorySummary.totalWholesaleValue)}
+          sub="potential wholesale"
+          accent="sourdough"
         />
       </section>
 
@@ -642,11 +709,9 @@ export default function Inventory() {
 
       <section className="workspacePanel compactPanel inventoryDirectoryPanel">
         <div
-  className="workspaceHeader compactPanelHeader inventoryDirectoryHeader"
-  style={{
-    marginBottom: "0.55rem"
-  }}
->
+          className="workspaceHeader compactPanelHeader inventoryDirectoryHeader"
+          style={{ marginBottom: "0.55rem" }}
+        >
           <div>
             <p className="eyebrow">Directory</p>
             <h3>Inventory Items</h3>
@@ -659,12 +724,9 @@ export default function Inventory() {
         </div>
 
         <div
-  className="inventoryFilterGrid"
-  style={{
-    marginTop: "-0.65rem",
-    marginBottom: "0.75rem"
-  }}
->
+          className="inventoryFilterGrid"
+          style={{ marginTop: "-0.65rem", marginBottom: "0.75rem" }}
+        >
           <div className="searchBox compactSearch inventorySearchBox">
             <Search size={17} />
             <input
@@ -723,7 +785,9 @@ export default function Inventory() {
               <span>Reorder</span>
               <span>Location</span>
               <span>Best By</span>
-              <span>Value</span>
+              <span>Cost</span>
+              <span>Retail</span>
+              <span>Wholesale</span>
               <span>Status</span>
               <span></span>
             </div>
@@ -774,6 +838,8 @@ export default function Inventory() {
                     </span>
 
                     <span>{formatCurrency(getInventoryValue(item))}</span>
+                    <span>{formatCurrency(getRetailValue(item))}</span>
+                    <span>{formatCurrency(getWholesaleValue(item))}</span>
 
                     <span>
                       <span className={`inventoryStatusPill ${getStatusClass(status)}`}>
@@ -924,10 +990,41 @@ export default function Inventory() {
                 Cost Per Unit
                 <input
                   type="number"
-                  step="0.0001"
+                  step="0.01"
                   value={itemForm.costPerUnit}
                   onChange={(event) => updateItemField("costPerUnit", event.target.value)}
+                  onBlur={(event) =>
+                    updateItemField("costPerUnit", cleanCurrencyInput(event.target.value))
+                  }
                   placeholder="e.g., 0.14"
+                />
+              </label>
+
+              <label>
+                Retail Price
+                <input
+                  type="number"
+                  step="0.01"
+                  value={itemForm.retailPrice}
+                  onChange={(event) => updateItemField("retailPrice", event.target.value)}
+                  onBlur={(event) =>
+                    updateItemField("retailPrice", cleanCurrencyInput(event.target.value))
+                  }
+                  placeholder="e.g., 12.00"
+                />
+              </label>
+
+              <label>
+                Wholesale Price
+                <input
+                  type="number"
+                  step="0.01"
+                  value={itemForm.wholesalePrice}
+                  onChange={(event) => updateItemField("wholesalePrice", event.target.value)}
+                  onBlur={(event) =>
+                    updateItemField("wholesalePrice", cleanCurrencyInput(event.target.value))
+                  }
+                  placeholder="e.g., 7.50"
                 />
               </label>
 
@@ -972,10 +1069,26 @@ export default function Inventory() {
                   />
 
                   <InventoryDetail
-                    label="Estimated Value"
+                    label="Inventory Value"
                     value={formatCurrency(
                       (Number(itemForm.quantityOnHand) || 0) *
                         (Number(itemForm.costPerUnit) || 0)
+                    )}
+                  />
+
+                  <InventoryDetail
+                    label="Retail Value"
+                    value={formatCurrency(
+                      (Number(itemForm.quantityOnHand) || 0) *
+                        (Number(itemForm.retailPrice) || 0)
+                    )}
+                  />
+
+                  <InventoryDetail
+                    label="Wholesale Value"
+                    value={formatCurrency(
+                      (Number(itemForm.quantityOnHand) || 0) *
+                        (Number(itemForm.wholesalePrice) || 0)
                     )}
                   />
 
