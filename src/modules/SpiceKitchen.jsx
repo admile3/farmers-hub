@@ -10,6 +10,7 @@ import {
   DollarSign,
   Edit3,
   Library,
+  PackageCheck,
   Plus,
   Save,
   Search,
@@ -20,6 +21,7 @@ import {
 import { useAuth } from "../AuthContext.jsx";
 import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import StatCard from "../components/StatCard.jsx";
+import { addQuantityToMatchedInventoryItem } from "../services/inventoryService.js";
 import {
   createSpiceIngredient,
   createSpiceRecipe,
@@ -164,6 +166,14 @@ function convertPackageSizeToOunces(size, unit) {
   return amount;
 }
 
+function getPackageDisplayName(packageItem, index) {
+  const sizeLabel = packageItem?.size
+    ? `${Number(toNumber(packageItem.size).toFixed(3)).toString()} ${packageItem.unit || ""}`.trim()
+    : "";
+
+  return packageItem?.name || sizeLabel || `Package ${index + 1}`;
+}
+
 export default function SpiceKitchen() {
   const { user, loginWithGoogle } = useAuth();
   const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } = useUnsavedChanges();
@@ -190,6 +200,9 @@ export default function SpiceKitchen() {
   const [libraryCostUnit, setLibraryCostUnit] = useState("oz");
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [quickIngredient, setQuickIngredient] = useState(emptyIngredient);
+  const [inventoryModalOpen, setInventoryModalOpen] = useState(false);
+  const [inventoryAllocations, setInventoryAllocations] = useState({});
+  const [savingInventory, setSavingInventory] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [statusType, setStatusType] = useState("info");
   const [loading, setLoading] = useState(false);
@@ -276,7 +289,7 @@ export default function SpiceKitchen() {
   }, []);
 
   useEffect(() => {
-    if (!statusMessage) return;
+    if (!statusMessage) return undefined;
 
     const timer = window.setTimeout(() => {
       setStatusMessage("");
@@ -419,6 +432,35 @@ export default function SpiceKitchen() {
 
     return { grams, ounces, cost };
   }, [batchRows]);
+
+  const inventoryPackages = useMemo(() => {
+    return Array.isArray(selectedRecipe?.productPackages)
+      ? selectedRecipe.productPackages
+          .map((packageItem, index) => {
+            const packageOunces =
+              Number(packageItem.packageOunces) ||
+              convertPackageSizeToOunces(packageItem.size, packageItem.unit);
+
+            return {
+              ...packageItem,
+              index,
+              id: `spice-${selectedRecipe.id}-variant-${index}`,
+              displayName: getPackageDisplayName(packageItem, index),
+              packageOunces
+            };
+          })
+          .filter((packageItem) => packageItem.packageOunces > 0)
+      : [];
+  }, [selectedRecipe]);
+
+  const allocatedInventoryOunces = useMemo(() => {
+    return inventoryPackages.reduce((sum, packageItem) => {
+      const quantity = toNumber(inventoryAllocations[packageItem.id]);
+      return sum + quantity * packageItem.packageOunces;
+    }, 0);
+  }, [inventoryPackages, inventoryAllocations]);
+
+  const remainingInventoryOunces = batchTotals.ounces - allocatedInventoryOunces;
 
   const spiceSummary = useMemo(() => {
     const recipeIngredientCount = recipes.reduce(
@@ -741,6 +783,113 @@ export default function SpiceKitchen() {
     } catch (error) {
       console.error(error);
       showStatus("Could not delete recipe.", "error");
+    }
+  }
+
+  function openInventoryModal() {
+    if (!selectedRecipe) {
+      showStatus("Select a saved recipe first.", "error");
+      return;
+    }
+
+    if (!batchRows.length || batchTotals.ounces <= 0) {
+      showStatus("Enter a batch amount before adding inventory.", "error");
+      return;
+    }
+
+    if (!selectedRecipe.listInProductDirectory || !inventoryPackages.length) {
+      showStatus(
+        "This recipe needs to be listed in the Product Directory with at least one package size before inventory can be added.",
+        "error"
+      );
+      editRecipe(selectedRecipe);
+      return;
+    }
+
+    const startingAllocations = inventoryPackages.reduce((next, packageItem) => {
+      next[packageItem.id] = "";
+      return next;
+    }, {});
+
+    setInventoryAllocations(startingAllocations);
+    setInventoryModalOpen(true);
+  }
+
+  function updateInventoryAllocation(packageId, value) {
+    setInventoryAllocations((current) => ({
+      ...current,
+      [packageId]: value
+    }));
+  }
+
+  async function saveBatchToInventory() {
+    if (!user || !selectedRecipe) return;
+
+    const activeAllocations = inventoryPackages
+      .map((packageItem) => ({
+        packageItem,
+        quantity: toNumber(inventoryAllocations[packageItem.id])
+      }))
+      .filter((item) => item.quantity > 0);
+
+    if (!activeAllocations.length) {
+      showStatus("Enter at least one package quantity to add inventory.", "error");
+      return;
+    }
+
+    if (remainingInventoryOunces < -0.01) {
+      showStatus("You allocated more ounces than the batch produced.", "error");
+      return;
+    }
+
+    setSavingInventory(true);
+
+    try {
+      await Promise.all(
+        activeAllocations.map(({ packageItem, quantity }) => {
+          const costPerUnit =
+            Number(packageItem.ingredientCost) ||
+            packageItem.packageOunces * getRecipeFormulaCostPerOunce(selectedRecipe);
+
+          return addQuantityToMatchedInventoryItem({
+            userId: user.uid,
+            match: {
+              recipeId: selectedRecipe.id,
+              variantId: packageItem.id,
+              sourceModule: "Spice Kitchen"
+            },
+            itemDefaults: {
+              name: `${selectedRecipe.name} - ${packageItem.displayName}`,
+              category: "Finished Goods",
+              sourceModule: "Spice Kitchen",
+              productId: `spice-${selectedRecipe.id}`,
+              productName: selectedRecipe.name || "",
+              recipeId: selectedRecipe.id,
+              recipeName: selectedRecipe.name || "",
+              variantId: packageItem.id,
+              variantName: packageItem.displayName,
+              quantityOnHand: 0,
+              unit: "packages",
+              costPerUnit,
+              status: "In Stock",
+              notes: `Added from Spice Kitchen batch calculator. Package size: ${round(
+                packageItem.packageOunces,
+                3
+              )} oz.`
+            },
+            quantityToAdd: quantity
+          });
+        })
+      );
+
+      setInventoryModalOpen(false);
+      setInventoryAllocations({});
+      showStatus("Batch added to inventory.", "success");
+    } catch (error) {
+      console.error(error);
+      showStatus("Could not add batch to inventory.", "error");
+    } finally {
+      setSavingInventory(false);
     }
   }
 
@@ -1239,6 +1388,16 @@ export default function SpiceKitchen() {
               <p className="eyebrow">Batch Calculator</p>
               <h3>Scale a Saved Recipe</h3>
             </div>
+
+            <button
+              className="primaryButton compactPrimary"
+              type="button"
+              onClick={openInventoryModal}
+              disabled={!batchRows.length}
+            >
+              <PackageCheck size={15} />
+              Add to Inventory
+            </button>
           </div>
 
           <div className="calculatorControls compactCalculatorControls">
@@ -1795,6 +1954,118 @@ export default function SpiceKitchen() {
           </div>
         </div>
       </section>
+
+      {inventoryModalOpen ? (
+        <div className="inventoryModalOverlay" role="dialog" aria-modal="true">
+          <div className="inventoryModal spiceInventoryModal">
+            <div className="inventoryModalHeader">
+              <div>
+                <p className="eyebrow">Add Batch to Inventory</p>
+                <h3>{selectedRecipe?.name || "Selected Recipe"}</h3>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setInventoryModalOpen(false);
+                  setInventoryAllocations({});
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="inventoryDetailGrid fullSpan">
+              <div>
+                <span>Batch Produced</span>
+                <strong>{round(batchTotals.ounces, 2)} oz</strong>
+              </div>
+
+              <div>
+                <span>Allocated</span>
+                <strong>{round(allocatedInventoryOunces, 2)} oz</strong>
+              </div>
+
+              <div>
+                <span>Remaining</span>
+                <strong>{round(remainingInventoryOunces, 2)} oz</strong>
+              </div>
+            </div>
+
+            <div className="productPackageBuilder">
+              <div className="recipeLineHeader">
+                <h4>Allocate Finished Packages</h4>
+              </div>
+
+              {inventoryPackages.map((packageItem) => {
+                const quantity = toNumber(inventoryAllocations[packageItem.id]);
+                const usedOunces = quantity * packageItem.packageOunces;
+
+                return (
+                  <div className="productPackageRow" key={packageItem.id}>
+                    <span>
+                      <strong>{packageItem.displayName}</strong>
+                      <small>
+                        {round(packageItem.packageOunces, 3)} oz each
+                      </small>
+                    </span>
+
+                    <input
+                      type="number"
+                      step="1"
+                      min="0"
+                      value={inventoryAllocations[packageItem.id] || ""}
+                      onChange={(event) =>
+                        updateInventoryAllocation(packageItem.id, event.target.value)
+                      }
+                      placeholder="0"
+                    />
+
+                    <span>{round(usedOunces, 2)} oz used</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {remainingInventoryOunces > 0.01 ? (
+              <div className="placeholderBox compactPlaceholder">
+                You still have {round(remainingInventoryOunces, 2)} oz unallocated. You can
+                save a partial allocation or adjust the package counts.
+              </div>
+            ) : null}
+
+            {remainingInventoryOunces < -0.01 ? (
+              <div className="placeholderBox compactPlaceholder">
+                You allocated {round(Math.abs(remainingInventoryOunces), 2)} oz more than the
+                batch produced. Reduce package counts before saving.
+              </div>
+            ) : null}
+
+            <div className="inventoryModalActions fullSpan">
+              <button
+                className="secondaryButton compactButton"
+                type="button"
+                onClick={() => {
+                  setInventoryModalOpen(false);
+                  setInventoryAllocations({});
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="primaryButton compactPrimary"
+                type="button"
+                onClick={saveBatchToInventory}
+                disabled={savingInventory || remainingInventoryOunces < -0.01}
+              >
+                <PackageCheck size={15} />
+                {savingInventory ? "Adding..." : "Add to Inventory"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {showBackToTop ? (
         <button className="backToTopButton" type="button" onClick={scrollToTop}>
