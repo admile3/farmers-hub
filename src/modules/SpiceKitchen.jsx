@@ -5,6 +5,7 @@ import {
   Beaker,
   BookOpen,
   Calculator,
+  CircleHelp,
   ChevronDown,
   ChevronUp,
   DollarSign,
@@ -21,6 +22,8 @@ import {
 import { useAuth } from "../AuthContext.jsx";
 import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import StatCard from "../components/StatCard.jsx";
+import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
+import SpiceKitchenGuideContent from "../components/SpiceKitchenGuideContent.jsx";
 import { addQuantityToMatchedInventoryItem } from "../services/inventoryService.js";
 import {
   createSpiceIngredient,
@@ -207,6 +210,7 @@ export default function SpiceKitchen() {
   const [statusType, setStatusType] = useState("info");
   const [loading, setLoading] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   function markSpiceDirty() {
     markUnsaved({
@@ -297,6 +301,15 @@ export default function SpiceKitchen() {
 
     return () => window.clearTimeout(timer);
   }, [statusMessage]);
+
+  useEffect(() => {
+    const guideHidden =
+      localStorage.getItem("hideModuleGuide_spiceKitchen") === "true";
+
+    if (!guideHidden) {
+      setShowGuide(true);
+    }
+  }, []);
 
   async function loadData() {
     if (!user) return;
@@ -1009,7 +1022,7 @@ export default function SpiceKitchen() {
 
   return (
     <div className="modulePage spicePage compactSpicePage">
-      <section className="farmModuleHero spiceKitchenHero">
+      <section className="farmModuleHero spiceKitchenHero moduleHeroWithActions">
         <div className="farmModuleHeroText">
           <p className="eyebrow">Spice Kitchen</p>
           <h2>Build, scale, and organize seasoning recipes.</h2>
@@ -1017,6 +1030,17 @@ export default function SpiceKitchen() {
             Manage your ingredient pantry, create recipes by parts, quick-add
             ingredients while building a recipe, and calculate exact batch weights.
           </p>
+        </div>
+
+        <div className="farmModuleHeroActions">
+          <button
+            className="secondaryButton compactButton moduleGuideButton"
+            type="button"
+            onClick={() => setShowGuide(true)}
+          >
+            <CircleHelp size={15} />
+            Guide
+          </button>
         </div>
       </section>
 
@@ -2107,6 +2131,15 @@ export default function SpiceKitchen() {
           Top
         </button>
       ) : null}
+
+      <ModuleGuideModal
+        isOpen={showGuide}
+        moduleKey="spiceKitchen"
+        title="How to Use Spice Kitchen"
+        onClose={() => setShowGuide(false)}
+      >
+        <SpiceKitchenGuideContent />
+      </ModuleGuideModal>
     </div>
   );
 }
