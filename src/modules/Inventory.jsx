@@ -641,7 +641,12 @@ export default function Inventory() {
       </section>
 
       <section className="workspacePanel compactPanel inventoryDirectoryPanel">
-        <div className="workspaceHeader compactPanelHeader inventoryDirectoryHeader">
+        <div
+  className="workspaceHeader compactPanelHeader inventoryDirectoryHeader"
+  style={{
+    marginBottom: "0.55rem"
+  }}
+>
           <div>
             <p className="eyebrow">Directory</p>
             <h3>Inventory Items</h3>
