@@ -349,6 +349,13 @@ function buildBakingDirectoryProducts(bakingRecipes = []) {
         retailPrice: "",
         wholesalePrice: "",
         batchIngredientCost: moneyValue(batchIngredientCost),
+costPerUnit: moneyValue(
+  recipe.pricingSummary?.costPerUnit ||
+    recipe.productDirectory?.costPerUnit ||
+    (Number(batchIngredientCost) && Number(unitsPerBatch)
+      ? Number(batchIngredientCost) / Number(unitsPerBatch)
+      : "")
+),
         batchUnits: unitsPerBatch,
         packagingCostPerUnit: "",
         notes: "Generated from Baking Planner.",
@@ -861,13 +868,13 @@ export default function Inventory() {
       quantityOnHand: "",
       unit: variantName || product.unitLabel || "each",
       costPerUnit:
-        cleanCurrencyInput(
-          variant?.costPerUnit ||
-            variant?.ingredientCost ||
-            product.batchIngredientCost ||
-            product.packagingCostPerUnit ||
-            ""
-        ),
+  cleanCurrencyInput(
+    variant?.costPerUnit ||
+      product.costPerUnit ||
+      variant?.ingredientCost ||
+      product.batchIngredientCost ||
+      ""
+  ),
       wholesalePrice: cleanCurrencyInput(variant?.wholesalePrice || product.wholesalePrice || ""),
       retailPrice: cleanCurrencyInput(variant?.retailPrice || product.retailPrice || ""),
       notes: product.notes || product.description || ""
