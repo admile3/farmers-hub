@@ -954,31 +954,31 @@ export default function SpiceKitchen() {
   }
 
   const sectionCards = [
-    {
-      title: "Recipe Builder",
-      description: "Create blends by parts using your saved pantry ingredients.",
-      icon: Beaker,
-      ref: builderRef
-    },
-    {
-      title: "Batch Calculator",
-      description: "Scale saved recipes to exact ounces, grams, and overage targets.",
-      icon: Calculator,
-      ref: calculatorRef
-    },
-    {
-      title: "Ingredient Pantry",
-      description: "Save ingredients, costs, suppliers, notes, and categories.",
-      icon: Library,
-      ref: pantryRef
-    },
-    {
-      title: "Recipe Library",
-      description: "Review, edit, and manage your saved seasoning recipes.",
-      icon: BookOpen,
-      ref: libraryRef
-    }
-  ];
+  {
+    title: "Ingredient Pantry",
+    description: "Save ingredients, costs, suppliers, notes, and categories.",
+    icon: Library,
+    ref: pantryRef
+  },
+  {
+    title: "Recipe Builder",
+    description: "Create blends by parts using your saved pantry ingredients.",
+    icon: Beaker,
+    ref: builderRef
+  },
+  {
+    title: "Batch Calculator",
+    description: "Scale saved recipes to exact ounces, grams, and overage targets.",
+    icon: Calculator,
+    ref: calculatorRef
+  },
+  {
+    title: "Recipe Library",
+    description: "Review, edit, and manage your saved seasoning recipes.",
+    icon: BookOpen,
+    ref: libraryRef
+  }
+];
 
   if (!user) {
     return (
