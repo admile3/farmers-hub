@@ -178,9 +178,9 @@ export default function SpiceKitchen() {
   const { user, loginWithGoogle } = useAuth();
   const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } = useUnsavedChanges();
 
+  const pantryRef = useRef(null);
   const builderRef = useRef(null);
   const calculatorRef = useRef(null);
-  const pantryRef = useRef(null);
   const libraryRef = useRef(null);
 
   const [ingredients, setIngredients] = useState([]);
@@ -846,83 +846,83 @@ export default function SpiceKitchen() {
           Number(packageItem.ingredientCost) ||
           packageItem.packageOunces * getRecipeFormulaCostPerOunce(selectedRecipe);
 
-      return addQuantityToMatchedInventoryItem({
-        userId: user.uid,
-        match: {
-          recipeId: selectedRecipe.id,
-          variantId: packageItem.id,
-          sourceModule: "Spice Kitchen"
-        },
-        itemDefaults: {
-          name: `${selectedRecipe.name} - ${packageItem.displayName}`,
-          category: "Finished Goods",
-          sourceModule: "Spice Kitchen",
-          productId: `spice-${selectedRecipe.id}`,
-          productName: selectedRecipe.name || "",
-          recipeId: selectedRecipe.id,
-          recipeName: selectedRecipe.name || "",
-          variantId: packageItem.id,
-          variantName: packageItem.displayName,
-          quantityOnHand: 0,
-          unit: "packages",
-          costPerUnit,
-          retailPrice: Number(packageItem.retailPrice) || "",
-          wholesalePrice: Number(packageItem.wholesalePrice) || "",
-          status: "In Stock",
-          notes: `Added from Spice Kitchen batch calculator. Package size: ${round(
-            packageItem.packageOunces,
-            3
-          )} oz.`
-        },
-        quantityToAdd: quantity
-      });
-    });
-
-    if (remainingInventoryOunces > 0.01) {
-      inventoryUpdates.push(
-        addQuantityToMatchedInventoryItem({
+        return addQuantityToMatchedInventoryItem({
           userId: user.uid,
           match: {
             recipeId: selectedRecipe.id,
-            variantId: `spice-${selectedRecipe.id}-unallocated-bulk`,
+            variantId: packageItem.id,
             sourceModule: "Spice Kitchen"
           },
           itemDefaults: {
-            name: `${selectedRecipe.name} - Unallocated Bulk`,
+            name: `${selectedRecipe.name} - ${packageItem.displayName}`,
             category: "Finished Goods",
             sourceModule: "Spice Kitchen",
             productId: `spice-${selectedRecipe.id}`,
             productName: selectedRecipe.name || "",
             recipeId: selectedRecipe.id,
             recipeName: selectedRecipe.name || "",
-            variantId: `spice-${selectedRecipe.id}-unallocated-bulk`,
-            variantName: "Unallocated Bulk",
+            variantId: packageItem.id,
+            variantName: packageItem.displayName,
             quantityOnHand: 0,
-            unit: "oz",
-            costPerUnit: getRecipeFormulaCostPerOunce(selectedRecipe),
-            retailPrice: "",
-            wholesalePrice: "",
+            unit: "packages",
+            costPerUnit,
+            retailPrice: Number(packageItem.retailPrice) || "",
+            wholesalePrice: Number(packageItem.wholesalePrice) || "",
             status: "In Stock",
-            notes:
-              "Unallocated finished seasoning saved from Spice Kitchen batch calculator."
+            notes: `Added from Spice Kitchen batch calculator. Package size: ${round(
+              packageItem.packageOunces,
+              3
+            )} oz.`
           },
-          quantityToAdd: Number(round(remainingInventoryOunces, 4))
-        })
-      );
+          quantityToAdd: quantity
+        });
+      });
+
+      if (remainingInventoryOunces > 0.01) {
+        inventoryUpdates.push(
+          addQuantityToMatchedInventoryItem({
+            userId: user.uid,
+            match: {
+              recipeId: selectedRecipe.id,
+              variantId: `spice-${selectedRecipe.id}-unallocated-bulk`,
+              sourceModule: "Spice Kitchen"
+            },
+            itemDefaults: {
+              name: `${selectedRecipe.name} - Unallocated Bulk`,
+              category: "Finished Goods",
+              sourceModule: "Spice Kitchen",
+              productId: `spice-${selectedRecipe.id}`,
+              productName: selectedRecipe.name || "",
+              recipeId: selectedRecipe.id,
+              recipeName: selectedRecipe.name || "",
+              variantId: `spice-${selectedRecipe.id}-unallocated-bulk`,
+              variantName: "Unallocated Bulk",
+              quantityOnHand: 0,
+              unit: "oz",
+              costPerUnit: getRecipeFormulaCostPerOunce(selectedRecipe),
+              retailPrice: "",
+              wholesalePrice: "",
+              status: "In Stock",
+              notes:
+                "Unallocated finished seasoning saved from Spice Kitchen batch calculator."
+            },
+            quantityToAdd: Number(round(remainingInventoryOunces, 4))
+          })
+        );
+      }
+
+      await Promise.all(inventoryUpdates);
+
+      setInventoryModalOpen(false);
+      setInventoryAllocations({});
+      showStatus("Batch added to inventory.", "success");
+    } catch (error) {
+      console.error(error);
+      showStatus("Could not add batch to inventory.", "error");
+    } finally {
+      setSavingInventory(false);
     }
-
-    await Promise.all(inventoryUpdates);
-
-    setInventoryModalOpen(false);
-    setInventoryAllocations({});
-    showStatus("Batch added to inventory.", "success");
-  } catch (error) {
-    console.error(error);
-    showStatus("Could not add batch to inventory.", "error");
-  } finally {
-    setSavingInventory(false);
   }
-}
 
   function getIngredientName(line) {
     const ingredient = ingredients.find((item) => item.id === line.ingredientId);
@@ -954,31 +954,31 @@ export default function SpiceKitchen() {
   }
 
   const sectionCards = [
-  {
-    title: "Ingredient Pantry",
-    description: "Save ingredients, costs, suppliers, notes, and categories.",
-    icon: Library,
-    ref: pantryRef
-  },
-  {
-    title: "Recipe Builder",
-    description: "Create blends by parts using your saved pantry ingredients.",
-    icon: Beaker,
-    ref: builderRef
-  },
-  {
-    title: "Batch Calculator",
-    description: "Scale saved recipes to exact ounces, grams, and overage targets.",
-    icon: Calculator,
-    ref: calculatorRef
-  },
-  {
-    title: "Recipe Library",
-    description: "Review, edit, and manage your saved seasoning recipes.",
-    icon: BookOpen,
-    ref: libraryRef
-  }
-];
+    {
+      title: "Ingredient Pantry",
+      description: "Save ingredients, costs, suppliers, notes, and categories.",
+      icon: Library,
+      ref: pantryRef
+    },
+    {
+      title: "Recipe Builder",
+      description: "Create blends by parts using your saved pantry ingredients.",
+      icon: Beaker,
+      ref: builderRef
+    },
+    {
+      title: "Batch Calculator",
+      description: "Scale saved recipes to exact ounces, grams, and overage targets.",
+      icon: Calculator,
+      ref: calculatorRef
+    },
+    {
+      title: "Recipe Library",
+      description: "Review, edit, and manage your saved seasoning recipes.",
+      icon: BookOpen,
+      ref: libraryRef
+    }
+  ];
 
   if (!user) {
     return (
@@ -1085,7 +1085,226 @@ export default function SpiceKitchen() {
         })}
       </section>
 
-      <section className="spiceWorkspace compactWorkspace">
+      <section className="spiceKitchenFlowGrid compactWorkspace">
+        <div className="workspacePanel compactPanel scrollAnchor" ref={pantryRef}>
+          <div className="workspaceHeader compactPanelHeader">
+            <div>
+              <p className="eyebrow">Pantry</p>
+              <h3>Ingredient Pantry</h3>
+            </div>
+
+            <div className="searchBox compactSearch">
+              <Search size={17} />
+              <input
+                value={ingredientSearch}
+                onChange={(event) => setIngredientSearch(event.target.value)}
+                placeholder="Search ingredients..."
+              />
+            </div>
+          </div>
+
+          <form className="formGrid compactFormGrid" onSubmit={saveIngredient}>
+            <label>
+              Ingredient Name
+              <input
+                value={ingredientForm.name}
+                onChange={(event) => updateIngredientField("name", event.target.value)}
+                placeholder="e.g., Dried thyme"
+              />
+            </label>
+
+            <label>
+              Category
+              <select
+                value={ingredientForm.category}
+                onChange={(event) => updateIngredientField("category", event.target.value)}
+              >
+                {ingredientCategories.map((category) => (
+                  <option key={category}>{category}</option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              Supplier / Source
+              <input
+                value={ingredientForm.supplier}
+                onChange={(event) =>
+                  updateIngredientField("supplier", event.target.value)
+                }
+                placeholder="e.g., Bulk supplier, farm, store"
+              />
+            </label>
+
+            <div className="inlineFields">
+              <label>
+                Cost
+                <input
+                  type="number"
+                  step="0.0001"
+                  value={ingredientForm.cost}
+                  onChange={(event) => updateIngredientField("cost", event.target.value)}
+                  onBlur={(event) =>
+                    updateIngredientField("cost", cleanCurrencyInput(event.target.value))
+                  }
+                  placeholder="e.g., 2.50"
+                />
+              </label>
+
+              <label>
+                Per
+                <select
+                  value={ingredientForm.costUnit}
+                  onChange={(event) =>
+                    updateIngredientField("costUnit", event.target.value)
+                  }
+                >
+                  <option value="oz">oz</option>
+                  <option value="g">g</option>
+                  <option value="lb">lb</option>
+                </select>
+              </label>
+            </div>
+
+            <label className="fullSpan">
+              Notes
+              <textarea
+                value={ingredientForm.notes}
+                onChange={(event) => updateIngredientField("notes", event.target.value)}
+                placeholder="e.g., Flavor notes, grind size, sourcing notes"
+              />
+            </label>
+
+            <div className="formActions fullSpan compactActions">
+              <button
+                className={`primaryButton compactPrimary ${
+                  hasUnsavedChanges ? "dirtySaveButton" : ""
+                }`}
+                type="submit"
+              >
+                <Save size={15} />
+                {editingIngredientId
+                  ? hasUnsavedChanges
+                    ? "Update Ingredient Changes"
+                    : "Update Ingredient"
+                  : hasUnsavedChanges
+                    ? "Save Ingredient Changes"
+                    : "Save Ingredient"}
+              </button>
+
+              <button
+                className="secondaryButton compactButton"
+                type="button"
+                onClick={clearIngredientDraft}
+              >
+                Clear
+              </button>
+            </div>
+          </form>
+
+          <div className="savedList compactSavedList spiceExpandableList">
+            <h4 className="smallSectionTitle">Saved Ingredients</h4>
+
+            {filteredIngredients.length ? (
+              filteredIngredients.map((ingredient) => {
+                const isExpanded = expandedIngredientId === ingredient.id;
+
+                return (
+                  <div
+                    className={isExpanded ? "savedItemBlock expanded" : "savedItemBlock"}
+                    key={ingredient.id}
+                  >
+                    <div className="savedItem compactSavedItem expandableSavedItem">
+                      <div>
+                        <h4>
+                          <button
+                            type="button"
+                            className="savedItemLink"
+                            onClick={() => editIngredient(ingredient)}
+                          >
+                            {ingredient.name}
+                          </button>
+                        </h4>
+                        <p>
+                          {ingredient.category}
+                          {ingredient.supplier ? ` • ${ingredient.supplier}` : ""}
+                          {ingredient.cost
+                            ? ` • $${formatCurrency(ingredient.cost)} / ${ingredient.costUnit}`
+                            : ""}
+                        </p>
+                      </div>
+
+                      <div className="itemActions">
+                        <button
+                          type="button"
+                          className="iconButton"
+                          aria-label={
+                            isExpanded
+                              ? "Collapse ingredient details"
+                              : "Expand ingredient details"
+                          }
+                          onClick={() =>
+                            setExpandedIngredientId(isExpanded ? null : ingredient.id)
+                          }
+                        >
+                          {isExpanded ? (
+                            <ChevronUp size={14} />
+                          ) : (
+                            <ChevronDown size={14} />
+                          )}
+                        </button>
+
+                        <button type="button" onClick={() => editIngredient(ingredient)}>
+                          <Edit3 size={14} />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => removeIngredient(ingredient.id)}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {isExpanded ? (
+                      <div className="spiceDetailPanel">
+                        <div>
+                          <strong>Category</strong>
+                          <span>{ingredient.category || "Other"}</span>
+                        </div>
+
+                        <div>
+                          <strong>Supplier / Source</strong>
+                          <span>{ingredient.supplier || "Not listed"}</span>
+                        </div>
+
+                        <div>
+                          <strong>Cost</strong>
+                          <span>
+                            {ingredient.cost
+                              ? `$${formatCurrency(ingredient.cost)} / ${ingredient.costUnit}`
+                              : "Not listed"}
+                          </span>
+                        </div>
+
+                        <div className="fullSpan">
+                          <strong>Notes</strong>
+                          <span>{ingredient.notes || "No notes saved."}</span>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })
+            ) : (
+              <div className="placeholderBox compactPlaceholder">
+                No ingredients saved yet.
+              </div>
+            )}
+          </div>
+        </div>
+
         <div className="workspacePanel compactPanel scrollAnchor" ref={builderRef}>
           <div className="workspaceHeader compactPanelHeader">
             <div>
@@ -1550,227 +1769,6 @@ export default function SpiceKitchen() {
               Select a saved recipe and enter a target amount to generate batch weights.
             </div>
           )}
-        </div>
-      </section>
-
-      <section className="lowerSpiceGrid">
-        <div className="workspacePanel compactPanel scrollAnchor" ref={pantryRef}>
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Pantry</p>
-              <h3>Ingredient Pantry</h3>
-            </div>
-
-            <div className="searchBox compactSearch">
-              <Search size={17} />
-              <input
-                value={ingredientSearch}
-                onChange={(event) => setIngredientSearch(event.target.value)}
-                placeholder="Search ingredients..."
-              />
-            </div>
-          </div>
-
-          <form className="formGrid compactFormGrid" onSubmit={saveIngredient}>
-            <label>
-              Ingredient Name
-              <input
-                value={ingredientForm.name}
-                onChange={(event) => updateIngredientField("name", event.target.value)}
-                placeholder="e.g., Dried thyme"
-              />
-            </label>
-
-            <label>
-              Category
-              <select
-                value={ingredientForm.category}
-                onChange={(event) => updateIngredientField("category", event.target.value)}
-              >
-                {ingredientCategories.map((category) => (
-                  <option key={category}>{category}</option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Supplier / Source
-              <input
-                value={ingredientForm.supplier}
-                onChange={(event) =>
-                  updateIngredientField("supplier", event.target.value)
-                }
-                placeholder="e.g., Bulk supplier, farm, store"
-              />
-            </label>
-
-            <div className="inlineFields">
-              <label>
-                Cost
-                <input
-                  type="number"
-                  step="0.0001"
-                  value={ingredientForm.cost}
-                  onChange={(event) => updateIngredientField("cost", event.target.value)}
-                  onBlur={(event) =>
-                    updateIngredientField("cost", cleanCurrencyInput(event.target.value))
-                  }
-                  placeholder="e.g., 2.50"
-                />
-              </label>
-
-              <label>
-                Per
-                <select
-                  value={ingredientForm.costUnit}
-                  onChange={(event) =>
-                    updateIngredientField("costUnit", event.target.value)
-                  }
-                >
-                  <option value="oz">oz</option>
-                  <option value="g">g</option>
-                  <option value="lb">lb</option>
-                </select>
-              </label>
-            </div>
-
-            <label className="fullSpan">
-              Notes
-              <textarea
-                value={ingredientForm.notes}
-                onChange={(event) => updateIngredientField("notes", event.target.value)}
-                placeholder="e.g., Flavor notes, grind size, sourcing notes"
-              />
-            </label>
-
-            <div className="formActions fullSpan compactActions">
-              <button
-                className={`primaryButton compactPrimary ${
-                  hasUnsavedChanges ? "dirtySaveButton" : ""
-                }`}
-                type="submit"
-              >
-                <Save size={15} />
-                {editingIngredientId
-                  ? hasUnsavedChanges
-                    ? "Update Ingredient Changes"
-                    : "Update Ingredient"
-                  : hasUnsavedChanges
-                    ? "Save Ingredient Changes"
-                    : "Save Ingredient"}
-              </button>
-
-              <button
-                className="secondaryButton compactButton"
-                type="button"
-                onClick={clearIngredientDraft}
-              >
-                Clear
-              </button>
-            </div>
-          </form>
-
-          <div className="savedList compactSavedList spiceExpandableList">
-            <h4 className="smallSectionTitle">Saved Ingredients</h4>
-
-            {filteredIngredients.length ? (
-              filteredIngredients.map((ingredient) => {
-                const isExpanded = expandedIngredientId === ingredient.id;
-
-                return (
-                  <div
-                    className={isExpanded ? "savedItemBlock expanded" : "savedItemBlock"}
-                    key={ingredient.id}
-                  >
-                    <div className="savedItem compactSavedItem expandableSavedItem">
-                      <div>
-                        <h4>
-                          <button
-                            type="button"
-                            className="savedItemLink"
-                            onClick={() => editIngredient(ingredient)}
-                          >
-                            {ingredient.name}
-                          </button>
-                        </h4>
-                        <p>
-                          {ingredient.category}
-                          {ingredient.supplier ? ` • ${ingredient.supplier}` : ""}
-                          {ingredient.cost
-                            ? ` • $${formatCurrency(ingredient.cost)} / ${ingredient.costUnit}`
-                            : ""}
-                        </p>
-                      </div>
-
-                      <div className="itemActions">
-                        <button
-                          type="button"
-                          className="iconButton"
-                          aria-label={
-                            isExpanded
-                              ? "Collapse ingredient details"
-                              : "Expand ingredient details"
-                          }
-                          onClick={() =>
-                            setExpandedIngredientId(isExpanded ? null : ingredient.id)
-                          }
-                        >
-                          {isExpanded ? (
-                            <ChevronUp size={14} />
-                          ) : (
-                            <ChevronDown size={14} />
-                          )}
-                        </button>
-
-                        <button type="button" onClick={() => editIngredient(ingredient)}>
-                          <Edit3 size={14} />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => removeIngredient(ingredient.id)}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-
-                    {isExpanded ? (
-                      <div className="spiceDetailPanel">
-                        <div>
-                          <strong>Category</strong>
-                          <span>{ingredient.category || "Other"}</span>
-                        </div>
-
-                        <div>
-                          <strong>Supplier / Source</strong>
-                          <span>{ingredient.supplier || "Not listed"}</span>
-                        </div>
-
-                        <div>
-                          <strong>Cost</strong>
-                          <span>
-                            {ingredient.cost
-                              ? `$${formatCurrency(ingredient.cost)} / ${ingredient.costUnit}`
-                              : "Not listed"}
-                          </span>
-                        </div>
-
-                        <div className="fullSpan">
-                          <strong>Notes</strong>
-                          <span>{ingredient.notes || "No notes saved."}</span>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })
-            ) : (
-              <div className="placeholderBox compactPlaceholder">
-                No ingredients saved yet.
-              </div>
-            )}
-          </div>
         </div>
 
         <div
