@@ -1025,8 +1025,9 @@ export default function Inventory() {
 
     try {
       await saveInventoryItem(user.uid, updatedItem);
-      await loadInventoryItems();
-      showStatus("Inventory quantity updated.", "success");
+await loadInventoryItems();
+markSaved();
+showStatus("Inventory quantity updated.", "success");
     } catch (error) {
       console.error(error);
       showStatus("Could not adjust inventory quantity.", "error");
