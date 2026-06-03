@@ -840,36 +840,54 @@ export default function MarketPrepPlanner() {
         </div>
 
         <div className="farmModuleHeroActions marketPrepHeroActions">
-          <button className="secondaryButton compactButton farmHeroAction" type="button" onClick={startNewPlan}>
-            <Plus size={15} />
-            New Plan
-          </button>
+  <button
+    className="primaryButton compactPrimary farmHeroAction"
+    type="button"
+    onClick={startNewPlan}
+  >
+    <Plus size={15} />
+    New Plan
+  </button>
 
-          <button className="secondaryButton compactButton farmHeroAction" type="button" onClick={loadSampleProducts}>
-            <Sprout size={15} />
-            Load Samples
-          </button>
+  <button
+    className="secondaryButton compactButton farmHeroAction"
+    type="button"
+    onClick={loadSampleProducts}
+  >
+    <Sprout size={15} />
+    Load Samples
+  </button>
 
-          <button className="secondaryButton compactButton farmHeroAction" type="button" onClick={() => setShowGuide(true)}>
-            <CircleHelp size={15} />
-            Guide
-          </button>
+  <button
+    className="secondaryButton compactButton farmHeroAction"
+    type="button"
+    onClick={() => setShowGuide(true)}
+  >
+    <CircleHelp size={15} />
+    Guide
+  </button>
 
-          <button className="secondaryButton compactButton farmHeroAction" type="button" onClick={printPlan}>
-            <Printer size={15} />
-            Print
-          </button>
+  <button
+    className="secondaryButton compactButton farmHeroAction"
+    type="button"
+    onClick={printPlan}
+  >
+    <Printer size={15} />
+    Print
+  </button>
 
-          <button
-            className={`primaryButton compactPrimary farmHeroAction ${hasUnsavedChanges ? "dirtySaveButton" : ""}`}
-            type="button"
-            onClick={savePlan}
-            disabled={saving}
-          >
-            <Save size={15} />
-            {saving ? "Saving..." : "Save"}
-          </button>
-        </div>
+  <button
+    className={`secondaryButton compactButton farmHeroAction ${
+      hasUnsavedChanges ? "dirtySaveButton" : ""
+    }`}
+    type="button"
+    onClick={savePlan}
+    disabled={saving}
+  >
+    <Save size={15} />
+    {saving ? "Saving..." : hasUnsavedChanges ? "Save Changes" : "Save"}
+  </button>
+</div>
       </section>
 
       {statusMessage ? (
