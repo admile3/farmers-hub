@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowUp,
   CalendarDays,
+  CircleHelp,
   ClipboardList,
   CloudRain,
   CloudSun,
@@ -21,6 +22,8 @@ import { db } from "../firebase";
 import { useAuth } from "../AuthContext.jsx";
 import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import StatCard from "../components/StatCard.jsx";
+import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
+import MarketPrepGuideContent from "../components/MarketPrepGuideContent.jsx";
 import {
   deleteMarketPrepPlan,
   getMarketPrepPlans,
@@ -373,6 +376,7 @@ export default function MarketPrepPlanner() {
   const [loadingWeather, setLoadingWeather] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   const [newProduct, setNewProduct] = useState({
     name: "",
@@ -412,6 +416,16 @@ export default function MarketPrepPlanner() {
 
     return () => window.clearTimeout(timer);
   }, [statusMessage]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const guideHidden = localStorage.getItem("hideModuleGuide_marketPrep") === "true";
+
+    if (!guideHidden) {
+      setShowGuide(true);
+    }
+  }, [user]);
 
   function scrollToSection(ref) {
     ref.current?.scrollIntoView({
@@ -834,6 +848,11 @@ export default function MarketPrepPlanner() {
           <button className="secondaryButton compactButton farmHeroAction" type="button" onClick={loadSampleProducts}>
             <Sprout size={15} />
             Load Samples
+          </button>
+
+          <button className="secondaryButton compactButton farmHeroAction" type="button" onClick={() => setShowGuide(true)}>
+            <CircleHelp size={15} />
+            Guide
           </button>
 
           <button className="secondaryButton compactButton farmHeroAction" type="button" onClick={printPlan}>
@@ -1660,6 +1679,15 @@ export default function MarketPrepPlanner() {
           )}
         </section>
       </section>
+
+      <ModuleGuideModal
+        isOpen={showGuide}
+        moduleKey="marketPrep"
+        title="How to Use Market Prep Planner"
+        onClose={() => setShowGuide(false)}
+      >
+        <MarketPrepGuideContent />
+      </ModuleGuideModal>
 
       {showBackToTop ? (
         <button className="backToTopButton" type="button" onClick={scrollToTop}>
