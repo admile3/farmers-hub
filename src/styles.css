@@ -11725,3 +11725,123 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+.inventoryStatGrid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.inventoryStatGrid .statCard,
+.inventoryStatGrid .hubStatCard,
+.inventoryStatGrid > * {
+  min-height: 66px;
+}
+
+.inventoryStatGrid .statCard,
+.inventoryStatGrid .hubStatCard {
+  padding: 0.75rem 0.85rem;
+}
+
+.inventoryStatGrid h3 {
+  font-size: 1.15rem;
+  line-height: 1.1;
+}
+
+.inventoryStatGrid p,
+.inventoryStatGrid span {
+  font-size: 0.72rem;
+}
+
+.inventoryTable {
+  min-width: 1180px;
+}
+
+.inventoryTableHeader,
+.inventoryTableRow {
+  grid-template-columns:
+    minmax(220px, 2fr)
+    minmax(105px, 0.8fr)
+    minmax(92px, 0.65fr)
+    minmax(82px, 0.55fr)
+    minmax(110px, 0.75fr)
+    minmax(105px, 0.75fr)
+    82px
+    82px
+    92px
+    92px
+    68px;
+  column-gap: 0.45rem;
+  align-items: center;
+}
+
+.inventoryTableHeader span,
+.inventoryTableRow > span {
+  min-width: 0;
+}
+
+.inventoryTableRow {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.inventoryQuantityCell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: flex-start;
+}
+
+.inventoryAdjustButtons {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0;
+}
+
+.inventoryAdjustButtons::before {
+  content: "Adjust";
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: var(--mutedText);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.inventoryAdjustButtons button {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 7px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.inventoryStatusPill {
+  white-space: nowrap;
+}
+
+.inventoryActions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+.inventoryActions button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+}
+
+@media (max-width: 1350px) {
+  .inventoryStatGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .inventoryStatGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
