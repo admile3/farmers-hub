@@ -117,6 +117,10 @@ function ouncesToGrams(ounces) {
   return ounces * 28.3495;
 }
 
+function poundsToGrams(pounds) {
+  return ouncesToGrams(pounds * 16);
+}
+
 function gramsToOunces(grams) {
   return grams / 28.3495;
 }
@@ -377,7 +381,9 @@ export default function SpiceKitchen() {
     const targetGrams =
       targetUnit === "oz"
         ? ouncesToGrams(toNumber(targetAmount))
-        : toNumber(targetAmount);
+        : targetUnit === "lb"
+          ? poundsToGrams(toNumber(targetAmount))
+          : toNumber(targetAmount);
 
     const adjustedTargetGrams =
       targetGrams * (1 + toNumber(overagePercent) / 100);
@@ -1270,6 +1276,7 @@ export default function SpiceKitchen() {
               >
                 <option value="oz">oz</option>
                 <option value="g">g</option>
+                <option value="lb">lb</option>
               </select>
             </label>
 
