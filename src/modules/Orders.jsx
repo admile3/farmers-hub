@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   CheckCircle2,
+  CircleHelp,
   ClipboardList,
   DollarSign,
   Package,
@@ -16,6 +17,8 @@ import { doc, getDoc } from "firebase/firestore";
 
 import { db } from "../firebase";
 import { useAuth } from "../AuthContext.jsx";
+import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
+import OrdersGuideContent from "../components/OrdersGuideContent.jsx";
 import StatCard from "../components/StatCard.jsx";
 import { getCustomers, saveCustomer } from "../services/customerService.js";
 import { getProducts } from "../services/productService.js";
@@ -309,6 +312,7 @@ export default function Orders() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -328,6 +332,14 @@ export default function Orders() {
     const timer = window.setTimeout(() => setStatusMessage(""), 3200);
     return () => window.clearTimeout(timer);
   }, [statusMessage]);
+
+  useEffect(() => {
+    const guideHidden = localStorage.getItem("hideModuleGuide_orders") === "true";
+
+    if (!guideHidden) {
+      setShowGuide(true);
+    }
+  }, []);
 
   async function loadData() {
     if (!user) return;
@@ -711,6 +723,15 @@ export default function Orders() {
   if (!user) {
     return (
       <div className="ordersModule modulePage">
+        <ModuleGuideModal
+          isOpen={showGuide}
+          moduleKey="orders"
+          title="How to Use Orders"
+          onClose={() => setShowGuide(false)}
+        >
+          <OrdersGuideContent />
+        </ModuleGuideModal>
+
         <section className="farmModuleHero ordersHero">
           <div className="farmModuleHeroText ordersHeroText">
             <p className="eyebrow">Orders</p>
@@ -733,6 +754,15 @@ export default function Orders() {
 
   return (
     <div className="ordersModule modulePage">
+      <ModuleGuideModal
+        isOpen={showGuide}
+        moduleKey="orders"
+        title="How to Use Orders"
+        onClose={() => setShowGuide(false)}
+      >
+        <OrdersGuideContent />
+      </ModuleGuideModal>
+
       {statusMessage ? (
         <div className="floatingStatus" role="status">
           <span>{statusMessage}</span>
@@ -756,6 +786,11 @@ export default function Orders() {
           <button className="primaryButton compactPrimary farmHeroAction" type="button" onClick={startNewOrder}>
             <Plus size={16} />
             New Order
+          </button>
+
+          <button className="secondaryButton compactButton farmHeroAction" type="button" onClick={() => setShowGuide(true)}>
+            <CircleHelp size={16} />
+            Guide
           </button>
         </div>
       </section>
