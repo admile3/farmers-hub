@@ -653,7 +653,13 @@ export default function Inventory() {
           </div>
         </div>
 
-        <div className="inventoryFilterGrid">
+        <div
+  className="inventoryFilterGrid"
+  style={{
+    marginTop: "-0.65rem",
+    marginBottom: "0.75rem"
+  }}
+>
           <div className="searchBox compactSearch inventorySearchBox">
             <Search size={17} />
             <input
