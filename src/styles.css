@@ -12760,3 +12760,40 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+.marketPrepHero {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+
+.marketPrepHero .farmModuleHeroText {
+  width: 100%;
+  max-width: none;
+}
+
+.marketPrepHero .farmModuleHeroText h2,
+.marketPrepHero .farmModuleHeroText p {
+  max-width: none;
+}
+
+.marketPrepHeroActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.marketPrepHeroActions .farmHeroAction {
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .marketPrepHeroActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .marketPrepHeroActions .farmHeroAction {
+    width: 100%;
+  }
+}
