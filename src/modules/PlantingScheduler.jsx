@@ -4,6 +4,7 @@ import {
   CalendarDays,
   CheckCircle2,
   ClipboardList,
+  CircleHelp,
   Flower2,
   Leaf,
   Plus,
@@ -16,6 +17,8 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "../AuthContext.jsx";
+import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
+import PlantingSchedulerGuideContent from "../components/PlantingSchedulerGuideContent.jsx";
 import StatCard from "../components/StatCard.jsx";
 import {
   deletePlantingBatch,
@@ -256,6 +259,7 @@ export default function PlantingScheduler() {
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [savingBatch, setSavingBatch] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -274,6 +278,14 @@ export default function PlantingScheduler() {
     const timer = window.setTimeout(() => setStatusMessage(""), 3200);
     return () => window.clearTimeout(timer);
   }, [statusMessage]);
+
+  useEffect(() => {
+    const guideHidden = localStorage.getItem("hideModuleGuide_plantingScheduler") === "true";
+
+    if (!guideHidden) {
+      setShowGuide(true);
+    }
+  }, []);
 
   async function loadData() {
     if (!user) return;
@@ -632,7 +644,16 @@ export default function PlantingScheduler() {
   if (!user) {
     return (
       <div className="plantingModule modulePage plantingSchedulerResponsive">
-        <section className="farmModuleHero plantingFarmHero">
+        <ModuleGuideModal
+        isOpen={showGuide}
+        moduleKey="plantingScheduler"
+        title="How to Use Planting Scheduler"
+        onClose={() => setShowGuide(false)}
+      >
+        <PlantingSchedulerGuideContent />
+      </ModuleGuideModal>
+
+      <section className="farmModuleHero plantingFarmHero">
           <div className="farmModuleHeroText">
             <p className="eyebrow">Planting Scheduler</p>
             <h2>Sign in to schedule plantings.</h2>
@@ -674,7 +695,7 @@ export default function PlantingScheduler() {
           </p>
         </div>
 
-        <div className="farmModuleHeroActions">
+        <div className="farmModuleHeroActions plantingHeroActions">
           <button className="secondaryButton compactButton farmHeroAction farmHeroSecondary" type="button" onClick={startNewTemplate}>
             <Leaf size={16} />
             New Template
@@ -683,6 +704,11 @@ export default function PlantingScheduler() {
           <button className="primaryButton compactPrimary farmHeroAction farmHeroPrimary" type="button" onClick={startNewBatch}>
             <Plus size={16} />
             New Planting
+          </button>
+
+          <button className="secondaryButton compactButton farmHeroAction farmHeroSecondary" type="button" onClick={() => setShowGuide(true)}>
+            <CircleHelp size={16} />
+            Guide
           </button>
         </div>
       </section>
