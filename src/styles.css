@@ -12234,3 +12234,451 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+/* =========================================================
+   Standard Module Guide Modal
+   ========================================================= */
+
+.moduleHeroWithActions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+}
+
+.moduleHeroWithActions .farmModuleHeroActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.moduleGuideButton {
+  width: fit-content;
+  white-space: nowrap;
+}
+
+.moduleGuideOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 11000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(18, 24, 32, 0.56);
+  backdrop-filter: blur(8px);
+}
+
+.moduleGuideModal {
+  width: min(980px, 100%);
+  max-height: calc(100vh - 48px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border-radius: 24px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.28);
+}
+
+.moduleGuideHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  background: #ffffff;
+}
+
+.moduleGuideHeader h2 {
+  margin: 5px 0 0;
+  font-size: clamp(1.8rem, 3vw, 3rem);
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+
+.moduleGuideCloseButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.moduleGuideCloseButton:hover {
+  background: #fbfaf6;
+  color: var(--text);
+}
+
+.moduleGuideBody {
+  overflow: auto;
+  padding: 20px 24px;
+  background: #fbfaf6;
+}
+
+.moduleGuideContent {
+  display: grid;
+  gap: 16px;
+}
+
+.moduleGuideIntro {
+  border: 1px solid rgba(199, 99, 67, 0.16);
+  border-radius: 18px;
+  background: #fffaf7;
+  padding: 16px 18px;
+}
+
+.moduleGuideIntro p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+  font-weight: 750;
+}
+
+.moduleGuideSection {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.42fr) minmax(0, 0.58fr);
+  gap: 16px;
+  align-items: stretch;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: #ffffff;
+  padding: 16px;
+}
+
+.moduleGuideStepText {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.moduleGuideStepNumber {
+  width: fit-content;
+  border-radius: 999px;
+  background: #fff0e8;
+  color: var(--spice);
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.moduleGuideStepText h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.25rem;
+  line-height: 1.15;
+}
+
+.moduleGuideStepText p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.moduleGuidePreview {
+  min-width: 0;
+  border: 1px solid rgba(22, 27, 34, 0.08);
+  border-radius: 18px;
+  background: #fbfaf6;
+  padding: 12px;
+}
+
+.moduleGuideStatPreview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.moduleGuideStatPreview .hubStatCard {
+  min-height: 64px;
+  padding: 10px;
+}
+
+.guideMiniPanel {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+
+.guideMiniHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.guideMiniHeader h4 {
+  margin: 4px 0 0;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.guideSearchMock {
+  min-width: 170px;
+  min-height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #ffffff;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.guideMiniGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.guideMiniGrid.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.guideMiniGrid div {
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: #fbfaf6;
+  padding: 10px;
+  display: grid;
+  gap: 3px;
+}
+
+.guideMiniGrid span,
+.guideRecipeHeader span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.guideMiniGrid strong {
+  color: var(--text);
+  font-size: 0.88rem;
+  line-height: 1.2;
+}
+
+.guideMockButton {
+  width: fit-content;
+  min-height: 34px;
+  border-radius: 999px;
+  background: var(--green);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 7px 12px;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.guideMockButton.secondary {
+  background: #ffffff;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.guideRecipeRows {
+  display: grid;
+  gap: 6px;
+}
+
+.guideRecipeHeader,
+.guideRecipeRows > div:not(.guideRecipeHeader) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 70px;
+  gap: 8px;
+  align-items: center;
+}
+
+.guideRecipeHeader {
+  padding: 0 4px;
+}
+
+.guideRecipeRows > div:not(.guideRecipeHeader) {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fbfaf6;
+  padding: 9px 10px;
+}
+
+.guideRecipeRows strong {
+  color: var(--text);
+  font-size: 0.88rem;
+}
+
+.guideRecipeRows div:not(.guideRecipeHeader) span {
+  color: var(--spice);
+  font-size: 0.88rem;
+  font-weight: 950;
+  text-align: right;
+}
+
+.guideCheckboxMock {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  background: #fff0e8;
+  color: var(--spice);
+  padding: 8px 11px;
+  font-size: 0.82rem;
+  font-weight: 950;
+}
+
+.guideCheckboxMock span {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: var(--spice);
+  color: #ffffff;
+  font-size: 0.72rem;
+}
+
+.guideSavedRecipe {
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: #fbfaf6;
+  padding: 11px 12px;
+  display: grid;
+  gap: 3px;
+}
+
+.guideSavedRecipe strong {
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.guideSavedRecipe span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.moduleGuideTip {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid rgba(52, 117, 62, 0.18);
+  border-radius: 16px;
+  background: #f5fbf3;
+  color: var(--green-dark);
+  padding: 14px 16px;
+}
+
+.moduleGuideTip p {
+  margin: 0;
+  color: var(--green-dark);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  font-weight: 850;
+}
+
+.moduleGuideFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  background: #ffffff;
+}
+
+.moduleGuideDismiss {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 850;
+}
+
+.moduleGuideDismiss input {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  accent-color: var(--spice);
+}
+
+@media (max-width: 900px) {
+  .moduleHeroWithActions {
+    grid-template-columns: 1fr;
+  }
+
+  .moduleHeroWithActions .farmModuleHeroActions {
+    justify-content: flex-start;
+  }
+
+  .moduleGuideButton {
+    width: fit-content;
+  }
+
+  .moduleGuideSection {
+    grid-template-columns: 1fr;
+  }
+
+  .moduleGuideStatPreview {
+    grid-template-columns: 1fr;
+  }
+
+  .moduleGuideFooter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .moduleGuideFooter .primaryButton {
+    width: 100%;
+  }
+}
+
+@media (max-width: 650px) {
+  .moduleGuideOverlay {
+    padding: 10px;
+  }
+
+  .moduleGuideModal {
+    max-height: calc(100vh - 20px);
+    border-radius: 20px;
+  }
+
+  .moduleGuideHeader,
+  .moduleGuideBody,
+  .moduleGuideFooter {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .guideMiniHeader {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .guideSearchMock,
+  .guideMockButton {
+    width: 100%;
+  }
+
+  .guideMiniGrid,
+  .guideMiniGrid.three {
+    grid-template-columns: 1fr;
+  }
+}
