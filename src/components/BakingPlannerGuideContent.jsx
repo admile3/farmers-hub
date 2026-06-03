@@ -10,10 +10,7 @@ import {
   Wheat
 } from "lucide-react";
 
-export default function BakingPlannerGuideContent({
-  selectedMode,
-  onSelectMode
-}) {
+export default function BakingPlannerGuideContent({ selectedMode, onSelectMode }) {
   return (
     <div className="moduleGuideContent">
       <section className="moduleGuideIntro">
@@ -149,7 +146,7 @@ export default function BakingPlannerGuideContent({
           <span className="moduleGuideStepNumber">Step 3</span>
           <h3>Choose Weights or Percentages.</h3>
           <p>
-            Fixed Weights uses grams per finished unit. Percentages uses baker’s percentages and
+            Fixed Weights uses grams per finished unit. Percentages uses baker&apos;s percentages and
             scales from flour weight. The planner shows the alternate value beside each field.
           </p>
         </div>
@@ -159,7 +156,7 @@ export default function BakingPlannerGuideContent({
             <div className="guideMiniHeader">
               <div>
                 <p className="eyebrow">Recipe Entry Mode</p>
-                <h4>Fixed Weights ↔ Percentages</h4>
+                <h4>Fixed Weights to Percentages</h4>
               </div>
               <Scale size={20} />
             </div>
@@ -348,9 +345,7 @@ export default function BakingPlannerGuideContent({
         <div>
           <p className="eyebrow">Builder Mode</p>
           <h3>Choose your Baking Planner mode.</h3>
-          <p>
-            You can change this later in Settings.
-          </p>
+          <p>You can change this later in Settings.</p>
         </div>
 
         <div className="bakingGuideModeGrid">
