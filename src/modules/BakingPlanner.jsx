@@ -28,6 +28,7 @@ import { db } from "../firebase";
 import { useAuth } from "../AuthContext.jsx";
 import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import StatCard from "../components/StatCard.jsx";
+import { addQuantityToMatchedInventoryItem } from "../services/inventoryService.js";
 
 function Card({ children, className = "" }) {
   return <div className={`card ${className}`}>{children}</div>;
@@ -728,6 +729,31 @@ function formatDisplayDate(dateString) {
     day: "numeric",
     year: "numeric"
   });
+}
+
+
+function getBakingProductName(recipe = {}) {
+  return recipe.productDirectory?.productName || recipe.name || "Untitled Baking Product";
+}
+
+function getBakingProductUnit(recipe = {}) {
+  return recipe.productDirectory?.sellingUnit || recipe.unitsLabel || "unit";
+}
+
+function getBakingProductCategory(recipe = {}) {
+  if (
+    recipe.category === "Loaf" ||
+    recipe.category === "Baguette" ||
+    recipe.category === "Pan Loaf"
+  ) {
+    return "Bread";
+  }
+
+  return "Baked Goods";
+}
+
+function getBakingProductId(recipe = {}) {
+  return `baking-${recipe.id}`;
 }
 
 function resourceLabel(resource) {
@@ -1466,6 +1492,13 @@ export default function BakingPlanner() {
     recipes[0]?.id || ""
   );
   const [lastSavedAt, setLastSavedAt] = useState("");
+  const [productionCompletions, setProductionCompletions] = useState(() =>
+    loadFromStorage("bakingPlannerProductionCompletions", [])
+  );
+  const [showProductionCompletionModal, setShowProductionCompletionModal] = useState(false);
+  const [productionCompletionRows, setProductionCompletionRows] = useState([]);
+  const [productionCompletionNotes, setProductionCompletionNotes] = useState("");
+  const [savingProductionCompletion, setSavingProductionCompletion] = useState(false);
 
   function markBakingDirty() {
     markUnsaved({
@@ -1509,6 +1542,14 @@ export default function BakingPlanner() {
             setProductionItems([]);
           }
 
+          if (Array.isArray(data.productionCompletions)) {
+            setProductionCompletions(data.productionCompletions);
+            saveToStorage("bakingPlannerProductionCompletions", data.productionCompletions);
+          } else {
+            setProductionCompletions([]);
+            saveToStorage("bakingPlannerProductionCompletions", []);
+          }
+
           if (Array.isArray(data.pantryItems)) {
             setPantryItems(data.pantryItems.map(normalizePantryItem));
           } else {
@@ -1520,6 +1561,7 @@ export default function BakingPlanner() {
           setRecipes([]);
           setSelectedRecipeId("");
           setProductionItems([]);
+          setProductionCompletions([]);
           setPantryItems([]);
           setCloudStatus("No cloud save yet");
         }
@@ -1917,93 +1959,95 @@ export default function BakingPlanner() {
   }
 
   async function savePlannerData() {
-  const normalizedPantryItems = pantryItems.map(normalizePantryItem);
+    const normalizedPantryItems = pantryItems.map(normalizePantryItem);
 
-  const normalizedRecipes = recipes.map((recipe) => {
-    const normalizedRecipe = normalizeRecipe(recipe);
-    const unitsPerBatch =
-      Number(normalizedRecipe.productDirectory?.unitsPerBatch) ||
-      Number(normalizedRecipe.ovenCapacityUnits) ||
-      1;
+    const normalizedRecipes = recipes.map((recipe) => {
+      const normalizedRecipe = normalizeRecipe(recipe);
+      const unitsPerBatch =
+        Number(normalizedRecipe.productDirectory?.unitsPerBatch) ||
+        Number(normalizedRecipe.ovenCapacityUnits) ||
+        1;
 
-    const unitPlan = calculateRecipePlan(normalizedRecipe, 1, env, settings);
-    const unitCost = calculatePlanIngredientCost(
-      unitPlan,
-      normalizedPantryItems,
-      matureStarterPullLabel,
-      false,
-      settings.ingredientBufferPct
-    );
+      const unitPlan = calculateRecipePlan(normalizedRecipe, 1, env, settings);
+      const unitCost = calculatePlanIngredientCost(
+        unitPlan,
+        normalizedPantryItems,
+        matureStarterPullLabel,
+        false,
+        settings.ingredientBufferPct
+      );
 
-    const batchIngredientCost = unitCost.costPerUnit * unitsPerBatch;
+      const batchIngredientCost = unitCost.costPerUnit * unitsPerBatch;
 
-    return {
-      ...normalizedRecipe,
-      productDirectory: {
-        ...normalizedRecipe.productDirectory,
-        batchIngredientCost,
-        costPerUnit: unitCost.costPerUnit,
-        matchedIngredientCount: unitCost.matchedRows,
-        totalIngredientCount: unitCost.totalRows
-      },
-      pricingSummary: {
-        totalCost: batchIngredientCost,
-        costPerUnit: unitCost.costPerUnit,
-        matchedIngredientCount: unitCost.matchedRows,
-        totalIngredientCount: unitCost.totalRows
-      }
-    };
-  });
+      return {
+        ...normalizedRecipe,
+        productDirectory: {
+          ...normalizedRecipe.productDirectory,
+          batchIngredientCost,
+          costPerUnit: unitCost.costPerUnit,
+          matchedIngredientCount: unitCost.matchedRows,
+          totalIngredientCount: unitCost.totalRows
+        },
+        pricingSummary: {
+          totalCost: batchIngredientCost,
+          costPerUnit: unitCost.costPerUnit,
+          matchedIngredientCount: unitCost.matchedRows,
+          totalIngredientCount: unitCost.totalRows
+        }
+      };
+    });
 
-  saveToStorage("bakingPlannerRecipes", normalizedRecipes);
-  saveToStorage("bakingPlannerSettings", settings);
-  saveToStorage("bakingPlannerEnv", env);
-  saveToStorage("bakingPlannerProductionDate", productionItems.length ? productionDate : "");
-  saveToStorage("bakingPlannerProductionItems", productionItems);
-  saveToStorage("bakingPlannerPantryItems", normalizedPantryItems);
+    saveToStorage("bakingPlannerRecipes", normalizedRecipes);
+    saveToStorage("bakingPlannerSettings", settings);
+    saveToStorage("bakingPlannerEnv", env);
+    saveToStorage("bakingPlannerProductionDate", productionItems.length ? productionDate : "");
+    saveToStorage("bakingPlannerProductionItems", productionItems);
+    saveToStorage("bakingPlannerProductionCompletions", productionCompletions);
+    saveToStorage("bakingPlannerPantryItems", normalizedPantryItems);
 
-  const savedTime = new Date().toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit"
-  });
+    const savedTime = new Date().toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit"
+    });
 
-  setLastSavedAt(savedTime);
+    setLastSavedAt(savedTime);
 
-  if (!user) {
-    setCloudStatus("Saved locally");
-    markSaved();
-    return;
+    if (!user) {
+      setCloudStatus("Saved locally");
+      markSaved();
+      return;
+    }
+
+    setCloudLoading(true);
+    setCloudStatus("Saving to cloud...");
+
+    try {
+      const ref = doc(db, "users", user.uid, "bakingPlanner", "main");
+
+      await setDoc(
+        ref,
+        {
+          recipes: normalizedRecipes,
+          settings,
+          env,
+          productionDate: productionItems.length ? productionDate : "",
+          productionItems,
+          productionCompletions,
+          pantryItems: normalizedPantryItems,
+          updatedAt: serverTimestamp()
+        },
+        { merge: true }
+      );
+
+      setCloudStatus(`Cloud saved at ${savedTime}`);
+      markSaved();
+    } catch (error) {
+      console.error(error);
+      setCloudStatus("Cloud save failed");
+    } finally {
+      setCloudLoading(false);
+    }
   }
-
-  setCloudLoading(true);
-  setCloudStatus("Saving to cloud...");
-
-  try {
-    const ref = doc(db, "users", user.uid, "bakingPlanner", "main");
-
-    await setDoc(
-      ref,
-      {
-        recipes: normalizedRecipes,
-        settings,
-        env,
-        productionDate: productionItems.length ? productionDate : "",
-        productionItems,
-        pantryItems: normalizedPantryItems,
-        updatedAt: serverTimestamp()
-      },
-      { merge: true }
-    );
-
-    setCloudStatus(`Cloud saved at ${savedTime}`);
-    markSaved();
-  } catch (error) {
-    console.error(error);
-    setCloudStatus("Cloud save failed");
-  } finally {
-    setCloudLoading(false);
-  }
-}
 
   function updateRecipeIngredientMode(mode) {
     markBakingDirty();
@@ -2527,6 +2571,152 @@ export default function BakingPlanner() {
     }
   }
 
+  function openProductionCompletionModal() {
+    const rows = planCostRows.map(({ plan, cost }) => {
+      const recipe = plan.recipe;
+      const productName = getBakingProductName(recipe);
+      const unitLabel = getBakingProductUnit(recipe);
+      const plannedUnits = Number(plan.quantity) || 0;
+
+      return {
+        id: recipe.id,
+        recipeId: recipe.id,
+        recipeName: recipe.name || productName,
+        productId: getBakingProductId(recipe),
+        productName,
+        category: getBakingProductCategory(recipe),
+        unitLabel,
+        plannedUnits,
+        actualUnits: plannedUnits,
+        costPerUnit: cost.costPerUnit || recipe.pricingSummary?.costPerUnit || recipe.productDirectory?.costPerUnit || 0,
+        totalIngredientCost: cost.totalCost || 0,
+        matchedIngredientCount: cost.matchedRows || 0,
+        totalIngredientCount: cost.totalRows || 0
+      };
+    });
+
+    setProductionCompletionRows(rows);
+    setProductionCompletionNotes("");
+    setShowProductionCompletionModal(true);
+  }
+
+  function updateProductionCompletionRow(recipeId, field, value) {
+    setProductionCompletionRows((previous) =>
+      previous.map((row) =>
+        row.recipeId === recipeId
+          ? {
+              ...row,
+              [field]: field === "actualUnits" ? Math.max(0, Number(value) || 0) : value
+            }
+          : row
+      )
+    );
+  }
+
+  async function saveProductionCompletion({ addToInventory = false } = {}) {
+    if (!productionCompletionRows.length) return;
+
+    if (addToInventory && !user) {
+      setCloudStatus("Sign in to add completed production to Inventory.");
+      return;
+    }
+
+    setSavingProductionCompletion(true);
+
+    const completedAt = new Date();
+    const completionRecord = {
+      id: makeId("production-completion"),
+      productionDate: productionDate || getTodayISODate(),
+      completedAt: completedAt.toISOString(),
+      notes: productionCompletionNotes.trim(),
+      addedToInventory: Boolean(addToInventory),
+      items: productionCompletionRows.map((row) => ({
+        recipeId: row.recipeId,
+        recipeName: row.recipeName,
+        productId: row.productId,
+        productName: row.productName,
+        category: row.category,
+        unitLabel: row.unitLabel,
+        plannedUnits: Number(row.plannedUnits) || 0,
+        actualUnits: Number(row.actualUnits) || 0,
+        costPerUnit: Number(row.costPerUnit) || 0,
+        totalIngredientCost: Number(row.totalIngredientCost) || 0,
+        matchedIngredientCount: Number(row.matchedIngredientCount) || 0,
+        totalIngredientCount: Number(row.totalIngredientCount) || 0
+      }))
+    };
+
+    try {
+      if (addToInventory) {
+        await Promise.all(
+          completionRecord.items
+            .filter((item) => Number(item.actualUnits) > 0)
+            .map((item) =>
+              addQuantityToMatchedInventoryItem({
+                userId: user.uid,
+                match: {
+                  productId: item.productId,
+                  recipeId: item.recipeId,
+                  sourceModule: "Baking Planner"
+                },
+                itemDefaults: {
+                  name: item.productName,
+                  category: item.category,
+                  sourceModule: "Baking Planner",
+                  productId: item.productId,
+                  productName: item.productName,
+                  recipeId: item.recipeId,
+                  recipeName: item.recipeName,
+                  quantityOnHand: 0,
+                  unit: item.unitLabel || "unit",
+                  costPerUnit: item.costPerUnit || "",
+                  notes: item.notes || "Added from completed Baking Planner production."
+                },
+                quantityToAdd: Number(item.actualUnits) || 0
+              })
+            )
+        );
+      }
+
+      const nextCompletions = [completionRecord, ...productionCompletions].slice(0, 75);
+
+      setProductionCompletions(nextCompletions);
+      saveToStorage("bakingPlannerProductionCompletions", nextCompletions);
+
+      if (user) {
+        const ref = doc(db, "users", user.uid, "bakingPlanner", "main");
+
+        await setDoc(
+          ref,
+          {
+            productionCompletions: nextCompletions,
+            updatedAt: serverTimestamp()
+          },
+          { merge: true }
+        );
+      }
+
+      setShowProductionCompletionModal(false);
+      setProductionCompletionRows([]);
+      setProductionCompletionNotes("");
+      markSaved();
+      setCloudStatus(
+        addToInventory
+          ? "Production completed and inventory updated"
+          : "Production completion saved"
+      );
+    } catch (error) {
+      console.error(error);
+      setCloudStatus(
+        addToInventory
+          ? "Could not add completed production to Inventory"
+          : "Could not save production completion"
+      );
+    } finally {
+      setSavingProductionCompletion(false);
+    }
+  }
+
   function openPantryEditorFromPull(row) {
     if (row?.pantryItem?.id) {
       setActivePantryEditId(row.pantryItem.id);
@@ -2792,6 +2982,95 @@ export default function BakingPlanner() {
                 disabled={cloudLoading}
               >
                 <Save size={16} /> {cloudLoading ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showProductionCompletionModal ? (
+        <div className="productionCompletionOverlay" role="dialog" aria-modal="true">
+          <div className="productionCompletionModal">
+            <div className="section-head">
+              <div>
+                <p className="eyebrow">Production Complete</p>
+                <h2>Finish Bake Cycle</h2>
+                <p className="muted small">
+                  Confirm finished quantities before saving this production record or adding finished units to Inventory.
+                </p>
+              </div>
+              <button
+                className="iconButton"
+                type="button"
+                onClick={() => setShowProductionCompletionModal(false)}
+                aria-label="Close production completion"
+              >
+                ×
+              </button>
+            </div>
+
+            {productionCompletionRows.length ? (
+              <div className="productionCompletionRows">
+                {productionCompletionRows.map((row) => (
+                  <div className="productionCompletionRow" key={row.recipeId}>
+                    <div>
+                      <strong>{row.productName}</strong>
+                      <p className="muted tiny">
+                        Planned {formatNumber(row.plannedUnits, 2)} {row.unitLabel || "units"}
+                        {row.costPerUnit
+                          ? ` • ${formatMoney(row.costPerUnit, 2)} ingredient cost / ${row.unitLabel || "unit"}`
+                          : " • No ingredient cost saved"}
+                      </p>
+                    </div>
+
+                    <NumberInput
+                      label={`Actual Finished (${row.unitLabel || "units"})`}
+                      value={row.actualUnits}
+                      onChange={(value) =>
+                        updateProductionCompletionRow(row.recipeId, "actualUnits", value)
+                      }
+                      min={0}
+                      step="1"
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="notice warning-box">
+                Add products to the bake plan before completing production.
+              </p>
+            )}
+
+            <label className="field productionCompletionNotes">
+              <span>Production Notes</span>
+              <textarea
+                className="text-field"
+                value={productionCompletionNotes}
+                onChange={(event) => setProductionCompletionNotes(event.target.value)}
+                placeholder="Optional notes, e.g. needed more starter because of humidity, one loaf dropped, proof ran long..."
+              />
+            </label>
+
+            <div className="button-row productionCompletionActions">
+              <Button
+                variant="outline"
+                onClick={() => setShowProductionCompletionModal(false)}
+                disabled={savingProductionCompletion}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => saveProductionCompletion({ addToInventory: false })}
+                disabled={savingProductionCompletion || !productionCompletionRows.length}
+              >
+                <Save size={16} /> {savingProductionCompletion ? "Saving..." : "Save Completion Log"}
+              </Button>
+              <Button
+                onClick={() => saveProductionCompletion({ addToInventory: true })}
+                disabled={savingProductionCompletion || !productionCompletionRows.length}
+              >
+                <Package size={16} /> {savingProductionCompletion ? "Saving..." : "Save and Add to Inventory"}
               </Button>
             </div>
           </div>
@@ -4460,6 +4739,14 @@ export default function BakingPlanner() {
                         onChange={(e) => setProductionDate(e.target.value)}
                       />
                     </label>
+
+                    <Button
+                      className="completeProductionButton"
+                      onClick={openProductionCompletionModal}
+                      disabled={!planCostRows.length}
+                    >
+                      <CheckCircle2 size={16} /> Complete Production
+                    </Button>
 
                     <Button onClick={() => window.print()}>
                       <Printer size={16} /> Print
