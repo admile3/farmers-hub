@@ -11197,3 +11197,323 @@ input[type="number"] {
 .calendarModule .calendarStatsGrid {
   margin-top: 0 !important;
 }
+/* =========================================================
+   Inventory Module
+   ========================================================= */
+
+.inventoryInsightGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.inventoryInsightPanel {
+  min-height: 260px;
+}
+
+.inventoryMiniList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inventoryMiniItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.inventoryMiniItem:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.inventoryMiniItem strong {
+  display: block;
+}
+
+.inventoryMiniItem p {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.inventoryStatusDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+
+.inventoryStatusDot.in-stock {
+  background: #3c9d50;
+}
+
+.inventoryStatusDot.low-stock {
+  background: #d69b18;
+}
+
+.inventoryStatusDot.out-of-stock {
+  background: #c53b3b;
+}
+
+.inventoryStatusDot.expiring-soon {
+  background: #d96d13;
+}
+
+.inventoryStatusDot.archived {
+  background: #8a8f99;
+}
+
+.inventoryDirectoryPanel {
+  margin-top: 16px;
+}
+
+.inventoryDirectoryHeader {
+  margin-bottom: 14px;
+}
+
+.inventoryFilterSummary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.inventoryFilterGrid {
+  display: grid;
+  grid-template-columns: 2fr repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.inventorySearchBox {
+  width: 100%;
+}
+
+.inventoryTableWrap {
+  overflow-x: auto;
+}
+
+.inventoryTable {
+  min-width: 1100px;
+}
+
+.inventoryTableHeader,
+.inventoryTableRow {
+  display: grid;
+  grid-template-columns:
+    2fr
+    1.2fr
+    1.2fr
+    1.2fr
+    1.4fr
+    1.3fr
+    1.2fr
+    1.1fr
+    80px;
+  gap: 12px;
+  align-items: center;
+}
+
+.inventoryTableHeader {
+  padding: 10px 0;
+  border-bottom: 2px solid var(--border);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.inventoryTableRow {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.inventoryNameCell {
+  display: flex;
+  flex-direction: column;
+}
+
+.inventoryNameCell small {
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.inventoryQuantityCell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.inventoryAdjustButtons {
+  display: flex;
+  gap: 6px;
+}
+
+.inventoryAdjustButtons button {
+  min-width: 32px;
+  height: 28px;
+  border-radius: 8px;
+}
+
+.inventoryStatusPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.inventoryStatusPill.in-stock {
+  background: rgba(60,157,80,.12);
+  color: #3c9d50;
+}
+
+.inventoryStatusPill.low-stock {
+  background: rgba(214,155,24,.12);
+  color: #b57d05;
+}
+
+.inventoryStatusPill.out-of-stock {
+  background: rgba(197,59,59,.12);
+  color: #c53b3b;
+}
+
+.inventoryStatusPill.expiring-soon {
+  background: rgba(217,109,19,.12);
+  color: #d96d13;
+}
+
+.inventoryStatusPill.archived {
+  background: rgba(138,143,153,.12);
+  color: #6b7280;
+}
+
+.inventoryActions {
+  display: flex;
+  gap: 6px;
+}
+
+.inventoryActions button {
+  width: 32px;
+  height: 32px;
+}
+
+.inventoryModalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 5000;
+}
+
+.inventoryModal {
+  width: min(900px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-strong);
+  padding: 22px;
+}
+
+.inventoryModalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.inventoryModalForm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.inventoryModalForm .fullSpan {
+  grid-column: 1 / -1;
+}
+
+.inventoryDetailGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--background);
+}
+
+.inventoryDetailGrid div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.inventoryDetailGrid span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.inventoryModalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.inventoryStatGrid .statCard {
+  min-height: 90px;
+}
+
+@media (max-width: 1100px) {
+  .inventoryInsightGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .inventoryFilterGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .inventoryModalForm {
+    grid-template-columns: 1fr;
+  }
+
+  .inventoryDetailGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .inventoryFilterGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .inventoryModal {
+    padding: 16px;
+  }
+
+  .inventoryModalActions {
+    flex-direction: column;
+  }
+
+  .inventoryModalActions button {
+    width: 100%;
+  }
+}
