@@ -12797,3 +12797,92 @@ input[type="number"] {
     width: 100%;
   }
 }
+/* =========================================================
+   Planting Scheduler Guide + Hero Fixes
+   ========================================================= */
+
+.plantingFarmHero {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+
+.plantingFarmHero .farmModuleHeroText {
+  width: 100%;
+  max-width: none;
+}
+
+.plantingFarmHero .farmModuleHeroText h2,
+.plantingFarmHero .farmModuleHeroText p {
+  max-width: none;
+}
+
+.plantingHeroActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.plantingHeroActions .farmHeroAction {
+  white-space: nowrap;
+}
+
+.plantingGuideContent .moduleGuideStepNumber {
+  background: #eef8ee;
+  color: var(--green-dark, #2f6d3a);
+}
+
+.plantingGuideContent .moduleGuideIntro {
+  border-color: rgba(52, 117, 62, 0.18);
+  background: #f7fcf6;
+}
+
+.plantingGuideTip {
+  border-color: rgba(52, 117, 62, 0.22);
+  background: #f5fbf3;
+}
+
+.plantingGuideTaskList {
+  display: grid;
+  gap: 8px;
+}
+
+.plantingGuideTaskList div {
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: #fbfaf6;
+  padding: 10px 12px;
+  display: grid;
+  gap: 3px;
+}
+
+.plantingGuideTaskList strong {
+  color: var(--green-dark, #2f6d3a);
+  font-size: 0.84rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.plantingGuideTaskList span {
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 850;
+}
+
+.plantingGuideTaskList small {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+@media (max-width: 700px) {
+  .plantingHeroActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .plantingHeroActions .farmHeroAction {
+    width: 100%;
+  }
+}
