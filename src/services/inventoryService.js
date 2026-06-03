@@ -46,6 +46,8 @@ function cleanInventoryItem(item = {}) {
 
     storageLocation: item.storageLocation || "",
     costPerUnit: cleanNumber(item.costPerUnit),
+    retailPrice: cleanNumber(item.retailPrice),
+    wholesalePrice: cleanNumber(item.wholesalePrice),
 
     bestByDate: item.bestByDate || "",
     status: item.status || "In Stock",
