@@ -12211,3 +12211,26 @@ input[type="number"] {
     padding: 0.7rem;
   }
 }
+.spiceKitchenFlowGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.spiceKitchenFlowGrid > .workspacePanel {
+  min-width: 0;
+  width: 100%;
+}
+
+.spiceKitchenFlowGrid .spiceRecipeLibraryTall,
+.spiceKitchenFlowGrid .spiceExpandableList {
+  max-height: 430px;
+  min-height: 0;
+}
+
+@media (max-width: 1200px) {
+  .spiceKitchenFlowGrid {
+    grid-template-columns: 1fr;
+  }
+}
