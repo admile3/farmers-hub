@@ -11845,3 +11845,220 @@ input[type="number"] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* =========================================================
+   Inventory module final layout overrides
+   Keep this at the very bottom of styles.css so it wins over
+   global .hubStatGrid and mobile/tablet stat-card rules.
+   ========================================================= */
+
+.inventoryModule .inventoryStatGrid,
+.inventoryModule .inventoryStatGridForced,
+.inventoryModule section.hubStatGrid.inventoryStatGrid,
+.inventoryModule section.hubStatGrid.inventoryStatGridForced {
+  display: grid !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  gap: 0.65rem !important;
+  align-items: stretch !important;
+  margin: 0 !important;
+}
+
+.inventoryModule .inventoryStatGrid .hubStatCard,
+.inventoryModule .inventoryStatGridForced .hubStatCard {
+  min-height: 58px !important;
+  padding: 0.62rem 0.72rem !important;
+  gap: 0.55rem !important;
+  border-radius: 14px !important;
+}
+
+.inventoryModule .inventoryStatGrid .hubStatIcon,
+.inventoryModule .inventoryStatGridForced .hubStatIcon {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 11px !important;
+}
+
+.inventoryModule .inventoryStatGrid .hubStatIcon svg,
+.inventoryModule .inventoryStatGridForced .hubStatIcon svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.inventoryModule .inventoryStatGrid .hubStatText span,
+.inventoryModule .inventoryStatGridForced .hubStatText span {
+  font-size: 0.62rem !important;
+  line-height: 1 !important;
+  margin-bottom: 1px !important;
+}
+
+.inventoryModule .inventoryStatGrid .hubStatText strong,
+.inventoryModule .inventoryStatGridForced .hubStatText strong {
+  display: inline !important;
+  font-size: 1.05rem !important;
+  line-height: 1 !important;
+  margin: 0 4px 0 0 !important;
+}
+
+.inventoryModule .inventoryStatGrid .hubStatText p,
+.inventoryModule .inventoryStatGridForced .hubStatText p {
+  display: inline !important;
+  font-size: 0.68rem !important;
+  line-height: 1.05 !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+}
+
+/* Inventory table, tighter one-row desktop layout */
+.inventoryModule .inventoryTable {
+  min-width: 1180px !important;
+}
+
+.inventoryModule .inventoryTableHeader,
+.inventoryModule .inventoryTableRow {
+  grid-template-columns:
+    minmax(300px, 1.8fr)
+    minmax(125px, 0.68fr)
+    minmax(115px, 0.55fr)
+    minmax(90px, 0.48fr)
+    minmax(115px, 0.6fr)
+    minmax(105px, 0.55fr)
+    minmax(82px, 0.42fr)
+    minmax(92px, 0.45fr)
+    minmax(82px, 0.42fr)
+    minmax(88px, 0.42fr)
+    minmax(64px, 0.28fr) !important;
+  column-gap: 0.48rem !important;
+  align-items: center !important;
+}
+
+.inventoryModule .inventoryTableHeader span,
+.inventoryModule .inventoryTableRow > span {
+  min-width: 0 !important;
+}
+
+.inventoryModule .inventoryTableRow {
+  padding-top: 0.78rem !important;
+  padding-bottom: 0.78rem !important;
+}
+
+.inventoryModule .inventoryQuantityCell {
+  display: grid !important;
+  gap: 0.2rem !important;
+  align-content: center !important;
+}
+
+.inventoryModule .inventoryAdjustButtons {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.24rem !important;
+  margin-top: 0 !important;
+  white-space: nowrap !important;
+}
+
+.inventoryModule .inventoryAdjustButtons::before {
+  content: "Adjust";
+  color: var(--text);
+  font-size: 0.58rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.inventoryModule .inventoryAdjustButtons button {
+  width: 23px !important;
+  height: 23px !important;
+  min-height: 23px !important;
+  padding: 0 !important;
+  border-radius: 7px !important;
+  font-size: 0.66rem !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+}
+
+.inventoryModule .inventoryStatusPill {
+  white-space: nowrap !important;
+}
+
+.inventoryModule .inventoryActions {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 0.25rem !important;
+  white-space: nowrap !important;
+}
+
+.inventoryModule .inventoryActions button {
+  width: 26px !important;
+  height: 26px !important;
+  min-height: 26px !important;
+  padding: 0 !important;
+  border-radius: 7px !important;
+}
+
+/* Keep Cost > Wholesale > Retail compact and aligned */
+.inventoryModule .inventoryTableHeader span:nth-child(7),
+.inventoryModule .inventoryTableHeader span:nth-child(8),
+.inventoryModule .inventoryTableHeader span:nth-child(9),
+.inventoryModule .inventoryTableRow > span:nth-child(7),
+.inventoryModule .inventoryTableRow > span:nth-child(8),
+.inventoryModule .inventoryTableRow > span:nth-child(9) {
+  text-align: left !important;
+  font-variant-numeric: tabular-nums !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 1500px) {
+  .inventoryModule .inventoryStatGrid,
+  .inventoryModule .inventoryStatGridForced,
+  .inventoryModule section.hubStatGrid.inventoryStatGrid,
+  .inventoryModule section.hubStatGrid.inventoryStatGridForced {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  }
+
+  .inventoryModule .inventoryStatGrid .hubStatCard,
+  .inventoryModule .inventoryStatGridForced .hubStatCard {
+    padding: 0.58rem 0.62rem !important;
+  }
+
+  .inventoryModule .inventoryStatGrid .hubStatText strong,
+  .inventoryModule .inventoryStatGridForced .hubStatText strong {
+    font-size: 0.98rem !important;
+  }
+
+  .inventoryModule .inventoryStatGrid .hubStatText p,
+  .inventoryModule .inventoryStatGridForced .hubStatText p {
+    font-size: 0.64rem !important;
+  }
+}
+
+@media (max-width: 1200px) {
+  .inventoryModule .inventoryStatGrid,
+  .inventoryModule .inventoryStatGridForced,
+  .inventoryModule section.hubStatGrid.inventoryStatGrid,
+  .inventoryModule section.hubStatGrid.inventoryStatGridForced {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .inventoryModule .inventoryStatGrid,
+  .inventoryModule .inventoryStatGridForced,
+  .inventoryModule section.hubStatGrid.inventoryStatGrid,
+  .inventoryModule section.hubStatGrid.inventoryStatGridForced {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .inventoryModule .inventoryStatGrid .hubStatText strong,
+  .inventoryModule .inventoryStatGridForced .hubStatText strong,
+  .inventoryModule .inventoryStatGrid .hubStatText p,
+  .inventoryModule .inventoryStatGridForced .hubStatText p {
+    display: block !important;
+  }
+
+  .inventoryModule .inventoryStatGrid .hubStatText p,
+  .inventoryModule .inventoryStatGridForced .hubStatText p {
+    margin-top: 2px !important;
+    white-space: normal !important;
+  }
+}
+
