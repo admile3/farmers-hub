@@ -11642,3 +11642,57 @@ input[type="number"] {
     min-width: 720px;
   }
 }
+.inventoryDirectoryPanel {
+  padding-top: 1rem;
+}
+
+.inventoryDirectoryHeader {
+  margin-bottom: 0.5rem;
+}
+
+.inventoryFilterGrid {
+  margin-top: 0;
+  margin-bottom: 0.85rem;
+  display: grid;
+  grid-template-columns: minmax(240px, 1.35fr) repeat(3, minmax(160px, 0.65fr));
+  gap: 0.65rem;
+  align-items: end;
+}
+
+.inventoryFilterGrid label {
+  margin: 0;
+}
+
+.inventoryFilterGrid .searchBox,
+.inventoryFilterGrid select {
+  min-height: 38px;
+}
+
+.inventoryTableWrap {
+  margin-top: 0;
+}
+
+@media (max-width: 950px) {
+  .inventoryFilterGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .inventorySearchBox {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 620px) {
+  .inventoryFilterGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .inventoryTableWrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .inventoryTable {
+    min-width: 720px;
+  }
+}
