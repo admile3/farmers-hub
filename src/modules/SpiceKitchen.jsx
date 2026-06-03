@@ -823,75 +823,101 @@ export default function SpiceKitchen() {
   }
 
   async function saveBatchToInventory() {
-    if (!user || !selectedRecipe) return;
+  if (!user || !selectedRecipe) return;
 
-    const activeAllocations = inventoryPackages
-      .map((packageItem) => ({
-        packageItem,
-        quantity: toNumber(inventoryAllocations[packageItem.id])
-      }))
-      .filter((item) => item.quantity > 0);
+  const activeAllocations = inventoryPackages
+    .map((packageItem) => ({
+      packageItem,
+      quantity: toNumber(inventoryAllocations[packageItem.id])
+    }))
+    .filter((item) => item.quantity > 0);
 
-    if (!activeAllocations.length) {
-      showStatus("Enter at least one package quantity to add inventory.", "error");
-      return;
-    }
+  if (remainingInventoryOunces < -0.01) {
+    showStatus("You allocated more ounces than the batch produced.", "error");
+    return;
+  }
 
-    if (remainingInventoryOunces < -0.01) {
-      showStatus("You allocated more ounces than the batch produced.", "error");
-      return;
-    }
+  setSavingInventory(true);
 
-    setSavingInventory(true);
+  try {
+    const inventoryUpdates = activeAllocations.map(({ packageItem, quantity }) => {
+      const costPerUnit =
+        Number(packageItem.ingredientCost) ||
+        packageItem.packageOunces * getRecipeFormulaCostPerOunce(selectedRecipe);
 
-    try {
-      await Promise.all(
-        activeAllocations.map(({ packageItem, quantity }) => {
-          const costPerUnit =
-            Number(packageItem.ingredientCost) ||
-            packageItem.packageOunces * getRecipeFormulaCostPerOunce(selectedRecipe);
+      return addQuantityToMatchedInventoryItem({
+        userId: user.uid,
+        match: {
+          recipeId: selectedRecipe.id,
+          variantId: packageItem.id,
+          sourceModule: "Spice Kitchen"
+        },
+        itemDefaults: {
+          name: `${selectedRecipe.name} - ${packageItem.displayName}`,
+          category: "Finished Goods",
+          sourceModule: "Spice Kitchen",
+          productId: `spice-${selectedRecipe.id}`,
+          productName: selectedRecipe.name || "",
+          recipeId: selectedRecipe.id,
+          recipeName: selectedRecipe.name || "",
+          variantId: packageItem.id,
+          variantName: packageItem.displayName,
+          quantityOnHand: 0,
+          unit: "packages",
+          costPerUnit,
+          status: "In Stock",
+          notes: `Added from Spice Kitchen batch calculator. Package size: ${round(
+            packageItem.packageOunces,
+            3
+          )} oz.`
+        },
+        quantityToAdd: quantity
+      });
+    });
 
-          return addQuantityToMatchedInventoryItem({
-            userId: user.uid,
-            match: {
-              recipeId: selectedRecipe.id,
-              variantId: packageItem.id,
-              sourceModule: "Spice Kitchen"
-            },
-            itemDefaults: {
-              name: `${selectedRecipe.name} - ${packageItem.displayName}`,
-              category: "Finished Goods",
-              sourceModule: "Spice Kitchen",
-              productId: `spice-${selectedRecipe.id}`,
-              productName: selectedRecipe.name || "",
-              recipeId: selectedRecipe.id,
-              recipeName: selectedRecipe.name || "",
-              variantId: packageItem.id,
-              variantName: packageItem.displayName,
-              quantityOnHand: 0,
-              unit: "packages",
-              costPerUnit,
-              status: "In Stock",
-              notes: `Added from Spice Kitchen batch calculator. Package size: ${round(
-                packageItem.packageOunces,
-                3
-              )} oz.`
-            },
-            quantityToAdd: quantity
-          });
+    if (remainingInventoryOunces > 0.01) {
+      inventoryUpdates.push(
+        addQuantityToMatchedInventoryItem({
+          userId: user.uid,
+          match: {
+            recipeId: selectedRecipe.id,
+            variantId: `spice-${selectedRecipe.id}-unallocated-bulk`,
+            sourceModule: "Spice Kitchen"
+          },
+          itemDefaults: {
+            name: `${selectedRecipe.name} - Unallocated Bulk`,
+            category: "Finished Goods",
+            sourceModule: "Spice Kitchen",
+            productId: `spice-${selectedRecipe.id}`,
+            productName: selectedRecipe.name || "",
+            recipeId: selectedRecipe.id,
+            recipeName: selectedRecipe.name || "",
+            variantId: `spice-${selectedRecipe.id}-unallocated-bulk`,
+            variantName: "Unallocated Bulk",
+            quantityOnHand: 0,
+            unit: "oz",
+            costPerUnit: getRecipeFormulaCostPerOunce(selectedRecipe),
+            status: "In Stock",
+            notes:
+              "Unallocated finished seasoning saved from Spice Kitchen batch calculator."
+          },
+          quantityToAdd: Number(round(remainingInventoryOunces, 4))
         })
       );
-
-      setInventoryModalOpen(false);
-      setInventoryAllocations({});
-      showStatus("Batch added to inventory.", "success");
-    } catch (error) {
-      console.error(error);
-      showStatus("Could not add batch to inventory.", "error");
-    } finally {
-      setSavingInventory(false);
     }
+
+    await Promise.all(inventoryUpdates);
+
+    setInventoryModalOpen(false);
+    setInventoryAllocations({});
+    showStatus("Batch added to inventory.", "success");
+  } catch (error) {
+    console.error(error);
+    showStatus("Could not add batch to inventory.", "error");
+  } finally {
+    setSavingInventory(false);
   }
+}
 
   function getIngredientName(line) {
     const ingredient = ingredients.find((item) => item.id === line.ingredientId);
@@ -2004,11 +2030,12 @@ export default function SpiceKitchen() {
                 return (
                   <div className="productPackageRow" key={packageItem.id}>
                     <span>
-                      <strong>{packageItem.displayName}</strong>
-                      <small>
-                        {round(packageItem.packageOunces, 3)} oz each
-                      </small>
-                    </span>
+  <strong>{packageItem.displayName}</strong>
+  <small>
+    {round(packageItem.packageOunces, 3)} oz each •{" "}
+    {Math.floor(Math.max(0, remainingInventoryOunces) / packageItem.packageOunces)} available
+  </small>
+</span>
 
                     <input
                       type="number"
@@ -2036,8 +2063,7 @@ export default function SpiceKitchen() {
 
             {remainingInventoryOunces < -0.01 ? (
               <div className="placeholderBox compactPlaceholder">
-                You allocated {round(Math.abs(remainingInventoryOunces), 2)} oz more than the
-                batch produced. Reduce package counts before saving.
+                You still have {round(remainingInventoryOunces, 2)} oz unallocated. This amount will be saved as Unallocated Bulk inventory.
               </div>
             ) : null}
 
