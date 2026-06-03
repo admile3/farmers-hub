@@ -230,8 +230,7 @@ function getStatusClass(status) {
   return String(status || "")
     .toLowerCase()
     .replaceAll("+", "")
-    .replaceAll(" ", "-")
-    .replace(/-+/g, "-");
+    .replaceAll(" ", "-");
 }
 
 function getStatusLabel(item) {
@@ -533,10 +532,18 @@ export default function Inventory() {
       recipeName: itemForm.recipeName || "",
       variantId: itemForm.variantId || "",
       variantName: itemForm.variantName || "",
-      quantityOnHand,
+      quantityOnHand: Math.round(parseInventoryNumber(quantityOnHand)),
       unit: itemForm.unit.trim() || "each",
-      parLevel: cleanNumber(itemForm.parLevel),
-      reorderPoint: cleanNumber(itemForm.reorderPoint),
+      parLevel:
+        itemForm.parLevel === "" || itemForm.parLevel === null || itemForm.parLevel === undefined
+          ? ""
+          : Math.round(parseInventoryNumber(itemForm.parLevel)),
+      reorderPoint:
+        itemForm.reorderPoint === "" ||
+        itemForm.reorderPoint === null ||
+        itemForm.reorderPoint === undefined
+          ? ""
+          : Math.round(parseInventoryNumber(itemForm.reorderPoint)),
       storageLocation: itemForm.storageLocation.trim(),
       costPerUnit: cleanNumber(itemForm.costPerUnit),
       wholesalePrice: cleanNumber(itemForm.wholesalePrice),
@@ -579,7 +586,7 @@ export default function Inventory() {
   async function quickSaveQuantityChange(item, change) {
     if (!user || !item?.id) return;
 
-    const currentQuantity = parseInventoryNumber(item.quantityOnHand);
+    const currentQuantity = Math.round(parseInventoryNumber(item.quantityOnHand));
     const nextQuantity = Math.max(0, currentQuantity + change);
 
     const updatedItem = {
@@ -1050,7 +1057,8 @@ export default function Inventory() {
                 Quantity On Hand
                 <input
                   type="number"
-                  step="0.0001"
+                  step="1"
+                  min="0"
                   value={itemForm.quantityOnHand}
                   onChange={(event) =>
                     updateItemField("quantityOnHand", event.target.value)
@@ -1072,7 +1080,8 @@ export default function Inventory() {
                 Par Level
                 <input
                   type="number"
-                  step="0.0001"
+                  step="1"
+                  min="0"
                   value={itemForm.parLevel}
                   onChange={(event) => updateItemField("parLevel", event.target.value)}
                   placeholder="Ideal stock level"
@@ -1083,7 +1092,8 @@ export default function Inventory() {
                 Reorder Point
                 <input
                   type="number"
-                  step="0.0001"
+                  step="1"
+                  min="0"
                   value={itemForm.reorderPoint}
                   onChange={(event) => updateItemField("reorderPoint", event.target.value)}
                   placeholder="Warn when at or below"
@@ -1092,20 +1102,19 @@ export default function Inventory() {
 
               <label>
                 Storage Location
-                <input
-                  list="inventory-storage-locations"
-                  value={itemForm.storageLocation}
+                <select
+                  value={itemForm.storageLocation || ""}
                   onChange={(event) =>
                     updateItemField("storageLocation", event.target.value)
                   }
-                  placeholder="e.g., Refrigerator, Dry Storage"
-                />
-
-                <datalist id="inventory-storage-locations">
+                >
+                  <option value="">Select location</option>
                   {storageLocations.map((location) => (
-                    <option value={location} key={location} />
+                    <option value={location} key={location}>
+                      {location}
+                    </option>
                   ))}
-                </datalist>
+                </select>
               </label>
 
               <label>
