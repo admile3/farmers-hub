@@ -781,7 +781,7 @@ export default function Inventory() {
             <div className="inventoryTableHeader">
               <span>Item</span>
               <span>Category</span>
-              <span>Qty</span>
+              <span>Qty / Adjust</span>
               <span>Reorder</span>
               <span>Location</span>
               <span>Best By</span>
