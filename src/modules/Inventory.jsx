@@ -4,6 +4,7 @@ import {
   Archive,
   CalendarClock,
   CheckCircle2,
+  DollarSign,
   Edit3,
   Filter,
   Layers3,
