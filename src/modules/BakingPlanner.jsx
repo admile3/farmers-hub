@@ -1917,57 +1917,93 @@ export default function BakingPlanner() {
   }
 
   async function savePlannerData() {
-    const normalizedRecipes = recipes.map(normalizeRecipe);
+  const normalizedPantryItems = pantryItems.map(normalizePantryItem);
 
-    saveToStorage("bakingPlannerRecipes", normalizedRecipes);
-    saveToStorage("bakingPlannerSettings", settings);
-    saveToStorage("bakingPlannerEnv", env);
-    saveToStorage("bakingPlannerProductionDate", productionItems.length ? productionDate : "");
-    saveToStorage("bakingPlannerProductionItems", productionItems);
-    saveToStorage("bakingPlannerPantryItems", pantryItems.map(normalizePantryItem));
+  const normalizedRecipes = recipes.map((recipe) => {
+    const normalizedRecipe = normalizeRecipe(recipe);
+    const unitsPerBatch =
+      Number(normalizedRecipe.productDirectory?.unitsPerBatch) ||
+      Number(normalizedRecipe.ovenCapacityUnits) ||
+      1;
 
-    const savedTime = new Date().toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit"
-    });
+    const unitPlan = calculateRecipePlan(normalizedRecipe, 1, env, settings);
+    const unitCost = calculatePlanIngredientCost(
+      unitPlan,
+      normalizedPantryItems,
+      matureStarterPullLabel,
+      false,
+      settings.ingredientBufferPct
+    );
 
-    setLastSavedAt(savedTime);
+    const batchIngredientCost = unitCost.costPerUnit * unitsPerBatch;
 
-    if (!user) {
-      setCloudStatus("Saved locally");
-      markSaved();
-      return;
-    }
+    return {
+      ...normalizedRecipe,
+      productDirectory: {
+        ...normalizedRecipe.productDirectory,
+        batchIngredientCost,
+        costPerUnit: unitCost.costPerUnit,
+        matchedIngredientCount: unitCost.matchedRows,
+        totalIngredientCount: unitCost.totalRows
+      },
+      pricingSummary: {
+        totalCost: batchIngredientCost,
+        costPerUnit: unitCost.costPerUnit,
+        matchedIngredientCount: unitCost.matchedRows,
+        totalIngredientCount: unitCost.totalRows
+      }
+    };
+  });
 
-    setCloudLoading(true);
-    setCloudStatus("Saving to cloud...");
+  saveToStorage("bakingPlannerRecipes", normalizedRecipes);
+  saveToStorage("bakingPlannerSettings", settings);
+  saveToStorage("bakingPlannerEnv", env);
+  saveToStorage("bakingPlannerProductionDate", productionItems.length ? productionDate : "");
+  saveToStorage("bakingPlannerProductionItems", productionItems);
+  saveToStorage("bakingPlannerPantryItems", normalizedPantryItems);
 
-    try {
-      const ref = doc(db, "users", user.uid, "bakingPlanner", "main");
+  const savedTime = new Date().toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit"
+  });
 
-      await setDoc(
-        ref,
-        {
-          recipes: normalizedRecipes,
-          settings,
-          env,
-          productionDate: productionItems.length ? productionDate : "",
-          productionItems,
-          pantryItems: pantryItems.map(normalizePantryItem),
-          updatedAt: serverTimestamp()
-        },
-        { merge: true }
-      );
+  setLastSavedAt(savedTime);
 
-      setCloudStatus(`Cloud saved at ${savedTime}`);
-      markSaved();
-    } catch (error) {
-      console.error(error);
-      setCloudStatus("Cloud save failed");
-    } finally {
-      setCloudLoading(false);
-    }
+  if (!user) {
+    setCloudStatus("Saved locally");
+    markSaved();
+    return;
   }
+
+  setCloudLoading(true);
+  setCloudStatus("Saving to cloud...");
+
+  try {
+    const ref = doc(db, "users", user.uid, "bakingPlanner", "main");
+
+    await setDoc(
+      ref,
+      {
+        recipes: normalizedRecipes,
+        settings,
+        env,
+        productionDate: productionItems.length ? productionDate : "",
+        productionItems,
+        pantryItems: normalizedPantryItems,
+        updatedAt: serverTimestamp()
+      },
+      { merge: true }
+    );
+
+    setCloudStatus(`Cloud saved at ${savedTime}`);
+    markSaved();
+  } catch (error) {
+    console.error(error);
+    setCloudStatus("Cloud save failed");
+  } finally {
+    setCloudLoading(false);
+  }
+}
 
   function updateRecipeIngredientMode(mode) {
     markBakingDirty();
