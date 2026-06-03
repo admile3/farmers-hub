@@ -14,6 +14,8 @@ import {
   X
 } from "lucide-react";
 
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebase";
 import { useAuth } from "../AuthContext.jsx";
 import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import StatCard from "../components/StatCard.jsx";
@@ -22,6 +24,8 @@ import {
   getInventoryItems,
   saveInventoryItem
 } from "../services/inventoryService.js";
+import { getProducts } from "../services/productService.js";
+import { getSpiceRecipes } from "../services/spiceKitchenService.js";
 
 const inventoryCategories = [
   "Microgreens",
@@ -48,6 +52,7 @@ const sourceModules = [
   "Manual",
   "Products & Pricing",
   "Spice Kitchen",
+  "Baking Planner",
   "Market Prep Planner",
   "Planting Scheduler",
   "Orders",
@@ -181,6 +186,178 @@ function cleanWholeNumberInput(value) {
   return String(Math.max(0, Math.round(number)));
 }
 
+function moneyValue(value) {
+  if (value === "" || value === null || value === undefined) return "";
+  const number = Number(value);
+  return Number.isFinite(number) ? number.toFixed(2) : "";
+}
+
+function numberOrFallback(...values) {
+  for (const value of values) {
+    if (value === "" || value === null || value === undefined) continue;
+    const number = Number(value);
+    if (Number.isFinite(number)) return number;
+  }
+
+  return "";
+}
+
+function formatPackageSize(size, unit) {
+  const amount = Number(size) || 0;
+  if (!amount) return "";
+  return `${Number(amount.toFixed(3)).toString()} ${unit || ""}`.trim();
+}
+
+function buildSpiceDirectoryProducts(spiceRecipes = []) {
+  const products = [];
+
+  spiceRecipes
+    .filter((recipe) => recipe?.listInProductDirectory)
+    .forEach((recipe) => {
+      const packageRows = Array.isArray(recipe.productPackages)
+        ? recipe.productPackages
+        : [];
+      const costPerOunce = Number(recipe.formulaCostPerOunce) || 0;
+      const listSizesAsUniqueProducts = Boolean(recipe.listSizesAsUniqueProducts);
+
+      if (listSizesAsUniqueProducts) {
+        packageRows.forEach((packageItem, index) => {
+          const packageName =
+            packageItem.name ||
+            formatPackageSize(packageItem.size, packageItem.unit) ||
+            `Size ${index + 1}`;
+          const ingredientCost =
+            Number(packageItem.ingredientCost) ||
+            (Number(packageItem.packageOunces) || 0) * costPerOunce;
+
+          products.push({
+            id: `spice-${recipe.id}-${index}`,
+            sourceType: "spice",
+            sourceLabel: "Spice Kitchen",
+            sourceRecipeId: recipe.id,
+            sourceVariantIndex: index,
+            isGeneratedProduct: true,
+            isVariantProduct: true,
+            parentName: recipe.name,
+            name: `${recipe.name} - ${packageName}`,
+            category: "Spices",
+            status: "Active",
+            sku: packageItem.sku || "",
+            unitLabel: packageName,
+            description: recipe.notes || "",
+            retailPrice: moneyValue(packageItem.retailPrice),
+            wholesalePrice: moneyValue(packageItem.wholesalePrice),
+            batchIngredientCost: moneyValue(ingredientCost),
+            batchUnits: numberOrFallback(packageItem.batchUnits, 1),
+            packagingCostPerUnit: moneyValue(packageItem.packagingCostPerUnit),
+            notes: "Generated from Spice Kitchen.",
+            generatedVariants: [],
+            updatedAt: recipe.updatedAt || recipe.createdAt || ""
+          });
+        });
+
+        return;
+      }
+
+      const variants = packageRows.map((packageItem, index) => {
+        const packageName =
+          packageItem.name ||
+          formatPackageSize(packageItem.size, packageItem.unit) ||
+          `Size ${index + 1}`;
+        const ingredientCost =
+          Number(packageItem.ingredientCost) ||
+          (Number(packageItem.packageOunces) || 0) * costPerOunce;
+
+        return {
+          id: `spice-${recipe.id}-variant-${index}`,
+          packageIndex: index,
+          name: packageName,
+          size: packageItem.size,
+          unit: packageItem.unit,
+          packageOunces: packageItem.packageOunces,
+          ingredientCost: moneyValue(ingredientCost),
+          costPerUnit: moneyValue(ingredientCost),
+          sku: packageItem.sku || "",
+          retailPrice: moneyValue(packageItem.retailPrice),
+          wholesalePrice: moneyValue(packageItem.wholesalePrice),
+          packagingCostPerUnit: moneyValue(packageItem.packagingCostPerUnit),
+          batchUnits: numberOrFallback(packageItem.batchUnits, 1)
+        };
+      });
+
+      const firstVariant = variants[0] || null;
+
+      products.push({
+        id: `spice-${recipe.id}`,
+        sourceType: "spice",
+        sourceLabel: "Spice Kitchen",
+        sourceRecipeId: recipe.id,
+        isGeneratedProduct: true,
+        name: recipe.name || "Untitled Spice Blend",
+        category: "Spices",
+        status: "Active",
+        sku: firstVariant?.sku || "",
+        unitLabel: firstVariant?.name || "package",
+        description: recipe.notes || "",
+        retailPrice: firstVariant?.retailPrice || "",
+        wholesalePrice: firstVariant?.wholesalePrice || "",
+        batchIngredientCost: firstVariant?.ingredientCost || moneyValue(costPerOunce),
+        batchUnits: firstVariant?.batchUnits || 1,
+        packagingCostPerUnit: firstVariant?.packagingCostPerUnit || "",
+        notes: "Generated from Spice Kitchen. Package sizes are shown as variants.",
+        formulaCostPerOunce: costPerOunce,
+        generatedVariants: variants,
+        listSizesAsUniqueProducts,
+        selectedVariantId: firstVariant?.id || "",
+        selectedVariantName: firstVariant?.name || "",
+        updatedAt: recipe.updatedAt || recipe.createdAt || ""
+      });
+    });
+
+  return products;
+}
+
+function buildBakingDirectoryProducts(bakingRecipes = []) {
+  return bakingRecipes
+    .filter((recipe) => recipe?.listInProductDirectory)
+    .map((recipe) => {
+      const directory = recipe.productDirectory || {};
+      const productName = directory.productName || recipe.name || "Untitled Baking Product";
+      const unitsPerBatch = Number(directory.unitsPerBatch) || Number(recipe.ovenCapacityUnits) || 1;
+      const batchIngredientCost =
+        recipe.pricingSummary?.totalCost ||
+        recipe.productDirectory?.batchIngredientCost ||
+        "";
+
+      return {
+        id: `baking-${recipe.id}`,
+        sourceType: "baking",
+        sourceLabel: "Baking Planner",
+        sourceRecipeId: recipe.id,
+        isGeneratedProduct: true,
+        name: productName,
+        category:
+          recipe.category === "Loaf" ||
+          recipe.category === "Baguette" ||
+          recipe.category === "Pan Loaf"
+            ? "Bread"
+            : "Baked Goods",
+        status: "Active",
+        sku: "",
+        unitLabel: directory.sellingUnit || recipe.unitsLabel || "unit",
+        description: directory.notes || "",
+        retailPrice: "",
+        wholesalePrice: "",
+        batchIngredientCost: moneyValue(batchIngredientCost),
+        batchUnits: unitsPerBatch,
+        packagingCostPerUnit: "",
+        notes: "Generated from Baking Planner.",
+        generatedVariants: [],
+        updatedAt: recipe.updatedAt || ""
+      };
+    });
+}
+
 function isArchived(item) {
   return item.status === "Archived";
 }
@@ -286,6 +463,7 @@ export default function Inventory() {
   const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } = useUnsavedChanges();
 
   const [inventoryItems, setInventoryItems] = useState([]);
+  const [directoryProducts, setDirectoryProducts] = useState([]);
   const [itemForm, setItemForm] = useState(blankInventoryItem);
   const [editingItemId, setEditingItemId] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -293,6 +471,7 @@ export default function Inventory() {
   const [addMode, setAddMode] = useState("existing");
   const [existingItemSearch, setExistingItemSearch] = useState("");
   const [selectedExistingItemId, setSelectedExistingItemId] = useState("");
+  const [selectedDirectoryVariantId, setSelectedDirectoryVariantId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -300,6 +479,7 @@ export default function Inventory() {
   const [statusMessage, setStatusMessage] = useState("");
   const [statusType, setStatusType] = useState("info");
   const [loading, setLoading] = useState(false);
+  const [loadingDirectoryProducts, setLoadingDirectoryProducts] = useState(false);
   const [saving, setSaving] = useState(false);
 
   function showStatus(message, type = "info") {
@@ -340,11 +520,60 @@ export default function Inventory() {
     }
   }
 
+  async function loadDirectoryProducts() {
+    if (!user) return;
+
+    setLoadingDirectoryProducts(true);
+
+    try {
+      const [savedProducts, spiceRecipeRows, bakingSnapshot] = await Promise.all([
+        getProducts(user.uid),
+        getSpiceRecipes(user.uid).catch((error) => {
+          console.error(error);
+          return [];
+        }),
+        getDoc(doc(db, "users", user.uid, "bakingPlanner", "main")).catch((error) => {
+          console.error(error);
+          return null;
+        })
+      ]);
+
+      const bakingRecipes = bakingSnapshot?.exists?.()
+        ? bakingSnapshot.data()?.recipes || []
+        : [];
+
+      const manualProducts = Array.isArray(savedProducts)
+        ? savedProducts.map((product) => ({
+            ...product,
+            sourceType: product.sourceType || "manual",
+            sourceLabel: product.sourceLabel || "Products & Pricing",
+            generatedVariants: product.generatedVariants || []
+          }))
+        : [];
+
+      const spiceProducts = buildSpiceDirectoryProducts(
+        Array.isArray(spiceRecipeRows) ? spiceRecipeRows : []
+      );
+      const bakingProducts = buildBakingDirectoryProducts(
+        Array.isArray(bakingRecipes) ? bakingRecipes : []
+      );
+
+      setDirectoryProducts([...manualProducts, ...spiceProducts, ...bakingProducts]);
+    } catch (error) {
+      console.error(error);
+      showStatus("Could not load product directory.", "error");
+    } finally {
+      setLoadingDirectoryProducts(false);
+    }
+  }
+
   useEffect(() => {
     if (user) {
       loadInventoryItems();
+      loadDirectoryProducts();
     } else {
       setInventoryItems([]);
+      setDirectoryProducts([]);
     }
   }, [user]);
 
@@ -490,42 +719,64 @@ export default function Inventory() {
     });
   }, [uniqueLocations]);
 
-  const existingItemOptions = useMemo(() => {
+  const directoryProductOptions = useMemo(() => {
     const search = existingItemSearch.trim().toLowerCase();
 
-    return inventoryItems
-      .filter((item) => {
-        if (!item?.id) return false;
+    return directoryProducts
+      .filter((product) => {
+        if (!product?.id) return false;
         if (!search) return true;
 
+        const variantNames = Array.isArray(product.generatedVariants)
+          ? product.generatedVariants.map((variant) => variant.name).join(" ")
+          : "";
+
         return (
-          item.name?.toLowerCase().includes(search) ||
-          item.category?.toLowerCase().includes(search) ||
-          item.sourceModule?.toLowerCase().includes(search) ||
-          item.storageLocation?.toLowerCase().includes(search)
+          product.name?.toLowerCase().includes(search) ||
+          product.category?.toLowerCase().includes(search) ||
+          product.sourceLabel?.toLowerCase().includes(search) ||
+          product.sku?.toLowerCase().includes(search) ||
+          product.unitLabel?.toLowerCase().includes(search) ||
+          variantNames.toLowerCase().includes(search)
         );
       })
       .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
-  }, [inventoryItems, existingItemSearch]);
+  }, [directoryProducts, existingItemSearch]);
+
+  const selectedDirectoryProduct = useMemo(() => {
+    return directoryProducts.find((product) => product.id === selectedExistingItemId) || null;
+  }, [directoryProducts, selectedExistingItemId]);
+
+  const selectedDirectoryVariants = useMemo(() => {
+    return Array.isArray(selectedDirectoryProduct?.generatedVariants)
+      ? selectedDirectoryProduct.generatedVariants
+      : [];
+  }, [selectedDirectoryProduct]);
 
   function resetModalState() {
     setItemForm(blankInventoryItem);
     setEditingItemId(null);
     setSelectedItem(null);
     setIsFormOpen(false);
-    setAddMode(inventoryItems.length ? "existing" : "new");
+    setAddMode(directoryProducts.length ? "existing" : "new");
     setExistingItemSearch("");
     setSelectedExistingItemId("");
+    setSelectedDirectoryVariantId("");
   }
 
   function openNewItem() {
     setItemForm(blankInventoryItem);
     setEditingItemId(null);
     setSelectedItem(null);
-    setAddMode(inventoryItems.length ? "existing" : "new");
+    setAddMode(directoryProducts.length ? "existing" : "new");
     setExistingItemSearch("");
     setSelectedExistingItemId("");
+    setSelectedDirectoryVariantId("");
     setIsFormOpen(true);
+
+    if (user) {
+      loadDirectoryProducts();
+    }
   }
 
   function openEditItem(item) {
@@ -555,19 +806,123 @@ export default function Inventory() {
 
     setEditingItemId(item.id || null);
     setSelectedItem(item);
-    setSelectedExistingItemId(item.id || "");
+    setSelectedExistingItemId(item.productId || item.id || "");
+    setSelectedDirectoryVariantId(item.variantId || "");
     setAddMode("existing");
     setIsFormOpen(true);
   }
 
-  function chooseExistingItem(itemId) {
-    const item = inventoryItems.find((inventoryItem) => inventoryItem.id === itemId);
+  function getDirectoryVariant(product, variantId = "") {
+    const variants = Array.isArray(product?.generatedVariants)
+      ? product.generatedVariants
+      : [];
 
-    setSelectedExistingItemId(itemId);
+    if (!variants.length) return null;
 
-    if (!item) return;
+    return (
+      variants.find((variant) => variant.id === variantId) ||
+      variants.find((variant) => variant.id === product?.selectedVariantId) ||
+      variants[0]
+    );
+  }
 
-    openEditItem(item);
+  function getExistingInventoryForDirectoryProduct(product, variant) {
+    if (!product?.id) return null;
+
+    return (
+      inventoryItems.find((item) => {
+        const productMatches = String(item.productId || "") === String(product.id || "");
+        const variantMatches = variant?.id
+          ? String(item.variantId || "") === String(variant.id || "")
+          : true;
+
+        return productMatches && variantMatches;
+      }) || null
+    );
+  }
+
+  function buildInventoryFormFromDirectoryProduct(product, variant = null) {
+    const variantName = variant?.name || product.selectedVariantName || "";
+    const displayName = variantName && product.generatedVariants?.length
+      ? `${product.name} - ${variantName}`
+      : product.name || "";
+
+    return {
+      ...blankInventoryItem,
+      name: displayName,
+      category: product.category || "Finished Goods",
+      sourceModule: product.sourceLabel || "Products & Pricing",
+      productId: product.id || "",
+      productName: product.name || "",
+      recipeId: product.sourceRecipeId || "",
+      recipeName: product.parentName || product.name || "",
+      variantId: variant?.id || product.selectedVariantId || "",
+      variantName,
+      quantityOnHand: "",
+      unit: variantName || product.unitLabel || "each",
+      costPerUnit:
+        cleanCurrencyInput(
+          variant?.costPerUnit ||
+            variant?.ingredientCost ||
+            product.batchIngredientCost ||
+            product.packagingCostPerUnit ||
+            ""
+        ),
+      wholesalePrice: cleanCurrencyInput(variant?.wholesalePrice || product.wholesalePrice || ""),
+      retailPrice: cleanCurrencyInput(variant?.retailPrice || product.retailPrice || ""),
+      notes: product.notes || product.description || ""
+    };
+  }
+
+  function chooseDirectoryProduct(productId) {
+    const product = directoryProducts.find((directoryProduct) => directoryProduct.id === productId);
+
+    setSelectedExistingItemId(productId);
+
+    if (!product) {
+      setSelectedDirectoryVariantId("");
+      setItemForm(blankInventoryItem);
+      return;
+    }
+
+    const variant = getDirectoryVariant(product);
+    const existingInventoryItem = getExistingInventoryForDirectoryProduct(product, variant);
+
+    setSelectedDirectoryVariantId(variant?.id || "");
+
+    if (existingInventoryItem) {
+      openEditItem(existingInventoryItem);
+      showStatus("Existing inventory record loaded.", "success");
+      return;
+    }
+
+    setEditingItemId(null);
+    setSelectedItem(null);
+    setItemForm(buildInventoryFormFromDirectoryProduct(product, variant));
+    markInventoryDirty();
+  }
+
+  function chooseDirectoryVariant(variantId) {
+    if (!selectedDirectoryProduct) return;
+
+    const variant = getDirectoryVariant(selectedDirectoryProduct, variantId);
+    const existingInventoryItem = getExistingInventoryForDirectoryProduct(
+      selectedDirectoryProduct,
+      variant
+    );
+
+    setSelectedDirectoryVariantId(variant?.id || "");
+
+    if (existingInventoryItem) {
+      openEditItem(existingInventoryItem);
+      showStatus("Existing inventory record loaded.", "success");
+      return;
+    }
+
+    setEditingItemId(null);
+    setSelectedItem(null);
+    setItemForm(buildInventoryFormFromDirectoryProduct(selectedDirectoryProduct, variant));
+    markInventoryDirty();
   }
 
   function updateItemField(field, value) {
@@ -635,8 +990,9 @@ export default function Inventory() {
       setEditingItemId(null);
       setSelectedItem(null);
       setSelectedExistingItemId("");
+      setSelectedDirectoryVariantId("");
       setExistingItemSearch("");
-      setAddMode(inventoryItems.length ? "existing" : "new");
+      setAddMode(directoryProducts.length ? "existing" : "new");
       setIsFormOpen(false);
       markSaved();
       showStatus(editingItemId ? "Inventory item updated." : "Inventory item saved.", "success");
@@ -1094,8 +1450,9 @@ export default function Inventory() {
                       setAddMode("existing");
                       setItemForm(blankInventoryItem);
                       setSelectedExistingItemId("");
+                      setSelectedDirectoryVariantId("");
                     }}
-                    disabled={!inventoryItems.length}
+                    disabled={!directoryProducts.length && !loadingDirectoryProducts}
                   >
                     Existing Product
                   </button>
@@ -1107,6 +1464,7 @@ export default function Inventory() {
                       setAddMode("new");
                       setItemForm(blankInventoryItem);
                       setSelectedExistingItemId("");
+                      setSelectedDirectoryVariantId("");
                     }}
                   >
                     New Product
@@ -1116,32 +1474,53 @@ export default function Inventory() {
                 {addMode === "existing" ? (
                   <div className="inventoryExistingPicker">
                     <label className="fullSpan">
-                      Select Existing Product
+                      Select Product Directory Item
                       <select
                         value={selectedExistingItemId}
-                        onChange={(event) => chooseExistingItem(event.target.value)}
+                        onChange={(event) => chooseDirectoryProduct(event.target.value)}
                       >
-                        <option value="">Choose an existing inventory item</option>
-                        {existingItemOptions.map((item) => (
-                          <option value={item.id} key={item.id}>
-                            {item.name} {item.category ? `• ${item.category}` : ""}
+                        <option value="">
+                          {loadingDirectoryProducts
+                            ? "Loading product directory..."
+                            : "Choose a product"}
+                        </option>
+                        {directoryProductOptions.map((product) => (
+                          <option value={product.id} key={product.id}>
+                            {product.name} {product.category ? `• ${product.category}` : ""}{" "}
+                            {product.sourceLabel ? `• ${product.sourceLabel}` : ""}
                           </option>
                         ))}
                       </select>
                     </label>
+
+                    {selectedDirectoryVariants.length ? (
+                      <label className="fullSpan">
+                        Variant / Package Size
+                        <select
+                          value={selectedDirectoryVariantId}
+                          onChange={(event) => chooseDirectoryVariant(event.target.value)}
+                        >
+                          {selectedDirectoryVariants.map((variant) => (
+                            <option key={variant.id} value={variant.id}>
+                              {variant.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    ) : null}
 
                     <div className="searchBox compactSearch inventorySearchBox">
                       <Search size={17} />
                       <input
                         value={existingItemSearch}
                         onChange={(event) => setExistingItemSearch(event.target.value)}
-                        placeholder="Search existing products..."
+                        placeholder="Search product directory..."
                       />
                     </div>
 
-                    {!inventoryItems.length ? (
+                    {!directoryProducts.length && !loadingDirectoryProducts ? (
                       <div className="placeholderBox compactPlaceholder fullSpan">
-                        No inventory products exist yet. Choose New Product to create the first one.
+                        No Product Directory items were found. Choose New Product to add an inventory-only item, or add products in Products & Pricing.
                       </div>
                     ) : null}
                   </div>
@@ -1149,7 +1528,7 @@ export default function Inventory() {
               </div>
             ) : null}
 
-            {(editingItemId || addMode === "new") ? (
+            {(editingItemId || addMode === "new" || itemForm.productId) ? (
               <form className="inventoryModalForm" onSubmit={saveItem}>
                 <label className="fullSpan">
                   Item Name *
