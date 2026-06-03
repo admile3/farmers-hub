@@ -1503,6 +1503,10 @@ export default function BakingPlanner() {
   const [productionCompletionNotes, setProductionCompletionNotes] = useState("");
   const [savingProductionCompletion, setSavingProductionCompletion] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  const [guideSelectedMode, setGuideSelectedMode] = useState(
+    settings.bakingPlannerMode || "basic"
+  );
+  const [hasHandledInitialGuide, setHasHandledInitialGuide] = useState(false);
 
   function markBakingDirty() {
     markUnsaved({
@@ -1581,12 +1585,17 @@ export default function BakingPlanner() {
   }, [user]);
 
   useEffect(() => {
+    setGuideSelectedMode(settings.bakingPlannerMode || "basic");
+  }, [settings.bakingPlannerMode]);
+
+  useEffect(() => {
     const guideHidden = localStorage.getItem("hideModuleGuide_bakingPlanner") === "true";
 
-    if (settings.bakingPlannerMode && !guideHidden) {
+    if (settings.bakingPlannerMode && !guideHidden && !hasHandledInitialGuide) {
       setShowGuide(true);
+      setHasHandledInitialGuide(true);
     }
-  }, [settings.bakingPlannerMode]);
+  }, [settings.bakingPlannerMode, hasHandledInitialGuide]);
 
   const productionRecipes = useMemo(() => {
     return productionItems
@@ -2744,6 +2753,16 @@ export default function BakingPlanner() {
     }
   }
 
+  function closeBakingGuide() {
+    setHasHandledInitialGuide(true);
+
+    if (!settings.bakingPlannerMode) {
+      setBakingPlannerMode(guideSelectedMode || "basic");
+    }
+
+    setShowGuide(false);
+  }
+
   const tabButton = (id, label, Icon) => (
     <button
       onClick={() => setActiveTab(id)}
@@ -2761,11 +2780,11 @@ export default function BakingPlanner() {
           isOpen={!settings.bakingPlannerMode}
           moduleKey="bakingPlanner"
           title="How to Use Baking Planner"
-          onClose={() => setBakingPlannerMode("basic")}
+          onClose={closeBakingGuide}
         >
           <BakingPlannerGuideContent
-            selectedMode={settings.bakingPlannerMode}
-            onSelectMode={(mode) => setBakingPlannerMode(mode)}
+            selectedMode={guideSelectedMode}
+            onSelectMode={setGuideSelectedMode}
           />
         </ModuleGuideModal>
       ) : null}
@@ -2775,14 +2794,11 @@ export default function BakingPlanner() {
           isOpen={showGuide}
           moduleKey="bakingPlanner"
           title="How to Use Baking Planner"
-          onClose={() => setShowGuide(false)}
+          onClose={closeBakingGuide}
         >
           <BakingPlannerGuideContent
-            selectedMode={settings.bakingPlannerMode}
-            onSelectMode={(mode) => {
-              setBakingPlannerMode(mode);
-              setShowGuide(false);
-            }}
+            selectedMode={guideSelectedMode}
+            onSelectMode={setGuideSelectedMode}
           />
         </ModuleGuideModal>
       ) : null}
