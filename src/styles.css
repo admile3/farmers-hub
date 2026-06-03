@@ -12062,3 +12062,47 @@ input[type="number"] {
   }
 }
 
+/* Inventory stat card readability override */
+
+.inventoryModule .inventoryStatGrid .hubStatCard,
+.inventoryModule .inventoryStatGridForced .hubStatCard {
+  min-height: 82px !important;
+  padding: 0.9rem 1rem !important;
+  gap: 0.75rem !important;
+}
+
+.inventoryModule .inventoryStatGrid .hubStatIcon,
+.inventoryModule .inventoryStatGridForced .hubStatIcon {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 12px !important;
+}
+
+.inventoryModule .inventoryStatGrid .hubStatIcon svg,
+.inventoryModule .inventoryStatGridForced .hubStatIcon svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.inventoryModule .inventoryStatGrid .hubStatText span,
+.inventoryModule .inventoryStatGridForced .hubStatText span {
+  font-size: 0.72rem !important;
+  margin-bottom: 0.15rem !important;
+}
+
+.inventoryModule .inventoryStatGrid .hubStatText strong,
+.inventoryModule .inventoryStatGridForced .hubStatText strong {
+  display: block !important;
+  font-size: 1.35rem !important;
+  line-height: 1.05 !important;
+  margin: 0 !important;
+}
+
+.inventoryModule .inventoryStatGrid .hubStatText p,
+.inventoryModule .inventoryStatGridForced .hubStatText p {
+  display: block !important;
+  font-size: 0.78rem !important;
+  line-height: 1.15 !important;
+  margin-top: 0.15rem !important;
+  white-space: normal !important;
+}
