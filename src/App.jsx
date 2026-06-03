@@ -7,6 +7,7 @@ import {
   useNavigate
 } from "react-router-dom";
 import {
+  Archive,
   Calculator,
   CalendarDays,
   ChefHat,
@@ -35,6 +36,7 @@ import Lists from "./modules/Lists.jsx";
 import Calendar from "./modules/Calendar.jsx";
 import Customers from "./modules/Customers.jsx";
 import Orders from "./modules/Orders.jsx";
+import Inventory from "./modules/Inventory.jsx";
 import PlantingScheduler from "./modules/PlantingScheduler.jsx";
 import AccountSettings from "./modules/AccountSettings.jsx";
 import Onboarding from "./modules/Onboarding.jsx";
@@ -97,6 +99,15 @@ const modules = [
     icon: PackageCheck,
     accent: "orders"
   },
+  {
+  key: "inventory",
+  title: "Inventory",
+  description:
+    "Track stock counts, storage locations, reorder points, inventory value, and expiring goods.",
+  path: "/inventory",
+  icon: Archive,
+  accent: "inventory"
+},
   {
     key: "pricing",
     title: "Products & Pricing",
@@ -1276,6 +1287,7 @@ export default function App() {
         <Route path="/calendar" element={<AccessGate><Calendar /></AccessGate>} />
         <Route path="/customers" element={<AccessGate><Customers /></AccessGate>} />
         <Route path="/orders" element={<AccessGate><Orders /></AccessGate>} />
+        <Route path="/inventory" element={<AccessGate><Inventory /></AccessGate>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
