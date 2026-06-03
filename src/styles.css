@@ -11517,3 +11517,84 @@ input[type="number"] {
     width: 100%;
   }
 }
+/* =========================================================
+   Inventory module color + filter layout fixes
+   ========================================================= */
+
+:root {
+  --inventory: #4f7f6b;
+}
+
+.modernNavLink.moduleNav.inventory,
+.planModuleButton.inventory {
+  background: var(--inventory) !important;
+}
+
+.modernModuleIcon.inventory,
+.moduleCard.inventory .moduleIcon,
+.hubStatIcon.inventory,
+.dashboardRowIcon.inventory {
+  color: #ffffff !important;
+  background: var(--inventory) !important;
+}
+
+.modernModuleCard.inventory::before {
+  background: var(--inventory) !important;
+}
+
+.modernModuleFooter.inventory,
+.moduleCard.inventory .moduleFooter {
+  color: #416f5b !important;
+}
+
+.app:has(.inventoryModule) .modulePage::before,
+.app:has(.inventoryModule) .inventoryModule::before {
+  background: var(--inventory) !important;
+}
+
+.app:has(.inventoryModule) .clickableToolCard::before {
+  background: var(--inventory) !important;
+}
+
+.inventoryStatGrid .hubStatIcon.inventory {
+  background: var(--inventory) !important;
+  color: #ffffff !important;
+}
+
+.inventoryFilterGrid {
+  grid-template-columns: minmax(320px, 1.6fr) minmax(180px, 0.8fr) minmax(180px, 0.8fr) minmax(180px, 0.8fr) !important;
+  align-items: end !important;
+}
+
+.inventorySearchBox {
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+.inventoryFilterGrid label {
+  min-width: 0 !important;
+}
+
+.inventoryFilterGrid select {
+  width: 100% !important;
+}
+
+@media (max-width: 1100px) {
+  .inventoryFilterGrid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .inventorySearchBox {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .inventoryFilterGrid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .inventorySearchBox {
+    grid-column: auto !important;
+  }
+}
