@@ -12886,3 +12886,41 @@ input[type="number"] {
     width: 100%;
   }
 }
+/* =========================================================
+   Customers Guide Content
+   ========================================================= */
+
+.customersGuideContent .moduleGuideStepNumber {
+  background: #eef7ff;
+  color: #27658f;
+}
+
+.customersGuideContent .moduleGuideIntro {
+  border-color: rgba(39, 101, 143, 0.18);
+  background: #f5fbff;
+}
+
+.customersGuideRows .guideRecipeHeader,
+.customersGuideRows > div:not(.guideRecipeHeader) {
+  grid-template-columns: minmax(0, 1fr) minmax(95px, 0.55fr);
+}
+
+.customersGuideTip {
+  border-color: rgba(39, 101, 143, 0.2);
+  background: #f5fbff;
+  color: #27658f;
+}
+
+.customersGuideTip p {
+  color: #27658f;
+}
+
+.customersGuideSecondaryTip {
+  border-color: rgba(52, 117, 62, 0.18);
+  background: #f5fbf3;
+  color: var(--green-dark);
+}
+
+.customersGuideSecondaryTip p {
+  color: var(--green-dark);
+}
