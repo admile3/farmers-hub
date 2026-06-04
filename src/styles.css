@@ -13959,3 +13959,153 @@ input[type="number"] {
   width: 42px;
   height: 42px;
 }
+:root {
+  --flowers: #c45f8c;
+}
+
+.modernNavLink.moduleNav.flowers,
+.planModuleButton.flowers {
+  background: var(--flowers);
+}
+
+.modernModuleIcon.flowers,
+.moduleCard.flowers .moduleIcon,
+.hubStatIcon.flowers,
+.dashboardRowIcon.flowers {
+  color: #ffffff;
+  background: var(--flowers);
+}
+
+.dashboardWorkspaceCard.flowers .dashboardWorkspaceAccent,
+.dashboardWorkspaceCard.flowers:hover .dashboardWorkspaceArrow,
+.dashboardWorkspaceIcon.flowers {
+  background: var(--flowers);
+}
+
+.app:has(.flowerStudioModule) .clickableToolCard::before {
+  background: var(--flowers);
+}
+
+.flowerStudioModule {
+  display: grid;
+  gap: 16px;
+}
+
+.flowerStudioLayout {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.62fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.flowerStudioLeftStack,
+.flowerStudioRightStack {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.flowerSubPanel {
+  border: 1px solid rgba(196, 95, 140, 0.18);
+  border-radius: 16px;
+  background: #fff7fb;
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.flowerStemLine {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(90px, 0.35fr) 40px;
+  gap: 8px;
+  align-items: center;
+}
+
+.flowerZoneResults {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.flowerZoneOption {
+  width: 100%;
+  border: 1px solid rgba(196, 95, 140, 0.18);
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 12px;
+  text-align: left;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.flowerZoneOption.selected {
+  border-color: var(--flowers);
+  background: #fff0f7;
+}
+
+.flowerZoneOption strong,
+.flowerZoneOption span {
+  display: block;
+}
+
+.flowerZoneOption span {
+  color: var(--muted);
+  font-size: 0.84rem;
+  margin-top: 3px;
+}
+
+.flowerTotals {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.flowerTotals div {
+  border: 1px solid rgba(196, 95, 140, 0.16);
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 13px;
+}
+
+.flowerTotals span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 5px;
+}
+
+.flowerTotals h4 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.2rem;
+}
+
+.flowerNeededList {
+  display: grid;
+  gap: 8px;
+}
+
+@media (max-width: 1250px) {
+  .flowerStudioLayout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 850px) {
+  .flowerTotals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .flowerStemLine {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 650px) {
+  .flowerTotals {
+    grid-template-columns: 1fr;
+  }
+}
