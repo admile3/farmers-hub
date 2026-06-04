@@ -11,7 +11,8 @@ import {
   Target,
   Trash2,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  CircleHelp
 } from "lucide-react";
 
 import { doc, getDoc } from "firebase/firestore";
@@ -28,6 +29,8 @@ import {
   updateSpiceRecipeProductPackage
 } from "../services/spiceKitchenService.js";
 import StatCard from "../components/StatCard.jsx";
+import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
+import PricingGuideContent from "../components/PricingGuideContent.jsx";
 
 const categories = [
   "Produce",
@@ -521,6 +524,7 @@ export default function PricingCalculator() {
   const [saving, setSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   const allDirectoryProducts = useMemo(() => {
     const manualProducts = products.map((product) => ({
@@ -627,6 +631,11 @@ export default function PricingCalculator() {
     handleScroll();
 
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const guideHidden = localStorage.getItem("hideModuleGuide_pricing") === "true";
+    if (!guideHidden) setShowGuide(true);
   }, []);
 
   useEffect(() => {
@@ -974,6 +983,10 @@ export default function PricingCalculator() {
           <button className="primaryButton compactPrimary farmHeroAction" type="button" onClick={startNewProduct}>
             <Plus size={18} />
             Add Product
+          </button>
+          <button className="secondaryButton compactButton farmHeroAction" type="button" onClick={() => setShowGuide(true)}>
+            <CircleHelp size={16} />
+            Guide
           </button>
         </div>
       </section>
@@ -1424,6 +1437,15 @@ export default function PricingCalculator() {
           Top
         </button>
       ) : null}
+
+      <ModuleGuideModal
+        isOpen={showGuide}
+        moduleKey="pricing"
+        title="How to Use Products & Pricing"
+        onClose={() => setShowGuide(false)}
+      >
+        <PricingGuideContent />
+      </ModuleGuideModal>
     </div>
   );
 }
