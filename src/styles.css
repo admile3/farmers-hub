@@ -13070,3 +13070,72 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+/* =========================================================
+   Products & Pricing Guide Content
+   ========================================================= */
+
+.pricingGuideContent .moduleGuidePreview {
+  overflow: hidden;
+}
+
+.pricingGuidePreview {
+  padding: 10px;
+}
+
+.pricingGuidePanel {
+  box-shadow: none;
+  margin: 0;
+}
+
+.pricingGuideActions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.pricingGuideFilters {
+  margin: 10px 0;
+}
+
+.pricingGuideFilters .searchBox span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pricingGuideTable {
+  margin-top: 10px;
+  min-width: 720px;
+  transform: scale(0.82);
+  transform-origin: top left;
+  width: 122%;
+  margin-bottom: -34px;
+}
+
+.pricingGuideFormGrid {
+  margin-top: 10px;
+}
+
+.pricingGuideFormGrid input,
+.pricingGuideFormGrid select {
+  pointer-events: none;
+}
+
+.pricingGuideStatPreview {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 760px) {
+  .pricingGuideTable {
+    min-width: 680px;
+    transform: scale(0.72);
+    width: 139%;
+    margin-bottom: -48px;
+  }
+
+  .pricingGuideStatPreview {
+    grid-template-columns: 1fr;
+  }
+}
