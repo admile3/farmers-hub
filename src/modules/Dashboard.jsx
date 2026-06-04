@@ -9,7 +9,9 @@ import {
   Save,
   Search
 } from "lucide-react";
-import StatCard from "./StatCard.jsx";
+import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
+import DashboardGuideContent from "../components/DashboardGuideContent.jsx";
+import StatCard from "../components/StatCard.jsx";
 
 export default function SpiceKitchenGuideContent() {
   return (
