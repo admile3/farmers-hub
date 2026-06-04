@@ -4,6 +4,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  HelpCircle,
   Link as LinkIcon,
   Plus,
   Save,
@@ -15,6 +16,8 @@ import { doc, getDoc } from "firebase/firestore";
 
 import { useAuth } from "../AuthContext.jsx";
 import { db } from "../firebase";
+import CalendarGuideContent from "../components/CalendarGuideContent.jsx";
+import StatCard from "../components/StatCard.jsx";
 import {
   deleteCalendarEvent,
   getCalendarEvents,
@@ -22,7 +25,6 @@ import {
 } from "../services/calendarService.js";
 import { getMarketPrepPlans } from "../services/marketPrepService.js";
 import { getPermitGrantItems } from "../services/permitGrantService.js";
-import StatCard from "../components/StatCard.jsx";
 
 const blankEvent = {
   id: "",
@@ -254,9 +256,10 @@ function calculateBakingRecipePlan(rawRecipe, quantity, settings) {
   const finishedUnitWeight = Number(recipe.finishedUnitWeight) || 0;
   const bakeLossPct = Number(recipe.bakeLossPct) || 0;
   const desiredBakedWeight = qty * finishedUnitWeight;
-  const doughWeight = bakeLossPct >= 100
-    ? desiredBakedWeight
-    : desiredBakedWeight / (1 - bakeLossPct / 100);
+  const doughWeight =
+    bakeLossPct >= 100
+      ? desiredBakedWeight
+      : desiredBakedWeight / (1 - bakeLossPct / 100);
 
   const otherPct = (recipe.otherIngredients || []).reduce(
     (sum, item) => sum + (Number(item.pct) || 0),
@@ -474,6 +477,7 @@ export default function Calendar() {
   const [selectedDate, setSelectedDate] = useState(todayISO());
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [eventForm, setEventForm] = useState({ ...blankEvent, date: todayISO() });
   const [statusMessage, setStatusMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -536,6 +540,17 @@ export default function Calendar() {
 
     return () => window.clearTimeout(timer);
   }, [statusMessage]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const hasSeenGuide = window.localStorage.getItem("farmersHubCalendarGuideSeen");
+
+    if (!hasSeenGuide) {
+      setIsGuideOpen(true);
+      window.localStorage.setItem("farmersHubCalendarGuideSeen", "true");
+    }
+  }, [user]);
 
   const allEvents = useMemo(() => {
     return [...manualEvents, ...importedEvents].sort((a, b) => {
@@ -755,6 +770,15 @@ export default function Calendar() {
 
         <div className="farmModuleHeroActions">
           <button
+            className="secondaryButton compactButton farmHeroAction"
+            type="button"
+            onClick={() => setIsGuideOpen(true)}
+          >
+            <HelpCircle size={18} />
+            Guide
+          </button>
+
+          <button
             className="primaryButton compactPrimary farmHeroAction"
             type="button"
             onClick={() => openNewEvent()}
@@ -915,7 +939,9 @@ export default function Calendar() {
                     ))}
 
                     {dayEvents.length > (calendarView === "month" ? 3 : 8) ? (
-                      <small>+{dayEvents.length - (calendarView === "month" ? 3 : 8)} more</small>
+                      <small>
+                        +{dayEvents.length - (calendarView === "month" ? 3 : 8)} more
+                      </small>
                     ) : null}
                   </div>
                 </button>
@@ -1346,6 +1372,45 @@ export default function Calendar() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      ) : null}
+
+      {isGuideOpen ? (
+        <div className="moduleGuideOverlay" role="dialog" aria-modal="true">
+          <div className="moduleGuideModal">
+            <div className="moduleGuideHeader">
+              <div>
+                <p className="eyebrow">Module Guide</p>
+                <h2>Calendar Guide</h2>
+              </div>
+
+              <button
+                className="moduleGuideCloseButton"
+                type="button"
+                onClick={() => setIsGuideOpen(false)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="moduleGuideBody">
+              <CalendarGuideContent />
+            </div>
+
+            <div className="moduleGuideFooter">
+              <span className="moduleGuideDismiss">
+                Use this guide anytime from the Guide button.
+              </span>
+
+              <button
+                className="primaryButton"
+                type="button"
+                onClick={() => setIsGuideOpen(false)}
+              >
+                Got it
+              </button>
+            </div>
           </div>
         </div>
       ) : null}
