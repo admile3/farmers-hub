@@ -13805,3 +13805,70 @@ input[type="number"] {
     width: 100%;
   }
 }
+.dashboardFooterBanner.dashboardSubscriptionBanner {
+  min-height: 0 !important;
+  padding: 16px 20px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 18px !important;
+}
+
+.dashboardFooterBanner.dashboardSubscriptionBanner .dashboardFooterCopy {
+  display: grid !important;
+  gap: 5px !important;
+}
+
+.dashboardFooterBanner.dashboardSubscriptionBanner .dashboardFooterCopy h3 {
+  margin: 0 !important;
+  font-size: 1.05rem !important;
+  line-height: 1.2 !important;
+}
+
+.dashboardFooterBanner.dashboardSubscriptionBanner .dashboardFooterCopy p {
+  margin: 0 !important;
+  max-width: 760px !important;
+  font-size: 0.92rem !important;
+}
+
+.dashboardFooterBanner.dashboardSubscriptionBanner .dashboardFooterActions {
+  display: grid !important;
+  grid-template-columns: repeat(2, 190px) !important;
+  gap: 10px !important;
+  align-items: center !important;
+  justify-content: end !important;
+}
+
+.dashboardFooterBanner.dashboardSubscriptionBanner .dashboardFooterButton {
+  width: 190px !important;
+  min-width: 190px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 14px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+@media (max-width: 900px) {
+  .dashboardFooterBanner.dashboardSubscriptionBanner {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dashboardFooterBanner.dashboardSubscriptionBanner .dashboardFooterActions {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    justify-content: stretch !important;
+  }
+
+  .dashboardFooterBanner.dashboardSubscriptionBanner .dashboardFooterButton {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .dashboardFooterBanner.dashboardSubscriptionBanner .dashboardFooterActions {
+    grid-template-columns: 1fr !important;
+  }
+}
