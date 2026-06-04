@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
+  Archive,
   ArrowRight,
   BookOpen,
   Calculator,
   CalendarDays,
-  CircleHelp,
   ChefHat,
+  CircleHelp,
   ClipboardList,
   FileText,
+  FlaskConical,
   Folder,
   ListChecks,
   PackageCheck,
@@ -37,6 +39,15 @@ const modules = [
     path: "/spice-kitchen",
     icon: ChefHat,
     accent: "spice"
+  },
+  {
+    key: "preserved-foods",
+    title: "Preserved Foods",
+    description:
+      "Build preserved food recipes, calculate brines, log batches, track pH, and add finished jars to inventory.",
+    path: "/preserved-foods",
+    icon: FlaskConical,
+    accent: "preserved"
   },
   {
     key: "baking",
@@ -82,6 +93,15 @@ const modules = [
     path: "/orders",
     icon: PackageCheck,
     accent: "orders"
+  },
+  {
+    key: "inventory",
+    title: "Inventory",
+    description:
+      "Track stock counts, storage locations, reorder points, inventory value, and expiring goods.",
+    path: "/inventory",
+    icon: Archive,
+    accent: "inventory"
   },
   {
     key: "pricing",
@@ -205,14 +225,14 @@ export default function Dashboard({
     !authLoading && !accountLoading && !user && showWelcomePricing;
 
   useEffect(() => {
-  if (!user || shouldShowWelcomePricing) return;
+    if (!user || shouldShowWelcomePricing) return;
 
-  const guideHidden = localStorage.getItem("hideModuleGuide_dashboard") === "true";
+    const guideHidden = localStorage.getItem("hideModuleGuide_dashboard") === "true";
 
-  if (!guideHidden) {
-    setShowGuide(true);
-  }
-}, [user, shouldShowWelcomePricing]);
+    if (!guideHidden) {
+      setShowGuide(true);
+    }
+  }, [user, shouldShowWelcomePricing]);
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -306,7 +326,7 @@ export default function Dashboard({
       })
       .filter((item) => item.days !== null && item.days >= 0 && item.days <= 60)
       .sort((a, b) => a.days - b.days)
-      .slice(0, 3);
+      .slice(0, 4);
   }, [dashboardData.permitItems]);
 
   const recentActivity = useMemo(() => {
@@ -383,7 +403,7 @@ export default function Dashboard({
       }
     });
 
-    return activity.sort((a, b) => b.timestamp - a.timestamp).slice(0, 3);
+    return activity.sort((a, b) => b.timestamp - a.timestamp).slice(0, 4);
   }, [
     dashboardData.spiceRecipes,
     dashboardData.bakingRecipes,
@@ -399,7 +419,7 @@ export default function Dashboard({
       ) : null}
 
       <ModuleGuideModal
-  isOpen={Boolean(user) && !shouldShowWelcomePricing && showGuide}
+        isOpen={Boolean(user) && !shouldShowWelcomePricing && showGuide}
         moduleKey="dashboard"
         title="How to Use the Dashboard"
         onClose={() => setShowGuide(false)}
@@ -415,7 +435,7 @@ export default function Dashboard({
 
           <p className="heroText">
             Manage recipes, products, pricing, customers, deadlines, prep plans,
-            and business activity from one dashboard.
+            inventory, production records, and business activity from one dashboard.
           </p>
 
           <div className="button-row dashboardMainHeroActions">
@@ -489,116 +509,120 @@ export default function Dashboard({
         />
       </section>
 
-      <section className="dashboardTwoColumn dashboardTwoColumnOptimized">
-        <div className="dashboardPanel">
+      <section className="dashboardActionGrid">
+        <div className="dashboardPanel dashboardActionPanel">
           <div className="sectionHeader dashboardPanelHeader">
             <div>
-              <p className="eyebrow">Workspaces</p>
-              <h2>Jump back in</h2>
+              <p className="eyebrow">Deadlines</p>
+              <h2>
+                Upcoming{" "}
+                <span className="dashboardHeadingMeta">(next 60 days)</span>
+              </h2>
             </div>
           </div>
 
           <div className="dashboardList">
-            {modules.map((module) => {
-              const Icon = module.icon;
-
-              return (
-                <div className="dashboardRow" key={module.path}>
-                  <div className={`dashboardRowIcon ${module.accent}`}>
-                    <Icon size={20} />
+            {dashboardDeadlines.length ? (
+              dashboardDeadlines.map((item) => (
+                <div className="dashboardRow compactDashboardRow" key={item.id || item.title}>
+                  <div className={`dashboardRowIcon ${item.accent}`}>
+                    <CalendarDays size={18} />
                   </div>
 
-                  <GuardedLink to={module.path} className="dashboardRowTextLink">
-                    <h4>{module.title}</h4>
-                    <p>{module.description}</p>
+                  <GuardedLink
+                    to={`/permit-grants?record=${encodeURIComponent(item.id)}`}
+                    className="dashboardRowTextLink"
+                  >
+                    <h4>{item.title}</h4>
+                    <p>{item.source}</p>
                   </GuardedLink>
 
-                  <GuardedLink to={module.path} className="secondaryButton compactButton">
-                    Open
-                  </GuardedLink>
+                  <div className="dashboardRightMeta">
+                    <span className="dashboardDuePill">{item.due}</span>
+                    <small>{item.date}</small>
+                  </div>
                 </div>
-              );
-            })}
+              ))
+            ) : (
+              <p className="dashboardEmpty">No upcoming deadlines found.</p>
+            )}
+          </div>
+
+          <div className="dashboardPanelFooter">
+            <GuardedLink to="/permit-grants" className="secondaryButton compactButton">
+              View all
+            </GuardedLink>
           </div>
         </div>
 
-        <div className="dashboardSideStack">
-          <div className="dashboardPanel">
-            <div className="sectionHeader dashboardPanelHeader">
-              <div>
-                <p className="eyebrow">Deadlines</p>
-                <h2>
-                  Upcoming{" "}
-                  <span className="dashboardHeadingMeta">(next 60 days)</span>
-                </h2>
-              </div>
+        <div className="dashboardPanel dashboardActionPanel">
+          <div className="sectionHeader dashboardPanelHeader">
+            <div>
+              <p className="eyebrow">Activity</p>
+              <h2>Recent Activity</h2>
             </div>
+          </div>
 
-            <div className="dashboardList">
-              {dashboardDeadlines.length ? (
-                dashboardDeadlines.map((item) => (
-                  <div className="dashboardRow compactDashboardRow" key={item.id || item.title}>
-                    <div className={`dashboardRowIcon ${item.accent}`}>
-                      <CalendarDays size={18} />
-                    </div>
-
-                    <GuardedLink
-                      to={`/permit-grants?record=${encodeURIComponent(item.id)}`}
-                      className="dashboardRowTextLink"
-                    >
-                      <h4>{item.title}</h4>
-                      <p>{item.source}</p>
-                    </GuardedLink>
-
-                    <div className="dashboardRightMeta">
-                      <span className="dashboardDuePill">{item.due}</span>
-                      <small>{item.date}</small>
-                    </div>
+          <div className="dashboardList">
+            {recentActivity.length ? (
+              recentActivity.map((item) => (
+                <div className="dashboardRow compactDashboardRow" key={`${item.title}-${item.time}`}>
+                  <div className={`dashboardRowIcon ${item.accent}`}>
+                    <Activity size={18} />
                   </div>
-                ))
-              ) : (
-                <p className="dashboardEmpty">No upcoming deadlines found.</p>
-              )}
-            </div>
 
-            <div className="dashboardPanelFooter">
-              <GuardedLink to="/permit-grants" className="secondaryButton compactButton">
-                View all
+                  <GuardedLink to={item.path || "/"} className="dashboardRowTextLink">
+                    <h4>{item.title}</h4>
+                    <p>{item.source}</p>
+                  </GuardedLink>
+
+                  <small className="dashboardTime">{item.time}</small>
+                </div>
+              ))
+            ) : (
+              <p className="dashboardEmpty">
+                Recent activity will appear after saved updates.
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="dashboardPanel dashboardWorkspacesPanel">
+        <div className="sectionHeader dashboardPanelHeader">
+          <div>
+            <p className="eyebrow">Workspaces</p>
+            <h2>Jump back in</h2>
+          </div>
+        </div>
+
+        <div className="dashboardWorkspaceGrid">
+          {modules.map((module) => {
+            const Icon = module.icon;
+
+            return (
+              <GuardedLink
+                to={module.path}
+                className={`dashboardWorkspaceCard ${module.accent}`}
+                key={module.path}
+              >
+                <span className="dashboardWorkspaceAccent" />
+
+                <div className={`dashboardWorkspaceIcon ${module.accent}`}>
+                  <Icon size={24} />
+                </div>
+
+                <div className="dashboardWorkspaceText">
+                  <h3>{module.title}</h3>
+                  <p>{module.description}</p>
+                </div>
+
+                <span className="dashboardWorkspaceArrow">
+                  <ArrowRight size={18} />
+                </span>
               </GuardedLink>
-            </div>
-          </div>
-
-          <div className="dashboardPanel">
-            <div className="sectionHeader dashboardPanelHeader">
-              <div>
-                <p className="eyebrow">Activity</p>
-                <h2>Recent Activity</h2>
-              </div>
-            </div>
-
-            <div className="dashboardList">
-              {recentActivity.length ? (
-                recentActivity.map((item) => (
-                  <div className="dashboardRow compactDashboardRow" key={`${item.title}-${item.time}`}>
-                    <div className={`dashboardRowIcon ${item.accent}`}>
-                      <Activity size={18} />
-                    </div>
-
-                    <GuardedLink to={item.path || "/"} className="dashboardRowTextLink">
-                      <h4>{item.title}</h4>
-                      <p>{item.source}</p>
-                    </GuardedLink>
-
-                    <small className="dashboardTime">{item.time}</small>
-                  </div>
-                ))
-              ) : (
-                <p className="dashboardEmpty">
-                  Recent activity will appear after saved updates.
-                </p>
-              )}
-            </div>
-          </div>
+            );
+          })}
         </div>
       </section>
 
