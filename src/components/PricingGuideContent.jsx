@@ -110,7 +110,7 @@ export default function PricingGuideContent() {
           </p>
         </div>
 
-        <div className="moduleGuidePreview pricingGuidePreview">
+        <div className="moduleGuidePreview pricingGuidePreview pricingGuidePreviewClip">
           <div className="workspacePanel compactPanel pricingGuidePanel">
             <div className="workspaceHeader compactPanelHeader">
               <div>
@@ -144,7 +144,7 @@ export default function PricingGuideContent() {
           </p>
         </div>
 
-        <div className="moduleGuidePreview pricingGuidePreview">
+        <div className="moduleGuidePreview pricingGuidePreview pricingGuidePreviewClip">
           <div className="workspacePanel compactPanel pricingGuidePanel">
             <div className="workspaceHeader compactPanelHeader">
               <div>
@@ -178,7 +178,7 @@ export default function PricingGuideContent() {
           </p>
         </div>
 
-        <div className="moduleGuidePreview pricingGuidePreview">
+        <div className="moduleGuidePreview pricingGuidePreview pricingGuidePreviewClip">
           <div className="workspacePanel compactPanel pricingGuidePanel">
             <div className="workspaceHeader compactPanelHeader">
               <div>
@@ -208,7 +208,7 @@ export default function PricingGuideContent() {
           </p>
         </div>
 
-        <div className="moduleGuidePreview moduleGuideStatPreview pricingGuideStatPreview">
+        <div className="moduleGuidePreview moduleGuideStatPreview pricingGuideStatPreview pricingGuidePreviewClip">
           <StatCard icon={DollarSign} label="Retail" value="$12.00" sub="per 1 oz Pouch" accent="pricing" />
           <StatCard icon={DollarSign} label="Wholesale" value="$7.50" sub="per 1 oz Pouch" accent="sourdough" />
           <StatCard icon={Target} label="Cost" value="$2.10" sub="estimated per unit" accent="market" />
@@ -228,7 +228,7 @@ export default function PricingGuideContent() {
           </p>
         </div>
 
-        <div className="moduleGuidePreview pricingGuidePreview">
+        <div className="moduleGuidePreview pricingGuidePreview pricingGuidePreviewClip">
           <div className="workspacePanel compactPanel pricingGuidePanel">
             <div className="workspaceHeader compactPanelHeader">
               <div>
