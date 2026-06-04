@@ -30,7 +30,7 @@ export default function PricingGuideContent() {
           </p>
         </div>
 
-        <div className="moduleGuidePreview pricingGuidePreview">
+        <div className="moduleGuidePreview pricingGuidePreviewClip">
           <div className="workspacePanel compactPanel pricingGuidePanel">
             <div className="workspaceHeader compactPanelHeader">
               <div>
