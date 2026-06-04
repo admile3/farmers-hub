@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 
 export default function ModuleGuideModal({
@@ -9,6 +9,16 @@ export default function ModuleGuideModal({
   children,
   onClose
 }) {
+  const [dismissChecked, setDismissChecked] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen || !moduleKey) return;
+
+    setDismissChecked(
+      localStorage.getItem(`hideModuleGuide_${moduleKey}`) === "true"
+    );
+  }, [isOpen, moduleKey]);
+
   useEffect(() => {
     if (!isOpen) return undefined;
 
@@ -35,9 +45,13 @@ export default function ModuleGuideModal({
   }
 
   function handleDismissChange(event) {
+    const checked = event.target.checked;
+
+    setDismissChecked(checked);
+
     if (!moduleKey) return;
 
-    if (event.target.checked) {
+    if (checked) {
       localStorage.setItem(`hideModuleGuide_${moduleKey}`, "true");
     } else {
       localStorage.removeItem(`hideModuleGuide_${moduleKey}`);
@@ -78,7 +92,11 @@ export default function ModuleGuideModal({
 
         <div className="moduleGuideFooter">
           <label className="moduleGuideDismiss">
-            <input type="checkbox" onChange={handleDismissChange} />
+            <input
+              type="checkbox"
+              checked={dismissChecked}
+              onChange={handleDismissChange}
+            />
             <span>Don’t show this guide automatically next time.</span>
           </label>
 
