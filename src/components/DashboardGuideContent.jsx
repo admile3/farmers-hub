@@ -4,7 +4,6 @@ import {
   BookOpen,
   CalendarDays,
   FileText,
-  Folder,
   PackageCheck,
   Sprout,
   Users
@@ -188,8 +187,8 @@ export default function DashboardGuideContent() {
       <div className="moduleGuideTip dashboardGuideTip">
         <ArrowRight size={18} />
         <p>
-          Tip: the Dashboard becomes more useful as you add records in each module. Saved recipes,
-          customers, permits, and lists all help create a better command center.
+          Tip: the Dashboard becomes more useful as you add records in each module.
+          Each module also has its own Guide button when you need help with that specific tool.
         </p>
       </div>
     </div>
