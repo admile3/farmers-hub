@@ -10,7 +10,9 @@ import {
   Sprout,
   Users
 } from "lucide-react";
-import StatCard from "./StatCard.jsx";
+import StatCard from "../components/StatCard.jsx";
+import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
+import DashboardGuideContent from "../components/DashboardGuideContent.jsx";
 
 export default function DashboardGuideContent() {
   return (
