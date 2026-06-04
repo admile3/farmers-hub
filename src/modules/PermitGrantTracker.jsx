@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   CalendarDays,
+  CircleHelp,
   Edit3,
   ExternalLink,
   FileText,
@@ -16,6 +17,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "../AuthContext.jsx";
 import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
+import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
+import PermitGrantGuideContent from "../components/PermitGrantGuideContent.jsx";
 import StatCard from "../components/StatCard.jsx";
 import {
   deletePermitGrantItem,
@@ -206,6 +209,7 @@ export default function PermitGrantTracker() {
   const [typeFilter, setTypeFilter] = useState("All Types");
   const [statusFilter, setStatusFilter] = useState("All Statuses");
   const [recordFilter, setRecordFilter] = useState("All Records");
+  const [showGuide, setShowGuide] = useState(false);
 
   function markPermitGrantDirty() {
     markUnsaved({
@@ -229,6 +233,14 @@ export default function PermitGrantTracker() {
 
     return () => window.clearTimeout(timer);
   }, [statusMessage]);
+
+  useEffect(() => {
+    const guideHidden = localStorage.getItem("hideModuleGuide_permitGrant") === "true";
+
+    if (!guideHidden) {
+      setShowGuide(true);
+    }
+  }, []);
 
   async function loadItems() {
     if (!user) return;
@@ -528,6 +540,15 @@ export default function PermitGrantTracker() {
           >
             <FileText size={15} />
             Load Sample Records
+          </button>
+
+          <button
+            className="secondaryButton farmHeroAction"
+            type="button"
+            onClick={() => setShowGuide(true)}
+          >
+            <CircleHelp size={15} />
+            Guide
           </button>
 
           <button className="primaryButton farmHeroAction" type="button" onClick={openNewRecord}>
@@ -885,6 +906,16 @@ export default function PermitGrantTracker() {
           </div>
         )}
       </section>
+
+
+      <ModuleGuideModal
+        isOpen={showGuide}
+        moduleKey="permitGrant"
+        title="How to Use Permits & Grants"
+        onClose={() => setShowGuide(false)}
+      >
+        <PermitGrantGuideContent />
+      </ModuleGuideModal>
 
       {isModalOpen ? (
         <div className="permitModalOverlay" role="dialog" aria-modal="true">
