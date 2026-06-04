@@ -13258,3 +13258,41 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+/* Permit & Grant Tracker hero layout fix */
+.permitGrantHero {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+
+.permitGrantHero .farmModuleHeroText {
+  width: 100%;
+  max-width: none;
+}
+
+.permitGrantHero .farmModuleHeroText h2,
+.permitGrantHero .farmModuleHeroText p {
+  max-width: none;
+}
+
+.permitGrantHero .farmModuleHeroActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.permitGrantHero .farmHeroAction {
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .permitGrantHero .farmModuleHeroActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .permitGrantHero .farmHeroAction {
+    width: 100%;
+  }
+}
