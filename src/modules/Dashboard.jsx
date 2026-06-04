@@ -5,6 +5,7 @@ import {
   BookOpen,
   Calculator,
   CalendarDays,
+  CircleHelp,
   ChefHat,
   ClipboardList,
   FileText,
@@ -20,6 +21,8 @@ import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "../AuthContext.jsx";
 import { db } from "../firebase";
 import StatCard from "../components/StatCard.jsx";
+import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
+import DashboardGuideContent from "../components/DashboardGuideContent.jsx";
 import { getSpiceRecipes } from "../services/spiceKitchenService.js";
 import { getPermitGrantItems } from "../services/permitGrantService.js";
 import { getLists } from "../services/listsService.js";
@@ -188,6 +191,7 @@ export default function Dashboard({
   } = useAuth();
 
   const [showWelcomePricing, setShowWelcomePricing] = useState(true);
+  const [showGuide, setShowGuide] = useState(false);
   const [dashboardData, setDashboardData] = useState({
     spiceRecipes: [],
     bakingRecipes: [],
@@ -199,6 +203,15 @@ export default function Dashboard({
 
   const shouldShowWelcomePricing =
     !authLoading && !accountLoading && !user && showWelcomePricing;
+
+
+  useEffect(() => {
+    const guideHidden = localStorage.getItem("hideModuleGuide_dashboard") === "true";
+
+    if (!guideHidden) {
+      setShowGuide(true);
+    }
+  }, []);
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -384,6 +397,15 @@ export default function Dashboard({
         <WelcomePricingModal onClose={() => setShowWelcomePricing(false)} />
       ) : null}
 
+      <ModuleGuideModal
+        isOpen={showGuide}
+        moduleKey="dashboard"
+        title="How to Use the Dashboard"
+        onClose={() => setShowGuide(false)}
+      >
+        <DashboardGuideContent />
+      </ModuleGuideModal>
+
       <section className="modernHero dashboardHeroV2">
         <div className="modernHeroMain dashboardHeroMainV2">
           <p className="eyebrow">Your business command center</p>
@@ -406,10 +428,21 @@ export default function Dashboard({
             </p>
           </div>
 
-          <GuardedLink to={user ? "/account-settings" : "/subscribe"} className="primaryButton">
-            {user ? "Manage Account" : "View Plans"}
-            <ArrowRight size={18} />
-          </GuardedLink>
+          <div className="dashboardHeroActions">
+            <button
+              className="secondaryButton"
+              type="button"
+              onClick={() => setShowGuide(true)}
+            >
+              <CircleHelp size={18} />
+              Guide
+            </button>
+
+            <GuardedLink to={user ? "/account-settings" : "/subscribe"} className="primaryButton">
+              {user ? "Manage Account" : "View Plans"}
+              <ArrowRight size={18} />
+            </GuardedLink>
+          </div>
         </div>
       </section>
 
