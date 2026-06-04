@@ -3,7 +3,10 @@ import {
   Beaker,
   BookOpen,
   Calculator,
+  ChevronDown,
+  ChevronUp,
   ClipboardCheck,
+  Edit3,
   FlaskConical,
   HelpCircle,
   Library,
@@ -241,6 +244,7 @@ export default function PreservedFoods() {
   const [editingIngredientId, setEditingIngredientId] = useState(null);
   const [recipeForm, setRecipeForm] = useState(emptyRecipe);
   const [editingRecipeId, setEditingRecipeId] = useState(null);
+  const [expandedRecipeId, setExpandedRecipeId] = useState(null);
   const [batchForm, setBatchForm] = useState(emptyBatch);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
@@ -693,6 +697,7 @@ export default function PreservedFoods() {
 
       setRecipeForm(emptyRecipe);
       setEditingRecipeId(null);
+      setExpandedRecipeId(null);
       markSaved();
       await loadData();
     } catch (error) {
@@ -724,6 +729,7 @@ export default function PreservedFoods() {
     try {
       await deletePreservedRecipe(user.uid, recipeId);
       showStatus("Recipe deleted.");
+      if (expandedRecipeId === recipeId) setExpandedRecipeId(null);
       await loadData();
     } catch (error) {
       console.error(error);
@@ -962,10 +968,10 @@ export default function PreservedFoods() {
           <p>Calculate brine, vinegar, water, salt, sugar, yield, and cost.</p>
         </a>
 
-        <a className="toolCard compactToolCard clickableToolCard" href="#preserved-batches">
-          <ClipboardCheck size={20} />
-          <h3>Batch Log</h3>
-          <p>Track production date, lot number, pH, process, and finished jars.</p>
+        <a className="toolCard compactToolCard clickableToolCard" href="#preserved-library">
+          <BookOpen size={20} />
+          <h3>Recipe Library</h3>
+          <p>Review, expand, edit, and manage saved preserved food recipes.</p>
         </a>
       </section>
 
@@ -1082,7 +1088,7 @@ export default function PreservedFoods() {
 
                     <div className="itemActions">
                       <button type="button" onClick={() => editIngredient(ingredient)}>
-                        Edit
+                        <Edit3 size={14} />
                       </button>
                       <button type="button" onClick={() => removeIngredient(ingredient.id)}>
                         <Trash2 size={15} />
@@ -1096,38 +1102,182 @@ export default function PreservedFoods() {
             </div>
           </section>
 
-          <section className="workspacePanel compactPanel scrollAnchor" id="preserved-batches">
+          <section className="workspacePanel compactPanel scrollAnchor" id="preserved-brine">
             <div className="workspaceHeader compactPanelHeader">
               <div>
-                <p className="eyebrow">Batch Records</p>
-                <h3>Batch Log</h3>
+                <p className="eyebrow">Calculator</p>
+                <h3>Brine Calculator</h3>
               </div>
+
+              <button
+                className="secondaryButton compactButton"
+                type="button"
+                onClick={addBatchToInventory}
+                disabled={savingInventory}
+              >
+                <PackageCheck size={15} />
+                {savingInventory ? "Adding..." : "Add to Inventory"}
+              </button>
             </div>
 
-            <div className="savedList compactSavedList preservedBatchList">
-              {batches.length ? (
-                batches.map((batch) => (
-                  <div className="savedItem compactSavedItem" key={batch.id}>
-                    <div>
-                      <h4>{batch.recipeName}</h4>
-                      <p>
-                        {batch.productionDate || "No date"} • {batch.jarCount || 0} jars
-                        {batch.ph ? ` • pH ${batch.ph}` : ""}{" "}
-                        {batch.lotNumber ? `• Lot ${batch.lotNumber}` : ""}
-                      </p>
-                    </div>
+            <form className="formGrid compactFormGrid" onSubmit={saveBatch}>
+              <label>
+                Recipe
+                <select
+                  value={batchForm.recipeId}
+                  onChange={(event) => updateBatchField("recipeId", event.target.value)}
+                >
+                  <option value="">Choose recipe...</option>
+                  {recipes.map((recipe) => (
+                    <option key={recipe.id} value={recipe.id}>
+                      {recipe.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-                    <div className="itemActions">
-                      <button type="button" onClick={() => removeBatch(batch.id)}>
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="permitEmptyState">No batches logged yet.</div>
-              )}
-            </div>
+              <label>
+                Package
+                <select
+                  value={batchForm.packageId}
+                  onChange={(event) => updateBatchField("packageId", event.target.value)}
+                  disabled={!selectedRecipe}
+                >
+                  <option value="">Choose package...</option>
+                  {(selectedRecipe?.packages || []).map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name} ({item.jarSizeOz} oz)
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Finished Jars *
+                <input
+                  type="number"
+                  step="1"
+                  value={batchForm.jarCount}
+                  onChange={(event) => updateBatchField("jarCount", event.target.value)}
+                  placeholder="24"
+                />
+              </label>
+
+              <label>
+                Production Date *
+                <input
+                  type="date"
+                  value={batchForm.productionDate}
+                  onChange={(event) => updateBatchField("productionDate", event.target.value)}
+                />
+              </label>
+
+              <label>
+                Lot Number
+                <input
+                  value={batchForm.lotNumber}
+                  onChange={(event) => updateBatchField("lotNumber", event.target.value)}
+                  placeholder="PF-2026-001"
+                />
+              </label>
+
+              <label>
+                Measured pH
+                <input
+                  type="number"
+                  step="0.01"
+                  value={batchForm.ph}
+                  onChange={(event) => updateBatchField("ph", event.target.value)}
+                  placeholder="3.8"
+                />
+              </label>
+
+              <label>
+                Process Method
+                <select
+                  value={batchForm.processMethod}
+                  onChange={(event) => updateBatchField("processMethod", event.target.value)}
+                >
+                  {processMethods.map((method) => (
+                    <option key={method}>{method}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Best By Date
+                <input
+                  type="date"
+                  value={batchForm.bestByDate}
+                  onChange={(event) => updateBatchField("bestByDate", event.target.value)}
+                />
+              </label>
+
+              <label className="fullSpan">
+                Batch Notes
+                <textarea
+                  value={batchForm.notes}
+                  onChange={(event) => updateBatchField("notes", event.target.value)}
+                  placeholder="Processing notes, deviations, texture, flavor, pH notes, etc."
+                />
+              </label>
+
+              <div className="batchTotals fullSpan preservedBrineTotals">
+                <div>
+                  <span>Total Fill</span>
+                  <h4>{round(brineSummary.totalFillOz)} oz</h4>
+                </div>
+
+                <div>
+                  <span>Brine Needed</span>
+                  <h4>{round(brineSummary.brineOz)} oz</h4>
+                </div>
+
+                <div>
+                  <span>Vinegar</span>
+                  <h4>{round(brineSummary.vinegarOz)} oz</h4>
+                </div>
+
+                <div>
+                  <span>Water</span>
+                  <h4>{round(brineSummary.waterOz)} oz</h4>
+                </div>
+
+                <div>
+                  <span>Salt</span>
+                  <h4>{round(brineSummary.saltOz)} oz</h4>
+                </div>
+
+                <div>
+                  <span>Sugar</span>
+                  <h4>{round(brineSummary.sugarOz)} oz</h4>
+                </div>
+              </div>
+
+              <div className="batchTotals fullSpan preservedBrineTotals">
+                <div>
+                  <span>Batch Cost</span>
+                  <h4>{formatCurrency(batchCostEstimate)}</h4>
+                </div>
+
+                <div>
+                  <span>Cost / Jar</span>
+                  <h4>{formatCurrency(batchCostPerJar)}</h4>
+                </div>
+
+                <div>
+                  <span>Target pH</span>
+                  <h4>{selectedRecipe?.targetPh || "N/A"}</h4>
+                </div>
+              </div>
+
+              <div className="formActions fullSpan">
+                <button className="primaryButton compactPrimary" type="submit">
+                  <Save size={15} />
+                  Save Batch Log
+                </button>
+              </div>
+            </form>
           </section>
         </div>
 
@@ -1466,244 +1616,245 @@ export default function PreservedFoods() {
             </form>
           </section>
 
-          <section className="workspacePanel compactPanel scrollAnchor" id="preserved-brine">
+          <section
+            className="workspacePanel compactPanel scrollAnchor spiceLibraryPanel"
+            id="preserved-library"
+          >
             <div className="workspaceHeader compactPanelHeader">
               <div>
-                <p className="eyebrow">Calculator</p>
-                <h3>Brine Calculator & Batch Log</h3>
-              </div>
-            </div>
-
-            <form className="formGrid compactFormGrid" onSubmit={saveBatch}>
-              <label>
-                Recipe
-                <select
-                  value={batchForm.recipeId}
-                  onChange={(event) => updateBatchField("recipeId", event.target.value)}
-                >
-                  <option value="">Choose recipe...</option>
-                  {recipes.map((recipe) => (
-                    <option key={recipe.id} value={recipe.id}>
-                      {recipe.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Package
-                <select
-                  value={batchForm.packageId}
-                  onChange={(event) => updateBatchField("packageId", event.target.value)}
-                  disabled={!selectedRecipe}
-                >
-                  <option value="">Choose package...</option>
-                  {(selectedRecipe?.packages || []).map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name} ({item.jarSizeOz} oz)
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Finished Jars *
-                <input
-                  type="number"
-                  step="1"
-                  value={batchForm.jarCount}
-                  onChange={(event) => updateBatchField("jarCount", event.target.value)}
-                  placeholder="24"
-                />
-              </label>
-
-              <label>
-                Production Date *
-                <input
-                  type="date"
-                  value={batchForm.productionDate}
-                  onChange={(event) => updateBatchField("productionDate", event.target.value)}
-                />
-              </label>
-
-              <label>
-                Lot Number
-                <input
-                  value={batchForm.lotNumber}
-                  onChange={(event) => updateBatchField("lotNumber", event.target.value)}
-                  placeholder="PF-2026-001"
-                />
-              </label>
-
-              <label>
-                Measured pH
-                <input
-                  type="number"
-                  step="0.01"
-                  value={batchForm.ph}
-                  onChange={(event) => updateBatchField("ph", event.target.value)}
-                  placeholder="3.8"
-                />
-              </label>
-
-              <label>
-                Process Method
-                <select
-                  value={batchForm.processMethod}
-                  onChange={(event) => updateBatchField("processMethod", event.target.value)}
-                >
-                  {processMethods.map((method) => (
-                    <option key={method}>{method}</option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Best By Date
-                <input
-                  type="date"
-                  value={batchForm.bestByDate}
-                  onChange={(event) => updateBatchField("bestByDate", event.target.value)}
-                />
-              </label>
-
-              <label className="fullSpan">
-                Batch Notes
-                <textarea
-                  value={batchForm.notes}
-                  onChange={(event) => updateBatchField("notes", event.target.value)}
-                  placeholder="Processing notes, deviations, texture, flavor, pH notes, etc."
-                />
-              </label>
-
-              <div className="batchTotals fullSpan preservedBrineTotals">
-                <div>
-                  <span>Total Fill</span>
-                  <h4>{round(brineSummary.totalFillOz)} oz</h4>
-                </div>
-
-                <div>
-                  <span>Brine Needed</span>
-                  <h4>{round(brineSummary.brineOz)} oz</h4>
-                </div>
-
-                <div>
-                  <span>Vinegar</span>
-                  <h4>{round(brineSummary.vinegarOz)} oz</h4>
-                </div>
-
-                <div>
-                  <span>Water</span>
-                  <h4>{round(brineSummary.waterOz)} oz</h4>
-                </div>
-
-                <div>
-                  <span>Salt</span>
-                  <h4>{round(brineSummary.saltOz)} oz</h4>
-                </div>
-
-                <div>
-                  <span>Sugar</span>
-                  <h4>{round(brineSummary.sugarOz)} oz</h4>
-                </div>
-              </div>
-
-              <div className="batchTotals fullSpan preservedBrineTotals">
-                <div>
-                  <span>Batch Cost</span>
-                  <h4>{formatCurrency(batchCostEstimate)}</h4>
-                </div>
-
-                <div>
-                  <span>Cost / Jar</span>
-                  <h4>{formatCurrency(batchCostPerJar)}</h4>
-                </div>
-
-                <div>
-                  <span>Target pH</span>
-                  <h4>{selectedRecipe?.targetPh || "N/A"}</h4>
-                </div>
-              </div>
-
-              <div className="formActions fullSpan">
-                <button className="primaryButton compactPrimary" type="submit">
-                  <Save size={15} />
-                  Save Batch Log
-                </button>
-
-                <button
-                  className="secondaryButton compactButton"
-                  type="button"
-                  onClick={addBatchToInventory}
-                  disabled={savingInventory}
-                >
-                  <PackageCheck size={15} />
-                  {savingInventory ? "Adding..." : "Add to Inventory"}
-                </button>
-              </div>
-            </form>
-          </section>
-
-          <section className="workspacePanel compactPanel">
-            <div className="workspaceHeader compactPanelHeader">
-              <div>
-                <p className="eyebrow">Library</p>
+                <p className="eyebrow">Saved Recipes</p>
                 <h3>Recipe Library</h3>
               </div>
 
-              <div className="searchBox compactSearch">
-                <Search size={16} />
-                <input
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder="Search recipes..."
-                />
+              <div className="recipeLibraryHeaderTools">
+                <div className="searchBox compactSearch">
+                  <Search size={16} />
+                  <input
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    placeholder="Search recipes..."
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="savedList compactSavedList preservedRecipeLibrary">
+            <div className="recipeLibrary compactSavedList spiceRecipeLibraryTall">
               {filteredRecipes.length ? (
-                filteredRecipes.map((recipe) => (
-                  <div className="savedItem compactSavedItem" key={recipe.id}>
-                    <div>
-                      <h4>{recipe.name}</h4>
-                      <p>
-                        {recipe.type} • {recipe.packages?.length || 0} package sizes •
-                        Target pH {recipe.targetPh || "N/A"}
-                      </p>
+                filteredRecipes.map((recipe) => {
+                  const isExpanded = expandedRecipeId === recipe.id;
+                  const formulaCost = calculateRecipeCost(
+                    recipe,
+                    availableRecipeIngredients
+                  );
+                  const sortedIngredients = [...(recipe.ingredients || [])].sort(
+                    (a, b) => String(a.ingredientName || "").localeCompare(
+                      String(b.ingredientName || "")
+                    )
+                  );
 
-                      {recipe.ingredients?.length ? (
-                        <div className="recipePartsList preservedRecipePreview">
-                          {recipe.ingredients.slice(0, 4).map((line, index) => (
-                            <div className="recipePartsRow" key={`${recipe.id}-${index}`}>
-                              <span>
-                                {getIngredientLabel(line, availableRecipeIngredients)}
-                                {line.pantrySource ? ` • ${line.pantrySource}` : ""}
-                              </span>
-                              <strong>
-                                {line.amount} {line.unit}
-                              </strong>
-                            </div>
-                          ))}
+                  return (
+                    <div
+                      className={isExpanded ? "savedItemBlock expanded" : "savedItemBlock"}
+                      key={recipe.id}
+                    >
+                      <div className="savedItem recipeItem compactSavedItem expandableSavedItem">
+                        <div>
+                          <h4 className="recipeTitleWithCost">
+                            <button
+                              type="button"
+                              className="savedItemLink"
+                              onClick={() => editRecipe(recipe)}
+                            >
+                              {recipe.name}
+                            </button>
+
+                            <span className="recipeQuickCostBadge">
+                              {formatCurrency(formulaCost)} recipe cost
+                            </span>
+                          </h4>
+
+                          <p>
+                            {recipe.type} • {recipe.ingredients?.length || 0} ingredients
+                            {recipe.packages?.length
+                              ? ` • ${recipe.packages.length} package sizes`
+                              : ""}
+                            {recipe.targetPh ? ` • Target pH ${recipe.targetPh}` : ""}
+                          </p>
+                        </div>
+
+                        <div className="itemActions">
+                          <button
+                            type="button"
+                            className="iconButton"
+                            aria-label={
+                              isExpanded
+                                ? "Collapse recipe details"
+                                : "Expand recipe details"
+                            }
+                            onClick={() =>
+                              setExpandedRecipeId(isExpanded ? null : recipe.id)
+                            }
+                          >
+                            {isExpanded ? (
+                              <ChevronUp size={14} />
+                            ) : (
+                              <ChevronDown size={14} />
+                            )}
+                          </button>
+
+                          <button type="button" onClick={() => editRecipe(recipe)}>
+                            <Edit3 size={14} />
+                          </button>
+
+                          <button type="button" onClick={() => removeRecipe(recipe.id)}>
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {isExpanded ? (
+                        <div className="spiceDetailPanel recipeDetailPanel">
+                          <div>
+                            <strong>Type</strong>
+                            <span>{recipe.type || "Other"}</span>
+                          </div>
+
+                          <div>
+                            <strong>Total Ingredients</strong>
+                            <span>{recipe.ingredients?.length || 0}</span>
+                          </div>
+
+                          <div>
+                            <strong>Formula Cost</strong>
+                            <span>{formatCurrency(formulaCost)}</span>
+                          </div>
+
+                          <div>
+                            <strong>Process Method</strong>
+                            <span>{recipe.processMethod || "Not listed"}</span>
+                          </div>
+
+                          <div>
+                            <strong>Brine %</strong>
+                            <span>{recipe.brinePercent || 0}% of jar fill</span>
+                          </div>
+
+                          <div>
+                            <strong>Vinegar %</strong>
+                            <span>{recipe.vinegarPercent || 0}% of brine</span>
+                          </div>
+
+                          <div>
+                            <strong>Salt %</strong>
+                            <span>{recipe.saltPercent || 0}%</span>
+                          </div>
+
+                          <div>
+                            <strong>Target pH</strong>
+                            <span>{recipe.targetPh || "Not listed"}</span>
+                          </div>
+
+                          <div className="fullSpan">
+                            <strong>Description / Notes</strong>
+                            <span>{recipe.description || "No notes saved."}</span>
+                          </div>
+
+                          <div className="fullSpan recipePartsList">
+                            <strong>Package Sizes</strong>
+
+                            {recipe.packages?.length ? (
+                              recipe.packages.map((item) => (
+                                <div
+                                  className="recipePartsRow"
+                                  key={`${recipe.id}-${item.id}`}
+                                >
+                                  <span>{item.name}</span>
+                                  <span>
+                                    {item.jarSizeOz} oz
+                                    {item.retailPrice
+                                      ? ` • ${formatCurrency(item.retailPrice)} retail`
+                                      : ""}
+                                    {item.wholesalePrice
+                                      ? ` • ${formatCurrency(item.wholesalePrice)} wholesale`
+                                      : ""}
+                                  </span>
+                                </div>
+                              ))
+                            ) : (
+                              <span>No package sizes saved.</span>
+                            )}
+                          </div>
+
+                          <div className="fullSpan recipePartsList">
+                            <strong>Ingredients</strong>
+
+                            {sortedIngredients.length ? (
+                              sortedIngredients.map((line, index) => (
+                                <div
+                                  className="recipePartsRow"
+                                  key={`${line.ingredientId}-${index}`}
+                                >
+                                  <span>
+                                    {getIngredientLabel(line, availableRecipeIngredients)}
+                                    {line.pantrySource ? ` • ${line.pantrySource}` : ""}
+                                  </span>
+
+                                  <span>
+                                    {line.amount} {line.unit}
+                                    {line.role ? ` • ${line.role}` : ""}
+                                  </span>
+                                </div>
+                              ))
+                            ) : (
+                              <span>No ingredients saved.</span>
+                            )}
+                          </div>
                         </div>
                       ) : null}
                     </div>
-
-                    <div className="itemActions">
-                      <button type="button" onClick={() => editRecipe(recipe)}>
-                        Edit
-                      </button>
-                      <button type="button" onClick={() => removeRecipe(recipe.id)}>
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
-                <div className="permitEmptyState">No recipes found.</div>
+                <div className="placeholderBox compactPlaceholder">
+                  No recipes saved yet.
+                </div>
               )}
             </div>
           </section>
+        </div>
+      </section>
+
+      <section className="workspacePanel compactPanel scrollAnchor preservedBatchLogPanel" id="preserved-batches">
+        <div className="workspaceHeader compactPanelHeader">
+          <div>
+            <p className="eyebrow">Batch Records</p>
+            <h3>Batch Log</h3>
+          </div>
+        </div>
+
+        <div className="savedList compactSavedList preservedBatchList">
+          {batches.length ? (
+            batches.map((batch) => (
+              <div className="savedItem compactSavedItem" key={batch.id}>
+                <div>
+                  <h4>{batch.recipeName}</h4>
+                  <p>
+                    {batch.productionDate || "No date"} • {batch.jarCount || 0} jars
+                    {batch.ph ? ` • pH ${batch.ph}` : ""}{" "}
+                    {batch.lotNumber ? `• Lot ${batch.lotNumber}` : ""}
+                  </p>
+                </div>
+
+                <div className="itemActions">
+                  <button type="button" onClick={() => removeBatch(batch.id)}>
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="permitEmptyState">No batches logged yet.</div>
+          )}
         </div>
       </section>
 
