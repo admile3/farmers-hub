@@ -13139,3 +13139,34 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+.pricingGuidePreviewClip {
+  overflow: hidden;
+}
+
+.pricingGuidePreviewClip .workspacePanel,
+.pricingGuidePreviewClip .compactPanel,
+.pricingGuidePreviewClip .pricingComparisonTable {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.pricingGuidePreviewClip .customersFilterPanel,
+.pricingGuidePreviewClip .pricingComparisonHeader,
+.pricingGuidePreviewClip .pricingComparisonRow {
+  width: 100%;
+  min-width: 0;
+}
+
+.pricingGuidePreviewClip .pricingComparisonTable {
+  overflow: hidden;
+}
+
+.pricingGuidePreviewClip .pricingComparisonHeader,
+.pricingGuidePreviewClip .pricingComparisonRow {
+  grid-template-columns: 1.25fr 0.7fr 0.55fr 0.55fr 0.55fr 0.7fr;
+}
+
+.pricingGuidePreviewClip .pricingVariantActionsHeader,
+.pricingGuidePreviewClip .pricingVariantActionsCell {
+  display: none;
+}
