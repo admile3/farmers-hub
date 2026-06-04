@@ -1,12 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Navigate,
-  Route,
-  Routes,
-  useLocation,
-  useNavigate
-} from "react-router-dom";
-import {
   Archive,
   Calculator,
   CalendarDays,
@@ -15,6 +8,7 @@ import {
   Eye,
   EyeOff,
   FileText,
+  FlaskConical,
   Home,
   ListChecks,
   LogIn,
@@ -27,7 +21,15 @@ import {
   Wheat,
   X
 } from "lucide-react";
+import {
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate
+} from "react-router-dom";
 import SpiceKitchen from "./modules/SpiceKitchen.jsx";
+import PreservedFoods from "./modules/PreservedFoods.jsx";
 import BakingPlanner from "./modules/BakingPlanner.jsx";
 import MarketPrepPlanner from "./modules/MarketPrepPlanner.jsx";
 import PricingCalculator from "./modules/PricingCalculator.jsx";
@@ -53,6 +55,15 @@ const modules = [
     path: "/spice-kitchen",
     icon: ChefHat,
     accent: "spice"
+  },
+  {
+    key: "preserved-foods",
+    title: "Preserved Foods",
+    description:
+      "Build preserved food recipes, calculate brines, log batches, track pH, and add finished jars to inventory.",
+    path: "/preserved-foods",
+    icon: FlaskConical,
+    accent: "preserved"
   },
   {
     key: "baking",
@@ -100,14 +111,14 @@ const modules = [
     accent: "orders"
   },
   {
-  key: "inventory",
-  title: "Inventory",
-  description:
-    "Track stock counts, storage locations, reorder points, inventory value, and expiring goods.",
-  path: "/inventory",
-  icon: Archive,
-  accent: "inventory"
-},
+    key: "inventory",
+    title: "Inventory",
+    description:
+      "Track stock counts, storage locations, reorder points, inventory value, and expiring goods.",
+    path: "/inventory",
+    icon: Archive,
+    accent: "inventory"
+  },
   {
     key: "pricing",
     title: "Products & Pricing",
@@ -1278,6 +1289,7 @@ export default function App() {
         />
 
         <Route path="/spice-kitchen" element={<AccessGate><SpiceKitchen /></AccessGate>} />
+        <Route path="/preserved-foods" element={<AccessGate><PreservedFoods /></AccessGate>} />
         <Route path="/baking-planner" element={<AccessGate><BakingPlanner /></AccessGate>} />
         <Route path="/market-prep" element={<AccessGate><MarketPrepPlanner /></AccessGate>} />
         <Route path="/planting-scheduler" element={<AccessGate><PlantingScheduler /></AccessGate>} />
