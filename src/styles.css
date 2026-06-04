@@ -12975,3 +12975,98 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+/* =========================================================
+   Inventory Guide Content
+   ========================================================= */
+
+.inventoryHeroActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.inventoryGuideModeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.inventoryGuideModeCard {
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: #ffffff;
+  padding: 13px;
+  display: grid;
+  gap: 6px;
+}
+
+.inventoryGuideModeCard.selected {
+  border-color: rgba(52, 117, 62, 0.35);
+  background: #f5fbf3;
+}
+
+.inventoryGuideModeCard strong {
+  color: var(--text);
+  font-size: 0.94rem;
+}
+
+.inventoryGuideModeCard span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.inventoryGuideStatPreview {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.inventoryGuideAlertRow {
+  border-color: rgba(52, 117, 62, 0.16);
+  background: #f5fbf3;
+}
+
+.inventoryGuideAlertRow.warning {
+  border-color: rgba(199, 99, 67, 0.18);
+  background: #fff6f1;
+}
+
+.inventoryGuideSearchMock {
+  width: 100%;
+}
+
+.inventoryGuideRows .guideRecipeHeader,
+.inventoryGuideRows > div:not(.guideRecipeHeader) {
+  grid-template-columns: minmax(0, 1fr) 90px;
+}
+
+.inventoryGuideAdjustButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.inventoryGuideAdjustButtons button {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--text);
+  padding: 7px 13px;
+  font-weight: 950;
+}
+
+@media (max-width: 700px) {
+  .inventoryHeroActions,
+  .inventoryHeroActions .farmHeroAction {
+    width: 100%;
+  }
+
+  .inventoryHeroActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .inventoryGuideModeGrid,
+  .inventoryGuideStatPreview {
+    grid-template-columns: 1fr;
+  }
+}
