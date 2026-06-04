@@ -13872,3 +13872,90 @@ input[type="number"] {
     grid-template-columns: 1fr !important;
   }
 }
+.compactDensity {
+  grid-template-columns: 260px 1fr;
+}
+
+.compactDensity .modernSidebar {
+  padding: 18px;
+  gap: 12px;
+}
+
+.compactDensity .modernMain {
+  padding: 18px;
+}
+
+.compactDensity .modernHero,
+.compactDensity .farmModuleHero,
+.compactDensity .moduleHero {
+  padding: 20px;
+  gap: 16px;
+}
+
+.compactDensity .workspacePanel,
+.compactDensity .dashboardPanel,
+.compactDensity .calendarPanel,
+.compactDensity .compactPanel {
+  padding: 16px;
+}
+
+.compactDensity .hubStatCard {
+  padding: 14px;
+  min-height: 88px;
+}
+
+.compactDensity .toolGrid,
+.compactDensity .hubStatGrid,
+.compactDensity .dashboardWorkspaceGrid,
+.compactDensity .dashboardActionGrid {
+  gap: 12px;
+}
+
+.compactDensity .dashboardWorkspaceCard {
+  min-height: 108px;
+  padding: 16px 42px 14px 18px;
+}
+
+.compactDensity .dashboardWorkspaceIcon {
+  width: 42px;
+  height: 42px;
+}
+
+.compactDensity .dashboardWorkspaceText h3 {
+  font-size: 0.98rem;
+}
+
+.compactDensity .dashboardWorkspaceText p {
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+
+.compactDensity input,
+.compactDensity select,
+.compactDensity textarea {
+  min-height: 36px;
+  padding: 7px 10px;
+}
+
+.compactDensity .primaryButton,
+.compactDensity .secondaryButton,
+.compactDensity .compactButton,
+.compactDensity .compactPrimary {
+  min-height: 36px;
+  padding: 8px 12px;
+}
+
+.compactDensity .nav,
+.compactDensity .modernNav {
+  gap: 6px;
+}
+
+.compactDensity .modernNavLink {
+  min-height: 38px;
+  padding: 8px 10px;
+}
+
+.compactDensity .brandIcon {
+  width: 42px;
+  height: 42px;
+}
