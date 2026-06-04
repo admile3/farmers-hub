@@ -8,7 +8,6 @@ import {
   Tag,
   Target
 } from "lucide-react";
-import StatCard from "./StatCard.jsx";
 
 export default function PricingGuideContent() {
   return (
@@ -31,17 +30,13 @@ export default function PricingGuideContent() {
         </div>
 
         <div className="moduleGuidePreview">
-          <div className="guideMiniPanel">
+          <div className="guideMiniPanel pricingGuidePanel">
             <div className="guideMiniHeader">
               <div>
                 <p className="eyebrow">Directory</p>
                 <h4>Product Directory</h4>
               </div>
-
-              <button className="guideMockButton" type="button">
-                <Plus size={14} />
-                New Product
-              </button>
+              <Package size={20} />
             </div>
 
             <div className="guideSearchMock pricingGuideSearchMock">
@@ -49,28 +44,14 @@ export default function PricingGuideContent() {
               <span>Search products...</span>
             </div>
 
-            <div className="pricingGuideProductList">
-              <div className="pricingGuideProductCard">
-                <div>
-                  <strong>Garlic Miso Seasoning</strong>
-                  <span>Spices • 1 oz pouch</span>
-                </div>
-                <div className="pricingGuideProductMetrics">
-                  <span>Retail $12.00</span>
-                  <span>Margin 82.5%</span>
-                </div>
-              </div>
+            <div className="guideSavedRecipe">
+              <strong>Garlic Miso Seasoning</strong>
+              <span>Spices • 1 oz pouch • Retail $12.00</span>
+            </div>
 
-              <div className="pricingGuideProductCard">
-                <div>
-                  <strong>Sourdough Loaf</strong>
-                  <span>Bread • each</span>
-                </div>
-                <div className="pricingGuideProductMetrics">
-                  <span>Retail $9.00</span>
-                  <span>Margin 71.0%</span>
-                </div>
-              </div>
+            <div className="guideSavedRecipe">
+              <strong>Country Sourdough</strong>
+              <span>Bread • each • Retail $9.00</span>
             </div>
           </div>
         </div>
@@ -87,27 +68,19 @@ export default function PricingGuideContent() {
         </div>
 
         <div className="moduleGuidePreview">
-          <div className="guideMiniPanel">
+          <div className="guideMiniPanel pricingGuidePanel">
             <div className="guideMiniHeader">
               <div>
                 <p className="eyebrow">Product</p>
                 <h4>Product Details</h4>
               </div>
-
-              <button className="guideMockButton" type="button">
-                <Save size={14} />
-                Save Product
-              </button>
+              <Tag size={20} />
             </div>
 
-            <div className="guideMiniGrid">
+            <div className="guideMiniGrid three">
               <div>
-                <span>Product Name</span>
-                <strong>Garlic Miso Seasoning</strong>
-              </div>
-              <div>
-                <span>SKU</span>
-                <strong>GM-001</strong>
+                <span>Name</span>
+                <strong>Garlic Miso</strong>
               </div>
               <div>
                 <span>Category</span>
@@ -116,6 +89,18 @@ export default function PricingGuideContent() {
               <div>
                 <span>Status</span>
                 <strong>Active</strong>
+              </div>
+              <div>
+                <span>SKU</span>
+                <strong>GM-001</strong>
+              </div>
+              <div>
+                <span>Unit</span>
+                <strong>1 oz pouch</strong>
+              </div>
+              <div>
+                <span>Source</span>
+                <strong>Linked</strong>
               </div>
             </div>
           </div>
@@ -134,28 +119,24 @@ export default function PricingGuideContent() {
         </div>
 
         <div className="moduleGuidePreview">
-          <div className="guideMiniPanel">
+          <div className="guideMiniPanel pricingGuidePanel">
             <div className="guideMiniHeader">
               <div>
-                <p className="eyebrow">Selected</p>
-                <h4>Garlic Miso Seasoning</h4>
+                <p className="eyebrow">Variants</p>
+                <h4>Package Sizes</h4>
               </div>
-              <Tag size={20} />
+              <Package size={20} />
             </div>
 
-            <div className="pricingGuideVariantStack">
-              <div className="pricingGuideVariantCard">
-                <strong>0.2 oz Pouch</strong>
-                <span>Sample size • retail $4.00</span>
-              </div>
-              <div className="pricingGuideVariantCard selected">
-                <strong>1 oz Pouch</strong>
-                <span>Standard size • retail $12.00</span>
-              </div>
-              <div className="pricingGuideVariantCard">
-                <strong>1 lb Bulk Bag</strong>
-                <span>Wholesale size • quote as needed</span>
-              </div>
+            <div className="pricingGuideChoiceGrid">
+              <span>0.2 oz pouch</span>
+              <span className="selected">1 oz pouch</span>
+              <span>1 lb bulk bag</span>
+            </div>
+
+            <div className="guideSavedRecipe">
+              <strong>Selected Variant</strong>
+              <span>1 oz pouch • Retail $12.00 • Wholesale $7.50</span>
             </div>
           </div>
         </div>
@@ -172,22 +153,22 @@ export default function PricingGuideContent() {
         </div>
 
         <div className="moduleGuidePreview">
-          <div className="guideMiniPanel">
+          <div className="guideMiniPanel pricingGuidePanel">
             <div className="guideMiniHeader">
               <div>
                 <p className="eyebrow">Pricing</p>
-                <h4>Pricing Analysis</h4>
+                <h4>Cost Inputs</h4>
               </div>
               <Calculator size={20} />
             </div>
 
             <div className="guideMiniGrid three">
               <div>
-                <span>Material Cost</span>
+                <span>Materials</span>
                 <strong>$32.00</strong>
               </div>
               <div>
-                <span>Batch Units</span>
+                <span>Units</span>
                 <strong>24</strong>
               </div>
               <div>
@@ -195,11 +176,11 @@ export default function PricingGuideContent() {
                 <strong>$0.35</strong>
               </div>
               <div>
-                <span>Labor Hours</span>
-                <strong>1.5</strong>
+                <span>Labor</span>
+                <strong>1.5 hr</strong>
               </div>
               <div>
-                <span>Labor Rate</span>
+                <span>Rate</span>
                 <strong>$18.00</strong>
               </div>
               <div>
@@ -221,13 +202,43 @@ export default function PricingGuideContent() {
           </p>
         </div>
 
-        <div className="moduleGuidePreview moduleGuideStatPreview pricingGuideStatPreview">
-          <StatCard icon={DollarSign} label="Retail" value="$12.00" sub="per 1 oz pouch" accent="pricing" />
-          <StatCard icon={DollarSign} label="Wholesale" value="$7.50" sub="per 1 oz pouch" accent="sourdough" />
-          <StatCard icon={Target} label="Cost" value="$2.10" sub="estimated per unit" accent="market" />
-          <StatCard icon={Package} label="Suggested Retail" value="$7.00" sub="70% target" accent="spice" />
-          <StatCard icon={Package} label="Suggested Wholesale" value="$4.20" sub="50% target" accent="pricing" />
-          <StatCard icon={Calculator} label="Retail Margin" value="82.5%" sub="$9.90 profit" accent="market" />
+        <div className="moduleGuidePreview">
+          <div className="guideMiniPanel pricingGuidePanel">
+            <div className="guideMiniHeader">
+              <div>
+                <p className="eyebrow">Analysis</p>
+                <h4>Pricing Summary</h4>
+              </div>
+              <Target size={20} />
+            </div>
+
+            <div className="guideMiniGrid three">
+              <div>
+                <span>Cost</span>
+                <strong>$2.10</strong>
+              </div>
+              <div>
+                <span>Retail</span>
+                <strong>$12.00</strong>
+              </div>
+              <div>
+                <span>Wholesale</span>
+                <strong>$7.50</strong>
+              </div>
+              <div>
+                <span>Retail Margin</span>
+                <strong>82.5%</strong>
+              </div>
+              <div>
+                <span>Wholesale Margin</span>
+                <strong>72.0%</strong>
+              </div>
+              <div>
+                <span>Profit</span>
+                <strong>$9.90</strong>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -242,42 +253,39 @@ export default function PricingGuideContent() {
         </div>
 
         <div className="moduleGuidePreview">
-          <div className="guideMiniPanel">
+          <div className="guideMiniPanel pricingGuidePanel">
             <div className="guideMiniHeader">
               <div>
                 <p className="eyebrow">Manage</p>
                 <h4>Saved Products</h4>
               </div>
-
-              <button className="guideMockButton" type="button">
-                <Save size={14} />
-                Save Product
-              </button>
+              <Save size={20} />
             </div>
 
-            <div className="pricingGuideManageGrid">
-              <div className="pricingGuideManageCard">
-                <Search size={16} />
+            <div className="guideRecipeRows pricingGuideRows">
+              <div className="guideRecipeHeader">
+                <span>Action</span>
+                <span>Use</span>
+              </div>
+              <div>
                 <strong>Search</strong>
-                <span>Find products by name, SKU, category, or notes.</span>
+                <span>Find products</span>
               </div>
-              <div className="pricingGuideManageCard">
-                <Package size={16} />
+              <div>
                 <strong>Filter</strong>
-                <span>Sort by category, status, or product type.</span>
+                <span>Sort lists</span>
               </div>
-              <div className="pricingGuideManageCard">
-                <DollarSign size={16} />
+              <div>
                 <strong>Update</strong>
-                <span>Adjust prices when costs or packaging change.</span>
+                <span>Revise pricing</span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <div className="moduleGuideTip">
-        <Tag size={18} />
+      <div className="moduleGuideTip pricingGuideTip">
+        <Plus size={18} />
         <p>
           Tip: keep products linked to their source modules whenever possible so recipes,
           package sizes, costs, orders, and inventory records stay connected across Farmers Hub.
