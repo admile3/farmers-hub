@@ -35,7 +35,14 @@
 }
 
 html {
+  font-size: 87.5%;
   scroll-behavior: smooth;
+}
+
+@media (max-width: 700px) {
+  html {
+    font-size: 100%;
+  }
 }
 
 body {
