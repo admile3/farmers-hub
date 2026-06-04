@@ -9,6 +9,7 @@ import {
   EyeOff,
   FileText,
   FlaskConical,
+  Flower2,
   Home,
   ListChecks,
   LogIn,
@@ -43,6 +44,7 @@ import PlantingScheduler from "./modules/PlantingScheduler.jsx";
 import AccountSettings from "./modules/AccountSettings.jsx";
 import Onboarding from "./modules/Onboarding.jsx";
 import Dashboard from "./modules/Dashboard.jsx";
+import FlowerStudio from "./modules/FlowerStudio.jsx";
 import { useAuth } from "./AuthContext.jsx";
 import { useUnsavedChanges } from "./UnsavedChangesContext.jsx";
 
@@ -65,6 +67,15 @@ const modules = [
     icon: FlaskConical,
     accent: "preserved"
   },
+  {
+  key: "flower-studio",
+  title: "Flower Studio",
+  description:
+    "Build flower pantries, import zone-friendly stems, create arrangements, calculate production, and add finished bouquets to inventory.",
+  path: "/flower-studio",
+  icon: Flower2,
+  accent: "flowers"
+},
   {
     key: "baking",
     title: "Baking Planner",
@@ -1290,6 +1301,7 @@ export default function App() {
 
         <Route path="/spice-kitchen" element={<AccessGate><SpiceKitchen /></AccessGate>} />
         <Route path="/preserved-foods" element={<AccessGate><PreservedFoods /></AccessGate>} />
+        <Route path="/flower-studio" element={<AccessGate><FlowerStudio /></AccessGate>} />
         <Route path="/baking-planner" element={<AccessGate><BakingPlanner /></AccessGate>} />
         <Route path="/market-prep" element={<AccessGate><MarketPrepPlanner /></AccessGate>} />
         <Route path="/planting-scheduler" element={<AccessGate><PlantingScheduler /></AccessGate>} />
