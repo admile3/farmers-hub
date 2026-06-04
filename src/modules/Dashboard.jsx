@@ -205,12 +205,14 @@ export default function Dashboard({
     !authLoading && !accountLoading && !user && showWelcomePricing;
 
   useEffect(() => {
-    const guideHidden = localStorage.getItem("hideModuleGuide_dashboard") === "true";
+  if (!user || shouldShowWelcomePricing) return;
 
-    if (!guideHidden) {
-      setShowGuide(true);
-    }
-  }, []);
+  const guideHidden = localStorage.getItem("hideModuleGuide_dashboard") === "true";
+
+  if (!guideHidden) {
+    setShowGuide(true);
+  }
+}, [user, shouldShowWelcomePricing]);
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -397,7 +399,7 @@ export default function Dashboard({
       ) : null}
 
       <ModuleGuideModal
-        isOpen={showGuide}
+  isOpen={Boolean(user) && !shouldShowWelcomePricing && showGuide}
         moduleKey="dashboard"
         title="How to Use the Dashboard"
         onClose={() => setShowGuide(false)}
