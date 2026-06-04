@@ -204,7 +204,6 @@ export default function Dashboard({
   const shouldShowWelcomePricing =
     !authLoading && !accountLoading && !user && showWelcomePricing;
 
-
   useEffect(() => {
     const guideHidden = localStorage.getItem("hideModuleGuide_dashboard") === "true";
 
@@ -416,6 +415,17 @@ export default function Dashboard({
             Manage recipes, products, pricing, customers, deadlines, prep plans,
             and business activity from one dashboard.
           </p>
+
+          <div className="button-row dashboardMainHeroActions">
+            <button
+              className="secondaryButton compactButton"
+              type="button"
+              onClick={() => setShowGuide(true)}
+            >
+              <CircleHelp size={16} />
+              Guide
+            </button>
+          </div>
         </div>
 
         <div className="heroPanel modernAccessPanel dashboardDatePanel">
@@ -428,21 +438,10 @@ export default function Dashboard({
             </p>
           </div>
 
-          <div className="dashboardHeroActions">
-            <button
-              className="secondaryButton"
-              type="button"
-              onClick={() => setShowGuide(true)}
-            >
-              <CircleHelp size={18} />
-              Guide
-            </button>
-
-            <GuardedLink to={user ? "/account-settings" : "/subscribe"} className="primaryButton">
-              {user ? "Manage Account" : "View Plans"}
-              <ArrowRight size={18} />
-            </GuardedLink>
-          </div>
+          <GuardedLink to={user ? "/account-settings" : "/subscribe"} className="primaryButton">
+            {user ? "Manage Account" : "View Plans"}
+            <ArrowRight size={18} />
+          </GuardedLink>
         </div>
       </section>
 
@@ -632,4 +631,3 @@ export default function Dashboard({
 }
 
 export { modules as dashboardModules };
-
