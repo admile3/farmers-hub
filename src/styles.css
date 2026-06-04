@@ -13741,3 +13741,67 @@ input[type="number"] {
     font-size: 0.82rem;
   }
 }
+.dashboardSubscriptionBanner {
+  min-height: auto;
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.dashboardFooterCopy {
+  display: grid;
+  gap: 5px;
+}
+
+.dashboardFooterCopy h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.dashboardFooterCopy p {
+  margin: 0;
+  max-width: 760px;
+}
+
+.dashboardFooterActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.dashboardFooterButton {
+  min-width: 190px;
+  min-height: 40px;
+  justify-content: center;
+  padding: 9px 16px;
+}
+
+@media (max-width: 850px) {
+  .dashboardSubscriptionBanner {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dashboardFooterActions {
+    justify-content: stretch;
+  }
+
+  .dashboardFooterButton {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .dashboardFooterActions {
+    flex-direction: column;
+  }
+
+  .dashboardFooterButton {
+    width: 100%;
+  }
+}
