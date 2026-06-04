@@ -11,8 +11,7 @@ import {
   Plus,
   Save,
   Search,
-  Trash2,
-  X
+  Trash2
 } from "lucide-react";
 
 import { useAuth } from "../AuthContext.jsx";
@@ -21,6 +20,7 @@ import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import PreservedFoodsGuideContent from "../components/PreservedFoodsGuideContent.jsx";
 import StatCard from "../components/StatCard.jsx";
 import { addQuantityToMatchedInventoryItem } from "../services/inventoryService.js";
+import { getSpiceIngredients } from "../services/spiceKitchenService.js";
 import {
   createPreservedBatch,
   createPreservedIngredient,
@@ -145,7 +145,7 @@ function convertToOunces(amount, unit) {
 }
 
 function convertCostToEachOrOunce(ingredient) {
-  const cost = toNumber(ingredient.cost);
+  const cost = toNumber(ingredient?.cost);
 
   if (!cost) return 0;
   if (ingredient.costUnit === "oz") return cost;
@@ -159,6 +159,7 @@ function createBlankRecipeIngredient() {
   return {
     ingredientId: "",
     ingredientName: "",
+    pantrySource: "",
     amount: "",
     unit: "oz",
     role: "Ingredient"
@@ -176,14 +177,20 @@ function createBlankPackage() {
   };
 }
 
-function getIngredientLabel(line, ingredients) {
-  const match = ingredients.find((item) => item.id === line.ingredientId);
+function getIngredientLabel(line, availableIngredients) {
+  const match = availableIngredients.find(
+    (item) => item.optionId === line.ingredientId
+  );
+
   return line.ingredientName || match?.name || "Unknown ingredient";
 }
 
-function calculateRecipeCost(recipe, ingredients) {
+function calculateRecipeCost(recipe, availableIngredients) {
   const ingredientCost = (recipe.ingredients || []).reduce((sum, line) => {
-    const ingredient = ingredients.find((item) => item.id === line.ingredientId);
+    const ingredient = availableIngredients.find(
+      (item) => item.optionId === line.ingredientId
+    );
+
     if (!ingredient) return sum;
 
     const unitCost = convertCostToEachOrOunce(ingredient);
@@ -223,9 +230,11 @@ function calculateBrine(recipe, packageItem, jarCount) {
 
 export default function PreservedFoods() {
   const { user, loginWithGoogle } = useAuth();
-  const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } = useUnsavedChanges();
+  const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } =
+    useUnsavedChanges();
 
   const [ingredients, setIngredients] = useState([]);
+  const [spiceIngredients, setSpiceIngredients] = useState([]);
   const [recipes, setRecipes] = useState([]);
   const [batches, setBatches] = useState([]);
   const [ingredientForm, setIngredientForm] = useState(emptyIngredient);
@@ -261,15 +270,18 @@ export default function PreservedFoods() {
     setLoading(true);
 
     try {
-      const [savedIngredients, savedRecipes, savedBatches] = await Promise.all([
-        getPreservedIngredients(user.uid),
-        getPreservedRecipes(user.uid),
-        getPreservedBatches(user.uid)
-      ]);
+      const [savedIngredients, savedRecipes, savedBatches, savedSpiceIngredients] =
+        await Promise.all([
+          getPreservedIngredients(user.uid),
+          getPreservedRecipes(user.uid),
+          getPreservedBatches(user.uid),
+          getSpiceIngredients(user.uid)
+        ]);
 
       setIngredients(savedIngredients);
       setRecipes(savedRecipes);
       setBatches(savedBatches);
+      setSpiceIngredients(savedSpiceIngredients);
     } catch (error) {
       console.error(error);
       showStatus("Could not load Preserved Foods data.", "error");
@@ -283,6 +295,7 @@ export default function PreservedFoods() {
       loadData();
     } else {
       setIngredients([]);
+      setSpiceIngredients([]);
       setRecipes([]);
       setBatches([]);
     }
@@ -301,12 +314,32 @@ export default function PreservedFoods() {
   useEffect(() => {
     if (!user) return;
 
-    const hideGuide = window.localStorage.getItem("hideModuleGuide_preservedFoods");
+    const hideGuide = window.localStorage.getItem(
+      "hideModuleGuide_preservedFoods"
+    );
 
     if (!hideGuide) {
       setShowGuide(true);
     }
   }, [user]);
+
+  const availableRecipeIngredients = useMemo(() => {
+    const preservedOptions = ingredients.map((ingredient) => ({
+      ...ingredient,
+      pantrySource: "Preserved Foods",
+      optionId: `preserved:${ingredient.id}`
+    }));
+
+    const spiceOptions = spiceIngredients.map((ingredient) => ({
+      ...ingredient,
+      pantrySource: "Spice Kitchen",
+      optionId: `spice:${ingredient.id}`
+    }));
+
+    return [...preservedOptions, ...spiceOptions].sort((a, b) =>
+      String(a.name || "").localeCompare(String(b.name || ""))
+    );
+  }, [ingredients, spiceIngredients]);
 
   const filteredRecipes = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
@@ -328,7 +361,12 @@ export default function PreservedFoods() {
 
   const selectedPackage = useMemo(() => {
     if (!selectedRecipe) return null;
-    return (selectedRecipe.packages || []).find((item) => item.id === batchForm.packageId) || null;
+
+    return (
+      (selectedRecipe.packages || []).find(
+        (item) => item.id === batchForm.packageId
+      ) || null
+    );
   }, [selectedRecipe, batchForm.packageId]);
 
   const brineSummary = useMemo(() => {
@@ -349,13 +387,14 @@ export default function PreservedFoods() {
   }, [selectedRecipe, selectedPackage, batchForm.jarCount]);
 
   const recipeCost = useMemo(() => {
-    return calculateRecipeCost(recipeForm, ingredients);
-  }, [recipeForm, ingredients]);
+    return calculateRecipeCost(recipeForm, availableRecipeIngredients);
+  }, [recipeForm, availableRecipeIngredients]);
 
   const selectedRecipeCost = useMemo(() => {
     if (!selectedRecipe) return 0;
-    return calculateRecipeCost(selectedRecipe, ingredients);
-  }, [selectedRecipe, ingredients]);
+
+    return calculateRecipeCost(selectedRecipe, availableRecipeIngredients);
+  }, [selectedRecipe, availableRecipeIngredients]);
 
   const batchCostEstimate = useMemo(() => {
     if (!selectedPackage || !brineSummary.jars) return 0;
@@ -366,9 +405,8 @@ export default function PreservedFoods() {
     return selectedRecipeCost + packagingCost;
   }, [selectedPackage, brineSummary.jars, selectedRecipeCost]);
 
-  const batchCostPerJar = brineSummary.jars > 0
-    ? batchCostEstimate / brineSummary.jars
-    : 0;
+  const batchCostPerJar =
+    brineSummary.jars > 0 ? batchCostEstimate / brineSummary.jars : 0;
 
   const dashboardSummary = useMemo(() => {
     const finishedJars = batches.reduce(
@@ -382,20 +420,24 @@ export default function PreservedFoods() {
 
     const averagePh =
       averagePhValues.length > 0
-        ? averagePhValues.reduce((sum, value) => sum + value, 0) / averagePhValues.length
+        ? averagePhValues.reduce((sum, value) => sum + value, 0) /
+          averagePhValues.length
         : 0;
 
     return {
-      ingredients: ingredients.length,
+      ingredients: ingredients.length + spiceIngredients.length,
+      preservedIngredients: ingredients.length,
+      sharedSpiceIngredients: spiceIngredients.length,
       recipes: recipes.length,
       batches: batches.length,
       finishedJars,
       averagePh
     };
-  }, [ingredients, recipes, batches]);
+  }, [ingredients, spiceIngredients, recipes, batches]);
 
   function updateIngredientField(field, value) {
     markPreservedDirty();
+
     setIngredientForm((current) => ({
       ...current,
       [field]: value
@@ -404,6 +446,7 @@ export default function PreservedFoods() {
 
   function updateRecipeField(field, value) {
     markPreservedDirty();
+
     setRecipeForm((current) => ({
       ...current,
       [field]: value
@@ -448,7 +491,11 @@ export default function PreservedFoods() {
 
     try {
       if (editingIngredientId) {
-        await updatePreservedIngredient(user.uid, editingIngredientId, cleanIngredient);
+        await updatePreservedIngredient(
+          user.uid,
+          editingIngredientId,
+          cleanIngredient
+        );
         showStatus("Ingredient updated.");
       } else {
         await createPreservedIngredient(user.uid, cleanIngredient);
@@ -492,9 +539,13 @@ export default function PreservedFoods() {
 
   function addRecipeIngredient() {
     markPreservedDirty();
+
     setRecipeForm((current) => ({
       ...current,
-      ingredients: [...(current.ingredients || []), createBlankRecipeIngredient()]
+      ingredients: [
+        ...(current.ingredients || []),
+        createBlankRecipeIngredient()
+      ]
     }));
   }
 
@@ -509,8 +560,12 @@ export default function PreservedFoods() {
       };
 
       if (field === "ingredientId") {
-        const ingredient = ingredients.find((item) => item.id === value);
+        const ingredient = availableRecipeIngredients.find(
+          (item) => item.optionId === value
+        );
+
         nextLine.ingredientName = ingredient?.name || "";
+        nextLine.pantrySource = ingredient?.pantrySource || "";
       }
 
       nextIngredients[index] = nextLine;
@@ -527,7 +582,9 @@ export default function PreservedFoods() {
 
     setRecipeForm((current) => ({
       ...current,
-      ingredients: (current.ingredients || []).filter((_, lineIndex) => lineIndex !== index)
+      ingredients: (current.ingredients || []).filter(
+        (_, lineIndex) => lineIndex !== index
+      )
     }));
   }
 
@@ -563,7 +620,9 @@ export default function PreservedFoods() {
 
     setRecipeForm((current) => ({
       ...current,
-      packages: (current.packages || []).filter((_, packageIndex) => packageIndex !== index)
+      packages: (current.packages || []).filter(
+        (_, packageIndex) => packageIndex !== index
+      )
     }));
   }
 
@@ -588,6 +647,7 @@ export default function PreservedFoods() {
         .map((line) => ({
           ingredientId: line.ingredientId,
           ingredientName: line.ingredientName,
+          pantrySource: line.pantrySource || "",
           amount: toNumber(line.amount),
           unit: line.unit,
           role: line.role || "Ingredient"
@@ -598,9 +658,12 @@ export default function PreservedFoods() {
           id: item.id || makeId("pkg"),
           name: item.name.trim(),
           jarSizeOz: toNumber(item.jarSizeOz),
-          retailPrice: item.retailPrice === "" ? "" : toNumber(item.retailPrice),
-          wholesalePrice: item.wholesalePrice === "" ? "" : toNumber(item.wholesalePrice),
-          packagingCost: item.packagingCost === "" ? "" : toNumber(item.packagingCost)
+          retailPrice:
+            item.retailPrice === "" ? "" : toNumber(item.retailPrice),
+          wholesalePrice:
+            item.wholesalePrice === "" ? "" : toNumber(item.wholesalePrice),
+          packagingCost:
+            item.packagingCost === "" ? "" : toNumber(item.packagingCost)
         }))
     };
 
@@ -847,7 +910,7 @@ export default function PreservedFoods() {
           icon={Beaker}
           label="Ingredients"
           value={loading ? "..." : dashboardSummary.ingredients}
-          sub="Saved inputs"
+          sub={`${dashboardSummary.preservedIngredients} pantry, ${dashboardSummary.sharedSpiceIngredients} shared spices`}
           accent="preserved"
         />
 
@@ -884,13 +947,13 @@ export default function PreservedFoods() {
         <a className="toolCard compactToolCard clickableToolCard" href="#preserved-pantry">
           <Library size={20} />
           <h3>Ingredient Pantry</h3>
-          <p>Save ingredients, jars, lids, labels, costs, suppliers, and notes.</p>
+          <p>Save preserved-specific ingredients, jars, lids, labels, costs, suppliers, and notes.</p>
         </a>
 
         <a className="toolCard compactToolCard clickableToolCard" href="#preserved-recipes">
           <FlaskConical size={20} />
           <h3>Recipe Builder</h3>
-          <p>Create preserved food formulas with ingredients and package sizes.</p>
+          <p>Create preserved food formulas using this pantry and shared Spice Kitchen ingredients.</p>
         </a>
 
         <a className="toolCard compactToolCard clickableToolCard" href="#preserved-brine">
@@ -954,7 +1017,9 @@ export default function PreservedFoods() {
                   step="0.01"
                   value={ingredientForm.cost}
                   onChange={(event) => updateIngredientField("cost", event.target.value)}
-                  onBlur={(event) => updateIngredientField("cost", cleanCurrency(event.target.value))}
+                  onBlur={(event) =>
+                    updateIngredientField("cost", cleanCurrency(event.target.value))
+                  }
                   placeholder="0.00"
                 />
               </label>
@@ -1026,7 +1091,7 @@ export default function PreservedFoods() {
                   </div>
                 ))
               ) : (
-                <div className="permitEmptyState">No ingredients yet.</div>
+                <div className="permitEmptyState">No preserved-specific ingredients yet.</div>
               )}
             </div>
           </section>
@@ -1202,11 +1267,32 @@ export default function PreservedFoods() {
                       }
                     >
                       <option value="">Choose ingredient...</option>
-                      {ingredients.map((ingredient) => (
-                        <option key={ingredient.id} value={ingredient.id}>
-                          {ingredient.name}
-                        </option>
-                      ))}
+
+                      <optgroup label="Preserved Foods Pantry">
+                        {availableRecipeIngredients
+                          .filter(
+                            (ingredient) =>
+                              ingredient.pantrySource === "Preserved Foods"
+                          )
+                          .map((ingredient) => (
+                            <option key={ingredient.optionId} value={ingredient.optionId}>
+                              {ingredient.name}
+                            </option>
+                          ))}
+                      </optgroup>
+
+                      <optgroup label="Spice Kitchen Ingredients">
+                        {availableRecipeIngredients
+                          .filter(
+                            (ingredient) =>
+                              ingredient.pantrySource === "Spice Kitchen"
+                          )
+                          .map((ingredient) => (
+                            <option key={ingredient.optionId} value={ingredient.optionId}>
+                              {ingredient.name}
+                            </option>
+                          ))}
+                      </optgroup>
                     </select>
 
                     <input
@@ -1249,7 +1335,9 @@ export default function PreservedFoods() {
                 ))}
 
                 {recipeForm.ingredients?.length ? null : (
-                  <div className="permitEmptyState">No recipe ingredients added yet.</div>
+                  <div className="permitEmptyState">
+                    No recipe ingredients added yet. You can use preserved pantry items or Spice Kitchen ingredients.
+                  </div>
                 )}
               </div>
 
@@ -1588,7 +1676,10 @@ export default function PreservedFoods() {
                         <div className="recipePartsList preservedRecipePreview">
                           {recipe.ingredients.slice(0, 4).map((line, index) => (
                             <div className="recipePartsRow" key={`${recipe.id}-${index}`}>
-                              <span>{getIngredientLabel(line, ingredients)}</span>
+                              <span>
+                                {getIngredientLabel(line, availableRecipeIngredients)}
+                                {line.pantrySource ? ` • ${line.pantrySource}` : ""}
+                              </span>
                               <strong>
                                 {line.amount} {line.unit}
                               </strong>
