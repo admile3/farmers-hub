@@ -13296,3 +13296,18 @@ input[type="number"] {
     width: 100%;
   }
 }
+/* Dashboard guide button placement */
+.dashboardMainHeroActions {
+  margin-top: 18px;
+}
+
+.dashboardMainHeroActions .secondaryButton {
+  width: fit-content;
+}
+
+@media (max-width: 700px) {
+  .dashboardMainHeroActions .secondaryButton {
+    width: 100%;
+    justify-content: center;
+  }
+}
