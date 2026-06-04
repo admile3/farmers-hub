@@ -1,57 +1,54 @@
 import {
-  Calculator,
+  ClipboardList,
   DollarSign,
   Package,
   Plus,
-  Save,
   Search,
-  Tag,
-  Target
+  Truck,
+  Users
 } from "lucide-react";
 
-export default function PricingGuideContent() {
+export default function OrdersGuideContent() {
   return (
-    <div className="moduleGuideContent pricingGuideContent">
+    <div className="moduleGuideContent ordersGuideContent">
       <section className="moduleGuideIntro">
         <p>
-          Products & Pricing helps you manage your product catalog, calculate true cost per unit,
-          set retail and wholesale prices, and keep pricing consistent across Farmers Hub.
+          Orders helps you create customer orders, connect them to customer records, add products or custom line items, and track fulfillment from request to completion.
         </p>
       </section>
 
       <section className="moduleGuideSection">
         <div className="moduleGuideStepText">
           <span className="moduleGuideStepNumber">Step 1</span>
-          <h3>Build your Product Directory.</h3>
+          <h3>Start a new order.</h3>
           <p>
-            Create products manually or pull products that were generated in other Farmers Hub modules.
-            Products created elsewhere can still be priced and analyzed here.
+            Create a new order and let the system assign the next order number. Set the order date, due date, status, fulfillment type, and retail or wholesale pricing.
           </p>
         </div>
 
         <div className="moduleGuidePreview">
-          <div className="guideMiniPanel pricingGuidePanel">
+          <div className="guideMiniPanel ordersGuidePanel">
             <div className="guideMiniHeader">
               <div>
-                <p className="eyebrow">Directory</p>
-                <h4>Product Directory</h4>
+                <p className="eyebrow">Editor</p>
+                <h4>New Order</h4>
               </div>
-              <Package size={20} />
+              <ClipboardList size={20} />
             </div>
 
-            <div className="guideSearchMock pricingGuideSearchMock">
-              <Search size={14} />
-              <span>Search products...</span>
-            </div>
-
-            <div className="guideSavedRecipe">
-              <strong>Garlic Miso Seasoning</strong>
-              <span>Spices • 1 oz pouch • Retail $12.00</span>
-            </div>
-
-            <div className="guideSavedRecipe">
-              <strong>Country Sourdough</strong>
-              <span>Bread • each • Retail $9.00</span>
+            <div className="guideMiniGrid three">
+              <div>
+                <span>Order #</span>
+                <strong>ORD-000014</strong>
+              </div>
+              <div>
+                <span>Status</span>
+                <strong>Draft</strong>
+              </div>
+              <div>
+                <span>Pricing</span>
+                <strong>Retail</strong>
+              </div>
             </div>
           </div>
         </div>
@@ -60,47 +57,36 @@ export default function PricingGuideContent() {
       <section className="moduleGuideSection">
         <div className="moduleGuideStepText">
           <span className="moduleGuideStepNumber">Step 2</span>
-          <h3>Load a product and review details.</h3>
+          <h3>Add customer info.</h3>
           <p>
-            Select a product to review or edit its name, category, SKU, status, unit label,
-            description, and notes. Generated products stay connected to their source module.
+            Choose a saved customer, quick-add a new customer to Customers, or enter a one-time customer just for this order.
           </p>
         </div>
 
         <div className="moduleGuidePreview">
-          <div className="guideMiniPanel pricingGuidePanel">
+          <div className="guideMiniPanel ordersGuidePanel">
             <div className="guideMiniHeader">
               <div>
-                <p className="eyebrow">Product</p>
-                <h4>Product Details</h4>
+                <p className="eyebrow">Customer</p>
+                <h4>Customer Info</h4>
               </div>
-              <Tag size={20} />
+              <Users size={20} />
             </div>
 
-            <div className="guideMiniGrid three">
+            <div className="ordersGuideChoiceGrid">
+              <span>Saved customer</span>
+              <span>Quick add</span>
+              <span>One-time</span>
+            </div>
+
+            <div className="guideMiniGrid">
               <div>
                 <span>Name</span>
-                <strong>Garlic Miso</strong>
+                <strong>Jordan Miller</strong>
               </div>
               <div>
-                <span>Category</span>
-                <strong>Spices</strong>
-              </div>
-              <div>
-                <span>Status</span>
-                <strong>Active</strong>
-              </div>
-              <div>
-                <span>SKU</span>
-                <strong>GM-001</strong>
-              </div>
-              <div>
-                <span>Unit</span>
-                <strong>1 oz pouch</strong>
-              </div>
-              <div>
-                <span>Source</span>
-                <strong>Linked</strong>
+                <span>Contact</span>
+                <strong>Email</strong>
               </div>
             </div>
           </div>
@@ -110,33 +96,35 @@ export default function PricingGuideContent() {
       <section className="moduleGuideSection">
         <div className="moduleGuideStepText">
           <span className="moduleGuideStepNumber">Step 3</span>
-          <h3>Select package variants.</h3>
+          <h3>Add line items.</h3>
           <p>
-            Some products may have multiple package sizes or variants. Select the variant you want
-            to price and analyze. Each variant can have its own cost, retail price, wholesale price,
-            and profit margin.
+            Build the order using products you&apos;ve created elsewhere in Farmers Hub. Select products from your product catalog or manually enter custom items when needed. Product pricing, package sizes, and product details can be pulled directly into the order to speed up order entry and improve consistency.
           </p>
         </div>
 
         <div className="moduleGuidePreview">
-          <div className="guideMiniPanel pricingGuidePanel">
+          <div className="guideMiniPanel ordersGuidePanel">
             <div className="guideMiniHeader">
               <div>
-                <p className="eyebrow">Variants</p>
-                <h4>Package Sizes</h4>
+                <p className="eyebrow">Products</p>
+                <h4>Line Items</h4>
               </div>
               <Package size={20} />
             </div>
 
-            <div className="pricingGuideChoiceGrid">
-              <span>0.2 oz pouch</span>
-              <span className="selected">1 oz pouch</span>
-              <span>1 lb bulk bag</span>
-            </div>
-
-            <div className="guideSavedRecipe">
-              <strong>Selected Variant</strong>
-              <span>1 oz pouch • Retail $12.00 • Wholesale $7.50</span>
+            <div className="guideRecipeRows ordersGuideRows">
+              <div className="guideRecipeHeader">
+                <span>Item</span>
+                <span>Total</span>
+              </div>
+              <div>
+                <strong>Country Sourdough</strong>
+                <span>$24.00</span>
+              </div>
+              <div>
+                <strong>Custom add-on</strong>
+                <span>$8.00</span>
+              </div>
             </div>
           </div>
         </div>
@@ -145,47 +133,30 @@ export default function PricingGuideContent() {
       <section className="moduleGuideSection">
         <div className="moduleGuideStepText">
           <span className="moduleGuideStepNumber">Step 4</span>
-          <h3>Enter production costs.</h3>
+          <h3>Review order totals.</h3>
           <p>
-            Add ingredient or material costs, packaging costs, labor, and overhead expenses.
-            The calculator uses these values to determine your true production cost per unit.
+            Add discounts, service or delivery fees, tax rate, and deposit paid. The order summary calculates subtotal, tax, total, and balance due.
           </p>
         </div>
 
         <div className="moduleGuidePreview">
-          <div className="guideMiniPanel pricingGuidePanel">
+          <div className="guideMiniPanel ordersGuidePanel">
             <div className="guideMiniHeader">
               <div>
-                <p className="eyebrow">Pricing</p>
-                <h4>Cost Inputs</h4>
+                <p className="eyebrow">Totals</p>
+                <h4>Order Summary</h4>
               </div>
-              <Calculator size={20} />
+              <DollarSign size={20} />
             </div>
 
-            <div className="guideMiniGrid three">
+            <div className="guideMiniGrid">
               <div>
-                <span>Materials</span>
+                <span>Subtotal</span>
                 <strong>$32.00</strong>
               </div>
               <div>
-                <span>Units</span>
-                <strong>24</strong>
-              </div>
-              <div>
-                <span>Packaging</span>
-                <strong>$0.35</strong>
-              </div>
-              <div>
-                <span>Labor</span>
-                <strong>1.5 hr</strong>
-              </div>
-              <div>
-                <span>Rate</span>
-                <strong>$18.00</strong>
-              </div>
-              <div>
-                <span>Overhead</span>
-                <strong>$6.00</strong>
+                <span>Balance Due</span>
+                <strong>$32.00</strong>
               </div>
             </div>
           </div>
@@ -195,48 +166,28 @@ export default function PricingGuideContent() {
       <section className="moduleGuideSection">
         <div className="moduleGuideStepText">
           <span className="moduleGuideStepNumber">Step 5</span>
-          <h3>Review suggested pricing.</h3>
+          <h3>Track order status.</h3>
           <p>
-            The module calculates cost per unit, suggested retail price, suggested wholesale price,
-            retail margin, and wholesale margin before you commit to a price.
+            Move orders from Draft to Confirmed, In Production, Ready, Completed, or Cancelled so the dashboard reflects what needs attention.
           </p>
         </div>
 
         <div className="moduleGuidePreview">
-          <div className="guideMiniPanel pricingGuidePanel">
+          <div className="guideMiniPanel ordersGuidePanel">
             <div className="guideMiniHeader">
               <div>
-                <p className="eyebrow">Analysis</p>
-                <h4>Pricing Summary</h4>
+                <p className="eyebrow">Fulfillment</p>
+                <h4>Status Flow</h4>
               </div>
-              <Target size={20} />
+              <Truck size={20} />
             </div>
 
-            <div className="guideMiniGrid three">
-              <div>
-                <span>Cost</span>
-                <strong>$2.10</strong>
-              </div>
-              <div>
-                <span>Retail</span>
-                <strong>$12.00</strong>
-              </div>
-              <div>
-                <span>Wholesale</span>
-                <strong>$7.50</strong>
-              </div>
-              <div>
-                <span>Retail Margin</span>
-                <strong>82.5%</strong>
-              </div>
-              <div>
-                <span>Wholesale Margin</span>
-                <strong>72.0%</strong>
-              </div>
-              <div>
-                <span>Profit</span>
-                <strong>$9.90</strong>
-              </div>
+            <div className="ordersGuideStatusFlow">
+              <span>Draft</span>
+              <span>Confirmed</span>
+              <span>In Production</span>
+              <span>Ready</span>
+              <span>Completed</span>
             </div>
           </div>
         </div>
@@ -245,50 +196,39 @@ export default function PricingGuideContent() {
       <section className="moduleGuideSection">
         <div className="moduleGuideStepText">
           <span className="moduleGuideStepNumber">Step 6</span>
-          <h3>Save and manage products.</h3>
+          <h3>Use the order directory.</h3>
           <p>
-            Save products to your directory, search existing products, filter by category or status,
-            and update pricing as costs change.
+            Search and filter orders by customer, product, order number, due date, or status. Open any order to update details or delete it.
           </p>
         </div>
 
         <div className="moduleGuidePreview">
-          <div className="guideMiniPanel pricingGuidePanel">
+          <div className="guideMiniPanel ordersGuidePanel">
             <div className="guideMiniHeader">
               <div>
-                <p className="eyebrow">Manage</p>
-                <h4>Saved Products</h4>
+                <p className="eyebrow">Directory</p>
+                <h4>Order Directory</h4>
               </div>
-              <Save size={20} />
+              <Search size={20} />
             </div>
 
-            <div className="guideRecipeRows pricingGuideRows">
-              <div className="guideRecipeHeader">
-                <span>Action</span>
-                <span>Use</span>
-              </div>
-              <div>
-                <strong>Search</strong>
-                <span>Find products</span>
-              </div>
-              <div>
-                <strong>Filter</strong>
-                <span>Sort lists</span>
-              </div>
-              <div>
-                <strong>Update</strong>
-                <span>Revise pricing</span>
-              </div>
+            <div className="guideSavedRecipe">
+              <strong>ORD-000014</strong>
+              <span>Jordan Miller • Ready • $32.00</span>
+            </div>
+
+            <div className="guideSavedRecipe">
+              <strong>ORD-000015</strong>
+              <span>One-time customer • Draft • $18.00</span>
             </div>
           </div>
         </div>
       </section>
 
-      <div className="moduleGuideTip pricingGuideTip">
+      <div className="moduleGuideTip ordersGuideTip">
         <Plus size={18} />
         <p>
-          Tip: keep products linked to their source modules whenever possible so recipes,
-          package sizes, costs, orders, and inventory records stay connected across Farmers Hub.
+          Tip: use saved customer profiles whenever possible so order details stay connected to your CRM and repeat customers are easier to manage.
         </p>
       </div>
     </div>
