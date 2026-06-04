@@ -15,8 +15,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "../AuthContext.jsx";
 import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
-import StatCard from "../components/StatCard.jsx";
 import ListsGuideContent from "../components/ListsGuideContent.jsx";
+import StatCard from "../components/StatCard.jsx";
 import {
   addListItem,
   createList,
@@ -98,6 +98,17 @@ export default function Lists() {
 
     return () => window.clearTimeout(timer);
   }, [statusMessage]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const hasSeenGuide = window.localStorage.getItem("farmersHubListsGuideSeen");
+
+    if (!hasSeenGuide) {
+      setIsGuideOpen(true);
+      window.localStorage.setItem("farmersHubListsGuideSeen", "true");
+    }
+  }, [user]);
 
   async function loadLists() {
     if (!user) return;
@@ -704,17 +715,40 @@ export default function Lists() {
       ) : null}
 
       {isGuideOpen ? (
-        <div className="permitModalOverlay" role="dialog" aria-modal="true">
-          <div className="permitModal guideModal">
-            <div className="permitModalHeader">
-              <h3>Lists Guide</h3>
+        <div className="moduleGuideOverlay" role="dialog" aria-modal="true">
+          <div className="moduleGuideModal">
+            <div className="moduleGuideHeader">
+              <div>
+                <p className="eyebrow">Module Guide</p>
+                <h2>Lists Guide</h2>
+              </div>
 
-              <button type="button" onClick={() => setIsGuideOpen(false)}>
+              <button
+                className="moduleGuideCloseButton"
+                type="button"
+                onClick={() => setIsGuideOpen(false)}
+              >
                 <X size={20} />
               </button>
             </div>
 
-            <ListsGuideContent />
+            <div className="moduleGuideBody">
+              <ListsGuideContent />
+            </div>
+
+            <div className="moduleGuideFooter">
+              <span className="moduleGuideDismiss">
+                Use this guide anytime from the Guide button.
+              </span>
+
+              <button
+                className="primaryButton"
+                type="button"
+                onClick={() => setIsGuideOpen(false)}
+              >
+                Got it
+              </button>
+            </div>
           </div>
         </div>
       ) : null}
