@@ -11,8 +11,12 @@ import {
   Search,
   Trash2,
   TrendingDown,
+  CircleHelp,
   X
 } from "lucide-react";
+
+import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
+import InventoryGuideContent from "../components/InventoryGuideContent.jsx";
 
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
@@ -488,6 +492,7 @@ export default function Inventory() {
   const [loading, setLoading] = useState(false);
   const [loadingDirectoryProducts, setLoadingDirectoryProducts] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   function showStatus(message, type = "info") {
     setStatusMessage(message);
@@ -511,7 +516,14 @@ export default function Inventory() {
     return () => window.clearTimeout(timer);
   }, [statusMessage]);
 
-  async function loadInventoryItems() {
+  
+
+  useEffect(() => {
+    const hidden = localStorage.getItem("hideModuleGuide_inventory") === "true";
+    if (!hidden) setShowGuide(true);
+  }, []);
+
+async function loadInventoryItems() {
     if (!user) return;
 
     setLoading(true);
@@ -1123,6 +1135,15 @@ showStatus("Inventory quantity updated.", "success");
           >
             <Plus size={16} />
             Add Item
+          </button>
+
+          <button
+            className="secondaryButton compactButton farmHeroAction"
+            type="button"
+            onClick={() => setShowGuide(true)}
+          >
+            <CircleHelp size={16} />
+            Guide
           </button>
         </div>
       </section>
@@ -1801,6 +1822,15 @@ showStatus("Inventory quantity updated.", "success");
           </div>
         </div>
       ) : null}
-    </div>
+    
+
+      <ModuleGuideModal
+        isOpen={showGuide}
+        moduleKey="inventory"
+        title="How to Use Inventory"
+        onClose={() => setShowGuide(false)}
+      >
+        <InventoryGuideContent />
+      </ModuleGuideModal></div>
   );
 }
