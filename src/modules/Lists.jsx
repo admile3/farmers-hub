@@ -16,6 +16,7 @@ import {
 import { useAuth } from "../AuthContext.jsx";
 import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import ListsGuideContent from "../components/ListsGuideContent.jsx";
+import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import StatCard from "../components/StatCard.jsx";
 import {
   addListItem,
@@ -102,11 +103,13 @@ export default function Lists() {
   useEffect(() => {
     if (!user) return;
 
-    const hasSeenGuide = window.localStorage.getItem("farmersHubListsGuideSeen");
+    window.localStorage.removeItem("farmersHubListsGuideSeen");
 
-    if (!hasSeenGuide) {
+    const guideHidden =
+      window.localStorage.getItem("hideModuleGuide_lists") === "true";
+
+    if (!guideHidden) {
       setIsGuideOpen(true);
-      window.localStorage.setItem("farmersHubListsGuideSeen", "true");
     }
   }, [user]);
 
@@ -714,44 +717,14 @@ export default function Lists() {
         </div>
       ) : null}
 
-      {isGuideOpen ? (
-        <div className="moduleGuideOverlay" role="dialog" aria-modal="true">
-          <div className="moduleGuideModal">
-            <div className="moduleGuideHeader">
-              <div>
-                <p className="eyebrow">Module Guide</p>
-                <h2>Lists Guide</h2>
-              </div>
-
-              <button
-                className="moduleGuideCloseButton"
-                type="button"
-                onClick={() => setIsGuideOpen(false)}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="moduleGuideBody">
-              <ListsGuideContent />
-            </div>
-
-            <div className="moduleGuideFooter">
-              <span className="moduleGuideDismiss">
-                Use this guide anytime from the Guide button.
-              </span>
-
-              <button
-                className="primaryButton"
-                type="button"
-                onClick={() => setIsGuideOpen(false)}
-              >
-                Got it
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <ModuleGuideModal
+        isOpen={isGuideOpen}
+        moduleKey="lists"
+        title="Lists Guide"
+        onClose={() => setIsGuideOpen(false)}
+      >
+        <ListsGuideContent />
+      </ModuleGuideModal>
     </div>
   );
 }
