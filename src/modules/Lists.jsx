@@ -5,6 +5,7 @@ import {
   CheckSquare,
   ClipboardList,
   Folder,
+  HelpCircle,
   ListPlus,
   Percent,
   Plus,
@@ -15,6 +16,7 @@ import {
 import { useAuth } from "../AuthContext.jsx";
 import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import StatCard from "../components/StatCard.jsx";
+import ListsGuideContent from "../components/ListsGuideContent.jsx";
 import {
   addListItem,
   createList,
@@ -43,13 +45,15 @@ function makeId(prefix = "list") {
 
 export default function Lists() {
   const { user, loginWithGoogle } = useAuth();
-  const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } = useUnsavedChanges();
+  const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } =
+    useUnsavedChanges();
 
   const [lists, setLists] = useState([]);
   const [selectedList, setSelectedList] = useState(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [isNewListOpen, setIsNewListOpen] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [newItemText, setNewItemText] = useState("");
 
@@ -388,9 +392,7 @@ export default function Lists() {
 
             <h2>{selectedList.name}</h2>
 
-            {selectedList.description ? (
-              <p>{selectedList.description}</p>
-            ) : null}
+            {selectedList.description ? <p>{selectedList.description}</p> : null}
           </div>
 
           <div className="listProgressCard">
@@ -498,6 +500,15 @@ export default function Lists() {
         </div>
 
         <div className="farmModuleHeroActions">
+          <button
+            className="secondaryButton compactButton farmHeroAction"
+            type="button"
+            onClick={() => setIsGuideOpen(true)}
+          >
+            <HelpCircle size={18} />
+            Guide
+          </button>
+
           <button
             className="primaryButton compactPrimary farmHeroAction"
             type="button"
@@ -688,6 +699,22 @@ export default function Lists() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      ) : null}
+
+      {isGuideOpen ? (
+        <div className="permitModalOverlay" role="dialog" aria-modal="true">
+          <div className="permitModal guideModal">
+            <div className="permitModalHeader">
+              <h3>Lists Guide</h3>
+
+              <button type="button" onClick={() => setIsGuideOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <ListsGuideContent />
           </div>
         </div>
       ) : null}
