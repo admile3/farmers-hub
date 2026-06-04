@@ -13510,3 +13510,234 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+:root {
+  --inventory: #6f8794;
+  --preserved: #8f6f4e;
+}
+
+.dashboardActionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+
+.dashboardActionPanel {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboardActionPanel .dashboardList {
+  flex: 1;
+}
+
+.dashboardWorkspacesPanel {
+  display: grid;
+  gap: 16px;
+}
+
+.dashboardWorkspaceGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.dashboardWorkspaceCard {
+  position: relative;
+  min-height: 126px;
+  border: 1px solid rgba(22, 27, 34, 0.1);
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 10px 26px rgba(22, 27, 34, 0.045);
+  padding: 20px 48px 18px 22px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  overflow: hidden;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    border-color 160ms ease;
+}
+
+.dashboardWorkspaceCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 42px rgba(22, 27, 34, 0.09);
+  border-color: rgba(22, 27, 34, 0.16);
+}
+
+.dashboardWorkspaceAccent {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 7px;
+  border-radius: 18px 0 0 18px;
+  background: var(--green);
+}
+
+.dashboardWorkspaceIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  background: var(--green);
+}
+
+.dashboardWorkspaceText {
+  min-width: 0;
+}
+
+.dashboardWorkspaceText h3 {
+  margin: 0 0 6px;
+  color: var(--text);
+  font-size: 1.02rem;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.dashboardWorkspaceText p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.dashboardWorkspaceArrow {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(22, 27, 34, 0.1);
+  border-radius: 10px;
+  background: #fbfaf6;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.dashboardWorkspaceCard:hover .dashboardWorkspaceArrow {
+  color: #ffffff;
+  transform: translateX(2px);
+}
+
+.dashboardWorkspaceCard.spice .dashboardWorkspaceAccent,
+.dashboardWorkspaceCard.spice:hover .dashboardWorkspaceArrow,
+.dashboardWorkspaceIcon.spice {
+  background: var(--spice);
+}
+
+.dashboardWorkspaceCard.preserved .dashboardWorkspaceAccent,
+.dashboardWorkspaceCard.preserved:hover .dashboardWorkspaceArrow,
+.dashboardWorkspaceIcon.preserved {
+  background: var(--preserved);
+}
+
+.dashboardWorkspaceCard.sourdough .dashboardWorkspaceAccent,
+.dashboardWorkspaceCard.sourdough:hover .dashboardWorkspaceArrow,
+.dashboardWorkspaceIcon.sourdough {
+  background: var(--sourdough);
+}
+
+.dashboardWorkspaceCard.market .dashboardWorkspaceAccent,
+.dashboardWorkspaceCard.market:hover .dashboardWorkspaceArrow,
+.dashboardWorkspaceIcon.market {
+  background: var(--market);
+}
+
+.dashboardWorkspaceCard.planting .dashboardWorkspaceAccent,
+.dashboardWorkspaceCard.planting:hover .dashboardWorkspaceArrow,
+.dashboardWorkspaceIcon.planting {
+  background: var(--planting);
+}
+
+.dashboardWorkspaceCard.customers .dashboardWorkspaceAccent,
+.dashboardWorkspaceCard.customers:hover .dashboardWorkspaceArrow,
+.dashboardWorkspaceIcon.customers {
+  background: var(--customers);
+}
+
+.dashboardWorkspaceCard.orders .dashboardWorkspaceAccent,
+.dashboardWorkspaceCard.orders:hover .dashboardWorkspaceArrow,
+.dashboardWorkspaceIcon.orders {
+  background: var(--orders);
+}
+
+.dashboardWorkspaceCard.inventory .dashboardWorkspaceAccent,
+.dashboardWorkspaceCard.inventory:hover .dashboardWorkspaceArrow,
+.dashboardWorkspaceIcon.inventory {
+  background: var(--inventory);
+}
+
+.dashboardWorkspaceCard.pricing .dashboardWorkspaceAccent,
+.dashboardWorkspaceCard.pricing:hover .dashboardWorkspaceArrow,
+.dashboardWorkspaceIcon.pricing {
+  background: var(--pricing);
+}
+
+.dashboardWorkspaceCard.grant .dashboardWorkspaceAccent,
+.dashboardWorkspaceCard.grant:hover .dashboardWorkspaceArrow,
+.dashboardWorkspaceIcon.grant {
+  background: var(--grant);
+}
+
+.dashboardWorkspaceCard.lists .dashboardWorkspaceAccent,
+.dashboardWorkspaceCard.lists:hover .dashboardWorkspaceArrow,
+.dashboardWorkspaceIcon.lists {
+  background: var(--lists);
+}
+
+.dashboardWorkspaceCard.calendar .dashboardWorkspaceAccent,
+.dashboardWorkspaceCard.calendar:hover .dashboardWorkspaceArrow,
+.dashboardWorkspaceIcon.calendar {
+  background: var(--calendar);
+}
+
+.dashboardWorkspaceCard:hover .dashboardWorkspaceText h3 {
+  color: var(--text);
+}
+
+@media (max-width: 1180px) {
+  .dashboardWorkspaceGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .dashboardActionGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardWorkspaceGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboardWorkspaceCard {
+    min-height: 112px;
+    padding: 18px 44px 16px 18px;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .dashboardWorkspaceIcon {
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+  }
+
+  .dashboardWorkspaceText h3 {
+    font-size: 0.98rem;
+  }
+
+  .dashboardWorkspaceText p {
+    font-size: 0.82rem;
+  }
+}
