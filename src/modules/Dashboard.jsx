@@ -509,6 +509,44 @@ export default function Dashboard({
         />
       </section>
 
+      <section className="dashboardPanel dashboardWorkspacesPanel">
+        <div className="sectionHeader dashboardPanelHeader">
+          <div>
+            <p className="eyebrow">Workspaces</p>
+            <h2>Jump back in</h2>
+          </div>
+        </div>
+
+        <div className="dashboardWorkspaceGrid">
+          {modules.map((module) => {
+            const Icon = module.icon;
+
+            return (
+              <GuardedLink
+                to={module.path}
+                className={`dashboardWorkspaceCard ${module.accent}`}
+                key={module.path}
+              >
+                <span className="dashboardWorkspaceAccent" />
+
+                <div className={`dashboardWorkspaceIcon ${module.accent}`}>
+                  <Icon size={24} />
+                </div>
+
+                <div className="dashboardWorkspaceText">
+                  <h3>{module.title}</h3>
+                  <p>{module.description}</p>
+                </div>
+
+                <span className="dashboardWorkspaceArrow">
+                  <ArrowRight size={18} />
+                </span>
+              </GuardedLink>
+            );
+          })}
+        </div>
+      </section>
+
       <section className="dashboardActionGrid">
         <div className="dashboardPanel dashboardActionPanel">
           <div className="sectionHeader dashboardPanelHeader">
@@ -585,44 +623,6 @@ export default function Dashboard({
               </p>
             )}
           </div>
-        </div>
-      </section>
-
-      <section className="dashboardPanel dashboardWorkspacesPanel">
-        <div className="sectionHeader dashboardPanelHeader">
-          <div>
-            <p className="eyebrow">Workspaces</p>
-            <h2>Jump back in</h2>
-          </div>
-        </div>
-
-        <div className="dashboardWorkspaceGrid">
-          {modules.map((module) => {
-            const Icon = module.icon;
-
-            return (
-              <GuardedLink
-                to={module.path}
-                className={`dashboardWorkspaceCard ${module.accent}`}
-                key={module.path}
-              >
-                <span className="dashboardWorkspaceAccent" />
-
-                <div className={`dashboardWorkspaceIcon ${module.accent}`}>
-                  <Icon size={24} />
-                </div>
-
-                <div className="dashboardWorkspaceText">
-                  <h3>{module.title}</h3>
-                  <p>{module.description}</p>
-                </div>
-
-                <span className="dashboardWorkspaceArrow">
-                  <ArrowRight size={18} />
-                </span>
-              </GuardedLink>
-            );
-          })}
         </div>
       </section>
 
