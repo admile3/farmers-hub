@@ -13170,3 +13170,91 @@ input[type="number"] {
 .pricingGuidePreviewClip .pricingVariantActionsCell {
   display: none;
 }
+/* =========================================================
+   Dashboard Guide Content
+   ========================================================= */
+
+.dashboardHeroActionStack {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboardHeroActionStack .primaryButton,
+.dashboardHeroActionStack .secondaryButton {
+  width: 100%;
+}
+
+.dashboardGuideButton {
+  justify-content: center;
+}
+
+.dashboardGuideStatPreview {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dashboardGuidePanel {
+  border-color: rgba(52, 117, 62, 0.14);
+}
+
+.dashboardGuideWorkspaceList {
+  display: grid;
+  gap: 8px;
+}
+
+.dashboardGuideWorkspaceList > div {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 9px;
+  row-gap: 2px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: #fbfaf6;
+  padding: 10px;
+}
+
+.dashboardGuideWorkspaceList strong {
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.15;
+}
+
+.dashboardGuideWorkspaceList small {
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.25;
+}
+
+.dashboardGuideDot {
+  grid-row: 1 / span 2;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+}
+
+.dashboardGuideDot.spice {
+  background: var(--spice);
+}
+
+.dashboardGuideDot.market {
+  background: var(--green);
+}
+
+.dashboardGuideDot.customers {
+  background: var(--customers, #3d7e90);
+}
+
+.dashboardGuideTip {
+  border-color: rgba(52, 117, 62, 0.18);
+  background: #f5fbf3;
+}
+
+@media (max-width: 700px) {
+  .dashboardGuideStatPreview {
+    grid-template-columns: 1fr;
+  }
+}
