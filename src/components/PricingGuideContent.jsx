@@ -30,61 +30,45 @@ export default function PricingGuideContent() {
           </p>
         </div>
 
-        <div className="moduleGuidePreview pricingGuidePreviewClip">
-          <div className="workspacePanel compactPanel pricingGuidePanel">
-            <div className="workspaceHeader compactPanelHeader pricingGuideHeaderStack">
+        <div className="moduleGuidePreview">
+          <div className="guideMiniPanel">
+            <div className="guideMiniHeader">
               <div>
                 <p className="eyebrow">Directory</p>
-                <h3>Product Directory</h3>
+                <h4>Product Directory</h4>
               </div>
-
-              <div className="formActions compactActions pricingGuideActions">
-                <button className="secondaryButton compactButton" type="button">
-                  Refresh
-                </button>
-                <button className="secondaryButton compactButton" type="button">
-                  <Package size={15} />
-                  Load Sample
-                </button>
-                <button className="primaryButton compactPrimary" type="button">
-                  <Plus size={15} />
-                  New Product
-                </button>
-              </div>
+              <button className="guideMockButton" type="button">
+                <Plus size={14} />
+                New Product
+              </button>
             </div>
 
-            <div className="customersFilterPanel pricingGuideFilters">
-              <div className="searchBox compactSearch customersSearchBox pricingGuideSearchBox">
-                <Search size={17} />
-                <span>Search products, variants, SKU, category...</span>
-              </div>
-
-              <label>
-                Category
-                <select value="All categories" readOnly>
-                  <option>All categories</option>
-                </select>
-              </label>
+            <div className="guideSearchMock">
+              <Search size={14} />
+              <span>Search products...</span>
             </div>
 
-            <div className="batchTable compactBatchTable pricingComparisonTable pricingGuideTable pricingGuideCompactTable">
-              <div className="pricingComparisonHeader pricingGuideCompactHeader">
+            <div className="pricingGuideMockTable">
+              <div className="pricingGuideMockHeader">
                 <span>Product</span>
-                <span>Category</span>
                 <span>Retail</span>
-                <span>Wholesale</span>
+                <span>Margin</span>
               </div>
-
-              <div className="pricingComparisonRow pricingGuideCompactRow">
-                <span className="pricingProductCell">
-                  <button className="savedItemLink" type="button">
-                    Garlic Miso Seasoning
-                  </button>
-                  <small>Generated • GM-001 • 3 size variants</small>
-                </span>
-                <span>Spices</span>
-                <span className="pricingMetric">$12.00</span>
-                <span className="pricingMetric">$7.50</span>
+              <div className="pricingGuideMockRow">
+                <div>
+                  <strong>Garlic Miso Seasoning</strong>
+                  <small>Spices • 1 oz pouch</small>
+                </div>
+                <span>$12.00</span>
+                <span>82.5%</span>
+              </div>
+              <div className="pricingGuideMockRow">
+                <div>
+                  <strong>Sourdough Loaf</strong>
+                  <small>Bread • each</small>
+                </div>
+                <span>$9.00</span>
+                <span>71.0%</span>
               </div>
             </div>
           </div>
@@ -101,58 +85,36 @@ export default function PricingGuideContent() {
           </p>
         </div>
 
-        <div className="moduleGuidePreview pricingGuidePreview pricingGuidePreviewClip">
-          <div className="workspacePanel compactPanel pricingGuidePanel">
-            <div className="workspaceHeader compactPanelHeader pricingGuideHeaderStack">
+        <div className="moduleGuidePreview">
+          <div className="guideMiniPanel">
+            <div className="guideMiniHeader">
               <div>
                 <p className="eyebrow">Product</p>
-                <h3>Product Details</h3>
+                <h4>Product Details</h4>
               </div>
-
-              <div className="formActions compactActions">
-                <button className="primaryButton compactPrimary" type="button">
-                  <Save size={15} />
-                  Save Product
-                </button>
-              </div>
+              <button className="guideMockButton" type="button">
+                <Save size={14} />
+                Save Product
+              </button>
             </div>
 
-            <div className="formGrid compactFormGrid pricingGuideFormGrid">
-              <label>
-                Product Name
-                <input value="Garlic Miso Seasoning" readOnly />
-              </label>
-
-              <label>
-                SKU
-                <input value="GM-001" readOnly />
-              </label>
-
-              <label>
-                Variant
-                <select value="1 oz Pouch" readOnly>
-                  <option>1 oz Pouch</option>
-                </select>
-              </label>
-
-              <label>
-                Category
-                <select value="Spices" readOnly>
-                  <option>Spices</option>
-                </select>
-              </label>
-
-              <label>
-                Status
-                <select value="Active" readOnly>
-                  <option>Active</option>
-                </select>
-              </label>
-
-              <label>
-                Unit Label
-                <input value="1 oz Pouch" readOnly />
-              </label>
+            <div className="guideMiniGrid">
+              <div>
+                <span>Product Name</span>
+                <strong>Garlic Miso Seasoning</strong>
+              </div>
+              <div>
+                <span>Category</span>
+                <strong>Spices</strong>
+              </div>
+              <div>
+                <span>SKU</span>
+                <strong>GM-001</strong>
+              </div>
+              <div>
+                <span>Status</span>
+                <strong>Active</strong>
+              </div>
             </div>
           </div>
         </div>
@@ -169,30 +131,29 @@ export default function PricingGuideContent() {
           </p>
         </div>
 
-        <div className="moduleGuidePreview pricingGuidePreview pricingGuidePreviewClip">
-          <div className="workspacePanel compactPanel pricingGuidePanel">
-            <div className="workspaceHeader compactPanelHeader">
+        <div className="moduleGuidePreview">
+          <div className="guideMiniPanel">
+            <div className="guideMiniHeader">
               <div>
-                <p className="eyebrow">Selected</p>
-                <h3>Garlic Miso Seasoning</h3>
-                <p className="importExportText">1 oz Pouch</p>
+                <p className="eyebrow">Selected Product</p>
+                <h4>Garlic Miso Seasoning</h4>
               </div>
+              <Package size={20} />
             </div>
 
-            <div className="formGrid compactFormGrid pricingGuideFormGrid">
-              <label>
-                Select Variant
-                <select value="1 oz Pouch" readOnly>
-                  <option>0.2 oz Pouch</option>
-                  <option>1 oz Pouch</option>
-                  <option>1 lb Bulk Bag</option>
-                </select>
-              </label>
-
-              <label>
-                Unit Label
-                <input value="1 oz Pouch" readOnly />
-              </label>
+            <div className="pricingGuideVariantStack">
+              <div>
+                <strong>0.2 oz Pouch</strong>
+                <span>Sample size or market trial size</span>
+              </div>
+              <div className="selected">
+                <strong>1 oz Pouch</strong>
+                <span>Current selected package size</span>
+              </div>
+              <div>
+                <strong>1 lb Bulk Bag</strong>
+                <span>Wholesale or restaurant size</span>
+              </div>
             </div>
           </div>
         </div>
@@ -208,57 +169,41 @@ export default function PricingGuideContent() {
           </p>
         </div>
 
-        <div className="moduleGuidePreview pricingGuidePreview pricingGuidePreviewClip">
-          <div className="workspacePanel compactPanel pricingGuidePanel">
-            <div className="workspaceHeader compactPanelHeader">
+        <div className="moduleGuidePreview">
+          <div className="guideMiniPanel">
+            <div className="guideMiniHeader">
               <div>
                 <p className="eyebrow">Pricing</p>
-                <h3>Pricing Analysis</h3>
+                <h4>Production Cost Inputs</h4>
               </div>
+              <Calculator size={20} />
             </div>
 
-            <div className="formGrid compactFormGrid pricingGuideFormGrid">
-              <label>
-                Batch Ingredient / Material Cost
-                <div className="moneyInputWrap">
-                  <span className="moneyPrefix">$</span>
-                  <input value="32.00" readOnly />
-                </div>
-              </label>
-
-              <label>
-                Units Produced Per Batch
-                <input value="24" readOnly />
-              </label>
-
-              <label>
-                Packaging Cost / Unit
-                <div className="moneyInputWrap">
-                  <span className="moneyPrefix">$</span>
-                  <input value="0.35" readOnly />
-                </div>
-              </label>
-
-              <label>
-                Labor Hours Per Batch
-                <input value="1.5" readOnly />
-              </label>
-
-              <label>
-                Labor Rate / Hour
-                <div className="moneyInputWrap">
-                  <span className="moneyPrefix">$</span>
-                  <input value="18.00" readOnly />
-                </div>
-              </label>
-
-              <label>
-                Overhead / Fees Per Batch
-                <div className="moneyInputWrap">
-                  <span className="moneyPrefix">$</span>
-                  <input value="6.00" readOnly />
-                </div>
-              </label>
+            <div className="guideMiniGrid three">
+              <div>
+                <span>Batch Cost</span>
+                <strong>$32.00</strong>
+              </div>
+              <div>
+                <span>Units</span>
+                <strong>24</strong>
+              </div>
+              <div>
+                <span>Packaging</span>
+                <strong>$0.35</strong>
+              </div>
+              <div>
+                <span>Labor</span>
+                <strong>1.5 hr</strong>
+              </div>
+              <div>
+                <span>Labor Rate</span>
+                <strong>$18.00</strong>
+              </div>
+              <div>
+                <span>Overhead</span>
+                <strong>$6.00</strong>
+              </div>
             </div>
           </div>
         </div>
@@ -274,9 +219,9 @@ export default function PricingGuideContent() {
           </p>
         </div>
 
-        <div className="moduleGuidePreview moduleGuideStatPreview pricingGuideStatPreview pricingGuidePreviewClip">
-          <StatCard icon={DollarSign} label="Retail" value="$12.00" sub="per 1 oz Pouch" accent="pricing" />
-          <StatCard icon={DollarSign} label="Wholesale" value="$7.50" sub="per 1 oz Pouch" accent="sourdough" />
+        <div className="moduleGuidePreview moduleGuideStatPreview pricingGuideStatPreview">
+          <StatCard icon={DollarSign} label="Retail" value="$12.00" sub="per 1 oz pouch" accent="pricing" />
+          <StatCard icon={DollarSign} label="Wholesale" value="$7.50" sub="per 1 oz pouch" accent="sourdough" />
           <StatCard icon={Target} label="Cost" value="$2.10" sub="estimated per unit" accent="market" />
           <StatCard icon={Package} label="Suggested Retail" value="$7.00" sub="70% target" accent="spice" />
           <StatCard icon={Package} label="Suggested Wholesale" value="$4.20" sub="50% target" accent="pricing" />
@@ -294,54 +239,32 @@ export default function PricingGuideContent() {
           </p>
         </div>
 
-        <div className="moduleGuidePreview pricingGuidePreview pricingGuidePreviewClip">
-          <div className="workspacePanel compactPanel pricingGuidePanel">
-            <div className="workspaceHeader compactPanelHeader pricingGuideHeaderStack">
+        <div className="moduleGuidePreview">
+          <div className="guideMiniPanel">
+            <div className="guideMiniHeader">
               <div>
-                <p className="eyebrow">Directory</p>
-                <h3>Product Directory</h3>
+                <p className="eyebrow">Manage</p>
+                <h4>Keep products current</h4>
               </div>
-
-              <div className="formActions compactActions">
-                <button className="primaryButton compactPrimary" type="button">
-                  <Save size={15} />
-                  Save Product
-                </button>
-              </div>
+              <Tag size={20} />
             </div>
 
-            <div className="customersFilterPanel pricingGuideFilters">
-              <div className="searchBox compactSearch customersSearchBox pricingGuideSearchBox">
-                <Search size={17} />
-                <span>Search products...</span>
+            <div className="guideMiniGrid">
+              <div>
+                <span>Search</span>
+                <strong>Find products quickly</strong>
               </div>
-
-              <label>
-                Category
-                <select value="All categories" readOnly>
-                  <option>All categories</option>
-                </select>
-              </label>
-            </div>
-
-            <div className="batchTable compactBatchTable pricingComparisonTable pricingGuideTable pricingGuideCompactTable">
-              <div className="pricingComparisonHeader pricingGuideCompactHeader">
-                <span>Product</span>
-                <span>Status</span>
-                <span>Retail</span>
-                <span>Margin</span>
+              <div>
+                <span>Filter</span>
+                <strong>Category or status</strong>
               </div>
-
-              <div className="pricingComparisonRow pricingGuideCompactRow">
-                <span className="pricingProductCell">
-                  <button className="savedItemLink" type="button">
-                    Garlic Miso Seasoning
-                  </button>
-                  <small>Updated pricing saved to directory</small>
-                </span>
-                <span>Active</span>
-                <span className="pricingMetric">$12.00</span>
-                <span className="pricingMetric pricingPositive">82.5%</span>
+              <div>
+                <span>Update</span>
+                <strong>Costs and margins</strong>
+              </div>
+              <div>
+                <span>Save</span>
+                <strong>Sync product records</strong>
               </div>
             </div>
           </div>
