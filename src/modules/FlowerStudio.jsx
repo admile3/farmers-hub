@@ -377,7 +377,12 @@ ${arrangementName}
 Stem recipe:
 ${stemLines}
 
-Show the arrangement as a finished bouquet in a clear glass vase. Keep the visual proportions close to the recipe, with higher-count flowers appearing more visually dominant. Use the same warm, airy, luminous Flower Studio style used for the individual flower variety images. Keep the flowers realistic to their natural form, scale, and foliage. Square composition. No hands, no people, no extra props, no watermarks.`);
+Show the arrangement as a simple test arrangement in a clear glass vase using only the listed stems. Keep the visual proportions close to the recipe, with higher-count flowers appearing more visually dominant. Use the same warm, airy, luminous Flower Studio style used for the individual flower variety images. Keep the flowers realistic to their natural form, scale, and foliage.
+
+Strict recipe fidelity requirement:
+Only include flowers, greenery, fillers, foliage, seed heads, grasses, or accent stems that are explicitly listed in the stem recipe above. Do not add extra filler, greenery, baby's breath, grasses, background stems, decorative accents, or any unlisted plant material. If the recipe looks sparse, leave it sparse. The image should accurately reveal whether the arrangement needs more filler added to the recipe.
+
+Square composition. No hands, no people, no extra props, no watermarks.`);
   }
 
   async function copyGeneratedPrompt() {
