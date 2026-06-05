@@ -14538,3 +14538,325 @@ input[type="number"] {
     justify-content: center;
   }
 }
+
+/* Inventory mobile optimization */
+.inventoryModule {
+  --inventory-card-radius: 1.15rem;
+}
+
+.inventoryModule .farmModuleHero {
+  width: 100%;
+}
+
+.inventoryModule .farmModuleHeroText {
+  min-width: 0;
+}
+
+.inventoryModule .farmModuleHeroActions {
+  flex-wrap: wrap;
+}
+
+.inventoryModule .farmHeroAction {
+  white-space: nowrap;
+}
+
+.inventoryStatGridForced {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.65rem;
+  align-items: stretch;
+}
+
+.inventoryDirectoryHeader {
+  margin-bottom: 0.55rem;
+}
+
+.inventoryFilterGrid {
+  margin-top: -0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.inventoryTableRow > span::before {
+  display: none;
+}
+
+.inventoryModalOverlay {
+  padding: clamp(0.75rem, 2vw, 1.5rem);
+}
+
+.inventoryModal {
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+}
+
+.inventoryModalHeader {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.inventoryModalForm,
+.inventoryExistingPicker {
+  min-width: 0;
+}
+
+.inventoryModalForm input,
+.inventoryModalForm select,
+.inventoryModalForm textarea,
+.inventoryExistingPicker input,
+.inventoryExistingPicker select,
+.inventoryFilterGrid input,
+.inventoryFilterGrid select {
+  max-width: 100%;
+}
+
+@media (max-width: 1180px) {
+  .inventoryStatGridForced {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .inventoryFilterGrid {
+    grid-template-columns: minmax(220px, 1.4fr) repeat(3, minmax(145px, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .inventoryModule {
+    padding-inline: 0.85rem;
+  }
+
+  .inventoryModule .farmModuleHero {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .inventoryModule .farmModuleHeroText h2 {
+    font-size: clamp(1.45rem, 7vw, 2.15rem);
+    line-height: 1.05;
+  }
+
+  .inventoryModule .farmModuleHeroText p {
+    max-width: 100%;
+  }
+
+  .inventoryModule .farmModuleHeroActions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+  }
+
+  .inventoryModule .farmHeroAction {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .inventoryStatGridForced {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .inventoryInsightGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .inventoryDirectoryHeader {
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .inventoryFilterGrid {
+    grid-template-columns: 1fr;
+    margin-top: 0;
+  }
+
+  .inventorySearchBox {
+    width: 100%;
+  }
+
+  .inventoryTableWrap {
+    overflow: visible;
+  }
+
+  .inventoryTable {
+    min-width: 0;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .inventoryTableHeader {
+    display: none;
+  }
+
+  .inventoryTableRow {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+    padding: 0.85rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: var(--inventory-card-radius);
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.07);
+  }
+
+  .inventoryTableRow > span {
+    display: grid;
+    grid-template-columns: minmax(6.75rem, 35%) 1fr;
+    gap: 0.65rem;
+    align-items: center;
+    min-width: 0;
+    font-size: 0.92rem;
+  }
+
+  .inventoryTableRow > span::before {
+    content: attr(data-label);
+    display: block;
+    color: var(--mutedText, #64748b);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .inventoryTableRow .inventoryNameCell {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+    padding-bottom: 0.45rem;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  }
+
+  .inventoryTableRow .inventoryNameCell::before {
+    display: none;
+  }
+
+  .inventoryNameCell .savedItemLink {
+    text-align: left;
+    font-size: 1rem;
+  }
+
+  .inventoryQuantityCell {
+    align-items: start;
+  }
+
+  .inventoryAdjustButtons {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .inventoryActions {
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+    padding-top: 0.35rem;
+  }
+
+  .inventoryActions::before {
+    display: none !important;
+  }
+
+  .inventoryActions button {
+    min-height: 2.35rem;
+  }
+
+  .inventoryModalOverlay {
+    align-items: stretch;
+    justify-content: stretch;
+    padding: 0;
+  }
+
+  .inventoryModal {
+    width: 100%;
+    max-width: none;
+    min-height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    overflow: auto;
+  }
+
+  .inventoryModalHeader {
+    padding: 1rem;
+  }
+
+  .inventoryAddModePanel,
+  .inventoryModalForm {
+    padding-inline: 1rem;
+  }
+
+  .inventoryAddModeTabs {
+    grid-template-columns: 1fr;
+  }
+
+  .inventoryExistingPicker,
+  .inventoryModalForm {
+    grid-template-columns: 1fr;
+  }
+
+  .inventoryModalActions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .inventoryModalActions button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .inventoryDetailGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .inventoryModule {
+    padding-inline: 0.6rem;
+  }
+
+  .inventoryModule .farmModuleHeroActions {
+    grid-template-columns: 1fr;
+  }
+
+  .inventoryStatGridForced {
+    grid-template-columns: 1fr;
+  }
+
+  .inventoryDirectoryPanel,
+  .inventoryInsightPanel {
+    border-radius: 1rem;
+  }
+
+  .inventoryDirectoryHeader {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .inventoryFilterSummary {
+    justify-content: flex-start;
+    width: fit-content;
+  }
+
+  .inventoryTableRow > span {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+  }
+
+  .inventoryTableRow > span::before {
+    font-size: 0.68rem;
+  }
+
+  .inventoryStatusPillStack {
+    justify-content: flex-start;
+  }
+
+  .inventoryMiniItem {
+    align-items: flex-start;
+  }
+
+  .inventoryModalHeader {
+    align-items: flex-start;
+  }
+
+  .inventoryModalHeader h3 {
+    font-size: 1.2rem;
+  }
+}
