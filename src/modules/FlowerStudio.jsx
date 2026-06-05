@@ -1256,45 +1256,57 @@ Show the arrangement as a finished bouquet in a clear glass vase. Keep the visua
                   </button>
                 </div>
 
-                {(arrangementForm.stems || []).map((line, index) => (
-                  <div className="flowerStemLine" key={line.id || index}>
-                    <select
-                      value={line.flowerId}
-                      onChange={(event) =>
-                        updateStemLine(index, "flowerId", event.target.value)
-                      }
-                    >
-                      <option value="">Choose flower...</option>
-                      {flowers.map((flower) => (
-                        <option key={flower.id} value={flower.id}>
-                          {flower.name}
-                        </option>
-                      ))}
-                    </select>
+                {(arrangementForm.stems || []).map((line, index) => {
+                  const selectedFlower = flowers.find(
+                    (flower) => flower.id === line.flowerId
+                  );
 
-                    <input
-                      type="number"
-                      step="1"
-                      value={line.stemsPerArrangement}
-                      onChange={(event) =>
-                        updateStemLine(
-                          index,
-                          "stemsPerArrangement",
-                          event.target.value
-                        )
-                      }
-                      placeholder="Stems"
-                    />
+                  return (
+                    <div className="flowerStemLine" key={line.id || index}>
+                      <select
+                        value={line.flowerId}
+                        onChange={(event) =>
+                          updateStemLine(index, "flowerId", event.target.value)
+                        }
+                      >
+                        <option value="">Choose flower...</option>
+                        {flowers.map((flower) => (
+                          <option key={flower.id} value={flower.id}>
+                            {flower.name}
+                          </option>
+                        ))}
+                      </select>
 
-                    <button
-                      className="iconButton"
-                      type="button"
-                      onClick={() => removeStemLine(index)}
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                ))}
+                      <input
+                        type="number"
+                        step="1"
+                        value={line.stemsPerArrangement}
+                        onChange={(event) =>
+                          updateStemLine(
+                            index,
+                            "stemsPerArrangement",
+                            event.target.value
+                          )
+                        }
+                        placeholder="Stems"
+                      />
+
+                      <div className="flowerStemCostBadge">
+                        {selectedFlower?.stemCost
+                          ? `${money(selectedFlower.stemCost)} / ea`
+                          : "No cost"}
+                      </div>
+
+                      <button
+                        className="iconButton"
+                        type="button"
+                        onClick={() => removeStemLine(index)}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  );
+                })}
 
                 {arrangementForm.stems?.length ? null : (
                   <div className="permitEmptyState">No stems added yet.</div>
@@ -1308,7 +1320,12 @@ Show the arrangement as a finished bouquet in a clear glass vase. Keep the visua
                 </div>
                 <div>
                   <span>Stems</span>
-                  <h4>{arrangementForm.stems?.length || 0}</h4>
+                  <h4>
+                    {(arrangementForm.stems || []).reduce(
+                      (sum, line) => sum + toNumber(line.stemsPerArrangement),
+                      0
+                    )}
+                  </h4>
                 </div>
                 <div>
                   <span>Margin</span>
