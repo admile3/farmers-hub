@@ -23,6 +23,7 @@ import StatCard from "../components/StatCard.jsx";
 import { addQuantityToMatchedInventoryItem } from "../services/inventoryService.js";
 import { getZoneFromZip } from "../data/zipZoneLookup.js";
 import { getFlowersForZone, usdaZones } from "../data/flowerZoneLibrary.js";
+import { getFlowerVisualByName } from "../data/flowerVisualDatabase.js";
 import {
   createFlowerArrangement,
   createFlowerItem,
@@ -759,11 +760,27 @@ export default function FlowerStudio() {
                       type="button"
                       onClick={() => toggleLibraryFlower(flower.name)}
                     >
-                      <CheckSquare size={17} />
-                      <div>
-                        <strong>{flower.name}</strong>
-                        <span>{flower.category} • {flower.difficulty} • {flower.bloomSeason}</span>
-                      </div>
+                      {(() => {
+  const visual = getFlowerVisualByName(flower.name);
+
+  return visual?.path ? (
+    <img
+      className="flowerZoneImage"
+      src={visual.path}
+      alt={visual.alt}
+      onError={(event) => {
+        event.currentTarget.style.display = "none";
+      }}
+    />
+  ) : (
+    <CheckSquare size={17} />
+  );
+})()}
+
+<div>
+  <strong>{flower.name}</strong>
+  <span>{flower.category} • {flower.difficulty} • {flower.bloomSeason}</span>
+</div>
                     </button>
                   ))
                 ) : (
