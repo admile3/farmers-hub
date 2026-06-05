@@ -16,6 +16,10 @@ function flowersCollection(userId) {
   return collection(db, "users", userId, "flowerStudioFlowers");
 }
 
+function containersCollection(userId) {
+  return collection(db, "users", userId, "flowerStudioContainers");
+}
+
 function arrangementsCollection(userId) {
   return collection(db, "users", userId, "flowerStudioArrangements");
 }
@@ -83,6 +87,47 @@ export async function deleteFlowerItem(userId, flowerId) {
   await deleteDoc(doc(db, "users", userId, "flowerStudioFlowers", flowerId));
 }
 
+export async function getFlowerContainers(userId) {
+  if (!userId) return [];
+
+  const q = query(containersCollection(userId), orderBy("name", "asc"));
+  const snapshot = await getDocs(q);
+
+  return snapshot.docs.map((item) => ({
+    id: item.id,
+    ...item.data()
+  }));
+}
+
+export async function createFlowerContainer(userId, container) {
+  const ref = await addDoc(containersCollection(userId), {
+    name: container.name || "",
+    type: container.type || "Other",
+    unitCost: cleanNumber(container.unitCost),
+    inventoryCount: cleanNumber(container.inventoryCount),
+    notes: container.notes || "",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
+
+  return ref.id;
+}
+
+export async function updateFlowerContainer(userId, containerId, container) {
+  await updateDoc(doc(db, "users", userId, "flowerStudioContainers", containerId), {
+    name: container.name || "",
+    type: container.type || "Other",
+    unitCost: cleanNumber(container.unitCost),
+    inventoryCount: cleanNumber(container.inventoryCount),
+    notes: container.notes || "",
+    updatedAt: serverTimestamp()
+  });
+}
+
+export async function deleteFlowerContainer(userId, containerId) {
+  await deleteDoc(doc(db, "users", userId, "flowerStudioContainers", containerId));
+}
+
 export async function getFlowerArrangements(userId) {
   if (!userId) return [];
 
@@ -98,6 +143,13 @@ export async function getFlowerArrangements(userId) {
 export async function createFlowerArrangement(userId, arrangement) {
   const ref = await addDoc(arrangementsCollection(userId), {
     ...arrangement,
+    containerId: arrangement.containerId || "",
+    containerName: arrangement.containerName || "",
+    containerCost: cleanNumber(arrangement.containerCost),
+    packagingCost: cleanNumber(arrangement.packagingCost),
+    retailPrice: cleanNumber(arrangement.retailPrice),
+    wholesalePrice: cleanNumber(arrangement.wholesalePrice),
+    estimatedCost: cleanNumber(arrangement.estimatedCost),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   });
@@ -108,6 +160,13 @@ export async function createFlowerArrangement(userId, arrangement) {
 export async function updateFlowerArrangement(userId, arrangementId, arrangement) {
   await updateDoc(doc(db, "users", userId, "flowerStudioArrangements", arrangementId), {
     ...arrangement,
+    containerId: arrangement.containerId || "",
+    containerName: arrangement.containerName || "",
+    containerCost: cleanNumber(arrangement.containerCost),
+    packagingCost: cleanNumber(arrangement.packagingCost),
+    retailPrice: cleanNumber(arrangement.retailPrice),
+    wholesalePrice: cleanNumber(arrangement.wholesalePrice),
+    estimatedCost: cleanNumber(arrangement.estimatedCost),
     updatedAt: serverTimestamp()
   });
 }
@@ -131,11 +190,20 @@ export async function getFlowerProductionLogs(userId) {
 export async function createFlowerProductionLog(userId, log) {
   const ref = await addDoc(productionCollection(userId), {
     ...log,
+    quantity: cleanNumber(log.quantity),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   });
 
   return ref.id;
+}
+
+export async function updateFlowerProductionLog(userId, logId, log) {
+  await updateDoc(doc(db, "users", userId, "flowerStudioProduction", logId), {
+    ...log,
+    quantity: cleanNumber(log.quantity),
+    updatedAt: serverTimestamp()
+  });
 }
 
 export async function deleteFlowerProductionLog(userId, logId) {
