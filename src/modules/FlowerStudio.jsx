@@ -418,29 +418,50 @@ export default function FlowerStudio() {
     setSelectedLibraryFlowers(allSelected ? [] : zoneFlowerNames);
   }
 
-  function generateArrangementImagePrompt() {
-    const stemLines = (arrangementForm.stems || [])
-      .filter((line) => line.flowerName && toNumber(line.stemsPerArrangement) > 0)
-      .map(
-        (line) =>
-          `- ${toNumber(line.stemsPerArrangement)} stems of ${line.flowerName}`
-      )
-      .join("\n");
+function generateArrangementImagePrompt() {
+  const stemLines = (arrangementForm.stems || [])
+    .filter((line) => line.flowerName && toNumber(line.stemsPerArrangement) > 0)
+    .map(
+      (line) =>
+        `- ${toNumber(line.stemsPerArrangement)} stems of ${line.flowerName}`
+    )
+    .join("\n");
 
-    if (!stemLines) {
-      showStatus("Add at least one stem line before generating a prompt.", "error");
-      return;
-    }
+  if (!stemLines) {
+    showStatus("Add at least one stem line before generating a prompt.", "error");
+    return;
+  }
 
-    const arrangementName =
-      arrangementForm.name?.trim() || "Untitled Flower Studio Arrangement";
-    const containerName =
-      selectedContainer?.name ||
-      arrangementForm.containerName ||
-      "clear glass vase";
+  const arrangementName =
+    arrangementForm.name?.trim() || "Untitled Flower Studio Arrangement";
 
-    setPromptCopied(false);
-    setGeneratedArrangementPrompt(`This prompt is designed to work best in ChatGPT image generation because it includes the Flower Studio visual style ID and full style definition.
+  const containerName =
+    selectedContainer?.name ||
+    arrangementForm.containerName ||
+    "clear glass vase";
+
+  const normalizedContainer = containerName.toLowerCase();
+
+  const isWrappedBouquet =
+    normalizedContainer.includes("wrapper") ||
+    normalizedContainer.includes("wrap") ||
+    normalizedContainer.includes("kraft") ||
+    normalizedContainer.includes("paper") ||
+    normalizedContainer.includes("sleeve") ||
+    normalizedContainer.includes("bouquet bag");
+
+  const containerInstruction = isWrappedBouquet
+    ? `Show the arrangement as a compact farmers market wrapped bouquet in ${containerName}. The flowers should be gathered tightly together and wrapped in paper around the stems, like a real hand-tied market bouquet. The paper should form a cone-style wrap around the stems, not a freestanding container, vase, bowl, bucket, or base. The bottom should show gathered stems extending below the paper wrap, tied with twine, raffia, or simple string.`
+    : `Show the arrangement as a compact farmers market floral arrangement displayed in a ${containerName}. The flowers should be arranged close together with a full, gathered market-bouquet look, not spaced far apart like a formal event centerpiece.`;
+
+  const presentationInstruction = isWrappedBouquet
+    ? `Important wrapper accuracy:
+The kraft paper or paper wrapper must wrap around the bouquet stems. It should not become a pot, vase, bag, pedestal, or crumpled base. Do not show the bouquet sitting inside a paper container. Do not create a flat-bottom paper vessel. The bouquet should look hand-held or market-ready, with visible stems gathered below the wrap.`
+    : `Important container accuracy:
+The selected container should be visible and believable for the arrangement. The flowers should sit naturally inside the selected vessel while still looking compact, fresh, and market-ready.`;
+
+  setPromptCopied(false);
+  setGeneratedArrangementPrompt(`This prompt is designed to work best in ChatGPT image generation because it includes the Flower Studio visual style ID and full style definition.
 
 Create a photorealistic botanical catalog image of a finished floral arrangement.
 
@@ -456,16 +477,21 @@ ${containerName}
 Stem recipe:
 ${stemLines}
 
-Show the arrangement as a simple test arrangement in a ${containerName} using only the listed stems. Keep the visual proportions close to the recipe, with higher-count flowers appearing more visually dominant. Use the same warm, airy, luminous Flower Studio style used for the individual flower variety images. Keep the flowers realistic to their natural form, scale, and foliage.
+${containerInstruction}
+
+Overall arrangement style:
+The flowers should be visually compact, clumped, and market-ready, like something sold at a farmers market flower stand. Keep the blooms close together with minimal empty space between stems. Avoid a wide, airy, spread-out wedding centerpiece look. The bouquet should feel full, gathered, practical, and saleable.
+
+${presentationInstruction}
 
 Strict recipe fidelity requirement:
-Only include flowers, greenery, fillers, foliage, seed heads, grasses, or accent stems that are explicitly listed in the stem recipe above. Do not add extra filler, greenery, baby's breath, grasses, background stems, decorative accents, or any unlisted plant material. If the recipe looks sparse, leave it sparse. The image should accurately reveal whether the arrangement needs more filler added to the recipe.
+Only include flowers, greenery, fillers, foliage, seed heads, grasses, or accent stems that are explicitly listed in the stem recipe above. Do not add extra filler, greenery, baby's breath, grasses, background stems, decorative accents, or any unlisted plant material. If the recipe looks sparse, leave it sparse, but arrange the listed stems close together.
 
 Photorealism requirement:
-The image must look like a real photograph taken with a camera, not an illustration, painting, cartoon, digital rendering, or dreamy AI image. Use natural window lighting, realistic shadows, true flower textures, and believable camera depth of field.
+The image must look like a real photograph taken with a camera, not an illustration, painting, cartoon, digital rendering, or dreamy AI image. Use natural window lighting, realistic shadows, true flower textures, realistic paper or container texture, and believable camera depth of field.
 
 Square composition. No hands, no people, no extra props, no watermarks.`);
-  }
+}
 
   async function copyGeneratedPrompt() {
     if (!generatedArrangementPrompt) return;
