@@ -113,7 +113,8 @@ function blankStemLine() {
 
 export default function FlowerStudio() {
   const { user, loginWithGoogle } = useAuth();
-  const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } = useUnsavedChanges();
+  const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } =
+    useUnsavedChanges();
 
   const [flowers, setFlowers] = useState([]);
   const [arrangements, setArrangements] = useState([]);
@@ -127,6 +128,7 @@ export default function FlowerStudio() {
   const [selectedZone, setSelectedZone] = useState("");
   const [zoneError, setZoneError] = useState("");
   const [selectedLibraryFlowers, setSelectedLibraryFlowers] = useState([]);
+  const [previewFlowerVisual, setPreviewFlowerVisual] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [statusType, setStatusType] = useState("success");
@@ -192,14 +194,32 @@ export default function FlowerStudio() {
   useEffect(() => {
     if (!user) return;
 
-    const hidden = localStorage.getItem("hideModuleGuide_flowerStudio") === "true";
+    const hidden =
+      localStorage.getItem("hideModuleGuide_flowerStudio") === "true";
     if (!hidden) setShowGuide(true);
   }, [user]);
 
-  const zoneFlowers = useMemo(() => getFlowersForZone(selectedZone), [selectedZone]);
+  const zoneFlowers = useMemo(
+    () => getFlowersForZone(selectedZone),
+    [selectedZone]
+  );
+
+  useEffect(() => {
+    if (!selectedZone) {
+      setSelectedLibraryFlowers([]);
+      return;
+    }
+
+    setSelectedLibraryFlowers(
+      getFlowersForZone(selectedZone).map((flower) => flower.name)
+    );
+  }, [selectedZone]);
 
   const selectedArrangement = useMemo(() => {
-    return arrangements.find((item) => item.id === productionForm.arrangementId) || null;
+    return (
+      arrangements.find((item) => item.id === productionForm.arrangementId) ||
+      null
+    );
   }, [arrangements, productionForm.arrangementId]);
 
   const arrangementCost = useMemo(() => {
@@ -287,7 +307,6 @@ export default function FlowerStudio() {
       }
 
       setSelectedZone(zone);
-      setSelectedLibraryFlowers([]);
       showStatus(`Detected USDA Zone ${zone}.`);
     } catch (error) {
       console.error(error);
@@ -315,7 +334,9 @@ export default function FlowerStudio() {
       return;
     }
 
-    const existingNames = new Set(flowers.map((flower) => flower.name.toLowerCase()));
+    const existingNames = new Set(
+      flowers.map((flower) => flower.name.toLowerCase())
+    );
 
     try {
       await Promise.all(
@@ -337,7 +358,6 @@ export default function FlowerStudio() {
       );
 
       showStatus("Selected flowers imported.");
-      setSelectedLibraryFlowers([]);
       await loadData();
     } catch (error) {
       console.error(error);
@@ -465,9 +485,18 @@ export default function FlowerStudio() {
       name: arrangementForm.name.trim(),
       category: arrangementForm.category.trim() || "Arrangement",
       description: arrangementForm.description.trim(),
-      retailPrice: arrangementForm.retailPrice === "" ? "" : toNumber(arrangementForm.retailPrice),
-      wholesalePrice: arrangementForm.wholesalePrice === "" ? "" : toNumber(arrangementForm.wholesalePrice),
-      packagingCost: arrangementForm.packagingCost === "" ? "" : toNumber(arrangementForm.packagingCost),
+      retailPrice:
+        arrangementForm.retailPrice === ""
+          ? ""
+          : toNumber(arrangementForm.retailPrice),
+      wholesalePrice:
+        arrangementForm.wholesalePrice === ""
+          ? ""
+          : toNumber(arrangementForm.wholesalePrice),
+      packagingCost:
+        arrangementForm.packagingCost === ""
+          ? ""
+          : toNumber(arrangementForm.packagingCost),
       estimatedCost: arrangementCost,
       stems: (arrangementForm.stems || [])
         .filter((line) => line.flowerId && toNumber(line.stemsPerArrangement) > 0)
@@ -490,7 +519,11 @@ export default function FlowerStudio() {
 
     try {
       if (editingArrangementId) {
-        await updateFlowerArrangement(user.uid, editingArrangementId, cleanArrangement);
+        await updateFlowerArrangement(
+          user.uid,
+          editingArrangementId,
+          cleanArrangement
+        );
         showStatus("Arrangement updated.");
       } else {
         await createFlowerArrangement(user.uid, cleanArrangement);
@@ -647,7 +680,10 @@ export default function FlowerStudio() {
           </div>
 
           <div className="farmModuleHeroActions">
-            <button className="primaryButton compactPrimary farmHeroAction" onClick={loginWithGoogle}>
+            <button
+              className="primaryButton compactPrimary farmHeroAction"
+              onClick={loginWithGoogle}
+            >
               Sign in with Google
             </button>
           </div>
@@ -662,7 +698,9 @@ export default function FlowerStudio() {
         <div className={`floatingStatus ${statusType}`}>
           <span>ⓘ</span>
           <span>{statusMessage}</span>
-          <button type="button" onClick={() => setStatusMessage("")}>×</button>
+          <button type="button" onClick={() => setStatusMessage("")}>
+            ×
+          </button>
         </div>
       ) : null}
 
@@ -689,17 +727,57 @@ export default function FlowerStudio() {
       </section>
 
       <section className="hubStatGrid flowerStudioStatGrid">
-        <StatCard icon={Flower2} label="Flowers" value={loading ? "..." : dashboardSummary.flowers} sub="Saved stems" accent="flowers" />
-        <StatCard icon={Library} label="Arrangements" value={loading ? "..." : dashboardSummary.arrangements} sub="Saved recipes" accent="spice" />
-        <StatCard icon={ClipboardCheck} label="Logs" value={loading ? "..." : dashboardSummary.logs} sub="Production records" accent="market" />
-        <StatCard icon={PackageCheck} label="Finished" value={loading ? "..." : dashboardSummary.finished} sub="Arrangements made" accent="pricing" />
+        <StatCard
+          icon={Flower2}
+          label="Flowers"
+          value={loading ? "..." : dashboardSummary.flowers}
+          sub="Saved stems"
+          accent="flowers"
+        />
+        <StatCard
+          icon={Library}
+          label="Arrangements"
+          value={loading ? "..." : dashboardSummary.arrangements}
+          sub="Saved recipes"
+          accent="spice"
+        />
+        <StatCard
+          icon={ClipboardCheck}
+          label="Logs"
+          value={loading ? "..." : dashboardSummary.logs}
+          sub="Production records"
+          accent="market"
+        />
+        <StatCard
+          icon={PackageCheck}
+          label="Finished"
+          value={loading ? "..." : dashboardSummary.finished}
+          sub="Arrangements made"
+          accent="pricing"
+        />
       </section>
 
       <section className="toolGrid compactToolGrid">
-        <a className="toolCard compactToolCard clickableToolCard" href="#flower-zone"><MapPin size={20} /><h3>Zone Library</h3><p>Find flowers by ZIP code or USDA zone.</p></a>
-        <a className="toolCard compactToolCard clickableToolCard" href="#flower-pantry"><Flower2 size={20} /><h3>Flower Pantry</h3><p>Save stems, greenery, fillers, and packaging.</p></a>
-        <a className="toolCard compactToolCard clickableToolCard" href="#flower-builder"><Library size={20} /><h3>Arrangement Builder</h3><p>Create reusable bouquet and arrangement recipes.</p></a>
-        <a className="toolCard compactToolCard clickableToolCard" href="#flower-production"><Calculator size={20} /><h3>Stem Calculator</h3><p>Calculate stems, cost, revenue, and profit.</p></a>
+        <a className="toolCard compactToolCard clickableToolCard" href="#flower-zone">
+          <MapPin size={20} />
+          <h3>Zone Library</h3>
+          <p>Find flowers by ZIP code or USDA zone.</p>
+        </a>
+        <a className="toolCard compactToolCard clickableToolCard" href="#flower-pantry">
+          <Flower2 size={20} />
+          <h3>Flower Pantry</h3>
+          <p>Save stems, greenery, fillers, and packaging.</p>
+        </a>
+        <a className="toolCard compactToolCard clickableToolCard" href="#flower-builder">
+          <Library size={20} />
+          <h3>Arrangement Builder</h3>
+          <p>Create reusable bouquet and arrangement recipes.</p>
+        </a>
+        <a className="toolCard compactToolCard clickableToolCard" href="#flower-production">
+          <Calculator size={20} />
+          <h3>Stem Calculator</h3>
+          <p>Calculate stems, cost, revenue, and profit.</p>
+        </a>
       </section>
 
       <section className="flowerStudioLayout">
@@ -716,7 +794,11 @@ export default function FlowerStudio() {
             <div className="formGrid compactFormGrid">
               <label>
                 ZIP Code
-                <input value={zipInput} onChange={(event) => setZipInput(event.target.value)} placeholder="40502" />
+                <input
+                  value={zipInput}
+                  onChange={(event) => setZipInput(event.target.value)}
+                  placeholder="40502"
+                />
               </label>
 
               <label>
@@ -725,21 +807,30 @@ export default function FlowerStudio() {
                   value={selectedZone}
                   onChange={(event) => {
                     setSelectedZone(event.target.value);
-                    setSelectedLibraryFlowers([]);
                     setZoneError("");
                   }}
                 >
                   <option value="">Choose zone...</option>
-                  {usdaZones.map((zone) => <option key={zone}>{zone}</option>)}
+                  {usdaZones.map((zone) => (
+                    <option key={zone}>{zone}</option>
+                  ))}
                 </select>
               </label>
 
               <div className="formActions fullSpan">
-                <button className="secondaryButton compactButton" type="button" onClick={detectZoneFromZip}>
+                <button
+                  className="secondaryButton compactButton"
+                  type="button"
+                  onClick={detectZoneFromZip}
+                >
                   Detect Zone
                 </button>
 
-                <button className="primaryButton compactPrimary" type="button" onClick={importSelectedFlowers}>
+                <button
+                  className="primaryButton compactPrimary"
+                  type="button"
+                  onClick={importSelectedFlowers}
+                >
                   <Plus size={15} />
                   Import Selected
                 </button>
@@ -753,38 +844,66 @@ export default function FlowerStudio() {
                 <p className="eyebrow">Recommended for USDA Zone {selectedZone}</p>
 
                 {zoneFlowers.length ? (
-                  zoneFlowers.map((flower) => (
-                    <button
-                      key={flower.name}
-                      className={`flowerZoneOption ${selectedLibraryFlowers.includes(flower.name) ? "selected" : ""}`}
-                      type="button"
-                      onClick={() => toggleLibraryFlower(flower.name)}
-                    >
-                      {(() => {
-  const visual = getFlowerVisualByName(flower.name);
+                  zoneFlowers.map((flower) => {
+                    const visual = getFlowerVisualByName(flower.name);
+                    const isSelected = selectedLibraryFlowers.includes(flower.name);
 
-  return visual?.path ? (
-    <img
-      className="flowerZoneImage"
-      src={visual.path}
-      alt={visual.alt}
-      onError={(event) => {
-        event.currentTarget.style.display = "none";
-      }}
-    />
-  ) : (
-    <CheckSquare size={17} />
-  );
-})()}
+                    return (
+                      <div
+                        key={flower.name}
+                        className={`flowerZoneOption ${isSelected ? "selected" : ""}`}
+                      >
+                        <label className="flowerZoneCheck">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleLibraryFlower(flower.name)}
+                          />
+                          <span className="srOnly">
+                            Select {flower.name} for import
+                          </span>
+                        </label>
 
-<div>
-  <strong>{flower.name}</strong>
-  <span>{flower.category} • {flower.difficulty} • {flower.bloomSeason}</span>
-</div>
-                    </button>
-                  ))
+                        {visual?.path ? (
+                          <button
+                            className="flowerImageButton"
+                            type="button"
+                            onClick={() => setPreviewFlowerVisual(visual)}
+                            aria-label={`Preview ${flower.name}`}
+                          >
+                            <img
+                              className="flowerZoneImage"
+                              src={visual.path}
+                              alt={visual.alt}
+                              onError={(event) => {
+                                event.currentTarget.style.display = "none";
+                              }}
+                            />
+                          </button>
+                        ) : (
+                          <div className="flowerZoneImageFallback">
+                            <Flower2 size={22} />
+                          </div>
+                        )}
+
+                        <button
+                          className="flowerZoneTextButton"
+                          type="button"
+                          onClick={() => toggleLibraryFlower(flower.name)}
+                        >
+                          <strong>{flower.name}</strong>
+                          <span>
+                            {flower.category} • {flower.difficulty} •{" "}
+                            {flower.bloomSeason}
+                          </span>
+                        </button>
+                      </div>
+                    );
+                  })
                 ) : (
-                  <div className="permitEmptyState">No flower recommendations found for this zone yet.</div>
+                  <div className="permitEmptyState">
+                    No flower recommendations found for this zone yet.
+                  </div>
                 )}
               </div>
             ) : null}
@@ -801,39 +920,78 @@ export default function FlowerStudio() {
             <form className="formGrid compactFormGrid" onSubmit={saveFlower}>
               <label>
                 Name *
-                <input value={flowerForm.name} onChange={(event) => updateFlowerField("name", event.target.value)} placeholder="Zinnia" />
+                <input
+                  value={flowerForm.name}
+                  onChange={(event) => updateFlowerField("name", event.target.value)}
+                  placeholder="Zinnia"
+                />
               </label>
 
               <label>
                 Category
-                <select value={flowerForm.category} onChange={(event) => updateFlowerField("category", event.target.value)}>
-                  {flowerCategories.map((category) => <option key={category}>{category}</option>)}
+                <select
+                  value={flowerForm.category}
+                  onChange={(event) =>
+                    updateFlowerField("category", event.target.value)
+                  }
+                >
+                  {flowerCategories.map((category) => (
+                    <option key={category}>{category}</option>
+                  ))}
                 </select>
               </label>
 
               <label>
                 Color
-                <input value={flowerForm.color} onChange={(event) => updateFlowerField("color", event.target.value)} />
+                <input
+                  value={flowerForm.color}
+                  onChange={(event) => updateFlowerField("color", event.target.value)}
+                />
               </label>
 
               <label>
                 Bloom Season
-                <input value={flowerForm.bloomSeason} onChange={(event) => updateFlowerField("bloomSeason", event.target.value)} />
+                <input
+                  value={flowerForm.bloomSeason}
+                  onChange={(event) =>
+                    updateFlowerField("bloomSeason", event.target.value)
+                  }
+                />
               </label>
 
               <label>
                 Cost / Stem
-                <input type="number" step="0.01" value={flowerForm.stemCost} onChange={(event) => updateFlowerField("stemCost", event.target.value)} onBlur={(event) => updateFlowerField("stemCost", cleanMoney(event.target.value))} />
+                <input
+                  type="number"
+                  step="0.01"
+                  value={flowerForm.stemCost}
+                  onChange={(event) =>
+                    updateFlowerField("stemCost", event.target.value)
+                  }
+                  onBlur={(event) =>
+                    updateFlowerField("stemCost", cleanMoney(event.target.value))
+                  }
+                />
               </label>
 
               <label>
                 Stem Inventory
-                <input type="number" step="1" value={flowerForm.inventoryCount} onChange={(event) => updateFlowerField("inventoryCount", event.target.value)} />
+                <input
+                  type="number"
+                  step="1"
+                  value={flowerForm.inventoryCount}
+                  onChange={(event) =>
+                    updateFlowerField("inventoryCount", event.target.value)
+                  }
+                />
               </label>
 
               <label className="fullSpan">
                 Notes
-                <textarea value={flowerForm.notes} onChange={(event) => updateFlowerField("notes", event.target.value)} />
+                <textarea
+                  value={flowerForm.notes}
+                  onChange={(event) => updateFlowerField("notes", event.target.value)}
+                />
               </label>
 
               <div className="formActions fullSpan">
@@ -845,19 +1003,58 @@ export default function FlowerStudio() {
             </form>
 
             <div className="savedList compactSavedList flowerPantryList">
-              {flowers.length ? flowers.map((flower) => (
-                <div className="savedItem compactSavedItem" key={flower.id}>
-                  <div>
-                    <h4>{flower.name}</h4>
-                    <p>{flower.category} • {flower.color || "No color"} • {flower.stemCost ? `${money(flower.stemCost)} / stem` : "No cost"}</p>
-                  </div>
+              {flowers.length ? (
+                flowers.map((flower) => {
+                  const visual = getFlowerVisualByName(flower.name);
 
-                  <div className="itemActions">
-                    <button type="button" onClick={() => editFlower(flower)}><Edit3 size={14} /></button>
-                    <button type="button" onClick={() => removeFlower(flower.id)}><Trash2 size={15} /></button>
-                  </div>
-                </div>
-              )) : <div className="permitEmptyState">No flowers saved yet.</div>}
+                  return (
+                    <div className="savedItem compactSavedItem" key={flower.id}>
+                      {visual?.path ? (
+                        <button
+                          className="flowerPantryImageButton"
+                          type="button"
+                          onClick={() => setPreviewFlowerVisual(visual)}
+                          aria-label={`Preview ${flower.name}`}
+                        >
+                          <img
+                            className="flowerPantryImage"
+                            src={visual.path}
+                            alt={visual.alt}
+                            onError={(event) => {
+                              event.currentTarget.style.display = "none";
+                            }}
+                          />
+                        </button>
+                      ) : (
+                        <div className="flowerPantryImageFallback">
+                          <Flower2 size={20} />
+                        </div>
+                      )}
+
+                      <div>
+                        <h4>{flower.name}</h4>
+                        <p>
+                          {flower.category} • {flower.color || "No color"} •{" "}
+                          {flower.stemCost
+                            ? `${money(flower.stemCost)} / stem`
+                            : "No cost"}
+                        </p>
+                      </div>
+
+                      <div className="itemActions">
+                        <button type="button" onClick={() => editFlower(flower)}>
+                          <Edit3 size={14} />
+                        </button>
+                        <button type="button" onClick={() => removeFlower(flower.id)}>
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="permitEmptyState">No flowers saved yet.</div>
+              )}
             </div>
           </section>
         </div>
@@ -874,32 +1071,69 @@ export default function FlowerStudio() {
             <form className="formGrid compactFormGrid" onSubmit={saveArrangement}>
               <label>
                 Arrangement Name *
-                <input value={arrangementForm.name} onChange={(event) => updateArrangementField("name", event.target.value)} placeholder="Summer Market Bouquet" />
+                <input
+                  value={arrangementForm.name}
+                  onChange={(event) =>
+                    updateArrangementField("name", event.target.value)
+                  }
+                  placeholder="Summer Market Bouquet"
+                />
               </label>
 
               <label>
                 Category
-                <input value={arrangementForm.category} onChange={(event) => updateArrangementField("category", event.target.value)} />
+                <input
+                  value={arrangementForm.category}
+                  onChange={(event) =>
+                    updateArrangementField("category", event.target.value)
+                  }
+                />
               </label>
 
               <label>
                 Retail Price
-                <input type="number" step="0.01" value={arrangementForm.retailPrice} onChange={(event) => updateArrangementField("retailPrice", event.target.value)} />
+                <input
+                  type="number"
+                  step="0.01"
+                  value={arrangementForm.retailPrice}
+                  onChange={(event) =>
+                    updateArrangementField("retailPrice", event.target.value)
+                  }
+                />
               </label>
 
               <label>
                 Wholesale Price
-                <input type="number" step="0.01" value={arrangementForm.wholesalePrice} onChange={(event) => updateArrangementField("wholesalePrice", event.target.value)} />
+                <input
+                  type="number"
+                  step="0.01"
+                  value={arrangementForm.wholesalePrice}
+                  onChange={(event) =>
+                    updateArrangementField("wholesalePrice", event.target.value)
+                  }
+                />
               </label>
 
               <label>
                 Packaging Cost
-                <input type="number" step="0.01" value={arrangementForm.packagingCost} onChange={(event) => updateArrangementField("packagingCost", event.target.value)} />
+                <input
+                  type="number"
+                  step="0.01"
+                  value={arrangementForm.packagingCost}
+                  onChange={(event) =>
+                    updateArrangementField("packagingCost", event.target.value)
+                  }
+                />
               </label>
 
               <label className="fullSpan">
                 Description
-                <textarea value={arrangementForm.description} onChange={(event) => updateArrangementField("description", event.target.value)} />
+                <textarea
+                  value={arrangementForm.description}
+                  onChange={(event) =>
+                    updateArrangementField("description", event.target.value)
+                  }
+                />
               </label>
 
               <div className="flowerSubPanel fullSpan">
@@ -909,7 +1143,11 @@ export default function FlowerStudio() {
                     <h4>Stem Lines</h4>
                   </div>
 
-                  <button className="secondaryButton compactButton" type="button" onClick={addStemLine}>
+                  <button
+                    className="secondaryButton compactButton"
+                    type="button"
+                    onClick={addStemLine}
+                  >
                     <Plus size={15} />
                     Add Stem
                   </button>
@@ -917,30 +1155,80 @@ export default function FlowerStudio() {
 
                 {(arrangementForm.stems || []).map((line, index) => (
                   <div className="flowerStemLine" key={line.id || index}>
-                    <select value={line.flowerId} onChange={(event) => updateStemLine(index, "flowerId", event.target.value)}>
+                    <select
+                      value={line.flowerId}
+                      onChange={(event) =>
+                        updateStemLine(index, "flowerId", event.target.value)
+                      }
+                    >
                       <option value="">Choose flower...</option>
-                      {flowers.map((flower) => <option key={flower.id} value={flower.id}>{flower.name}</option>)}
+                      {flowers.map((flower) => (
+                        <option key={flower.id} value={flower.id}>
+                          {flower.name}
+                        </option>
+                      ))}
                     </select>
 
-                    <input type="number" step="1" value={line.stemsPerArrangement} onChange={(event) => updateStemLine(index, "stemsPerArrangement", event.target.value)} placeholder="Stems" />
+                    <input
+                      type="number"
+                      step="1"
+                      value={line.stemsPerArrangement}
+                      onChange={(event) =>
+                        updateStemLine(
+                          index,
+                          "stemsPerArrangement",
+                          event.target.value
+                        )
+                      }
+                      placeholder="Stems"
+                    />
 
-                    <button className="iconButton" type="button" onClick={() => removeStemLine(index)}>
+                    <button
+                      className="iconButton"
+                      type="button"
+                      onClick={() => removeStemLine(index)}
+                    >
                       <Trash2 size={15} />
                     </button>
                   </div>
                 ))}
 
-                {arrangementForm.stems?.length ? null : <div className="permitEmptyState">No stems added yet.</div>}
+                {arrangementForm.stems?.length ? null : (
+                  <div className="permitEmptyState">No stems added yet.</div>
+                )}
               </div>
 
               <div className="batchTotals fullSpan flowerTotals">
-                <div><span>Estimated Cost</span><h4>{money(arrangementCost)}</h4></div>
-                <div><span>Stems</span><h4>{arrangementForm.stems?.length || 0}</h4></div>
-                <div><span>Margin</span><h4>{toNumber(arrangementForm.retailPrice) ? `${Math.round(((toNumber(arrangementForm.retailPrice) - arrangementCost) / toNumber(arrangementForm.retailPrice)) * 100)}%` : "N/A"}</h4></div>
+                <div>
+                  <span>Estimated Cost</span>
+                  <h4>{money(arrangementCost)}</h4>
+                </div>
+                <div>
+                  <span>Stems</span>
+                  <h4>{arrangementForm.stems?.length || 0}</h4>
+                </div>
+                <div>
+                  <span>Margin</span>
+                  <h4>
+                    {toNumber(arrangementForm.retailPrice)
+                      ? `${Math.round(
+                          ((toNumber(arrangementForm.retailPrice) -
+                            arrangementCost) /
+                            toNumber(arrangementForm.retailPrice)) *
+                            100
+                        )}%`
+                      : "N/A"}
+                  </h4>
+                </div>
               </div>
 
               <div className="formActions fullSpan">
-                <button className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`} type="submit">
+                <button
+                  className={`primaryButton compactPrimary ${
+                    hasUnsavedChanges ? "dirtySaveButton" : ""
+                  }`}
+                  type="submit"
+                >
                   <Save size={15} />
                   {editingArrangementId ? "Update Arrangement" : "Save Arrangement"}
                 </button>
@@ -957,24 +1245,45 @@ export default function FlowerStudio() {
 
               <div className="searchBox compactSearch">
                 <Search size={16} />
-                <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Search arrangements..." />
+                <input
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Search arrangements..."
+                />
               </div>
             </div>
 
             <div className="savedList compactSavedList">
-              {filteredArrangements.length ? filteredArrangements.map((arrangement) => (
-                <div className="savedItem compactSavedItem" key={arrangement.id}>
-                  <div>
-                    <h4>{arrangement.name}</h4>
-                    <p>{arrangement.category} • {arrangement.stems?.length || 0} stem lines • {arrangement.retailPrice ? `${money(arrangement.retailPrice)} retail` : "No price"}</p>
-                  </div>
+              {filteredArrangements.length ? (
+                filteredArrangements.map((arrangement) => (
+                  <div className="savedItem compactSavedItem" key={arrangement.id}>
+                    <div>
+                      <h4>{arrangement.name}</h4>
+                      <p>
+                        {arrangement.category} • {arrangement.stems?.length || 0} stem
+                        lines •{" "}
+                        {arrangement.retailPrice
+                          ? `${money(arrangement.retailPrice)} retail`
+                          : "No price"}
+                      </p>
+                    </div>
 
-                  <div className="itemActions">
-                    <button type="button" onClick={() => editArrangement(arrangement)}><Edit3 size={14} /></button>
-                    <button type="button" onClick={() => removeArrangement(arrangement.id)}><Trash2 size={15} /></button>
+                    <div className="itemActions">
+                      <button type="button" onClick={() => editArrangement(arrangement)}>
+                        <Edit3 size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeArrangement(arrangement.id)}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )) : <div className="permitEmptyState">No arrangements saved yet.</div>}
+                ))
+              ) : (
+                <div className="permitEmptyState">No arrangements saved yet.</div>
+              )}
             </div>
           </section>
 
@@ -985,7 +1294,12 @@ export default function FlowerStudio() {
                 <h3>Stem Calculator & Log</h3>
               </div>
 
-              <button className="secondaryButton compactButton" type="button" onClick={addProductionToInventory} disabled={savingInventory}>
+              <button
+                className="secondaryButton compactButton"
+                type="button"
+                onClick={addProductionToInventory}
+                disabled={savingInventory}
+              >
                 <PackageCheck size={15} />
                 {savingInventory ? "Adding..." : "Add to Inventory"}
               </button>
@@ -994,42 +1308,109 @@ export default function FlowerStudio() {
             <form className="formGrid compactFormGrid" onSubmit={saveProductionLog}>
               <label>
                 Arrangement
-                <select value={productionForm.arrangementId} onChange={(event) => setProductionForm((current) => ({ ...current, arrangementId: event.target.value }))}>
+                <select
+                  value={productionForm.arrangementId}
+                  onChange={(event) =>
+                    setProductionForm((current) => ({
+                      ...current,
+                      arrangementId: event.target.value
+                    }))
+                  }
+                >
                   <option value="">Choose arrangement...</option>
-                  {arrangements.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                  {arrangements.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
                 </select>
               </label>
 
               <label>
                 Quantity
-                <input type="number" step="1" value={productionForm.quantity} onChange={(event) => setProductionForm((current) => ({ ...current, quantity: event.target.value }))} />
+                <input
+                  type="number"
+                  step="1"
+                  value={productionForm.quantity}
+                  onChange={(event) =>
+                    setProductionForm((current) => ({
+                      ...current,
+                      quantity: event.target.value
+                    }))
+                  }
+                />
               </label>
 
               <label>
                 Production Date
-                <input type="date" value={productionForm.productionDate} onChange={(event) => setProductionForm((current) => ({ ...current, productionDate: event.target.value }))} />
+                <input
+                  type="date"
+                  value={productionForm.productionDate}
+                  onChange={(event) =>
+                    setProductionForm((current) => ({
+                      ...current,
+                      productionDate: event.target.value
+                    }))
+                  }
+                />
               </label>
 
               <label>
                 Event / Market
-                <input value={productionForm.eventName} onChange={(event) => setProductionForm((current) => ({ ...current, eventName: event.target.value }))} />
+                <input
+                  value={productionForm.eventName}
+                  onChange={(event) =>
+                    setProductionForm((current) => ({
+                      ...current,
+                      eventName: event.target.value
+                    }))
+                  }
+                />
               </label>
 
               <label>
                 Customer
-                <input value={productionForm.customerName} onChange={(event) => setProductionForm((current) => ({ ...current, customerName: event.target.value }))} />
+                <input
+                  value={productionForm.customerName}
+                  onChange={(event) =>
+                    setProductionForm((current) => ({
+                      ...current,
+                      customerName: event.target.value
+                    }))
+                  }
+                />
               </label>
 
               <label className="fullSpan">
                 Notes
-                <textarea value={productionForm.notes} onChange={(event) => setProductionForm((current) => ({ ...current, notes: event.target.value }))} />
+                <textarea
+                  value={productionForm.notes}
+                  onChange={(event) =>
+                    setProductionForm((current) => ({
+                      ...current,
+                      notes: event.target.value
+                    }))
+                  }
+                />
               </label>
 
               <div className="batchTotals fullSpan flowerTotals">
-                <div><span>Total Stems</span><h4>{productionSummary.totalStems}</h4></div>
-                <div><span>Cost</span><h4>{money(productionSummary.cost)}</h4></div>
-                <div><span>Revenue</span><h4>{money(productionSummary.revenue)}</h4></div>
-                <div><span>Profit</span><h4>{money(productionSummary.profit)}</h4></div>
+                <div>
+                  <span>Total Stems</span>
+                  <h4>{productionSummary.totalStems}</h4>
+                </div>
+                <div>
+                  <span>Cost</span>
+                  <h4>{money(productionSummary.cost)}</h4>
+                </div>
+                <div>
+                  <span>Revenue</span>
+                  <h4>{money(productionSummary.revenue)}</h4>
+                </div>
+                <div>
+                  <span>Profit</span>
+                  <h4>{money(productionSummary.profit)}</h4>
+                </div>
               </div>
 
               <div className="flowerNeededList fullSpan">
@@ -1061,20 +1442,59 @@ export default function FlowerStudio() {
         </div>
 
         <div className="savedList compactSavedList">
-          {logs.length ? logs.map((log) => (
-            <div className="savedItem compactSavedItem" key={log.id}>
-              <div>
-                <h4>{log.arrangementName}</h4>
-                <p>{log.productionDate || "No date"} • {log.quantity || 0} finished • {log.eventName || "No event"}</p>
-              </div>
+          {logs.length ? (
+            logs.map((log) => (
+              <div className="savedItem compactSavedItem" key={log.id}>
+                <div>
+                  <h4>{log.arrangementName}</h4>
+                  <p>
+                    {log.productionDate || "No date"} • {log.quantity || 0} finished •{" "}
+                    {log.eventName || "No event"}
+                  </p>
+                </div>
 
-              <div className="itemActions">
-                <button type="button" onClick={() => removeLog(log.id)}><Trash2 size={15} /></button>
+                <div className="itemActions">
+                  <button type="button" onClick={() => removeLog(log.id)}>
+                    <Trash2 size={15} />
+                  </button>
+                </div>
               </div>
-            </div>
-          )) : <div className="permitEmptyState">No production logs yet.</div>}
+            ))
+          ) : (
+            <div className="permitEmptyState">No production logs yet.</div>
+          )}
         </div>
       </section>
+
+      {previewFlowerVisual ? (
+        <div
+          className="flowerImagePreviewOverlay"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setPreviewFlowerVisual(null)}
+        >
+          <div
+            className="flowerImagePreviewModal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              className="moduleGuideCloseButton"
+              type="button"
+              onClick={() => setPreviewFlowerVisual(null)}
+              aria-label="Close flower image preview"
+            >
+              ×
+            </button>
+
+            <img src={previewFlowerVisual.path} alt={previewFlowerVisual.alt} />
+
+            <div>
+              <h3>{previewFlowerVisual.name}</h3>
+              <p>{previewFlowerVisual.alt}</p>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <ModuleGuideModal
         isOpen={showGuide}
