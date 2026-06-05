@@ -14234,3 +14234,13 @@ input[type="number"] {
 .flowerImagePreviewModal p {
   margin: 0;
 }
+.flowerZoneResultsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.flowerZoneResultsHeader .eyebrow {
+  margin: 0;
+}
