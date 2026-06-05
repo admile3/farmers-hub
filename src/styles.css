@@ -14277,9 +14277,19 @@ input[type="number"] {
 .flowerPromptModal .formActions {
   justify-content: flex-start;
 }
-.flowerStemCostBadge {
+.flowerStemLine {
   display: grid;
-  place-items: center;
+  grid-template-columns: minmax(240px, 1fr) 150px 120px 44px;
+  gap: 10px;
+  align-items: center;
+}
+
+.flowerStemLine select,
+.flowerStemLine input {
+  width: 100%;
+}
+
+.flowerStemCostBadge {
   min-height: 42px;
   padding: 0 12px;
   border-radius: 12px;
@@ -14287,5 +14297,12 @@ input[type="number"] {
   border: 1px solid rgba(196, 95, 140, 0.18);
   font-weight: 800;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
- 
+
+.flowerStemLine .iconButton {
+  width: 42px;
+  height: 42px;
+}
