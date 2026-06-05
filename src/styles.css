@@ -14467,3 +14467,74 @@ input[type="number"] {
     min-height: 320px;
   }
 }
+/* Flower Studio container pantry and production edit updates */
+
+.flowerStudioStatGrid {
+  align-items: stretch;
+}
+
+.containerPantryList .compactSavedItem,
+.flowerPantryList .compactSavedItem {
+  align-items: center;
+}
+
+.containerListIcon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: rgba(149, 125, 104, 0.12);
+  color: var(--grant);
+  flex: 0 0 auto;
+}
+
+.flowerEditNotice {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(52, 117, 62, 0.18);
+  border-radius: 14px;
+  background: rgba(52, 117, 62, 0.08);
+  color: var(--green-dark);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.84rem;
+  font-weight: 850;
+}
+
+.flowerEditNotice button {
+  min-height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(52, 117, 62, 0.18);
+  background: #ffffff;
+  color: var(--green-dark);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  font-size: 0.78rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.flowerContainerNeededRow {
+  background: rgba(149, 125, 104, 0.08);
+}
+
+.flowerTotals {
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+}
+
+@media (max-width: 760px) {
+  .flowerEditNotice {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .flowerEditNotice button {
+    width: 100%;
+    justify-content: center;
+  }
+}
