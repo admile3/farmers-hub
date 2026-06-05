@@ -381,7 +381,8 @@ Show the arrangement as a simple test arrangement in a clear glass vase using on
 
 Strict recipe fidelity requirement:
 Only include flowers, greenery, fillers, foliage, seed heads, grasses, or accent stems that are explicitly listed in the stem recipe above. Do not add extra filler, greenery, baby's breath, grasses, background stems, decorative accents, or any unlisted plant material. If the recipe looks sparse, leave it sparse. The image should accurately reveal whether the arrangement needs more filler added to the recipe.
-
+Photorealism requirement:
+The image must look like a real photograph taken with a camera, not an illustration, painting, cartoon, digital rendering, or dreamy AI image. Use natural window lighting, realistic shadows, realistic glass reflections, true flower textures, and believable camera depth of field.
 Square composition. No hands, no people, no extra props, no watermarks.`);
   }
 
