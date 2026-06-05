@@ -14244,3 +14244,36 @@ input[type="number"] {
 .flowerZoneResultsHeader .eyebrow {
   margin: 0;
 }
+.flowerPromptModal {
+  position: relative;
+  width: min(760px, 94vw);
+  max-height: 88vh;
+  overflow: auto;
+  background: #fffaf4;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 24px 70px rgba(22, 27, 34, 0.28);
+  display: grid;
+  gap: 14px;
+}
+
+.flowerPromptModal h3,
+.flowerPromptModal p {
+  margin: 0;
+}
+
+.flowerPromptModal textarea {
+  width: 100%;
+  min-height: 360px;
+  resize: vertical;
+  border-radius: 16px;
+  padding: 14px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  line-height: 1.45;
+  background: #ffffff;
+  border: 1px solid rgba(196, 95, 140, 0.22);
+}
+
+.flowerPromptModal .formActions {
+  justify-content: flex-start;
+}
