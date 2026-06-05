@@ -1148,15 +1148,7 @@ showStatus("Inventory quantity updated.", "success");
         </div>
       </section>
 
-      <section
-        className="hubStatGrid inventoryStatGrid inventoryStatGridForced"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(6, minmax(0, 1fr))",
-          gap: "0.65rem",
-          alignItems: "stretch"
-        }}
-      >
+      <section className="hubStatGrid inventoryStatGrid inventoryStatGridForced">
         <StatCard
           icon={PackageCheck}
           label="Active Items"
@@ -1287,10 +1279,7 @@ showStatus("Inventory quantity updated.", "success");
       </section>
 
       <section className="workspacePanel compactPanel inventoryDirectoryPanel">
-        <div
-          className="workspaceHeader compactPanelHeader inventoryDirectoryHeader"
-          style={{ marginBottom: "0.55rem" }}
-        >
+        <div className="workspaceHeader compactPanelHeader inventoryDirectoryHeader">
           <div>
             <p className="eyebrow">Directory</p>
             <h3>Inventory Items</h3>
@@ -1302,10 +1291,7 @@ showStatus("Inventory quantity updated.", "success");
           </div>
         </div>
 
-        <div
-          className="inventoryFilterGrid"
-          style={{ marginTop: "-0.65rem", marginBottom: "0.75rem" }}
-        >
+        <div className="inventoryFilterGrid">
           <div className="searchBox compactSearch inventorySearchBox">
             <Search size={17} />
             <input
@@ -1375,7 +1361,7 @@ showStatus("Inventory quantity updated.", "success");
               filteredItems.map((item) => {
                 return (
                   <div className="inventoryTableRow" key={item.id}>
-                    <span className="inventoryNameCell">
+                    <span className="inventoryNameCell" data-label="Item">
                       <button
                         type="button"
                         className="savedItemLink"
@@ -1386,9 +1372,9 @@ showStatus("Inventory quantity updated.", "success");
                       <small>{item.sourceModule || "Manual"}</small>
                     </span>
 
-                    <span>{item.category || "Other"}</span>
+                    <span data-label="Category">{item.category || "Other"}</span>
 
-                    <span className="inventoryQuantityCell">
+                    <span className="inventoryQuantityCell" data-label="Qty / Adjust">
                       <strong>
                         {formatNumber(item.quantityOnHand)} {item.unit || "each"}
                       </strong>
@@ -1410,27 +1396,27 @@ showStatus("Inventory quantity updated.", "success");
                       </div>
                     </span>
 
-                    <span>
+                    <span data-label="Reorder">
                       {item.reorderPoint !== "" && item.reorderPoint !== null
                         ? `${formatNumber(item.reorderPoint)} ${item.unit || ""}`
                         : "Not set"}
                     </span>
 
-                    <span>{item.storageLocation || "Not listed"}</span>
+                    <span data-label="Location">{item.storageLocation || "Not listed"}</span>
 
-                    <span>
+                    <span data-label="Best By">
                       {item.bestByDate ? formatDate(item.bestByDate) : "Not listed"}
                     </span>
 
-                    <span>{formatCurrency(getInventoryValue(item))}</span>
-                    <span>{formatCurrency(getWholesaleValue(item))}</span>
-                    <span>{formatCurrency(getRetailValue(item))}</span>
+                    <span data-label="Cost">{formatCurrency(getInventoryValue(item))}</span>
+                    <span data-label="Wholesale">{formatCurrency(getWholesaleValue(item))}</span>
+                    <span data-label="Retail">{formatCurrency(getRetailValue(item))}</span>
 
-                    <span>
+                    <span data-label="Status">
                       <ItemStatusPills item={item} />
                     </span>
 
-                    <span className="inventoryActions">
+                    <span className="inventoryActions" data-label="Actions">
                       <button type="button" onClick={() => openEditItem(item)}>
                         <Edit3 size={14} />
                       </button>
@@ -1831,6 +1817,7 @@ showStatus("Inventory quantity updated.", "success");
         onClose={() => setShowGuide(false)}
       >
         <InventoryGuideContent />
-      </ModuleGuideModal></div>
+      </ModuleGuideModal>
+    </div>
   );
 }
