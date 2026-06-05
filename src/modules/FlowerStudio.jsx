@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Calculator,
-  CheckSquare,
   ClipboardCheck,
   Edit3,
   Flower2,
@@ -90,13 +89,6 @@ function makeId(prefix) {
 function toNumber(value) {
   const number = Number(value);
   return Number.isFinite(number) ? number : 0;
-}
-
-function toggleAllLibraryFlowers() {
-  const allSelected =
-    zoneFlowers.length > 0 && selectedLibraryFlowers.length === zoneFlowers.length;
-
-  setSelectedLibraryFlowers(allSelected ? [] : zoneFlowers.map((flower) => flower.name));
 }
 
 function money(value) {
@@ -222,6 +214,10 @@ export default function FlowerStudio() {
     );
   }, [selectedZone]);
 
+  const allZoneFlowersSelected =
+    zoneFlowers.length > 0 &&
+    zoneFlowers.every((flower) => selectedLibraryFlowers.includes(flower.name));
+
   const selectedArrangement = useMemo(() => {
     return (
       arrangements.find((item) => item.id === productionForm.arrangementId) ||
@@ -327,6 +323,15 @@ export default function FlowerStudio() {
         ? current.filter((item) => item !== name)
         : [...current, name]
     );
+  }
+
+  function toggleAllLibraryFlowers() {
+    const zoneFlowerNames = zoneFlowers.map((flower) => flower.name);
+    const allSelected = zoneFlowerNames.every((name) =>
+      selectedLibraryFlowers.includes(name)
+    );
+
+    setSelectedLibraryFlowers(allSelected ? [] : zoneFlowerNames);
   }
 
   async function importSelectedFlowers() {
@@ -849,16 +854,16 @@ export default function FlowerStudio() {
             {selectedZone ? (
               <div className="flowerZoneResults">
                 <div className="flowerZoneResultsHeader">
-  <p className="eyebrow">Recommended for USDA Zone {selectedZone}</p>
+                  <p className="eyebrow">Recommended for USDA Zone {selectedZone}</p>
 
-  <button
-    className="secondaryButton compactButton"
-    type="button"
-    onClick={toggleAllLibraryFlowers}
-  >
-    {selectedLibraryFlowers.length === zoneFlowers.length ? "Deselect All" : "Select All"}
-  </button>
-</div>
+                  <button
+                    className="secondaryButton compactButton"
+                    type="button"
+                    onClick={toggleAllLibraryFlowers}
+                  >
+                    {allZoneFlowersSelected ? "Deselect All" : "Select All"}
+                  </button>
+                </div>
 
                 {zoneFlowers.length ? (
                   zoneFlowers.map((flower) => {
@@ -870,11 +875,15 @@ export default function FlowerStudio() {
                         key={flower.name}
                         className={`flowerZoneOption ${isSelected ? "selected" : ""}`}
                       >
-                        <label className="flowerZoneCheck">
+                        <label
+                          className="flowerZoneCheck"
+                          title={`Select ${flower.name} for import`}
+                        >
                           <input
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => toggleLibraryFlower(flower.name)}
+                            aria-label={`Select ${flower.name} for import`}
                           />
                         </label>
 
