@@ -92,6 +92,13 @@ function toNumber(value) {
   return Number.isFinite(number) ? number : 0;
 }
 
+function toggleAllLibraryFlowers() {
+  const allSelected =
+    zoneFlowers.length > 0 && selectedLibraryFlowers.length === zoneFlowers.length;
+
+  setSelectedLibraryFlowers(allSelected ? [] : zoneFlowers.map((flower) => flower.name));
+}
+
 function money(value) {
   return `$${toNumber(value).toFixed(2)}`;
 }
@@ -841,7 +848,17 @@ export default function FlowerStudio() {
 
             {selectedZone ? (
               <div className="flowerZoneResults">
-                <p className="eyebrow">Recommended for USDA Zone {selectedZone}</p>
+                <div className="flowerZoneResultsHeader">
+  <p className="eyebrow">Recommended for USDA Zone {selectedZone}</p>
+
+  <button
+    className="secondaryButton compactButton"
+    type="button"
+    onClick={toggleAllLibraryFlowers}
+  >
+    {selectedLibraryFlowers.length === zoneFlowers.length ? "Deselect All" : "Select All"}
+  </button>
+</div>
 
                 {zoneFlowers.length ? (
                   zoneFlowers.map((flower) => {
