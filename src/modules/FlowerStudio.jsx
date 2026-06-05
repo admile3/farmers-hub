@@ -859,9 +859,6 @@ export default function FlowerStudio() {
                             checked={isSelected}
                             onChange={() => toggleLibraryFlower(flower.name)}
                           />
-                          <span className="srOnly">
-                            Select {flower.name} for import
-                          </span>
                         </label>
 
                         {visual?.path ? (
