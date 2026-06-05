@@ -13,7 +13,8 @@ import {
   Save,
   Search,
   Sparkles,
-  Trash2
+  Trash2,
+  X
 } from "lucide-react";
 
 import { useAuth } from "../AuthContext.jsx";
@@ -28,16 +29,21 @@ import { getFlowerVisualByName } from "../data/flowerVisualDatabase.js";
 import { FLOWER_STUDIO_STYLE } from "../data/flowerStudioStyle.js";
 import {
   createFlowerArrangement,
+  createFlowerContainer,
   createFlowerItem,
   createFlowerProductionLog,
   deleteFlowerArrangement,
+  deleteFlowerContainer,
   deleteFlowerItem,
   deleteFlowerProductionLog,
   getFlowerArrangements,
+  getFlowerContainers,
   getFlowerItems,
   getFlowerProductionLogs,
   updateFlowerArrangement,
-  updateFlowerItem
+  updateFlowerContainer,
+  updateFlowerItem,
+  updateFlowerProductionLog
 } from "../services/flowerStudioService.js";
 
 const flowerCategories = [
@@ -49,6 +55,20 @@ const flowerCategories = [
   "Hanging",
   "Dried",
   "Packaging",
+  "Other"
+];
+
+const commonContainerTypes = [
+  "Clear Glass Vase",
+  "Ceramic Vase",
+  "Bud Vase",
+  "Mason Jar",
+  "Paper Wrapper",
+  "Kraft Sleeve",
+  "Bouquet Bag",
+  "Market Bucket",
+  "Compote Bowl",
+  "Floral Foam Container",
   "Other"
 ];
 
@@ -66,6 +86,14 @@ const emptyFlower = {
   zone: ""
 };
 
+const emptyContainer = {
+  name: "",
+  type: "Clear Glass Vase",
+  unitCost: "",
+  inventoryCount: "",
+  notes: ""
+};
+
 const emptyArrangement = {
   name: "",
   category: "Market Bouquet",
@@ -73,6 +101,9 @@ const emptyArrangement = {
   retailPrice: "",
   wholesalePrice: "",
   packagingCost: "",
+  containerId: "",
+  containerName: "",
+  containerCost: "",
   stems: []
 };
 
@@ -119,13 +150,22 @@ export default function FlowerStudio() {
     useUnsavedChanges();
 
   const [flowers, setFlowers] = useState([]);
+  const [containers, setContainers] = useState([]);
   const [arrangements, setArrangements] = useState([]);
   const [logs, setLogs] = useState([]);
+
   const [flowerForm, setFlowerForm] = useState(emptyFlower);
   const [editingFlowerId, setEditingFlowerId] = useState(null);
+
+  const [containerForm, setContainerForm] = useState(emptyContainer);
+  const [editingContainerId, setEditingContainerId] = useState(null);
+
   const [arrangementForm, setArrangementForm] = useState(emptyArrangement);
   const [editingArrangementId, setEditingArrangementId] = useState(null);
+
   const [productionForm, setProductionForm] = useState(emptyProduction);
+  const [editingProductionLogId, setEditingProductionLogId] = useState(null);
+
   const [zipInput, setZipInput] = useState("");
   const [selectedZone, setSelectedZone] = useState("");
   const [zoneError, setZoneError] = useState("");
@@ -161,13 +201,16 @@ export default function FlowerStudio() {
     setLoading(true);
 
     try {
-      const [savedFlowers, savedArrangements, savedLogs] = await Promise.all([
-        getFlowerItems(user.uid),
-        getFlowerArrangements(user.uid),
-        getFlowerProductionLogs(user.uid)
-      ]);
+      const [savedFlowers, savedContainers, savedArrangements, savedLogs] =
+        await Promise.all([
+          getFlowerItems(user.uid),
+          getFlowerContainers(user.uid),
+          getFlowerArrangements(user.uid),
+          getFlowerProductionLogs(user.uid)
+        ]);
 
       setFlowers(savedFlowers);
+      setContainers(savedContainers);
       setArrangements(savedArrangements);
       setLogs(savedLogs);
     } catch (error) {
@@ -183,6 +226,7 @@ export default function FlowerStudio() {
       loadData();
     } else {
       setFlowers([]);
+      setContainers([]);
       setArrangements([]);
       setLogs([]);
     }
@@ -237,18 +281,40 @@ export default function FlowerStudio() {
     );
   }, [arrangements, productionForm.arrangementId]);
 
-  const arrangementCost = useMemo(() => {
+  const selectedContainer = useMemo(() => {
+    return (
+      containers.find((item) => item.id === arrangementForm.containerId) ||
+      null
+    );
+  }, [containers, arrangementForm.containerId]);
+
+  const arrangementStemCost = useMemo(() => {
     return (arrangementForm.stems || []).reduce((sum, line) => {
       const flower = flowers.find((item) => item.id === line.flowerId);
       return sum + toNumber(flower?.stemCost) * toNumber(line.stemsPerArrangement);
-    }, toNumber(arrangementForm.packagingCost));
-  }, [arrangementForm, flowers]);
+    }, 0);
+  }, [arrangementForm.stems, flowers]);
+
+  const arrangementContainerCost = selectedContainer
+    ? toNumber(selectedContainer.unitCost)
+    : toNumber(arrangementForm.containerCost);
+
+  const arrangementCost = useMemo(() => {
+    return (
+      arrangementStemCost +
+      toNumber(arrangementForm.packagingCost) +
+      arrangementContainerCost
+    );
+  }, [arrangementStemCost, arrangementForm.packagingCost, arrangementContainerCost]);
 
   const productionSummary = useMemo(() => {
     if (!selectedArrangement) {
       return {
         quantity: 0,
         totalStems: 0,
+        stemsCost: 0,
+        packagingCost: 0,
+        containerCost: 0,
         cost: 0,
         revenue: 0,
         profit: 0,
@@ -271,13 +337,17 @@ export default function FlowerStudio() {
 
     const stemsCost = stemLines.reduce((sum, line) => sum + line.cost, 0);
     const packagingCost = quantity * toNumber(selectedArrangement.packagingCost);
-    const cost = stemsCost + packagingCost;
+    const containerCost = quantity * toNumber(selectedArrangement.containerCost);
+    const cost = stemsCost + packagingCost + containerCost;
     const revenue = quantity * toNumber(selectedArrangement.retailPrice);
     const profit = revenue - cost;
 
     return {
       quantity,
       totalStems: stemLines.reduce((sum, line) => sum + line.totalNeeded, 0),
+      stemsCost,
+      packagingCost,
+      containerCost,
       cost,
       revenue,
       profit,
@@ -290,11 +360,12 @@ export default function FlowerStudio() {
 
     return {
       flowers: flowers.length,
+      containers: containers.length,
       arrangements: arrangements.length,
       logs: logs.length,
       finished
     };
-  }, [flowers, arrangements, logs]);
+  }, [flowers, containers, arrangements, logs]);
 
   const filteredArrangements = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
@@ -305,7 +376,8 @@ export default function FlowerStudio() {
       return (
         item.name?.toLowerCase().includes(query) ||
         item.category?.toLowerCase().includes(query) ||
-        item.description?.toLowerCase().includes(query)
+        item.description?.toLowerCase().includes(query) ||
+        item.containerName?.toLowerCase().includes(query)
       );
     });
   }, [arrangements, searchTerm]);
@@ -362,6 +434,10 @@ export default function FlowerStudio() {
 
     const arrangementName =
       arrangementForm.name?.trim() || "Untitled Flower Studio Arrangement";
+    const containerName =
+      selectedContainer?.name ||
+      arrangementForm.containerName ||
+      "clear glass vase";
 
     setPromptCopied(false);
     setGeneratedArrangementPrompt(`This prompt is designed to work best in ChatGPT image generation because it includes the Flower Studio visual style ID and full style definition.
@@ -374,15 +450,20 @@ ${FLOWER_STUDIO_STYLE.description}
 Arrangement name:
 ${arrangementName}
 
+Container / presentation:
+${containerName}
+
 Stem recipe:
 ${stemLines}
 
-Show the arrangement as a simple test arrangement in a clear glass vase using only the listed stems. Keep the visual proportions close to the recipe, with higher-count flowers appearing more visually dominant. Use the same warm, airy, luminous Flower Studio style used for the individual flower variety images. Keep the flowers realistic to their natural form, scale, and foliage.
+Show the arrangement as a simple test arrangement in a ${containerName} using only the listed stems. Keep the visual proportions close to the recipe, with higher-count flowers appearing more visually dominant. Use the same warm, airy, luminous Flower Studio style used for the individual flower variety images. Keep the flowers realistic to their natural form, scale, and foliage.
 
 Strict recipe fidelity requirement:
 Only include flowers, greenery, fillers, foliage, seed heads, grasses, or accent stems that are explicitly listed in the stem recipe above. Do not add extra filler, greenery, baby's breath, grasses, background stems, decorative accents, or any unlisted plant material. If the recipe looks sparse, leave it sparse. The image should accurately reveal whether the arrangement needs more filler added to the recipe.
+
 Photorealism requirement:
-The image must look like a real photograph taken with a camera, not an illustration, painting, cartoon, digital rendering, or dreamy AI image. Use natural window lighting, realistic shadows, realistic glass reflections, true flower textures, and believable camera depth of field.
+The image must look like a real photograph taken with a camera, not an illustration, painting, cartoon, digital rendering, or dreamy AI image. Use natural window lighting, realistic shadows, true flower textures, and believable camera depth of field.
+
 Square composition. No hands, no people, no extra props, no watermarks.`);
   }
 
@@ -510,6 +591,11 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
       source: flower.source || "Manual",
       zone: flower.zone || ""
     });
+
+    document.getElementById("flower-pantry")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
   }
 
   async function removeFlower(flowerId) {
@@ -525,9 +611,94 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
     }
   }
 
+  function updateContainerField(field, value) {
+    markFlowerDirty();
+    setContainerForm((current) => ({ ...current, [field]: value }));
+  }
+
+  async function saveContainer(event) {
+    event?.preventDefault?.();
+
+    if (!user) return;
+
+    const cleanContainer = {
+      ...containerForm,
+      name: containerForm.name.trim(),
+      type: containerForm.type || "Other",
+      unitCost: cleanMoney(containerForm.unitCost),
+      inventoryCount: toNumber(containerForm.inventoryCount),
+      notes: containerForm.notes.trim()
+    };
+
+    if (!cleanContainer.name) {
+      showStatus("Container name is required.", "error");
+      return;
+    }
+
+    try {
+      if (editingContainerId) {
+        await updateFlowerContainer(user.uid, editingContainerId, cleanContainer);
+        showStatus("Container updated.");
+      } else {
+        await createFlowerContainer(user.uid, cleanContainer);
+        showStatus("Container saved.");
+      }
+
+      setContainerForm(emptyContainer);
+      setEditingContainerId(null);
+      markSaved();
+      await loadData();
+    } catch (error) {
+      console.error(error);
+      showStatus("Could not save container.", "error");
+    }
+  }
+
+  function editContainer(container) {
+    setEditingContainerId(container.id);
+    setContainerForm({
+      name: container.name || "",
+      type: container.type || "Other",
+      unitCost: cleanMoney(container.unitCost),
+      inventoryCount: container.inventoryCount || "",
+      notes: container.notes || ""
+    });
+
+    document.getElementById("container-pantry")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  }
+
+  async function removeContainer(containerId) {
+    if (!user) return;
+
+    try {
+      await deleteFlowerContainer(user.uid, containerId);
+      showStatus("Container deleted.");
+      await loadData();
+    } catch (error) {
+      console.error(error);
+      showStatus("Could not delete container.", "error");
+    }
+  }
+
   function updateArrangementField(field, value) {
     markFlowerDirty();
     setArrangementForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function updateArrangementContainer(containerId) {
+    markFlowerDirty();
+
+    const container = containers.find((item) => item.id === containerId);
+
+    setArrangementForm((current) => ({
+      ...current,
+      containerId,
+      containerName: container?.name || "",
+      containerCost: container ? cleanMoney(container.unitCost) : ""
+    }));
   }
 
   function addStemLine() {
@@ -570,6 +741,10 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
 
     if (!user) return;
 
+    const activeContainer = containers.find(
+      (item) => item.id === arrangementForm.containerId
+    );
+
     const cleanArrangement = {
       name: arrangementForm.name.trim(),
       category: arrangementForm.category.trim() || "Arrangement",
@@ -586,6 +761,12 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
         arrangementForm.packagingCost === ""
           ? ""
           : toNumber(arrangementForm.packagingCost),
+      containerId: activeContainer?.id || "",
+      containerName: activeContainer?.name || arrangementForm.containerName || "",
+      containerCost:
+        arrangementForm.containerCost === ""
+          ? ""
+          : toNumber(arrangementForm.containerCost),
       estimatedCost: arrangementCost,
       stems: (arrangementForm.stems || [])
         .filter((line) => line.flowerId && toNumber(line.stemsPerArrangement) > 0)
@@ -638,7 +819,18 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
       retailPrice: arrangement.retailPrice || "",
       wholesalePrice: arrangement.wholesalePrice || "",
       packagingCost: arrangement.packagingCost || "",
-      stems: arrangement.stems || []
+      containerId: arrangement.containerId || "",
+      containerName: arrangement.containerName || "",
+      containerCost: cleanMoney(arrangement.containerCost),
+      stems: (arrangement.stems || []).map((line) => ({
+        id: makeId("stem"),
+        ...line
+      }))
+    });
+
+    document.getElementById("flower-builder")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
     });
   }
 
@@ -655,6 +847,13 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
     }
   }
 
+  function updateProductionField(field, value) {
+    setProductionForm((current) => ({
+      ...current,
+      [field]: value
+    }));
+  }
+
   async function saveProductionLog(event) {
     event?.preventDefault?.();
 
@@ -663,8 +862,21 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
       return;
     }
 
-    if (!productionForm.productionDate || !productionForm.quantity) {
-      showStatus("Production date and quantity are required.", "error");
+    const missingDate = !productionForm.productionDate;
+    const missingQuantity = !productionForm.quantity || toNumber(productionForm.quantity) <= 0;
+
+    if (missingDate && missingQuantity) {
+      showStatus("Add a production date and quantity.", "error");
+      return;
+    }
+
+    if (missingDate) {
+      showStatus("Add a production date.", "error");
+      return;
+    }
+
+    if (missingQuantity) {
+      showStatus("Add a quantity.", "error");
       return;
     }
 
@@ -680,14 +892,43 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
     };
 
     try {
-      await createFlowerProductionLog(user.uid, cleanLog);
-      showStatus("Production logged.");
+      if (editingProductionLogId) {
+        await updateFlowerProductionLog(user.uid, editingProductionLogId, cleanLog);
+        showStatus("Production log updated.");
+      } else {
+        await createFlowerProductionLog(user.uid, cleanLog);
+        showStatus("Production logged.");
+      }
+
       setProductionForm(emptyProduction);
+      setEditingProductionLogId(null);
       await loadData();
     } catch (error) {
       console.error(error);
       showStatus("Could not save production log.", "error");
     }
+  }
+
+  function editProductionLog(log) {
+    setEditingProductionLogId(log.id);
+    setProductionForm({
+      arrangementId: log.arrangementId || "",
+      productionDate: log.productionDate || "",
+      quantity: log.quantity || "",
+      eventName: log.eventName || "",
+      customerName: log.customerName || "",
+      notes: log.notes || ""
+    });
+
+    document.getElementById("flower-production")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  }
+
+  function cancelProductionEdit() {
+    setEditingProductionLogId(null);
+    setProductionForm(emptyProduction);
   }
 
   async function addProductionToInventory() {
@@ -726,9 +967,9 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
           retailPrice: selectedArrangement.retailPrice || "",
           wholesalePrice: selectedArrangement.wholesalePrice || "",
           status: "In Stock",
-          notes: `Added from Flower Studio. Event: ${
-            productionForm.eventName || "not recorded"
-          }.`
+          notes: `Added from Flower Studio. Container: ${
+            selectedArrangement.containerName || "none"
+          }. Event: ${productionForm.eventName || "not recorded"}.`
         },
         quantityToAdd: quantity
       });
@@ -748,6 +989,11 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
     try {
       await deleteFlowerProductionLog(user.uid, logId);
       showStatus("Production log deleted.");
+
+      if (editingProductionLogId === logId) {
+        cancelProductionEdit();
+      }
+
       await loadData();
     } catch (error) {
       console.error(error);
@@ -763,8 +1009,8 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
             <p className="eyebrow">Flower Studio</p>
             <h2>Build flower arrangements from stem planning to inventory.</h2>
             <p>
-              Sign in to manage flower pantries, arrangements, zone suggestions,
-              stem calculations, production logs, and finished inventory.
+              Sign in to manage flower pantries, container costs, arrangements,
+              zone suggestions, production logs, and finished inventory.
             </p>
           </div>
 
@@ -796,10 +1042,11 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
       <section className="farmModuleHero flowerStudioHero">
         <div className="farmModuleHeroText">
           <p className="eyebrow">Flower Studio</p>
-          <h2>Plan stems, arrangements, production, and finished inventory.</h2>
+          <h2>Plan stems, containers, arrangements, production, and inventory.</h2>
           <p>
-            Import flowers by USDA zone, build bouquet recipes, calculate stem needs,
-            log production, and send finished arrangements to Inventory.
+            Import flowers by USDA zone, build bouquet recipes, assign vase or
+            wrapper costs, log production, and send finished arrangements to
+            Inventory.
           </p>
         </div>
 
@@ -824,6 +1071,13 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
           accent="flowers"
         />
         <StatCard
+          icon={PackageCheck}
+          label="Containers"
+          value={loading ? "..." : dashboardSummary.containers}
+          sub="Vases and wrappers"
+          accent="grant"
+        />
+        <StatCard
           icon={Library}
           label="Arrangements"
           value={loading ? "..." : dashboardSummary.arrangements}
@@ -832,13 +1086,6 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
         />
         <StatCard
           icon={ClipboardCheck}
-          label="Logs"
-          value={loading ? "..." : dashboardSummary.logs}
-          sub="Production records"
-          accent="market"
-        />
-        <StatCard
-          icon={PackageCheck}
           label="Finished"
           value={loading ? "..." : dashboardSummary.finished}
           sub="Arrangements made"
@@ -856,6 +1103,11 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
           <Flower2 size={20} />
           <h3>Flower Pantry</h3>
           <p>Save stems, greenery, fillers, and packaging.</p>
+        </a>
+        <a className="toolCard compactToolCard clickableToolCard" href="#container-pantry">
+          <PackageCheck size={20} />
+          <h3>Container Pantry</h3>
+          <p>Save vases, jars, sleeves, wrappers, and unit costs.</p>
         </a>
         <a className="toolCard compactToolCard clickableToolCard" href="#flower-builder">
           <Library size={20} />
@@ -1099,6 +1351,19 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
                   <Save size={15} />
                   {editingFlowerId ? "Update Flower" : "Save Flower"}
                 </button>
+
+                {editingFlowerId ? (
+                  <button
+                    className="secondaryButton compactButton"
+                    type="button"
+                    onClick={() => {
+                      setEditingFlowerId(null);
+                      setFlowerForm(emptyFlower);
+                    }}
+                  >
+                    Cancel Edit
+                  </button>
+                ) : null}
               </div>
             </form>
 
@@ -1154,6 +1419,144 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
                 })
               ) : (
                 <div className="permitEmptyState">No flowers saved yet.</div>
+              )}
+            </div>
+          </section>
+
+          <section
+            className="workspacePanel compactPanel scrollAnchor"
+            id="container-pantry"
+          >
+            <div className="workspaceHeader compactPanelHeader">
+              <div>
+                <p className="eyebrow">Pantry</p>
+                <h3>Container Pantry</h3>
+              </div>
+              <PackageCheck size={22} />
+            </div>
+
+            <form className="formGrid compactFormGrid" onSubmit={saveContainer}>
+              <label>
+                Container Name *
+                <input
+                  value={containerForm.name}
+                  onChange={(event) =>
+                    updateContainerField("name", event.target.value)
+                  }
+                  placeholder="12 oz Mason Jar"
+                />
+              </label>
+
+              <label>
+                Type
+                <select
+                  value={containerForm.type}
+                  onChange={(event) =>
+                    updateContainerField("type", event.target.value)
+                  }
+                >
+                  {commonContainerTypes.map((type) => (
+                    <option key={type}>{type}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Unit Cost
+                <input
+                  type="number"
+                  step="0.01"
+                  value={containerForm.unitCost}
+                  onChange={(event) =>
+                    updateContainerField("unitCost", event.target.value)
+                  }
+                  onBlur={(event) =>
+                    updateContainerField("unitCost", cleanMoney(event.target.value))
+                  }
+                />
+              </label>
+
+              <label>
+                Inventory Count
+                <input
+                  type="number"
+                  step="1"
+                  value={containerForm.inventoryCount}
+                  onChange={(event) =>
+                    updateContainerField("inventoryCount", event.target.value)
+                  }
+                />
+              </label>
+
+              <label className="fullSpan">
+                Notes
+                <textarea
+                  value={containerForm.notes}
+                  onChange={(event) =>
+                    updateContainerField("notes", event.target.value)
+                  }
+                  placeholder="Source, size, case count, vendor, or use notes"
+                />
+              </label>
+
+              <div className="formActions fullSpan">
+                <button className="primaryButton compactPrimary" type="submit">
+                  <Save size={15} />
+                  {editingContainerId ? "Update Container" : "Save Container"}
+                </button>
+
+                {editingContainerId ? (
+                  <button
+                    className="secondaryButton compactButton"
+                    type="button"
+                    onClick={() => {
+                      setEditingContainerId(null);
+                      setContainerForm(emptyContainer);
+                    }}
+                  >
+                    Cancel Edit
+                  </button>
+                ) : null}
+              </div>
+            </form>
+
+            <div className="savedList compactSavedList containerPantryList">
+              {containers.length ? (
+                containers.map((container) => (
+                  <div className="savedItem compactSavedItem" key={container.id}>
+                    <div className="containerListIcon">
+                      <PackageCheck size={18} />
+                    </div>
+
+                    <div>
+                      <h4>{container.name}</h4>
+                      <p>
+                        {container.type || "Container"} •{" "}
+                        {container.unitCost
+                          ? `${money(container.unitCost)} / ea`
+                          : "No cost"}{" "}
+                        • {container.inventoryCount || 0} on hand
+                      </p>
+                    </div>
+
+                    <div className="itemActions">
+                      <button type="button" onClick={() => editContainer(container)}>
+                        <Edit3 size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeContainer(container.id)}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="permitEmptyState">
+                  No containers saved yet. Add vases, mason jars, sleeves, wraps,
+                  or other presentation supplies here.
+                </div>
               )}
             </div>
           </section>
@@ -1224,7 +1627,40 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
               </label>
 
               <label>
-                Packaging Cost
+                Container / Presentation
+                <select
+                  value={arrangementForm.containerId}
+                  onChange={(event) =>
+                    updateArrangementContainer(event.target.value)
+                  }
+                >
+                  <option value="">No saved container</option>
+                  {containers.map((container) => (
+                    <option key={container.id} value={container.id}>
+                      {container.name} {container.unitCost ? `(${money(container.unitCost)})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Container Cost
+                <input
+                  type="number"
+                  step="0.01"
+                  value={arrangementForm.containerCost}
+                  onChange={(event) =>
+                    updateArrangementField("containerCost", event.target.value)
+                  }
+                  onBlur={(event) =>
+                    updateArrangementField("containerCost", cleanMoney(event.target.value))
+                  }
+                  placeholder="Auto-filled from container"
+                />
+              </label>
+
+              <label>
+                Packaging / Add-On Cost
                 <input
                   type="number"
                   step="0.01"
@@ -1232,6 +1668,10 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
                   onChange={(event) =>
                     updateArrangementField("packagingCost", event.target.value)
                   }
+                  onBlur={(event) =>
+                    updateArrangementField("packagingCost", cleanMoney(event.target.value))
+                  }
+                  placeholder="Ribbon, card, sleeve, etc."
                 />
               </label>
 
@@ -1321,6 +1761,14 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
 
               <div className="batchTotals fullSpan flowerTotals">
                 <div>
+                  <span>Stem Cost</span>
+                  <h4>{money(arrangementStemCost)}</h4>
+                </div>
+                <div>
+                  <span>Container Cost</span>
+                  <h4>{money(arrangementContainerCost)}</h4>
+                </div>
+                <div>
                   <span>Estimated Cost</span>
                   <h4>{money(arrangementCost)}</h4>
                 </div>
@@ -1358,6 +1806,19 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
                   <Save size={15} />
                   {editingArrangementId ? "Update Arrangement" : "Save Arrangement"}
                 </button>
+
+                {editingArrangementId ? (
+                  <button
+                    className="secondaryButton compactButton"
+                    type="button"
+                    onClick={() => {
+                      setEditingArrangementId(null);
+                      setArrangementForm(emptyArrangement);
+                    }}
+                  >
+                    Cancel Edit
+                  </button>
+                ) : null}
               </div>
             </form>
           </section>
@@ -1388,6 +1849,9 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
                       <p>
                         {arrangement.category} • {arrangement.stems?.length || 0} stem
                         lines •{" "}
+                        {arrangement.containerName
+                          ? `${arrangement.containerName} • `
+                          : ""}
                         {arrangement.retailPrice
                           ? `${money(arrangement.retailPrice)} retail`
                           : "No price"}
@@ -1431,16 +1895,23 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
               </button>
             </div>
 
+            {editingProductionLogId ? (
+              <div className="flowerEditNotice">
+                <span>Editing a saved production log.</span>
+                <button type="button" onClick={cancelProductionEdit}>
+                  <X size={14} />
+                  Cancel Edit
+                </button>
+              </div>
+            ) : null}
+
             <form className="formGrid compactFormGrid" onSubmit={saveProductionLog}>
               <label>
                 Arrangement
                 <select
                   value={productionForm.arrangementId}
                   onChange={(event) =>
-                    setProductionForm((current) => ({
-                      ...current,
-                      arrangementId: event.target.value
-                    }))
+                    updateProductionField("arrangementId", event.target.value)
                   }
                 >
                   <option value="">Choose arrangement...</option>
@@ -1459,10 +1930,7 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
                   step="1"
                   value={productionForm.quantity}
                   onChange={(event) =>
-                    setProductionForm((current) => ({
-                      ...current,
-                      quantity: event.target.value
-                    }))
+                    updateProductionField("quantity", event.target.value)
                   }
                 />
               </label>
@@ -1473,10 +1941,7 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
                   type="date"
                   value={productionForm.productionDate}
                   onChange={(event) =>
-                    setProductionForm((current) => ({
-                      ...current,
-                      productionDate: event.target.value
-                    }))
+                    updateProductionField("productionDate", event.target.value)
                   }
                 />
               </label>
@@ -1486,10 +1951,7 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
                 <input
                   value={productionForm.eventName}
                   onChange={(event) =>
-                    setProductionForm((current) => ({
-                      ...current,
-                      eventName: event.target.value
-                    }))
+                    updateProductionField("eventName", event.target.value)
                   }
                 />
               </label>
@@ -1499,10 +1961,7 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
                 <input
                   value={productionForm.customerName}
                   onChange={(event) =>
-                    setProductionForm((current) => ({
-                      ...current,
-                      customerName: event.target.value
-                    }))
+                    updateProductionField("customerName", event.target.value)
                   }
                 />
               </label>
@@ -1512,10 +1971,7 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
                 <textarea
                   value={productionForm.notes}
                   onChange={(event) =>
-                    setProductionForm((current) => ({
-                      ...current,
-                      notes: event.target.value
-                    }))
+                    updateProductionField("notes", event.target.value)
                   }
                 />
               </label>
@@ -1524,6 +1980,10 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
                 <div>
                   <span>Total Stems</span>
                   <h4>{productionSummary.totalStems}</h4>
+                </div>
+                <div>
+                  <span>Container Cost</span>
+                  <h4>{money(productionSummary.containerCost)}</h4>
                 </div>
                 <div>
                   <span>Cost</span>
@@ -1540,6 +2000,15 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
               </div>
 
               <div className="flowerNeededList fullSpan">
+                {selectedArrangement?.containerName ? (
+                  <div className="recipePartsRow flowerContainerNeededRow">
+                    <span>Container</span>
+                    <strong>
+                      {productionSummary.quantity} × {selectedArrangement.containerName}
+                    </strong>
+                  </div>
+                ) : null}
+
                 {productionSummary.stemLines.map((line) => (
                   <div className="recipePartsRow" key={line.flowerId}>
                     <span>{line.flowerName}</span>
@@ -1551,8 +2020,20 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
               <div className="formActions fullSpan">
                 <button className="primaryButton compactPrimary" type="submit">
                   <Save size={15} />
-                  Save Production Log
+                  {editingProductionLogId
+                    ? "Update Production Log"
+                    : "Save Production Log"}
                 </button>
+
+                {editingProductionLogId ? (
+                  <button
+                    className="secondaryButton compactButton"
+                    type="button"
+                    onClick={cancelProductionEdit}
+                  >
+                    Cancel Edit
+                  </button>
+                ) : null}
               </div>
             </form>
           </section>
@@ -1575,11 +2056,17 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
                   <h4>{log.arrangementName}</h4>
                   <p>
                     {log.productionDate || "No date"} • {log.quantity || 0} finished •{" "}
+                    {log.summary?.containerCost
+                      ? `${money(log.summary.containerCost)} containers • `
+                      : ""}
                     {log.eventName || "No event"}
                   </p>
                 </div>
 
                 <div className="itemActions">
+                  <button type="button" onClick={() => editProductionLog(log)}>
+                    <Edit3 size={14} />
+                  </button>
                   <button type="button" onClick={() => removeLog(log.id)}>
                     <Trash2 size={15} />
                   </button>
@@ -1670,12 +2157,11 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
               </div>
 
               <div>
-                <span>Stem Lines</span>
+                <span>Container</span>
                 <strong>
-                  {(arrangementForm.stems || []).filter(
-                    (line) =>
-                      line.flowerName && toNumber(line.stemsPerArrangement) > 0
-                  ).length}
+                  {selectedContainer?.name ||
+                    arrangementForm.containerName ||
+                    "No container"}
                 </strong>
               </div>
 
