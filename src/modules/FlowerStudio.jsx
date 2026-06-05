@@ -1484,11 +1484,6 @@ export default function FlowerStudio() {
             </button>
 
             <img src={previewFlowerVisual.path} alt={previewFlowerVisual.alt} />
-
-            <div>
-              <h3>{previewFlowerVisual.name}</h3>
-              <p>{previewFlowerVisual.alt}</p>
-            </div>
           </div>
         </div>
       ) : null}
