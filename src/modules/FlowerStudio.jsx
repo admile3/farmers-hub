@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Calculator,
   ClipboardCheck,
+  Copy,
   Edit3,
   Flower2,
   HelpCircle,
@@ -11,6 +12,7 @@ import {
   Plus,
   Save,
   Search,
+  Sparkles,
   Trash2
 } from "lucide-react";
 
@@ -23,6 +25,7 @@ import { addQuantityToMatchedInventoryItem } from "../services/inventoryService.
 import { getZoneFromZip } from "../data/zipZoneLookup.js";
 import { getFlowersForZone, usdaZones } from "../data/flowerZoneLibrary.js";
 import { getFlowerVisualByName } from "../data/flowerVisualDatabase.js";
+import { FLOWER_STUDIO_STYLE } from "../data/flowerStudioStyle.js";
 import {
   createFlowerArrangement,
   createFlowerItem,
@@ -128,6 +131,8 @@ export default function FlowerStudio() {
   const [zoneError, setZoneError] = useState("");
   const [selectedLibraryFlowers, setSelectedLibraryFlowers] = useState([]);
   const [previewFlowerVisual, setPreviewFlowerVisual] = useState(null);
+  const [generatedArrangementPrompt, setGeneratedArrangementPrompt] = useState("");
+  const [promptCopied, setPromptCopied] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [statusType, setStatusType] = useState("success");
@@ -189,6 +194,13 @@ export default function FlowerStudio() {
     const timer = window.setTimeout(() => setStatusMessage(""), 3000);
     return () => window.clearTimeout(timer);
   }, [statusMessage]);
+
+  useEffect(() => {
+    if (!promptCopied) return;
+
+    const timer = window.setTimeout(() => setPromptCopied(false), 1800);
+    return () => window.clearTimeout(timer);
+  }, [promptCopied]);
 
   useEffect(() => {
     if (!user) return;
@@ -332,6 +344,53 @@ export default function FlowerStudio() {
     );
 
     setSelectedLibraryFlowers(allSelected ? [] : zoneFlowerNames);
+  }
+
+  function generateArrangementImagePrompt() {
+    const stemLines = (arrangementForm.stems || [])
+      .filter((line) => line.flowerName && toNumber(line.stemsPerArrangement) > 0)
+      .map(
+        (line) =>
+          `- ${toNumber(line.stemsPerArrangement)} stems of ${line.flowerName}`
+      )
+      .join("\n");
+
+    if (!stemLines) {
+      showStatus("Add at least one stem line before generating a prompt.", "error");
+      return;
+    }
+
+    const arrangementName =
+      arrangementForm.name?.trim() || "Untitled Flower Studio Arrangement";
+
+    setPromptCopied(false);
+    setGeneratedArrangementPrompt(`This prompt is designed to work best in ChatGPT image generation because it includes the Flower Studio visual style ID and full style definition.
+
+Create a photorealistic botanical catalog image of a finished floral arrangement.
+
+Use Flower Studio Style ID ${FLOWER_STUDIO_STYLE.id}:
+${FLOWER_STUDIO_STYLE.description}
+
+Arrangement name:
+${arrangementName}
+
+Stem recipe:
+${stemLines}
+
+Show the arrangement as a finished bouquet in a clear glass vase. Keep the visual proportions close to the recipe, with higher-count flowers appearing more visually dominant. Use the same warm, airy, luminous Flower Studio style used for the individual flower variety images. Keep the flowers realistic to their natural form, scale, and foliage. Square composition. No hands, no people, no extra props, no watermarks.`);
+  }
+
+  async function copyGeneratedPrompt() {
+    if (!generatedArrangementPrompt) return;
+
+    try {
+      await navigator.clipboard.writeText(generatedArrangementPrompt);
+      setPromptCopied(true);
+      showStatus("Prompt copied.");
+    } catch (error) {
+      console.error(error);
+      showStatus("Could not copy prompt. Select the text and copy manually.", "error");
+    }
   }
 
   async function importSelectedFlowers() {
@@ -1089,6 +1148,15 @@ export default function FlowerStudio() {
                 <p className="eyebrow">Builder</p>
                 <h3>Arrangement Builder</h3>
               </div>
+
+              <button
+                className="secondaryButton compactButton"
+                type="button"
+                onClick={generateArrangementImagePrompt}
+              >
+                <Sparkles size={15} />
+                Generate Image Prompt
+              </button>
             </div>
 
             <form className="formGrid compactFormGrid" onSubmit={saveArrangement}>
@@ -1510,6 +1578,59 @@ export default function FlowerStudio() {
             </button>
 
             <img src={previewFlowerVisual.path} alt={previewFlowerVisual.alt} />
+          </div>
+        </div>
+      ) : null}
+
+      {generatedArrangementPrompt ? (
+        <div
+          className="flowerImagePreviewOverlay"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setGeneratedArrangementPrompt("")}
+        >
+          <div
+            className="flowerPromptModal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              className="moduleGuideCloseButton"
+              type="button"
+              onClick={() => setGeneratedArrangementPrompt("")}
+              aria-label="Close arrangement image prompt"
+            >
+              ×
+            </button>
+
+            <div>
+              <p className="eyebrow">ChatGPT Image Prompt</p>
+              <h3>Arrangement Image Prompt</h3>
+              <p>
+                This prompt is most effective in ChatGPT because it includes the
+                Flower Studio style ID and full visual style definition.
+              </p>
+            </div>
+
+            <textarea readOnly value={generatedArrangementPrompt} />
+
+            <div className="formActions">
+              <button
+                className="primaryButton compactPrimary"
+                type="button"
+                onClick={copyGeneratedPrompt}
+              >
+                <Copy size={15} />
+                {promptCopied ? "Copied" : "Copy Prompt"}
+              </button>
+
+              <button
+                className="secondaryButton compactButton"
+                type="button"
+                onClick={() => setGeneratedArrangementPrompt("")}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       ) : null}
