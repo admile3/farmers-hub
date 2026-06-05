@@ -429,7 +429,19 @@ Show the arrangement as a finished bouquet in a clear glass vase. Keep the visua
       );
 
       showStatus("Selected flowers imported.");
+      setSelectedLibraryFlowers([]);
+      setSelectedZone("");
+      setZipInput("");
+      setZoneError("");
+
       await loadData();
+
+      window.setTimeout(() => {
+        document.getElementById("flower-pantry")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      }, 150);
     } catch (error) {
       console.error(error);
       showStatus("Could not import flowers.", "error");
