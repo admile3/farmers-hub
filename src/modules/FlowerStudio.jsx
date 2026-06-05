@@ -1623,7 +1623,7 @@ Show the arrangement as a finished bouquet in a clear glass vase. Keep the visua
             onClick={(event) => event.stopPropagation()}
           >
             <button
-              className="moduleGuideCloseButton"
+              className="moduleGuideCloseButton flowerPromptCloseButton"
               type="button"
               onClick={() => setGeneratedArrangementPrompt("")}
               aria-label="Close arrangement image prompt"
@@ -1631,18 +1631,67 @@ Show the arrangement as a finished bouquet in a clear glass vase. Keep the visua
               ×
             </button>
 
-            <div>
-              <p className="eyebrow">ChatGPT Image Prompt</p>
-              <h3>Arrangement Image Prompt</h3>
-              <p>
-                This prompt is most effective in ChatGPT because it includes the
-                Flower Studio style ID and full visual style definition.
-              </p>
+            <div className="flowerPromptHeader">
+              <div className="flowerPromptTitleIcon">
+                <Sparkles size={20} />
+              </div>
+
+              <div>
+                <p className="eyebrow">ChatGPT Image Prompt</p>
+                <h3>Arrangement Image Prompt</h3>
+                <p>
+                  Generate a visual mockup of this arrangement using the Flower
+                  Studio style standard.
+                </p>
+              </div>
             </div>
 
-            <textarea readOnly value={generatedArrangementPrompt} />
+            <div className="flowerPromptMeta">
+              <span className="flowerPromptStyleBadge">
+                Style: {FLOWER_STUDIO_STYLE.id}
+              </span>
+              <span className="flowerPromptOptimized">
+                Optimized for ChatGPT image generation
+              </span>
+            </div>
 
-            <div className="formActions">
+            <div className="flowerPromptSummary">
+              <div>
+                <span>Arrangement</span>
+                <strong>
+                  {arrangementForm.name?.trim() || "Untitled Arrangement"}
+                </strong>
+              </div>
+
+              <div>
+                <span>Stem Lines</span>
+                <strong>
+                  {(arrangementForm.stems || []).filter(
+                    (line) =>
+                      line.flowerName && toNumber(line.stemsPerArrangement) > 0
+                  ).length}
+                </strong>
+              </div>
+
+              <div>
+                <span>Total Stems</span>
+                <strong>
+                  {(arrangementForm.stems || []).reduce(
+                    (sum, line) => sum + toNumber(line.stemsPerArrangement),
+                    0
+                  )}
+                </strong>
+              </div>
+            </div>
+
+            <textarea
+              className="flowerPromptTextarea"
+              readOnly
+              value={generatedArrangementPrompt}
+              aria-label="Generated arrangement image prompt"
+            />
+
+            <div className="flowerPromptActions">
               <button
                 className="primaryButton compactPrimary"
                 type="button"
