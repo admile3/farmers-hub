@@ -15600,3 +15600,38 @@ input[type="number"] {
     transform: scale(0.96);
   }
 }
+@media (max-width: 820px) {
+  .inventoryModule .inventoryQuantityAdjustCell {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  .inventoryModule .inventoryQuantityAdjustControl {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+  }
+
+  .inventoryModule .inventoryQuantityAdjustControl strong {
+    min-width: 88px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    font-weight: 950 !important;
+  }
+
+  .inventoryModule .inventoryQuantityAdjustControl button {
+    width: 36px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 !important;
+    border: 1px solid rgba(22, 27, 34, 0.22) !important;
+    border-radius: 10px !important;
+    background: #ffffff !important;
+    color: var(--text) !important;
+    font-weight: 950 !important;
+    box-shadow: 0 2px 8px rgba(22, 27, 34, 0.06) !important;
+  }
+}
