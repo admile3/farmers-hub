@@ -1374,27 +1374,29 @@ showStatus("Inventory quantity updated.", "success");
 
                     <span data-label="Category">{item.category || "Other"}</span>
 
-                    <span className="inventoryQuantityCell" data-label="Qty / Adjust">
-                      <strong>
-                        {formatNumber(item.quantityOnHand)} {item.unit || "each"}
-                      </strong>
-                      <div className="inventoryAdjustButtons">
-                        <button
-                          type="button"
-                          title="Subtract 1"
-                          onClick={() => quickSaveQuantityChange(item, -1)}
-                        >
-                          -1
-                        </button>
-                        <button
-                          type="button"
-                          title="Add 1"
-                          onClick={() => quickSaveQuantityChange(item, 1)}
-                        >
-                          +1
-                        </button>
-                      </div>
-                    </span>
+                    <span className="inventoryQuantityCell inventoryQuantityAdjustCell" data-label="Quantity">
+  <div className="inventoryQuantityAdjustControl">
+    <button
+      type="button"
+      title="Subtract 1"
+      onClick={() => quickSaveQuantityChange(item, -1)}
+    >
+      -1
+    </button>
+
+    <strong>
+      {formatNumber(item.quantityOnHand)} {item.unit || "each"}
+    </strong>
+
+    <button
+      type="button"
+      title="Add 1"
+      onClick={() => quickSaveQuantityChange(item, 1)}
+    >
+      +1
+    </button>
+  </div>
+</span>
 
                     <span data-label="Reorder">
                       {item.reorderPoint !== "" && item.reorderPoint !== null
