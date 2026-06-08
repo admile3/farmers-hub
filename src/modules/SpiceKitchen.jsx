@@ -421,21 +421,23 @@ export default function SpiceKitchen() {
 
     if (!targetGrams || !totalParts) return [];
 
-    return selectedRecipe.ingredients.map((item) => {
-      const ingredient = ingredients.find((saved) => saved.id === item.ingredientId);
-      const grams = (toNumber(item.parts) / totalParts) * adjustedTargetGrams;
-      const ounces = gramsToOunces(grams);
-      const estimatedCost = ounces * getIngredientCostPerOunce(ingredient);
+    return selectedRecipe.ingredients
+  .map((item) => {
+    const ingredient = ingredients.find((saved) => saved.id === item.ingredientId);
+    const grams = (toNumber(item.parts) / totalParts) * adjustedTargetGrams;
+    const ounces = gramsToOunces(grams);
+    const estimatedCost = ounces * getIngredientCostPerOunce(ingredient);
 
-      return {
-        ingredientId: item.ingredientId || ingredient?.id || "",
-        name: item.ingredientName || ingredient?.name || "Unknown ingredient",
-        parts: toNumber(item.parts),
-        grams,
-        ounces,
-        estimatedCost
-      };
-    });
+    return {
+      ingredientId: item.ingredientId || ingredient?.id || "",
+      name: item.ingredientName || ingredient?.name || "Unknown ingredient",
+      parts: toNumber(item.parts),
+      grams,
+      ounces,
+      estimatedCost
+    };
+  })
+  .sort((a, b) => b.parts - a.parts || a.name.localeCompare(b.name));
   }, [selectedRecipe, ingredients, targetAmount, targetUnit, overagePercent]);
 
   const batchTotals = useMemo(() => {
