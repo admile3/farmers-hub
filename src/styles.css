@@ -15635,3 +15635,49 @@ input[type="number"] {
     box-shadow: 0 2px 8px rgba(22, 27, 34, 0.06) !important;
   }
 }
+/* Spice Kitchen recipe library repair after inventory mobile pass */
+.spicePage .recipePartsRow {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(82px, auto) !important;
+  align-items: center !important;
+  gap: 14px !important;
+}
+
+.spicePage .recipePartsRow span:first-child,
+.spicePage .recipePartsRow strong:first-child {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.spicePage .recipePartsRow span:last-child,
+.spicePage .recipePartsRow strong:last-child {
+  min-width: 82px !important;
+  text-align: right !important;
+  white-space: nowrap !important;
+}
+
+.spicePage .spiceExpandableList,
+.spicePage .spiceRecipeLibraryTall {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-gutter: stable !important;
+  padding-right: 10px !important;
+}
+
+.spicePage .spiceExpandableList::-webkit-scrollbar,
+.spicePage .spiceRecipeLibraryTall::-webkit-scrollbar {
+  width: 10px !important;
+}
+
+.spicePage .spiceExpandableList::-webkit-scrollbar-thumb,
+.spicePage .spiceRecipeLibraryTall::-webkit-scrollbar-thumb {
+  background: rgba(22, 27, 34, 0.28) !important;
+  border-radius: 999px !important;
+}
+
+.spicePage .spiceExpandableList::-webkit-scrollbar-track,
+.spicePage .spiceRecipeLibraryTall::-webkit-scrollbar-track {
+  background: rgba(22, 27, 34, 0.06) !important;
+}
