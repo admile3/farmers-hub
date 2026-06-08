@@ -14860,3 +14860,325 @@ input[type="number"] {
     font-size: 1.2rem;
   }
 }
+/* =========================================================
+   Module Guide Mobile Fix
+   Paste at the very bottom of src/styles.css
+   Fixes Inventory guide popup and keeps all module guide popups mobile-friendly.
+   ========================================================= */
+
+.moduleGuideOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(18, 24, 32, 0.62);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+
+.moduleGuideModal {
+  width: min(980px, 100%);
+  max-height: calc(100dvh - 48px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 22px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.24);
+}
+
+.moduleGuideHeader {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 22px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  background: #ffffff;
+}
+
+.moduleGuideHeader h2 {
+  margin: 4px 0 0;
+  font-size: clamp(1.45rem, 3vw, 2.35rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.moduleGuideCloseButton {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  background: #fbfaf6;
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.moduleGuideBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px 24px 22px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.moduleGuideFooter {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 15px 24px;
+  border-top: 1px solid var(--border);
+  background: #ffffff;
+}
+
+.moduleGuideDismiss {
+  display: flex;
+  grid-template-columns: none;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.moduleGuideDismiss input {
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  flex: 0 0 auto;
+}
+
+.moduleGuideDismiss span {
+  min-width: 0;
+  line-height: 1.35;
+}
+
+.moduleGuideContent {
+  display: grid;
+  gap: 16px;
+}
+
+.moduleGuideIntro,
+.moduleGuideTip,
+.moduleGuideSection,
+.guideMiniPanel {
+  min-width: 0;
+}
+
+.moduleGuideSection {
+  display: grid;
+  grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+  gap: 16px;
+  align-items: stretch;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: #fbfaf6;
+}
+
+.moduleGuidePreview,
+.moduleGuideStatPreview,
+.inventoryGuideStatPreview {
+  min-width: 0;
+}
+
+.moduleGuideStatPreview,
+.inventoryGuideStatPreview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.guideMiniGrid.three,
+.inventoryGuideModeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.inventoryGuideModeGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.guideMiniGrid > div,
+.inventoryGuideModeCard,
+.guideSavedRecipe,
+.guideSearchMock,
+.guideRecipeRows {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .moduleGuideOverlay {
+    align-items: stretch;
+    justify-items: stretch;
+    place-items: stretch;
+    padding: 0;
+    background: rgba(18, 24, 32, 0.68);
+  }
+
+  .moduleGuideModal {
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+
+  .moduleGuideHeader {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: calc(14px + env(safe-area-inset-top)) 14px 12px;
+    align-items: center;
+  }
+
+  .moduleGuideHeader h2 {
+    font-size: 1.25rem;
+    letter-spacing: -0.03em;
+  }
+
+  .moduleGuideHeader .eyebrow {
+    font-size: 0.68rem;
+  }
+
+  .moduleGuideCloseButton {
+    width: 36px;
+    height: 36px;
+  }
+
+  .moduleGuideBody {
+    padding: 14px;
+  }
+
+  .moduleGuideFooter {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
+  }
+
+  .moduleGuideFooter .primaryButton,
+  .moduleGuideFooter .compactPrimary {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .moduleGuideDismiss {
+    align-items: flex-start;
+    font-size: 0.78rem;
+  }
+
+  .moduleGuideDismiss input {
+    margin-top: 2px;
+  }
+
+  .moduleGuideContent {
+    gap: 12px;
+  }
+
+  .moduleGuideIntro,
+  .moduleGuideTip,
+  .moduleGuideSection {
+    padding: 13px;
+    border-radius: 15px;
+  }
+
+  .moduleGuideSection {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .moduleGuideStepText h3 {
+    margin-top: 8px;
+    font-size: 1rem;
+  }
+
+  .moduleGuideStepText p,
+  .moduleGuideIntro p,
+  .moduleGuideTip p {
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+
+  .moduleGuidePreview {
+    width: 100%;
+  }
+
+  .guideMiniPanel {
+    width: 100%;
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .guideMiniHeader {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .guideMiniHeader h4 {
+    font-size: 0.95rem;
+  }
+
+  .moduleGuideStatPreview,
+  .inventoryGuideStatPreview,
+  .guideMiniGrid.three,
+  .inventoryGuideModeGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .moduleGuideStatPreview .hubStatCard,
+  .inventoryGuideStatPreview .hubStatCard {
+    min-height: 0;
+    padding: 12px;
+  }
+
+  .moduleGuideStatPreview .hubStatIcon,
+  .inventoryGuideStatPreview .hubStatIcon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+  }
+
+  .moduleGuideStatPreview .hubStatText strong,
+  .inventoryGuideStatPreview .hubStatText strong {
+    font-size: 1.15rem;
+  }
+
+  .guideRecipeRows,
+  .inventoryGuideRows {
+    overflow-x: auto;
+  }
+
+  .guideRecipeHeader,
+  .guideRecipeRows > div {
+    min-width: 0;
+  }
+
+  .inventoryGuideAdjustButtons {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .inventoryGuideAdjustButtons button {
+    min-height: 40px;
+  }
+}
