@@ -7,7 +7,7 @@ import {
   orderBy,
   query,
   serverTimestamp,
-  updateDoc
+  updateDoc,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
@@ -34,6 +34,10 @@ function cleanNumber(value) {
   return Number.isFinite(number) ? number : "";
 }
 
+function cleanImageUrl(value) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
 export async function getFlowerItems(userId) {
   if (!userId) return [];
 
@@ -42,7 +46,7 @@ export async function getFlowerItems(userId) {
 
   return snapshot.docs.map((item) => ({
     id: item.id,
-    ...item.data()
+    ...item.data(),
   }));
 }
 
@@ -59,8 +63,10 @@ export async function createFlowerItem(userId, flower) {
     notes: flower.notes || "",
     source: flower.source || "Manual",
     zone: flower.zone || "",
+    imageUrl: cleanImageUrl(flower.imageUrl),
+    imageSource: flower.imageUrl ? flower.imageSource || "uploaded" : "",
     createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
+    updatedAt: serverTimestamp(),
   });
 
   return ref.id;
@@ -79,7 +85,9 @@ export async function updateFlowerItem(userId, flowerId, flower) {
     notes: flower.notes || "",
     source: flower.source || "Manual",
     zone: flower.zone || "",
-    updatedAt: serverTimestamp()
+    imageUrl: cleanImageUrl(flower.imageUrl),
+    imageSource: flower.imageUrl ? flower.imageSource || "uploaded" : "",
+    updatedAt: serverTimestamp(),
   });
 }
 
@@ -95,7 +103,7 @@ export async function getFlowerContainers(userId) {
 
   return snapshot.docs.map((item) => ({
     id: item.id,
-    ...item.data()
+    ...item.data(),
   }));
 }
 
@@ -107,7 +115,7 @@ export async function createFlowerContainer(userId, container) {
     inventoryCount: cleanNumber(container.inventoryCount),
     notes: container.notes || "",
     createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
+    updatedAt: serverTimestamp(),
   });
 
   return ref.id;
@@ -120,7 +128,7 @@ export async function updateFlowerContainer(userId, containerId, container) {
     unitCost: cleanNumber(container.unitCost),
     inventoryCount: cleanNumber(container.inventoryCount),
     notes: container.notes || "",
-    updatedAt: serverTimestamp()
+    updatedAt: serverTimestamp(),
   });
 }
 
@@ -136,7 +144,7 @@ export async function getFlowerArrangements(userId) {
 
   return snapshot.docs.map((item) => ({
     id: item.id,
-    ...item.data()
+    ...item.data(),
   }));
 }
 
@@ -150,25 +158,34 @@ export async function createFlowerArrangement(userId, arrangement) {
     retailPrice: cleanNumber(arrangement.retailPrice),
     wholesalePrice: cleanNumber(arrangement.wholesalePrice),
     estimatedCost: cleanNumber(arrangement.estimatedCost),
+    imageUrl: cleanImageUrl(arrangement.imageUrl),
+    imageSource: arrangement.imageUrl ? arrangement.imageSource || "uploaded" : "",
     createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
+    updatedAt: serverTimestamp(),
   });
 
   return ref.id;
 }
 
 export async function updateFlowerArrangement(userId, arrangementId, arrangement) {
-  await updateDoc(doc(db, "users", userId, "flowerStudioArrangements", arrangementId), {
-    ...arrangement,
-    containerId: arrangement.containerId || "",
-    containerName: arrangement.containerName || "",
-    containerCost: cleanNumber(arrangement.containerCost),
-    packagingCost: cleanNumber(arrangement.packagingCost),
-    retailPrice: cleanNumber(arrangement.retailPrice),
-    wholesalePrice: cleanNumber(arrangement.wholesalePrice),
-    estimatedCost: cleanNumber(arrangement.estimatedCost),
-    updatedAt: serverTimestamp()
-  });
+  await updateDoc(
+    doc(db, "users", userId, "flowerStudioArrangements", arrangementId),
+    {
+      ...arrangement,
+      containerId: arrangement.containerId || "",
+      containerName: arrangement.containerName || "",
+      containerCost: cleanNumber(arrangement.containerCost),
+      packagingCost: cleanNumber(arrangement.packagingCost),
+      retailPrice: cleanNumber(arrangement.retailPrice),
+      wholesalePrice: cleanNumber(arrangement.wholesalePrice),
+      estimatedCost: cleanNumber(arrangement.estimatedCost),
+      imageUrl: cleanImageUrl(arrangement.imageUrl),
+      imageSource: arrangement.imageUrl
+        ? arrangement.imageSource || "uploaded"
+        : "",
+      updatedAt: serverTimestamp(),
+    }
+  );
 }
 
 export async function deleteFlowerArrangement(userId, arrangementId) {
@@ -183,7 +200,7 @@ export async function getFlowerProductionLogs(userId) {
 
   return snapshot.docs.map((item) => ({
     id: item.id,
-    ...item.data()
+    ...item.data(),
   }));
 }
 
@@ -192,7 +209,7 @@ export async function createFlowerProductionLog(userId, log) {
     ...log,
     quantity: cleanNumber(log.quantity),
     createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
+    updatedAt: serverTimestamp(),
   });
 
   return ref.id;
@@ -202,7 +219,7 @@ export async function updateFlowerProductionLog(userId, logId, log) {
   await updateDoc(doc(db, "users", userId, "flowerStudioProduction", logId), {
     ...log,
     quantity: cleanNumber(log.quantity),
-    updatedAt: serverTimestamp()
+    updatedAt: serverTimestamp(),
   });
 }
 
