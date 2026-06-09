@@ -33,6 +33,7 @@ import {
 } from "../services/storageService.js";
 import {
   getSpiceRecipes,
+  updateSpiceRecipe,
   updateSpiceRecipeProductPackage
 } from "../services/spiceKitchenService.js";
 import StatCard from "../components/StatCard.jsx";
@@ -545,8 +546,7 @@ export default function PricingCalculator() {
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [zoomedProductImage, setZoomedProductImage] = useState(null);
-  const productDirectoryGridColumns =
-  "72px minmax(210px, 1.5fr) minmax(145px, 0.8fr) minmax(110px, 0.65fr) minmax(90px, 0.5fr) minmax(105px, 0.6fr) minmax(90px, 0.5fr) minmax(120px, 0.7fr) 90px";
+
   const allDirectoryProducts = useMemo(() => {
     const manualProducts = products.map((product) => ({
       ...product,
@@ -827,6 +827,37 @@ export default function PricingCalculator() {
       setSelectedProductId(productId);
       setForm(updatedForm);
 
+      if (updatedForm.sourceType === "spice" && updatedForm.sourceRecipeId) {
+        await updateSpiceRecipe(user.uid, updatedForm.sourceRecipeId, {
+          imageUrl: uploadResult.url,
+          imagePath: uploadResult.path
+        });
+
+        setSpiceRecipes((current) =>
+          current.map((recipe) =>
+            recipe.id === updatedForm.sourceRecipeId
+              ? {
+                  ...recipe,
+                  imageUrl: uploadResult.url,
+                  imagePath: uploadResult.path
+                }
+              : recipe
+          )
+        );
+
+        setSpiceProducts((current) =>
+          current.map((product) =>
+            product.sourceRecipeId === updatedForm.sourceRecipeId
+              ? {
+                  ...product,
+                  imageUrl: uploadResult.url,
+                  imagePath: uploadResult.path
+                }
+              : product
+          )
+        );
+      }
+
       setProducts((current) =>
         current.map((product) =>
           product.id === productId
@@ -858,6 +889,39 @@ export default function PricingCalculator() {
     try {
       if (form.imagePath) {
         await deleteStorageFile(form.imagePath);
+      }
+
+      const removingSpiceImage = form.sourceType === "spice" && form.sourceRecipeId;
+
+      if (removingSpiceImage) {
+        await updateSpiceRecipe(user.uid, form.sourceRecipeId, {
+          imageUrl: "",
+          imagePath: ""
+        });
+
+        setSpiceRecipes((current) =>
+          current.map((recipe) =>
+            recipe.id === form.sourceRecipeId
+              ? {
+                  ...recipe,
+                  imageUrl: "",
+                  imagePath: ""
+                }
+              : recipe
+          )
+        );
+
+        setSpiceProducts((current) =>
+          current.map((product) =>
+            product.sourceRecipeId === form.sourceRecipeId
+              ? {
+                  ...product,
+                  imageUrl: "",
+                  imagePath: ""
+                }
+              : product
+          )
+        );
       }
 
       setForm((current) => ({
@@ -920,6 +984,8 @@ export default function PricingCalculator() {
   }
 
   async function saveCurrentProduct() {
+    const productDirectoryGridColumns =
+    "72px minmax(210px, 1.5fr) minmax(145px, 0.8fr) minmax(110px, 0.65fr) minmax(90px, 0.5fr) minmax(105px, 0.6fr) minmax(90px, 0.5fr) minmax(120px, 0.7fr) 90px";
 
   if (!user) {
       setStatusMessage("Sign in from the Farmers Hub sidebar to save products.");
