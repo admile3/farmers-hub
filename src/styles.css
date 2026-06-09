@@ -15878,3 +15878,107 @@ input[type="number"] {
     height: 64px;
   }
 }
+/* Product Directory image upload additions */
+.hiddenFileInput {
+  display: none;
+}
+
+.productImagePanel {
+  display: grid;
+  grid-template-columns: 148px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fbfaf6;
+}
+
+.productImagePreview {
+  width: 148px;
+  aspect-ratio: 1;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  background: #ffffff;
+}
+
+.productImagePreview img,
+.pricingImageCell img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.productImageEmptyState,
+.pricingImagePlaceholder {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  color: var(--muted);
+  background: #ffffff;
+}
+
+.productImageEmptyState span {
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.productImageActions {
+  display: grid;
+  gap: 12px;
+}
+
+.productImageActions .importExportText {
+  margin-bottom: 0;
+}
+
+.dangerTextButton {
+  color: var(--danger);
+}
+
+.pricingComparisonHeader,
+.pricingDirectoryCompactRow {
+  grid-template-columns:
+    58px
+    minmax(220px, 1.4fr)
+    minmax(85px, 0.55fr)
+    minmax(72px, 0.42fr)
+    minmax(86px, 0.48fr)
+    minmax(70px, 0.4fr)
+    minmax(92px, 0.52fr)
+    minmax(190px, 0.9fr);
+}
+
+.pricingImageCell {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: #ffffff;
+}
+
+.pricingImagePlaceholder {
+  color: var(--muted-soft);
+}
+
+@media (max-width: 800px) {
+  .productImagePanel {
+    grid-template-columns: 1fr;
+  }
+
+  .productImagePreview {
+    width: 100%;
+    max-width: 220px;
+  }
+
+  .pricingImageCell {
+    width: 52px;
+    height: 52px;
+  }
+}
