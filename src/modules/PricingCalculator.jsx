@@ -965,7 +965,12 @@ export default function PricingCalculator() {
 
       const savedId = await saveProduct(user.uid, productToSave);
       setSelectedProductId(savedId);
-      setForm((current) => ({ ...current, id: savedId }));
+      setForm((current) => ({
+  ...current,
+  id: savedId,
+  imageUrl: productToSave.imageUrl || current.imageUrl || "",
+  imagePath: productToSave.imagePath || current.imagePath || ""
+}));
       markSaved();
       setStatusMessage("Product saved.");
       await loadProducts();
