@@ -787,50 +787,65 @@ export default function PricingCalculator() {
   }
 
   async function handleProductImageUpload(event) {
-    const file = event.target.files?.[0];
-    event.target.value = "";
+  const file = event.target.files?.[0];
+  event.target.value = "";
 
-    if (!file || !user) return;
+  if (!file || !user) return;
 
-    if (!file.type?.startsWith("image/")) {
-      setStatusMessage("Please choose an image file.");
-      return;
-    }
-
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      setStatusMessage("Image must be 5 MB or smaller.");
-      return;
-    }
-
-    const productId = form.id || selectedProductId || makeId();
-
-    setUploadingImage(true);
-
-    try {
-      const uploadResult = await uploadProductImage({
-        userId: user.uid,
-        productId,
-        file,
-        previousPath: form.imagePath || ""
-      });
-
-      setSelectedProductId(productId);
-      setForm((current) => ({
-        ...current,
-        id: productId,
-        imageUrl: uploadResult.url,
-        imagePath: uploadResult.path
-      }));
-      markProductsDirty();
-      setStatusMessage("Product image uploaded. Save the product to keep it attached.");
-    } catch (error) {
-      console.error(error);
-      setStatusMessage("Could not upload product image.");
-    } finally {
-      setUploadingImage(false);
-    }
+  if (!file.type?.startsWith("image/")) {
+    setStatusMessage("Please choose an image file.");
+    return;
   }
+
+  const maxSize = 5 * 1024 * 1024;
+  if (file.size > maxSize) {
+    setStatusMessage("Image must be 5 MB or smaller.");
+    return;
+  }
+
+  const productId = form.id || selectedProductId || makeId();
+
+  setUploadingImage(true);
+
+  try {
+    const uploadResult = await uploadProductImage({
+      userId: user.uid,
+      productId,
+      file,
+      previousPath: form.imagePath || ""
+    });
+
+    const updatedForm = {
+      ...form,
+      id: productId,
+      imageUrl: uploadResult.url,
+      imagePath: uploadResult.path
+    };
+
+    setSelectedProductId(productId);
+    setForm(updatedForm);
+
+    setProducts((current) =>
+      current.map((product) =>
+        product.id === productId
+          ? {
+              ...product,
+              imageUrl: uploadResult.url,
+              imagePath: uploadResult.path
+            }
+          : product
+      )
+    );
+
+    setStatusMessage("Product image uploaded. Click Save Product to keep it attached.");
+    markProductsDirty();
+  } catch (error) {
+    console.error(error);
+    setStatusMessage("Could not upload product image.");
+  } finally {
+    setUploadingImage(false);
+  }
+}
 
   async function removeProductImage() {
     if (!form.imageUrl && !form.imagePath) return;
