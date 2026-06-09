@@ -547,6 +547,9 @@ export default function PricingCalculator() {
   const [showGuide, setShowGuide] = useState(false);
   const [zoomedProductImage, setZoomedProductImage] = useState(null);
 
+  const productDirectoryGridColumns =
+    "64px minmax(180px, 1.6fr) minmax(120px, 0.8fr) 90px 80px 90px 80px 100px 70px";
+
   const allDirectoryProducts = useMemo(() => {
     const manualProducts = products.map((product) => ({
       ...product,
@@ -984,8 +987,6 @@ export default function PricingCalculator() {
   }
 
   async function saveCurrentProduct() {
-    const productDirectoryGridColumns =
-    "72px minmax(210px, 1.5fr) minmax(145px, 0.8fr) minmax(110px, 0.65fr) minmax(90px, 0.5fr) minmax(105px, 0.6fr) minmax(90px, 0.5fr) minmax(120px, 0.7fr) 90px";
 
   if (!user) {
       setStatusMessage("Sign in from the Farmers Hub sidebar to save products.");
