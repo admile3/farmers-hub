@@ -15681,3 +15681,176 @@ input[type="number"] {
 .spicePage .spiceRecipeLibraryTall::-webkit-scrollbar-track {
   background: rgba(22, 27, 34, 0.06) !important;
 }
+/* ==========================================
+   FLOWER STUDIO IMAGE UPLOADS
+========================================== */
+
+.flowerUploadField {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.flowerUploadHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.flowerUploadHeader span {
+  display: block;
+  font-weight: 600;
+}
+
+.flowerUploadHeader small {
+  display: block;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.flowerUploadButton {
+  position: relative;
+  overflow: hidden;
+}
+
+.flowerUploadButton input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.flowerUploadPreview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--card-bg);
+}
+
+.flowerUploadedThumbButton {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.flowerUploadedThumbButton img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+}
+
+.flowerUploadPreview strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.flowerUploadPreview p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.arrangementUploadPreview {
+  align-items: center;
+}
+
+/* ==========================================
+   FLOWER PANTRY IMAGES
+========================================== */
+
+.flowerPantryImageButton {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.flowerPantryImage {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+}
+
+.flowerPantryImageFallback {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel-bg);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* ==========================================
+   ARRANGEMENT LIBRARY IMAGES
+========================================== */
+
+.arrangementLibraryItem {
+  align-items: center;
+}
+
+.arrangementLibraryImageButton {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.arrangementLibraryImageButton img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.arrangementLibraryImageFallback {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--panel-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* ==========================================
+   MOBILE
+========================================== */
+
+@media (max-width: 768px) {
+  .flowerUploadHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .flowerUploadPreview {
+    flex-wrap: wrap;
+  }
+
+  .flowerUploadedThumbButton img {
+    width: 64px;
+    height: 64px;
+  }
+
+  .arrangementLibraryImageButton img,
+  .arrangementLibraryImageFallback {
+    width: 64px;
+    height: 64px;
+  }
+}
