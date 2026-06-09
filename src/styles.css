@@ -16113,3 +16113,97 @@ input[type="number"] {
     grid-column: 1 / -1;
   }
 }
+/* Product Directory image row final override */
+.pricingPage .productDirectoryImageTable {
+  overflow-x: auto !important;
+}
+
+.pricingPage .productDirectoryImageHeader,
+.pricingPage .productDirectoryImageRow {
+  display: grid !important;
+  grid-template-columns:
+    72px
+    minmax(210px, 1.4fr)
+    minmax(150px, 0.8fr)
+    minmax(110px, 0.6fr)
+    minmax(90px, 0.45fr)
+    minmax(105px, 0.55fr)
+    minmax(90px, 0.45fr)
+    minmax(120px, 0.65fr)
+    90px !important;
+  min-width: 1180px !important;
+  align-items: center !important;
+  column-gap: 14px !important;
+}
+
+.pricingPage .productDirectoryImageHeader {
+  padding: 12px 14px !important;
+}
+
+.pricingPage .productDirectoryImageRow {
+  min-height: 78px !important;
+  padding: 10px 14px !important;
+}
+
+.pricingPage .pricingImageCell,
+.pricingPage .pricingProductCell,
+.pricingPage .pricingDirectoryVariantCell,
+.pricingPage .pricingMetric,
+.pricingPage .pricingDirectoryActions {
+  grid-column: auto !important;
+  grid-row: auto !important;
+}
+
+.pricingPage .pricingImageCell {
+  justify-content: flex-start !important;
+}
+
+.pricingPage .productDirectoryImageButton,
+.pricingPage .pricingImagePlaceholder {
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 14px !important;
+}
+
+.pricingPage .pricingProductCell {
+  display: grid !important;
+  gap: 3px !important;
+  min-width: 0 !important;
+}
+
+.pricingPage .pricingProductCell .savedItemLink {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.pricingPage .pricingMetric {
+  white-space: nowrap !important;
+}
+
+.pricingPage .pricingMetric small {
+  display: block !important;
+  margin-top: 2px !important;
+}
+
+.pricingPage .pricingDirectoryActions {
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.pricingPage .pricingExpandedDetails {
+  grid-column: 1 / -1 !important;
+}
+
+@media (max-width: 1100px) {
+  .pricingPage .productDirectoryImageHeader {
+    display: none !important;
+  }
+
+  .pricingPage .productDirectoryImageRow {
+    grid-template-columns: 68px 1fr !important;
+    min-width: 0 !important;
+  }
+}
