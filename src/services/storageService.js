@@ -6,9 +6,18 @@ import {
 } from "firebase/storage";
 import { storage } from "../firebase";
 
-export async function uploadProductImage(userId, productId, file) {
+export async function uploadProductImage({
+  userId,
+  productId,
+  file,
+  previousPath = ""
+}) {
   if (!userId || !productId || !file) {
     throw new Error("Missing required upload parameters.");
+  }
+
+  if (previousPath) {
+    await deleteStorageFile(previousPath);
   }
 
   const safeFileName = file.name
@@ -26,8 +35,8 @@ export async function uploadProductImage(userId, productId, file) {
   const downloadUrl = await getDownloadURL(storageRef);
 
   return {
-    imageUrl: downloadUrl,
-    imagePath: storageRef.fullPath
+    url: downloadUrl,
+    path: storageRef.fullPath
   };
 }
 
@@ -40,8 +49,4 @@ export async function deleteStorageFile(filePath) {
   } catch (error) {
     console.error("Failed to delete storage file:", error);
   }
-}
-
-export async function deleteProductImage(imagePath) {
-  return deleteStorageFile(imagePath);
 }
