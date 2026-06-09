@@ -6,6 +6,7 @@ import {
   Edit3,
   Flower2,
   HelpCircle,
+  Image as ImageIcon,
   Library,
   MapPin,
   PackageCheck,
@@ -14,6 +15,7 @@ import {
   Search,
   Sparkles,
   Trash2,
+  Upload,
   X
 } from "lucide-react";
 
@@ -23,6 +25,7 @@ import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import FlowerStudioGuideContent from "../components/FlowerStudioGuideContent.jsx";
 import StatCard from "../components/StatCard.jsx";
 import { addQuantityToMatchedInventoryItem } from "../services/inventoryService.js";
+import { uploadFlowerStudioImage } from "../services/flowerStudioImageService.js";
 import { getZoneFromZip } from "../data/zipZoneLookup.js";
 import { getFlowersForZone, usdaZones } from "../data/flowerZoneLibrary.js";
 import { getFlowerVisualByName } from "../data/flowerVisualDatabase.js";
@@ -48,12 +51,16 @@ import {
 
 const flowerCategories = [
   "Focal",
+  "Secondary Focal",
   "Filler",
   "Greenery",
   "Spike",
   "Texture",
-  "Hanging",
+  "Vine",
+  "Woody / Branch",
+  "Grass",
   "Dried",
+  "Seasonal / Novelty",
   "Packaging",
   "Other"
 ];
@@ -83,7 +90,9 @@ const emptyFlower = {
   inventoryCount: "",
   notes: "",
   source: "Manual",
-  zone: ""
+  zone: "",
+  imageUrl: "",
+  imageSource: ""
 };
 
 const emptyContainer = {
@@ -104,6 +113,8 @@ const emptyArrangement = {
   containerId: "",
   containerName: "",
   containerCost: "",
+  imageUrl: "",
+  imageSource: "",
   stems: []
 };
 
@@ -144,6 +155,18 @@ function blankStemLine() {
   };
 }
 
+function getFlowerImage(flower) {
+  if (flower?.imageUrl) {
+    return {
+      path: flower.imageUrl,
+      alt: `${flower.name} uploaded image`,
+      source: flower.imageSource || "uploaded"
+    };
+  }
+
+  return getFlowerVisualByName(flower?.name);
+}
+
 export default function FlowerStudio() {
   const { user, loginWithGoogle } = useAuth();
   const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } =
@@ -156,12 +179,14 @@ export default function FlowerStudio() {
 
   const [flowerForm, setFlowerForm] = useState(emptyFlower);
   const [editingFlowerId, setEditingFlowerId] = useState(null);
+  const [uploadingFlowerImage, setUploadingFlowerImage] = useState(false);
 
   const [containerForm, setContainerForm] = useState(emptyContainer);
   const [editingContainerId, setEditingContainerId] = useState(null);
 
   const [arrangementForm, setArrangementForm] = useState(emptyArrangement);
   const [editingArrangementId, setEditingArrangementId] = useState(null);
+  const [uploadingArrangementImage, setUploadingArrangementImage] = useState(false);
 
   const [productionForm, setProductionForm] = useState(emptyProduction);
   const [editingProductionLogId, setEditingProductionLogId] = useState(null);
@@ -171,6 +196,7 @@ export default function FlowerStudio() {
   const [zoneError, setZoneError] = useState("");
   const [selectedLibraryFlowers, setSelectedLibraryFlowers] = useState([]);
   const [previewFlowerVisual, setPreviewFlowerVisual] = useState(null);
+  const [previewArrangementImage, setPreviewArrangementImage] = useState(null);
   const [generatedArrangementPrompt, setGeneratedArrangementPrompt] = useState("");
   const [promptCopied, setPromptCopied] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -418,50 +444,50 @@ export default function FlowerStudio() {
     setSelectedLibraryFlowers(allSelected ? [] : zoneFlowerNames);
   }
 
-function generateArrangementImagePrompt() {
-  const stemLines = (arrangementForm.stems || [])
-    .filter((line) => line.flowerName && toNumber(line.stemsPerArrangement) > 0)
-    .map(
-      (line) =>
-        `- ${toNumber(line.stemsPerArrangement)} stems of ${line.flowerName}`
-    )
-    .join("\n");
+  function generateArrangementImagePrompt() {
+    const stemLines = (arrangementForm.stems || [])
+      .filter((line) => line.flowerName && toNumber(line.stemsPerArrangement) > 0)
+      .map(
+        (line) =>
+          `- ${toNumber(line.stemsPerArrangement)} stems of ${line.flowerName}`
+      )
+      .join("\n");
 
-  if (!stemLines) {
-    showStatus("Add at least one stem line before generating a prompt.", "error");
-    return;
-  }
+    if (!stemLines) {
+      showStatus("Add at least one stem line before generating a prompt.", "error");
+      return;
+    }
 
-  const arrangementName =
-    arrangementForm.name?.trim() || "Untitled Flower Studio Arrangement";
+    const arrangementName =
+      arrangementForm.name?.trim() || "Untitled Flower Studio Arrangement";
 
-  const containerName =
-    selectedContainer?.name ||
-    arrangementForm.containerName ||
-    "clear glass vase";
+    const containerName =
+      selectedContainer?.name ||
+      arrangementForm.containerName ||
+      "clear glass vase";
 
-  const normalizedContainer = containerName.toLowerCase();
+    const normalizedContainer = containerName.toLowerCase();
 
-  const isWrappedBouquet =
-    normalizedContainer.includes("wrapper") ||
-    normalizedContainer.includes("wrap") ||
-    normalizedContainer.includes("kraft") ||
-    normalizedContainer.includes("paper") ||
-    normalizedContainer.includes("sleeve") ||
-    normalizedContainer.includes("bouquet bag");
+    const isWrappedBouquet =
+      normalizedContainer.includes("wrapper") ||
+      normalizedContainer.includes("wrap") ||
+      normalizedContainer.includes("kraft") ||
+      normalizedContainer.includes("paper") ||
+      normalizedContainer.includes("sleeve") ||
+      normalizedContainer.includes("bouquet bag");
 
-  const containerInstruction = isWrappedBouquet
-    ? `Show the arrangement as a compact farmers market wrapped bouquet in ${containerName}. The flowers should be gathered tightly together and wrapped in paper around the stems, like a real hand-tied market bouquet. The paper should form a cone-style wrap around the stems, not a freestanding container, vase, bowl, bucket, or base. The bottom should show gathered stems extending below the paper wrap, tied with twine, raffia, or simple string.`
-    : `Show the arrangement as a compact farmers market floral arrangement displayed in a ${containerName}. The flowers should be arranged close together with a full, gathered market-bouquet look, not spaced far apart like a formal event centerpiece.`;
+    const containerInstruction = isWrappedBouquet
+      ? `Show the arrangement as a compact farmers market wrapped bouquet in ${containerName}. The flowers should be gathered tightly together and wrapped in paper around the stems, like a real hand-tied market bouquet. The paper should form a cone-style wrap around the stems, not a freestanding container, vase, bowl, bucket, or base. The bottom should show gathered stems extending below the paper wrap, tied with twine, raffia, or simple string.`
+      : `Show the arrangement as a compact farmers market floral arrangement displayed in a ${containerName}. The flowers should be arranged close together with a full, gathered market-bouquet look, not spaced far apart like a formal event centerpiece.`;
 
-  const presentationInstruction = isWrappedBouquet
-    ? `Important wrapper accuracy:
+    const presentationInstruction = isWrappedBouquet
+      ? `Important wrapper accuracy:
 The kraft paper or paper wrapper must wrap around the bouquet stems. It should not become a pot, vase, bag, pedestal, or crumpled base. Do not show the bouquet sitting inside a paper container. Do not create a flat-bottom paper vessel. The bouquet should look hand-held or market-ready, with visible stems gathered below the wrap.`
-    : `Important container accuracy:
+      : `Important container accuracy:
 The selected container should be visible and believable for the arrangement. The flowers should sit naturally inside the selected vessel while still looking compact, fresh, and market-ready.`;
 
-  setPromptCopied(false);
-  setGeneratedArrangementPrompt(`This prompt is designed to work best in ChatGPT image generation because it includes the Flower Studio visual style ID and full style definition.
+    setPromptCopied(false);
+    setGeneratedArrangementPrompt(`This prompt is designed to work best in ChatGPT image generation because it includes the Flower Studio visual style ID and full style definition.
 
 Create a photorealistic botanical catalog image of a finished floral arrangement.
 
@@ -491,7 +517,7 @@ Photorealism requirement:
 The image must look like a real photograph taken with a camera, not an illustration, painting, cartoon, digital rendering, or dreamy AI image. Use natural window lighting, realistic shadows, true flower textures, realistic paper or container texture, and believable camera depth of field.
 
 Square composition. No hands, no people, no extra props, no watermarks.`);
-}
+  }
 
   async function copyGeneratedPrompt() {
     if (!generatedArrangementPrompt) return;
@@ -566,6 +592,46 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
     setFlowerForm((current) => ({ ...current, [field]: value }));
   }
 
+  async function handleFlowerImageUpload(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file || !user) return;
+
+    setUploadingFlowerImage(true);
+
+    try {
+      const imageUrl = await uploadFlowerStudioImage({
+        userId: user.uid,
+        file,
+        folder: "flowers"
+      });
+
+      setFlowerForm((current) => ({
+        ...current,
+        imageUrl,
+        imageSource: "uploaded"
+      }));
+
+      markFlowerDirty();
+      showStatus("Flower image uploaded.");
+    } catch (error) {
+      console.error(error);
+      showStatus(error.message || "Could not upload flower image.", "error");
+    } finally {
+      setUploadingFlowerImage(false);
+    }
+  }
+
+  function clearFlowerImage() {
+    markFlowerDirty();
+    setFlowerForm((current) => ({
+      ...current,
+      imageUrl: "",
+      imageSource: ""
+    }));
+  }
+
   async function saveFlower(event) {
     event?.preventDefault?.();
 
@@ -615,7 +681,9 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
       inventoryCount: flower.inventoryCount || "",
       notes: flower.notes || "",
       source: flower.source || "Manual",
-      zone: flower.zone || ""
+      zone: flower.zone || "",
+      imageUrl: flower.imageUrl || "",
+      imageSource: flower.imageSource || ""
     });
 
     document.getElementById("flower-pantry")?.scrollIntoView({
@@ -727,6 +795,46 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
     }));
   }
 
+  async function handleArrangementImageUpload(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file || !user) return;
+
+    setUploadingArrangementImage(true);
+
+    try {
+      const imageUrl = await uploadFlowerStudioImage({
+        userId: user.uid,
+        file,
+        folder: "arrangements"
+      });
+
+      setArrangementForm((current) => ({
+        ...current,
+        imageUrl,
+        imageSource: "uploaded"
+      }));
+
+      markFlowerDirty();
+      showStatus("Arrangement image uploaded.");
+    } catch (error) {
+      console.error(error);
+      showStatus(error.message || "Could not upload arrangement image.", "error");
+    } finally {
+      setUploadingArrangementImage(false);
+    }
+  }
+
+  function clearArrangementImage() {
+    markFlowerDirty();
+    setArrangementForm((current) => ({
+      ...current,
+      imageUrl: "",
+      imageSource: ""
+    }));
+  }
+
   function addStemLine() {
     markFlowerDirty();
     setArrangementForm((current) => ({
@@ -793,6 +901,10 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
         arrangementForm.containerCost === ""
           ? ""
           : toNumber(arrangementForm.containerCost),
+      imageUrl: arrangementForm.imageUrl || "",
+      imageSource: arrangementForm.imageUrl
+        ? arrangementForm.imageSource || "uploaded"
+        : "",
       estimatedCost: arrangementCost,
       stems: (arrangementForm.stems || [])
         .filter((line) => line.flowerId && toNumber(line.stemsPerArrangement) > 0)
@@ -848,6 +960,8 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
       containerId: arrangement.containerId || "",
       containerName: arrangement.containerName || "",
       containerCost: cleanMoney(arrangement.containerCost),
+      imageUrl: arrangement.imageUrl || "",
+      imageSource: arrangement.imageSource || "",
       stems: (arrangement.stems || []).map((line) => ({
         id: makeId("stem"),
         ...line
@@ -889,7 +1003,8 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
     }
 
     const missingDate = !productionForm.productionDate;
-    const missingQuantity = !productionForm.quantity || toNumber(productionForm.quantity) <= 0;
+    const missingQuantity =
+      !productionForm.quantity || toNumber(productionForm.quantity) <= 0;
 
     if (missingDate && missingQuantity) {
       showStatus("Add a production date and quantity.", "error");
@@ -992,6 +1107,7 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
             : "",
           retailPrice: selectedArrangement.retailPrice || "",
           wholesalePrice: selectedArrangement.wholesalePrice || "",
+          imageUrl: selectedArrangement.imageUrl || "",
           status: "In Stock",
           notes: `Added from Flower Studio. Container: ${
             selectedArrangement.containerName || "none"
@@ -1070,9 +1186,9 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
           <p className="eyebrow">Flower Studio</p>
           <h2>Plan stems, containers, arrangements, production, and inventory.</h2>
           <p>
-            Import flowers by USDA zone, build bouquet recipes, assign vase or
-            wrapper costs, log production, and send finished arrangements to
-            Inventory.
+            Import flowers by USDA zone, upload custom flower photos, build bouquet
+            recipes, save arrangement images, assign container costs, log production,
+            and send finished arrangements to Inventory.
           </p>
         </div>
 
@@ -1128,7 +1244,7 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
         <a className="toolCard compactToolCard clickableToolCard" href="#flower-pantry">
           <Flower2 size={20} />
           <h3>Flower Pantry</h3>
-          <p>Save stems, greenery, fillers, and packaging.</p>
+          <p>Save stems, greenery, fillers, and custom photos.</p>
         </a>
         <a className="toolCard compactToolCard clickableToolCard" href="#container-pantry">
           <PackageCheck size={20} />
@@ -1138,7 +1254,7 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
         <a className="toolCard compactToolCard clickableToolCard" href="#flower-builder">
           <Library size={20} />
           <h3>Arrangement Builder</h3>
-          <p>Create reusable bouquet and arrangement recipes.</p>
+          <p>Create reusable bouquet recipes with saved images.</p>
         </a>
         <a className="toolCard compactToolCard clickableToolCard" href="#flower-production">
           <Calculator size={20} />
@@ -1364,6 +1480,61 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
                 />
               </label>
 
+              <div className="fullSpan flowerUploadField">
+                <div className="flowerUploadHeader">
+                  <div>
+                    <span>Flower Photo</span>
+                    <small>
+                      Optional. Uploaded photos override the built-in library image.
+                    </small>
+                  </div>
+
+                  <label className="secondaryButton compactButton flowerUploadButton">
+                    <Upload size={15} />
+                    {uploadingFlowerImage ? "Uploading..." : "Upload Photo"}
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={handleFlowerImageUpload}
+                      disabled={uploadingFlowerImage}
+                    />
+                  </label>
+                </div>
+
+                {flowerForm.imageUrl ? (
+                  <div className="flowerUploadPreview">
+                    <button
+                      type="button"
+                      className="flowerUploadedThumbButton"
+                      onClick={() =>
+                        setPreviewFlowerVisual({
+                          path: flowerForm.imageUrl,
+                          alt: `${flowerForm.name || "Flower"} uploaded image`
+                        })
+                      }
+                    >
+                      <img
+                        src={flowerForm.imageUrl}
+                        alt={`${flowerForm.name || "Flower"} uploaded preview`}
+                      />
+                    </button>
+
+                    <div>
+                      <strong>Custom image attached</strong>
+                      <p>This image will be saved with the flower variety.</p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="secondaryButton compactButton"
+                      onClick={clearFlowerImage}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+
               <label className="fullSpan">
                 Notes
                 <textarea
@@ -1396,7 +1567,7 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
             <div className="savedList compactSavedList flowerPantryList">
               {flowers.length ? (
                 flowers.map((flower) => {
-                  const visual = getFlowerVisualByName(flower.name);
+                  const visual = getFlowerImage(flower);
 
                   return (
                     <div className="savedItem compactSavedItem" key={flower.id}>
@@ -1429,6 +1600,7 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
                           {flower.stemCost
                             ? `${money(flower.stemCost)} / stem`
                             : "No cost"}
+                          {flower.imageUrl ? " • Custom photo" : ""}
                         </p>
                       </div>
 
@@ -1701,6 +1873,61 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
                 />
               </label>
 
+              <div className="fullSpan flowerUploadField">
+                <div className="flowerUploadHeader">
+                  <div>
+                    <span>Arrangement Photo</span>
+                    <small>
+                      Optional. Save a generated mockup or real photo with this arrangement.
+                    </small>
+                  </div>
+
+                  <label className="secondaryButton compactButton flowerUploadButton">
+                    <Upload size={15} />
+                    {uploadingArrangementImage ? "Uploading..." : "Upload Photo"}
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={handleArrangementImageUpload}
+                      disabled={uploadingArrangementImage}
+                    />
+                  </label>
+                </div>
+
+                {arrangementForm.imageUrl ? (
+                  <div className="flowerUploadPreview arrangementUploadPreview">
+                    <button
+                      type="button"
+                      className="flowerUploadedThumbButton"
+                      onClick={() =>
+                        setPreviewArrangementImage({
+                          path: arrangementForm.imageUrl,
+                          alt: `${arrangementForm.name || "Arrangement"} uploaded image`
+                        })
+                      }
+                    >
+                      <img
+                        src={arrangementForm.imageUrl}
+                        alt={`${arrangementForm.name || "Arrangement"} uploaded preview`}
+                      />
+                    </button>
+
+                    <div>
+                      <strong>Arrangement image attached</strong>
+                      <p>This image will appear in the Arrangement Library.</p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="secondaryButton compactButton"
+                      onClick={clearArrangementImage}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+
               <label className="fullSpan">
                 Description
                 <textarea
@@ -1866,10 +2093,36 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
               </div>
             </div>
 
-            <div className="savedList compactSavedList">
+            <div className="savedList compactSavedList arrangementLibraryList">
               {filteredArrangements.length ? (
                 filteredArrangements.map((arrangement) => (
-                  <div className="savedItem compactSavedItem" key={arrangement.id}>
+                  <div
+                    className="savedItem compactSavedItem arrangementLibraryItem"
+                    key={arrangement.id}
+                  >
+                    {arrangement.imageUrl ? (
+                      <button
+                        className="arrangementLibraryImageButton"
+                        type="button"
+                        onClick={() =>
+                          setPreviewArrangementImage({
+                            path: arrangement.imageUrl,
+                            alt: `${arrangement.name} arrangement image`
+                          })
+                        }
+                        aria-label={`Preview ${arrangement.name}`}
+                      >
+                        <img
+                          src={arrangement.imageUrl}
+                          alt={`${arrangement.name} arrangement`}
+                        />
+                      </button>
+                    ) : (
+                      <div className="arrangementLibraryImageFallback">
+                        <ImageIcon size={20} />
+                      </div>
+                    )}
+
                     <div>
                       <h4>{arrangement.name}</h4>
                       <p>
@@ -1881,6 +2134,7 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
                         {arrangement.retailPrice
                           ? `${money(arrangement.retailPrice)} retail`
                           : "No price"}
+                        {arrangement.imageUrl ? " • Photo saved" : ""}
                       </p>
                     </div>
 
@@ -2126,6 +2380,31 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
             </button>
 
             <img src={previewFlowerVisual.path} alt={previewFlowerVisual.alt} />
+          </div>
+        </div>
+      ) : null}
+
+      {previewArrangementImage ? (
+        <div
+          className="flowerImagePreviewOverlay"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setPreviewArrangementImage(null)}
+        >
+          <div
+            className="flowerImagePreviewModal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              className="moduleGuideCloseButton"
+              type="button"
+              onClick={() => setPreviewArrangementImage(null)}
+              aria-label="Close arrangement image preview"
+            >
+              ×
+            </button>
+
+            <img src={previewArrangementImage.path} alt={previewArrangementImage.alt} />
           </div>
         </div>
       ) : null}
