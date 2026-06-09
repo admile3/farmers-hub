@@ -11,11 +11,14 @@ export async function uploadProductImage(userId, productId, file) {
     throw new Error("Missing required upload parameters.");
   }
 
-  const extension = file.name.split(".").pop();
+  const safeFileName = file.name
+    .toLowerCase()
+    .replace(/[^a-z0-9.]+/g, "-")
+    .replace(/-+/g, "-");
 
   const storageRef = ref(
     storage,
-    `users/${userId}/products/${productId}.${extension}`
+    `users/${userId}/products/${productId}/${Date.now()}-${safeFileName}`
   );
 
   await uploadBytes(storageRef, file);
@@ -28,13 +31,17 @@ export async function uploadProductImage(userId, productId, file) {
   };
 }
 
-export async function deleteProductImage(imagePath) {
-  if (!imagePath) return;
+export async function deleteStorageFile(filePath) {
+  if (!filePath) return;
 
   try {
-    const storageRef = ref(storage, imagePath);
+    const storageRef = ref(storage, filePath);
     await deleteObject(storageRef);
   } catch (error) {
-    console.error("Failed to delete image:", error);
+    console.error("Failed to delete storage file:", error);
   }
+}
+
+export async function deleteProductImage(imagePath) {
+  return deleteStorageFile(imagePath);
 }
