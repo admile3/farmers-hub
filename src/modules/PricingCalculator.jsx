@@ -36,6 +36,10 @@ import {
   updateSpiceRecipe,
   updateSpiceRecipeProductPackage
 } from "../services/spiceKitchenService.js";
+import {
+  getFlowerArrangements,
+  updateFlowerArrangement
+} from "../services/flowerStudioService.js";
 import StatCard from "../components/StatCard.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import PricingGuideContent from "../components/PricingGuideContent.jsx";
@@ -362,6 +366,47 @@ function buildBakingDirectoryProducts(bakingRecipes = []) {
     });
 }
 
+
+function buildFlowerDirectoryProducts(arrangements = []) {
+  return arrangements
+    .filter((arrangement) => arrangement?.listInProductDirectory !== false)
+    .map((arrangement) => {
+      const estimatedCost = Number(arrangement.estimatedCost) || 0;
+      const packagingCost = Number(arrangement.packagingCost) || 0;
+      const containerCost = Number(arrangement.containerCost) || 0;
+      const materialCost = estimatedCost || packagingCost + containerCost;
+
+      return {
+        id: `flower-${arrangement.id}`,
+        sourceType: "flower",
+        sourceLabel: "Flower Studio",
+        sourceArrangementId: arrangement.id,
+        isGeneratedProduct: true,
+        name: arrangement.name || "Untitled Arrangement",
+        category: "Flowers",
+        status: "Active",
+        sku: "",
+        unitLabel: arrangement.containerName || arrangement.category || "arrangement",
+        description: arrangement.description || "",
+        retailPrice: moneyValue(arrangement.retailPrice),
+        wholesalePrice: moneyValue(arrangement.wholesalePrice),
+        targetRetailMargin: 70,
+        targetWholesaleMargin: 50,
+        batchIngredientCost: moneyValue(materialCost),
+        batchUnits: 1,
+        packagingCostPerUnit: "",
+        laborHours: "",
+        laborRate: "",
+        overheadCost: "",
+        notes: arrangement.description || "Generated from Flower Studio.",
+        imageUrl: arrangement.imageUrl || "",
+        imagePath: arrangement.imagePath || "",
+        generatedVariants: [],
+        updatedAt: arrangement.updatedAt || arrangement.createdAt || ""
+      };
+    });
+}
+
 function productSourceLabel(product) {
   if (product?.sourceLabel) return product.sourceLabel;
   if (product?.sourceType === "manual") return "Manual";
@@ -530,6 +575,8 @@ export default function PricingCalculator() {
   const [products, setProducts] = useState([]);
   const [spiceRecipes, setSpiceRecipes] = useState([]);
   const [spiceProducts, setSpiceProducts] = useState([]);
+  const [flowerArrangements, setFlowerArrangements] = useState([]);
+  const [flowerProducts, setFlowerProducts] = useState([]);
   const [bakingProducts, setBakingProducts] = useState([]);
   const [expandedProductIds, setExpandedProductIds] = useState({});
   const [directoryVariantSelections, setDirectoryVariantSelections] = useState({});
@@ -547,9 +594,6 @@ export default function PricingCalculator() {
   const [showGuide, setShowGuide] = useState(false);
   const [zoomedProductImage, setZoomedProductImage] = useState(null);
 
-  const productDirectoryGridColumns =
-    "64px minmax(180px, 1.6fr) minmax(120px, 0.8fr) 90px 80px 90px 80px 100px 70px";
-
   const allDirectoryProducts = useMemo(() => {
     const manualProducts = products.map((product) => ({
       ...product,
@@ -560,8 +604,8 @@ export default function PricingCalculator() {
       targetWholesaleMargin: getTargetWholesaleMargin(product)
     }));
 
-    return [...manualProducts, ...spiceProducts, ...bakingProducts];
-  }, [products, spiceProducts, bakingProducts]);
+    return [...manualProducts, ...spiceProducts, ...flowerProducts, ...bakingProducts];
+  }, [products, spiceProducts, flowerProducts, bakingProducts]);
 
   const selectedProduct = useMemo(() => {
     return allDirectoryProducts.find((product) => product.id === selectedProductId) || null;
@@ -676,6 +720,8 @@ export default function PricingCalculator() {
       setProducts([]);
       setSpiceRecipes([]);
       setSpiceProducts([]);
+      setFlowerArrangements([]);
+      setFlowerProducts([]);
       setBakingProducts([]);
       setSelectedProductId("");
       setSelectedVariantId("");
@@ -689,9 +735,13 @@ export default function PricingCalculator() {
     setLoadingProducts(true);
 
     try {
-      const [saved, spiceRecipeRows, bakingSnapshot] = await Promise.all([
+      const [saved, spiceRecipeRows, flowerArrangementRows, bakingSnapshot] = await Promise.all([
         getProducts(user.uid),
         getSpiceRecipes(user.uid).catch((error) => {
+          console.error(error);
+          return [];
+        }),
+        getFlowerArrangements(user.uid).catch((error) => {
           console.error(error);
           return [];
         }),
@@ -706,8 +756,12 @@ export default function PricingCalculator() {
         : [];
 
       setProducts(Array.isArray(saved) ? saved : []);
+      const safeFlowerArrangements = Array.isArray(flowerArrangementRows) ? flowerArrangementRows : [];
+
       setSpiceRecipes(Array.isArray(spiceRecipeRows) ? spiceRecipeRows : []);
+      setFlowerArrangements(safeFlowerArrangements);
       setSpiceProducts(buildSpiceDirectoryProducts(spiceRecipeRows));
+      setFlowerProducts(buildFlowerDirectoryProducts(safeFlowerArrangements));
       setBakingProducts(buildBakingDirectoryProducts(bakingRecipes));
     } catch (error) {
       console.error(error);
@@ -861,6 +915,46 @@ export default function PricingCalculator() {
         );
       }
 
+      if (updatedForm.sourceType === "flower" && updatedForm.sourceArrangementId) {
+        const existingArrangement = flowerArrangements.find(
+          (arrangement) => arrangement.id === updatedForm.sourceArrangementId
+        );
+
+        await updateFlowerArrangement(user.uid, updatedForm.sourceArrangementId, {
+          ...(existingArrangement || {}),
+          imageUrl: uploadResult.url,
+          imagePath: uploadResult.path,
+          imageSource: "uploaded",
+          listInProductDirectory: true
+        });
+
+        setFlowerArrangements((current) =>
+          current.map((arrangement) =>
+            arrangement.id === updatedForm.sourceArrangementId
+              ? {
+                  ...arrangement,
+                  imageUrl: uploadResult.url,
+                  imagePath: uploadResult.path,
+                  imageSource: "uploaded",
+                  listInProductDirectory: true
+                }
+              : arrangement
+          )
+        );
+
+        setFlowerProducts((current) =>
+          current.map((product) =>
+            product.sourceArrangementId === updatedForm.sourceArrangementId
+              ? {
+                  ...product,
+                  imageUrl: uploadResult.url,
+                  imagePath: uploadResult.path
+                }
+              : product
+          )
+        );
+      }
+
       setProducts((current) =>
         current.map((product) =>
           product.id === productId
@@ -917,6 +1011,48 @@ export default function PricingCalculator() {
         setSpiceProducts((current) =>
           current.map((product) =>
             product.sourceRecipeId === form.sourceRecipeId
+              ? {
+                  ...product,
+                  imageUrl: "",
+                  imagePath: ""
+                }
+              : product
+          )
+        );
+      }
+
+      const removingFlowerImage = form.sourceType === "flower" && form.sourceArrangementId;
+
+      if (removingFlowerImage) {
+        const existingArrangement = flowerArrangements.find(
+          (arrangement) => arrangement.id === form.sourceArrangementId
+        );
+
+        await updateFlowerArrangement(user.uid, form.sourceArrangementId, {
+          ...(existingArrangement || {}),
+          imageUrl: "",
+          imagePath: "",
+          imageSource: "",
+          listInProductDirectory: true
+        });
+
+        setFlowerArrangements((current) =>
+          current.map((arrangement) =>
+            arrangement.id === form.sourceArrangementId
+              ? {
+                  ...arrangement,
+                  imageUrl: "",
+                  imagePath: "",
+                  imageSource: "",
+                  listInProductDirectory: true
+                }
+              : arrangement
+          )
+        );
+
+        setFlowerProducts((current) =>
+          current.map((product) =>
+            product.sourceArrangementId === form.sourceArrangementId
               ? {
                   ...product,
                   imageUrl: "",
@@ -987,6 +1123,8 @@ export default function PricingCalculator() {
   }
 
   async function saveCurrentProduct() {
+    const productDirectoryGridColumns =
+    "72px minmax(210px, 1.5fr) minmax(145px, 0.8fr) minmax(110px, 0.65fr) minmax(90px, 0.5fr) minmax(105px, 0.6fr) minmax(90px, 0.5fr) minmax(120px, 0.7fr) 90px";
 
   if (!user) {
       setStatusMessage("Sign in from the Farmers Hub sidebar to save products.");
@@ -1001,6 +1139,31 @@ export default function PricingCalculator() {
     setSaving(true);
 
     try {
+      if (form.isGeneratedProduct && form.sourceType === "flower" && form.sourceArrangementId) {
+        const existingArrangement = flowerArrangements.find(
+          (arrangement) => arrangement.id === form.sourceArrangementId
+        );
+
+        await updateFlowerArrangement(user.uid, form.sourceArrangementId, {
+          ...(existingArrangement || {}),
+          name: form.name.trim(),
+          category: existingArrangement?.category || form.category || "Arrangement",
+          description: form.description || form.notes || existingArrangement?.description || "",
+          retailPrice: form.retailPrice === "" ? "" : Number(form.retailPrice) || 0,
+          wholesalePrice: form.wholesalePrice === "" ? "" : Number(form.wholesalePrice) || 0,
+          imageUrl: form.imageUrl || "",
+          imagePath: form.imagePath || "",
+          imageSource: form.imageUrl ? "uploaded" : "",
+          listInProductDirectory: true,
+          estimatedCost: Number(form.batchIngredientCost) || existingArrangement?.estimatedCost || 0
+        });
+
+        markSaved();
+        setStatusMessage("Flower Studio arrangement pricing saved.");
+        await loadProducts();
+        return;
+      }
+
       if (form.isGeneratedProduct && form.sourceType === "spice") {
         const savedLinkedVariant = await saveSpiceKitchenVariant();
 
