@@ -115,6 +115,7 @@ const emptyArrangement = {
   containerCost: "",
   imageUrl: "",
   imageSource: "",
+  listInProductDirectory: true,
   stems: []
 };
 
@@ -883,6 +884,8 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
       name: arrangementForm.name.trim(),
       category: arrangementForm.category.trim() || "Arrangement",
       description: arrangementForm.description.trim(),
+      listInProductDirectory:
+  arrangementForm.listInProductDirectory !== false,
       retailPrice:
         arrangementForm.retailPrice === ""
           ? ""
@@ -954,6 +957,8 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
       name: arrangement.name || "",
       category: arrangement.category || "Arrangement",
       description: arrangement.description || "",
+      listInProductDirectory:
+  arrangement.listInProductDirectory !== false,
       retailPrice: arrangement.retailPrice || "",
       wholesalePrice: arrangement.wholesalePrice || "",
       packagingCost: arrangement.packagingCost || "",
@@ -1823,7 +1828,20 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
                   }
                 />
               </label>
+<label className="toggleField">
+  <span>List in Product Directory</span>
 
+  <input
+    type="checkbox"
+    checked={arrangementForm.listInProductDirectory !== false}
+    onChange={(event) =>
+      updateArrangementField(
+        "listInProductDirectory",
+        event.target.checked
+      )
+    }
+  />
+</label>
               <label>
                 Container / Presentation
                 <select
@@ -2135,6 +2153,9 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
                           ? `${money(arrangement.retailPrice)} retail`
                           : "No price"}
                         {arrangement.imageUrl ? " • Photo saved" : ""}
+{arrangement.listInProductDirectory !== false
+  ? " • Listed in Product Directory"
+  : ""}
                       </p>
                     </div>
 
