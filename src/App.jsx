@@ -16,6 +16,7 @@ import {
   LogOut,
   Menu,
   PackageCheck,
+  Printer,
   Settings,
   Sprout,
   Users,
@@ -41,6 +42,7 @@ import Customers from "./modules/Customers.jsx";
 import Orders from "./modules/Orders.jsx";
 import Inventory from "./modules/Inventory.jsx";
 import PlantingScheduler from "./modules/PlantingScheduler.jsx";
+import ThermalPrinter from "./modules/ThermalPrinter.jsx";
 import AccountSettings from "./modules/AccountSettings.jsx";
 import Onboarding from "./modules/Onboarding.jsx";
 import Dashboard from "./modules/Dashboard.jsx";
@@ -128,6 +130,15 @@ const modules = [
       "Track stock counts, storage locations, reorder points, inventory value, and expiring goods.",
     path: "/inventory",
     icon: Archive,
+    accent: "inventory"
+  },
+  {
+    key: "thermal-printer",
+    title: "Thermal Printer",
+    description:
+      "Batch upload PNG labels, set quantities, reorder print jobs, and print through universal or direct thermal printer modes.",
+    path: "/thermal-printer",
+    icon: Printer,
     accent: "inventory"
   },
   {
@@ -1312,6 +1323,7 @@ export default function App() {
         <Route path="/customers" element={<AccessGate><Customers /></AccessGate>} />
         <Route path="/orders" element={<AccessGate><Orders /></AccessGate>} />
         <Route path="/inventory" element={<AccessGate><Inventory /></AccessGate>} />
+        <Route path="/thermal-printer" element={<AccessGate><ThermalPrinter /></AccessGate>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
