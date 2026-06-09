@@ -919,7 +919,10 @@ export default function PricingCalculator() {
   }
 
   async function saveCurrentProduct() {
-    if (!user) {
+    const productDirectoryGridColumns =
+    "72px minmax(210px, 1.5fr) minmax(145px, 0.8fr) minmax(110px, 0.65fr) minmax(90px, 0.5fr) minmax(105px, 0.6fr) minmax(90px, 0.5fr) minmax(120px, 0.7fr) 90px";
+
+  if (!user) {
       setStatusMessage("Sign in from the Farmers Hub sidebar to save products.");
       return;
     }
@@ -1172,8 +1175,33 @@ export default function PricingCalculator() {
           </label>
         </div>
 
-        <div className="batchTable compactBatchTable pricingComparisonTable productDirectoryImageTable">
-          <div className="pricingComparisonHeader productDirectoryImageHeader">
+        <div
+          className="productDirectoryInlineTable"
+          style={{
+            overflowX: "auto",
+            border: "1px solid var(--border)",
+            borderRadius: "14px",
+            background: "#ffffff"
+          }}
+        >
+          <div
+            className="productDirectoryInlineHeader"
+            style={{
+              display: "grid",
+              gridTemplateColumns: productDirectoryGridColumns,
+              minWidth: "1180px",
+              alignItems: "center",
+              columnGap: "14px",
+              padding: "12px 14px",
+              background: "#fbfaf6",
+              borderBottom: "1px solid var(--border)",
+              color: "var(--muted)",
+              fontSize: "0.72rem",
+              fontWeight: 900,
+              letterSpacing: "0.075em",
+              textTransform: "uppercase"
+            }}
+          >
             <span>Photo</span>
             <span>Product</span>
             <span>Variant</span>
@@ -1182,7 +1210,7 @@ export default function PricingCalculator() {
             <span>Wholesale</span>
             <span>Cost</span>
             <span>Margin</span>
-            <span>Actions</span>
+            <span style={{ textAlign: "right" }}>Actions</span>
           </div>
 
           {filteredProducts.length ? (
@@ -1196,8 +1224,24 @@ export default function PricingCalculator() {
               const calc = calculateProduct(productForCalc);
 
               return (
-                <div className="pricingComparisonRow pricingDirectoryCompactRow productDirectoryImageRow" key={product.id}>
-                  <span className="pricingImageCell">
+                <div
+                  className="productDirectoryInlineRow"
+                  key={product.id}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: productDirectoryGridColumns,
+                    minWidth: "1180px",
+                    minHeight: "78px",
+                    alignItems: "center",
+                    columnGap: "14px",
+                    padding: "10px 14px",
+                    borderBottom: "1px solid var(--border)"
+                  }}
+                >
+                  <span
+                    className="pricingImageCell"
+                    style={{ display: "flex", alignItems: "center", justifyContent: "flex-start" }}
+                  >
                     {product.imageUrl ? (
                       <button
                         className="productDirectoryImageButton"
@@ -1209,19 +1253,52 @@ export default function PricingCalculator() {
                           })
                         }
                         aria-label={`View ${product.name || "product"} image`}
+                        style={{
+                          width: "58px",
+                          height: "58px",
+                          padding: 0,
+                          borderRadius: "14px",
+                          overflow: "hidden",
+                          border: "1px solid var(--border)",
+                          background: "#fbfaf6",
+                          cursor: "zoom-in"
+                        }}
                       >
-                        <img src={product.imageUrl} alt={`${product.name || "Product"} product`} />
+                        <img
+                          src={product.imageUrl}
+                          alt={`${product.name || "Product"} product`}
+                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                        />
                       </button>
                     ) : (
-                      <span className="pricingImagePlaceholder"><Image size={20} /></span>
+                      <span
+                        className="pricingImagePlaceholder"
+                        style={{
+                          width: "58px",
+                          height: "58px",
+                          borderRadius: "14px",
+                          border: "1px solid var(--border)",
+                          background: "#fbfaf6",
+                          display: "grid",
+                          placeItems: "center"
+                        }}
+                      >
+                        <Image size={20} />
+                      </span>
                     )}
                   </span>
 
-                  <span className="pricingProductCell">
+                  <span className="pricingProductCell" style={{ display: "grid", gap: "3px", minWidth: 0 }}>
                     <button
                       className="savedItemLink"
                       type="button"
                       onClick={() => loadProduct(product, { variantId: directoryVariantId })}
+                      style={{
+                        maxWidth: "100%",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap"
+                      }}
                     >
                       {product.name || "Untitled Product"}
                     </button>
@@ -1231,7 +1308,7 @@ export default function PricingCalculator() {
                     </small>
                   </span>
 
-                  <span className="pricingDirectoryVariantCell">
+                  <span className="pricingDirectoryVariantCell" style={{ minWidth: 0 }}>
                     {product.generatedVariants?.length ? (
                       <select
                         className="pricingDirectoryVariantSelect"
@@ -1250,16 +1327,19 @@ export default function PricingCalculator() {
                   </span>
 
                   <span>{product.category || "Other"}</span>
-                  <span className="pricingMetric">{money(productForCalc.retailPrice)}</span>
-                  <span className="pricingMetric">{money(productForCalc.wholesalePrice)}</span>
-                  <span className="pricingMetric">{money(calc.costPerUnit)}</span>
+                  <span className="pricingMetric" style={{ whiteSpace: "nowrap" }}>{money(productForCalc.retailPrice)}</span>
+                  <span className="pricingMetric" style={{ whiteSpace: "nowrap" }}>{money(productForCalc.wholesalePrice)}</span>
+                  <span className="pricingMetric" style={{ whiteSpace: "nowrap" }}>{money(calc.costPerUnit)}</span>
 
-                  <span className="pricingMetric pricingPositive">
+                  <span className="pricingMetric pricingPositive" style={{ whiteSpace: "nowrap" }}>
                     {percent(calc.retailMargin)}
-                    <small>{money(calc.retailProfitPerUnit)} / unit</small>
+                    <small style={{ display: "block", marginTop: "2px" }}>{money(calc.retailProfitPerUnit)} / unit</small>
                   </span>
 
-                  <span className="pricingDirectoryActions">
+                  <span
+                    className="pricingDirectoryActions"
+                    style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "8px" }}
+                  >
                     {!product.isGeneratedProduct ? (
                       <button
                         className="iconButton danger"
@@ -1281,7 +1361,10 @@ export default function PricingCalculator() {
                   </span>
 
                   {expandedProductIds[product.id] ? (
-                    <div className="pricingExpandedDetails">
+                    <div
+                      className="pricingExpandedDetails"
+                      style={{ gridColumn: "1 / -1", marginTop: "10px" }}
+                    >
                       <div>
                         <strong>Source</strong>
                         <span>{productSourceLabel(product)}</span>
