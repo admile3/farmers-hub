@@ -32,6 +32,10 @@ import {
   uploadProductImage
 } from "../services/storageService.js";
 import {
+  deleteStorageFile,
+  uploadProductImage
+} from "../services/storageService.js";
+import {
   getSpiceRecipes,
   updateSpiceRecipeProductPackage
 } from "../services/spiceKitchenService.js";
@@ -525,6 +529,7 @@ export default function PricingCalculator() {
   const detailsRef = useRef(null);
   const pricingRef = useRef(null);
   const imageInputRef = useRef(null);
+  const imageInputRef = useRef(null);
 
   const [products, setProducts] = useState([]);
   const [spiceRecipes, setSpiceRecipes] = useState([]);
@@ -871,6 +876,92 @@ export default function PricingCalculator() {
     }
   }
 
+
+  async function handleProductImageUpload(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file || !user) return;
+
+    if (!file.type?.startsWith("image/")) {
+      setStatusMessage("Please choose an image file.");
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setStatusMessage("Image must be 5 MB or smaller.");
+      return;
+    }
+
+    const productId = form.id || selectedProductId || makeId();
+
+    setUploadingImage(true);
+
+    try {
+      const uploadResult = await uploadProductImage({
+        userId: user.uid,
+        productId,
+        file,
+        previousPath: form.imagePath || ""
+      });
+
+      const updatedForm = {
+        ...form,
+        id: productId,
+        imageUrl: uploadResult.url,
+        imagePath: uploadResult.path
+      };
+
+      setSelectedProductId(productId);
+      setForm(updatedForm);
+
+      setProducts((current) =>
+        current.map((product) =>
+          product.id === productId
+            ? {
+                ...product,
+                imageUrl: uploadResult.url,
+                imagePath: uploadResult.path
+              }
+            : product
+        )
+      );
+
+      setStatusMessage("Product image uploaded. Click Save Product to keep it attached.");
+      markProductsDirty();
+    } catch (error) {
+      console.error(error);
+      setStatusMessage("Could not upload product image.");
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
+  async function removeProductImage() {
+    if (!form.imageUrl && !form.imagePath) return;
+
+    const confirmed = window.confirm("Remove this product image?");
+    if (!confirmed) return;
+
+    try {
+      if (form.imagePath) {
+        await deleteStorageFile(form.imagePath);
+      }
+
+      setForm((current) => ({
+        ...current,
+        imageUrl: "",
+        imagePath: ""
+      }));
+      markProductsDirty();
+      setStatusMessage("Product image removed. Save the product to keep this change.");
+    } catch (error) {
+      console.error(error);
+      setStatusMessage("Could not remove product image.");
+    }
+  }
+
   async function saveSpiceKitchenVariant() {
     const recipeId = form.sourceRecipeId;
     const recipe = spiceRecipes.find((item) => item.id === recipeId);
@@ -1171,19 +1262,17 @@ export default function PricingCalculator() {
           </label>
         </div>
 
-        <div className="batchTable compactBatchTable pricingComparisonTable">
-          <div className="pricingComparisonHeader">
+        <div className="batchTable compactBatchTable pricingComparisonTable productDirectoryImageTable">
+          <div className="pricingComparisonHeader productDirectoryImageHeader">
             <span>Photo</span>
             <span>Product</span>
+            <span>Variant</span>
             <span>Category</span>
             <span>Retail</span>
             <span>Wholesale</span>
             <span>Cost</span>
             <span>Margin</span>
-            <span className="pricingVariantActionsHeader">
-              <span>Variant</span>
-              <span>Actions</span>
-            </span>
+            <span>Actions</span>
           </div>
 
           {filteredProducts.length ? (
@@ -1197,12 +1286,24 @@ export default function PricingCalculator() {
               const calc = calculateProduct(productForCalc);
 
               return (
-                <div className="pricingComparisonRow pricingDirectoryCompactRow" key={product.id}>
+                <div className="pricingComparisonRow pricingDirectoryCompactRow productDirectoryImageRow" key={product.id}>
                   <span className="pricingImageCell">
                     {product.imageUrl ? (
-                      <img src={product.imageUrl} alt={`${product.name || "Product"} product`} />
+                      <button
+                        className="productDirectoryImageButton"
+                        type="button"
+                        onClick={() =>
+                          setZoomedProductImage({
+                            url: product.imageUrl,
+                            name: product.name || "Product image"
+                          })
+                        }
+                        aria-label={`View ${product.name || "product"} image`}
+                      >
+                        <img src={product.imageUrl} alt={`${product.name || "Product"} product`} />
+                      </button>
                     ) : (
-                      <span className="pricingImagePlaceholder"><Image size={17} /></span>
+                      <span className="pricingImagePlaceholder"><Image size={20} /></span>
                     )}
                   </span>
 
@@ -1217,10 +1318,25 @@ export default function PricingCalculator() {
                     <small>
                       {productSourceLabel(product)}
                       {product.sku ? ` • ${product.sku}` : ""}
-                      {product.generatedVariants?.length
-                        ? ` • ${product.generatedVariants.length} size variant${product.generatedVariants.length === 1 ? "" : "s"}`
-                        : ""}
                     </small>
+                  </span>
+
+                  <span className="pricingDirectoryVariantCell">
+                    {product.generatedVariants?.length ? (
+                      <select
+                        className="pricingDirectoryVariantSelect"
+                        value={directoryVariantId}
+                        onChange={(event) => changeDirectoryVariant(product.id, event.target.value)}
+                      >
+                        {product.generatedVariants.map((variant) => (
+                          <option key={variant.id} value={variant.id}>
+                            {variant.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="mutedText">Single unit</span>
+                    )}
                   </span>
 
                   <span>{product.category || "Other"}</span>
@@ -1233,45 +1349,25 @@ export default function PricingCalculator() {
                     <small>{money(calc.retailProfitPerUnit)} / unit</small>
                   </span>
 
-                  <span className="pricingVariantActionsCell">
-                    <span className="pricingDirectoryVariantCell">
-                      {product.generatedVariants?.length ? (
-                        <select
-                          className="pricingDirectoryVariantSelect"
-                          value={directoryVariantId}
-                          onChange={(event) => changeDirectoryVariant(product.id, event.target.value)}
-                        >
-                          {product.generatedVariants.map((variant) => (
-                            <option key={variant.id} value={variant.id}>
-                              {variant.name}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <span className="mutedText">Single unit</span>
-                      )}
-                    </span>
-
-                    <span className="pricingDirectoryActions">
-                      {!product.isGeneratedProduct ? (
-                        <button
-                          className="iconButton danger"
-                          type="button"
-                          onClick={() => removeProduct(product.id)}
-                          aria-label="Delete product"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      ) : null}
+                  <span className="pricingDirectoryActions">
+                    {!product.isGeneratedProduct ? (
                       <button
-                        className="iconButton"
+                        className="iconButton danger"
                         type="button"
-                        onClick={() => toggleProductExpanded(product.id)}
-                        aria-label="Toggle product details"
+                        onClick={() => removeProduct(product.id)}
+                        aria-label="Delete product"
                       >
-                        {expandedProductIds[product.id] ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                        <Trash2 size={15} />
                       </button>
-                    </span>
+                    ) : null}
+                    <button
+                      className="iconButton"
+                      type="button"
+                      onClick={() => toggleProductExpanded(product.id)}
+                      aria-label="Toggle product details"
+                    >
+                      {expandedProductIds[product.id] ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                    </button>
                   </span>
 
                   {expandedProductIds[product.id] ? (
@@ -1359,6 +1455,58 @@ export default function PricingCalculator() {
               <strong>Linked product:</strong> this product is generated from {productSourceLabel(form)}. Saving edits here will update the linked source package variant.
             </div>
           ) : null}
+
+          <div className="productImagePanel">
+            <div className="productImagePreview">
+              {form.imageUrl ? (
+                <img src={form.imageUrl} alt={`${form.name || "Product"} preview`} />
+              ) : (
+                <div className="productImageEmptyState">
+                  <Image size={28} />
+                  <span>No product image yet</span>
+                </div>
+              )}
+            </div>
+
+            <div className="productImageActions">
+              <div>
+                <p className="eyebrow">Product Image</p>
+                <p className="importExportText">
+                  Upload a product photo for the directory. Images are stored in Firebase Storage and saved to this product record.
+                </p>
+              </div>
+
+              <div className="formActions compactActions">
+                <input
+                  ref={imageInputRef}
+                  className="hiddenFileInput"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProductImageUpload}
+                />
+                <button
+                  className="secondaryButton compactButton"
+                  type="button"
+                  onClick={() => imageInputRef.current?.click()}
+                  disabled={uploadingImage}
+                >
+                  <Upload size={15} />
+                  {uploadingImage ? "Uploading..." : form.imageUrl ? "Replace Image" : "Upload Image"}
+                </button>
+                {form.imageUrl ? (
+                  <button
+                    className="secondaryButton compactButton dangerTextButton"
+                    type="button"
+                    onClick={removeProductImage}
+                    disabled={uploadingImage}
+                  >
+                    <X size={15} />
+                    Remove
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          </div>
 
           <div className="productImagePanel">
             <div className="productImagePreview">
@@ -1610,6 +1758,23 @@ export default function PricingCalculator() {
           <ArrowUp size={18} />
           Top
         </button>
+      ) : null}
+
+      {zoomedProductImage ? (
+        <div className="productImageZoomOverlay" onClick={() => setZoomedProductImage(null)}>
+          <div className="productImageZoomModal" onClick={(event) => event.stopPropagation()}>
+            <button
+              className="modalCloseButton"
+              type="button"
+              onClick={() => setZoomedProductImage(null)}
+              aria-label="Close image preview"
+            >
+              ×
+            </button>
+            <img src={zoomedProductImage.url} alt={zoomedProductImage.name} />
+            <strong>{zoomedProductImage.name}</strong>
+          </div>
+        </div>
       ) : null}
 
       <ModuleGuideModal
