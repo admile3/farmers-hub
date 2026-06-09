@@ -151,8 +151,7 @@ export async function getFlowerArrangements(userId) {
 export async function createFlowerArrangement(userId, arrangement) {
   const ref = await addDoc(arrangementsCollection(userId), {
     ...arrangement,
-    listInProductDirectory:
-      arrangement.listInProductDirectory !== false,
+    listInProductDirectory: arrangement.listInProductDirectory !== false,
     containerId: arrangement.containerId || "",
     containerName: arrangement.containerName || "",
     containerCost: cleanNumber(arrangement.containerCost),
@@ -161,9 +160,8 @@ export async function createFlowerArrangement(userId, arrangement) {
     wholesalePrice: cleanNumber(arrangement.wholesalePrice),
     estimatedCost: cleanNumber(arrangement.estimatedCost),
     imageUrl: cleanImageUrl(arrangement.imageUrl),
-    imageSource: arrangement.imageUrl
-      ? arrangement.imageSource || "uploaded"
-      : "",
+    imagePath: cleanImageUrl(arrangement.imagePath),
+    imageSource: arrangement.imageUrl ? arrangement.imageSource || "uploaded" : "",
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -176,8 +174,7 @@ export async function updateFlowerArrangement(userId, arrangementId, arrangement
     doc(db, "users", userId, "flowerStudioArrangements", arrangementId),
     {
       ...arrangement,
-      listInProductDirectory:
-        arrangement.listInProductDirectory !== false,
+      listInProductDirectory: arrangement.listInProductDirectory !== false,
       containerId: arrangement.containerId || "",
       containerName: arrangement.containerName || "",
       containerCost: cleanNumber(arrangement.containerCost),
@@ -186,6 +183,7 @@ export async function updateFlowerArrangement(userId, arrangementId, arrangement
       wholesalePrice: cleanNumber(arrangement.wholesalePrice),
       estimatedCost: cleanNumber(arrangement.estimatedCost),
       imageUrl: cleanImageUrl(arrangement.imageUrl),
+      imagePath: cleanImageUrl(arrangement.imagePath),
       imageSource: arrangement.imageUrl
         ? arrangement.imageSource || "uploaded"
         : "",
