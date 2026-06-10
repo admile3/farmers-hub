@@ -11,9 +11,11 @@ import {
   ClipboardList,
   FileText,
   FlaskConical,
+  Flower2,
   Folder,
   ListChecks,
   PackageCheck,
+  Printer,
   Sprout,
   Users,
   Wheat
@@ -32,24 +34,6 @@ import { getCustomers } from "../services/customerService.js";
 
 const modules = [
   {
-    key: "spice",
-    title: "Spice Kitchen",
-    description:
-      "Build seasoning recipes, scale batches, manage ingredients, and calculate production needs.",
-    path: "/spice-kitchen",
-    icon: ChefHat,
-    accent: "spice"
-  },
-  {
-    key: "preserved-foods",
-    title: "Preserved Foods",
-    description:
-      "Build preserved food recipes, calculate brines, log batches, track pH, and add finished jars to inventory.",
-    path: "/preserved-foods",
-    icon: FlaskConical,
-    accent: "preserved"
-  },
-  {
     key: "baking",
     title: "Baking Planner",
     description:
@@ -59,22 +43,13 @@ const modules = [
     accent: "sourdough"
   },
   {
-    key: "market",
-    title: "Market Prep Planner",
+    key: "calendar",
+    title: "Calendar",
     description:
-      "Estimate harvest, packing, inventory, and product quantities before each market.",
-    path: "/market-prep",
-    icon: ClipboardList,
-    accent: "market"
-  },
-  {
-    key: "planting",
-    title: "Planting Scheduler",
-    description:
-      "Create crop templates, schedule planting batches, and track grow tasks from seed to harvest.",
-    path: "/planting-scheduler",
-    icon: Sprout,
-    accent: "planting"
+      "View market plans, permit deadlines, grant renewals, production dates, and manual events.",
+    path: "/calendar",
+    icon: CalendarDays,
+    accent: "calendar"
   },
   {
     key: "customers",
@@ -86,13 +61,13 @@ const modules = [
     accent: "customers"
   },
   {
-    key: "orders",
-    title: "Orders",
+    key: "flower-studio",
+    title: "Flower Studio",
     description:
-      "Create customer orders, add line items, track fulfillment, and manage order totals.",
-    path: "/orders",
-    icon: PackageCheck,
-    accent: "orders"
+      "Build flower pantries, import zone-friendly stems, create arrangements, calculate production, and add finished bouquets to inventory.",
+    path: "/flower-studio",
+    icon: Flower2,
+    accent: "flowers"
   },
   {
     key: "inventory",
@@ -104,13 +79,31 @@ const modules = [
     accent: "inventory"
   },
   {
-    key: "pricing",
-    title: "Products & Pricing",
+    key: "lists",
+    title: "Lists",
     description:
-      "Manage your product list, retail prices, wholesale prices, costs, margins, and profitability.",
-    path: "/pricing",
-    icon: Calculator,
-    accent: "pricing"
+      "Create reusable checklists for market prep, production, shopping, permits, delivery, and ideas.",
+    path: "/lists",
+    icon: ListChecks,
+    accent: "lists"
+  },
+  {
+    key: "market",
+    title: "Market Prep Planner",
+    description:
+      "Estimate harvest, packing, inventory, and product quantities before each market.",
+    path: "/market-prep",
+    icon: ClipboardList,
+    accent: "market"
+  },
+  {
+    key: "orders",
+    title: "Orders",
+    description:
+      "Create customer orders, add line items, track fulfillment, and manage order totals.",
+    path: "/orders",
+    icon: PackageCheck,
+    accent: "orders"
   },
   {
     key: "permit-grants",
@@ -122,22 +115,49 @@ const modules = [
     accent: "grant"
   },
   {
-    key: "lists",
-    title: "Lists",
+    key: "planting",
+    title: "Planting Scheduler",
     description:
-      "Create reusable checklists for market prep, production, shopping, permits, delivery, and ideas.",
-    path: "/lists",
-    icon: ListChecks,
-    accent: "lists"
+      "Create crop templates, schedule planting batches, and track grow tasks from seed to harvest.",
+    path: "/planting-scheduler",
+    icon: Sprout,
+    accent: "planting"
   },
   {
-    key: "calendar",
-    title: "Calendar",
+    key: "preserved-foods",
+    title: "Preserved Foods",
     description:
-      "View market plans, permit deadlines, grant renewals, production dates, and manual events.",
-    path: "/calendar",
-    icon: CalendarDays,
-    accent: "calendar"
+      "Build preserved food recipes, calculate brines, log batches, track pH, and add finished jars to inventory.",
+    path: "/preserved-foods",
+    icon: FlaskConical,
+    accent: "preserved"
+  },
+  {
+    key: "pricing",
+    title: "Products & Pricing",
+    description:
+      "Manage your product list, retail prices, wholesale prices, costs, margins, and profitability.",
+    path: "/pricing",
+    icon: Calculator,
+    accent: "pricing"
+  },
+  {
+    key: "spice",
+    title: "Spice Kitchen",
+    description:
+      "Build seasoning recipes, scale batches, manage ingredients, and calculate production needs.",
+    path: "/spice-kitchen",
+    icon: ChefHat,
+    accent: "spice"
+  },
+  {
+    key: "thermal-printer",
+    title: "Thermal Printer",
+    description:
+      "Batch upload PNG labels, set quantities, reorder print jobs, and print through universal or direct thermal printer modes.",
+    path: "/thermal-printer",
+    icon: Printer,
+    accent: "thermal"
   }
 ];
 
