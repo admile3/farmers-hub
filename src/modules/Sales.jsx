@@ -4,6 +4,7 @@ import {
   CalendarDays,
   CircleDollarSign,
   CircleHelp,
+  ClipboardList,
   DollarSign,
   FileCheck2,
   PackagePlus,
@@ -643,7 +644,7 @@ export default function Sales() {
           accent="sales"
         />
         <StatCard
-          icon={Receipt}
+          icon={ClipboardList}
           label="Sales Records"
           value={loading ? "..." : salesSummary.totalSalesCount}
           sub="in current view"
