@@ -375,7 +375,14 @@ export default function ThermalPrinter() {
       labels.forEach((label) => URL.revokeObjectURL(label.url));
     };
   }, [labels]);
+useEffect(() => {
+  const guideHidden =
+    localStorage.getItem("hideModuleGuide_thermalPrinter") === "true";
 
+  if (!guideHidden) {
+    setShowGuide(true);
+  }
+}, []);
   function showStatus(message, type = "success") {
     setStatusMessage(message);
     setStatusType(type);
