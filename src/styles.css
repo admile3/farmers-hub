@@ -17050,3 +17050,6 @@ input[type="number"] {
 .thermalPrinterModule .toolCard.compactToolCard.clickableToolCard svg {
   color: #3f6f7d !important;
 }
+.thermalPrinterModule .toolCard.compactToolCard.clickableToolCard::before {
+  background: #3f6f7d !important;
+}
