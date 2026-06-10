@@ -302,6 +302,77 @@ export default function ThermalPrinter() {
   const webBluetoothSupported =
     typeof navigator !== "undefined" && "bluetooth" in navigator;
 
+  const sectionTightStyle = {
+    marginTop: 0,
+    marginBottom: 10
+  };
+
+  const selectedModeStyle = {
+    background: "rgba(226, 241, 232, 0.78)",
+    borderColor: "rgba(55, 93, 72, 0.72)",
+    boxShadow: "0 0 0 3px rgba(55, 93, 72, 0.14), 0 10px 24px rgba(28, 43, 35, 0.08)"
+  };
+
+  const labelRowStyle = {
+    display: "grid",
+    gridTemplateColumns: "300px minmax(0, 1fr) 340px",
+    gap: 16,
+    alignItems: "center",
+    minHeight: 178,
+    overflow: "visible"
+  };
+
+  const labelThumbStyle = {
+    width: 300,
+    height: 158,
+    padding: 10,
+    overflow: "visible",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  };
+
+  const labelThumbImageStyle = {
+    width: "auto",
+    height: "auto",
+    maxWidth: "100%",
+    maxHeight: "100%",
+    objectFit: "contain",
+    display: "block"
+  };
+
+  const labelControlsStyle = {
+    display: "grid",
+    gridTemplateColumns: "auto 150px 40px",
+    alignItems: "center",
+    justifyContent: "end",
+    gap: 10
+  };
+
+  const moveButtonsStyle = {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    height: 40
+  };
+
+  const quantityFieldStyle = {
+    width: 150,
+    minWidth: 0,
+    display: "grid",
+    gridTemplateRows: "16px 38px",
+    gap: 4,
+    margin: 0,
+    alignSelf: "center"
+  };
+
+  const quantityInputStyle = {
+    height: 38,
+    lineHeight: "38px",
+    textAlign: "center",
+    margin: 0
+  };
+
   useEffect(() => {
     const root = document.documentElement;
     root.style.setProperty("--thermal-label-width", `${labelWidth || DEFAULT_LABEL_WIDTH}in`);
@@ -560,7 +631,7 @@ export default function ThermalPrinter() {
       : bluetoothDevice?.name || "Not connected";
 
   return (
-    <div className="modulePage thermalPrinterModule">
+    <div className="modulePage thermalPrinterModule" style={{ gap: 12 }}>
       {statusMessage ? (
         <div className={`floatingStatus ${statusType}`}>
           <span>ⓘ</span>
@@ -603,7 +674,7 @@ export default function ThermalPrinter() {
         </div>
       </section>
 
-      <section className="hubStatGrid thermalPrinterStatGrid">
+      <section className="hubStatGrid thermalPrinterStatGrid" style={sectionTightStyle}>
         <StatCard
           icon={Printer}
           label="Mode"
@@ -634,7 +705,7 @@ export default function ThermalPrinter() {
         />
       </section>
 
-      <section className="toolGrid compactToolGrid">
+      <section className="toolGrid compactToolGrid" style={sectionTightStyle}>
         <button
           className="toolCard compactToolCard clickableToolCard"
           type="button"
@@ -668,7 +739,7 @@ export default function ThermalPrinter() {
         </button>
       </section>
 
-      <section className="thermalModePanel workspacePanel compactPanel">
+      <section className="thermalModePanel workspacePanel compactPanel" style={{ marginTop: 0, marginBottom: 14 }}>
         <div className="workspaceHeader compactPanelHeader">
           <div>
             <p className="eyebrow">Print Mode</p>
@@ -680,6 +751,7 @@ export default function ThermalPrinter() {
           <button
             type="button"
             className={`thermalModeCard ${printMode === "universal" ? "selected" : ""}`}
+            style={printMode === "universal" ? selectedModeStyle : undefined}
             onClick={() => setPrintMode("universal")}
           >
             <Printer size={22} />
@@ -690,6 +762,7 @@ export default function ThermalPrinter() {
           <button
             type="button"
             className={`thermalModeCard ${printMode === "direct" ? "selected" : ""}`}
+            style={printMode === "direct" ? selectedModeStyle : undefined}
             onClick={() => setPrintMode("direct")}
           >
             <PlugZap size={22} />
@@ -774,6 +847,7 @@ export default function ThermalPrinter() {
               labels.map((label, index) => (
                 <div
                   className="thermalLabelItem"
+                  style={labelRowStyle}
                   key={label.id}
                   draggable
                   onDragStart={() => setDraggedId(label.id)}
@@ -784,8 +858,8 @@ export default function ThermalPrinter() {
                     reorderLabels(draggedId, label.id);
                   }}
                 >
-                  <div className="thermalLabelThumb">
-                    <img src={label.url} alt={label.name} />
+                  <div className="thermalLabelThumb" style={labelThumbStyle}>
+                    <img src={label.url} alt={label.name} style={labelThumbImageStyle} />
                   </div>
 
                   <div className="thermalLabelMeta">
@@ -794,8 +868,8 @@ export default function ThermalPrinter() {
                     <small>Drag this row, or use the up and down buttons.</small>
                   </div>
 
-                  <div className="thermalLabelControls">
-                    <div className="thermalMoveButtons">
+                  <div className="thermalLabelControls" style={labelControlsStyle}>
+                    <div className="thermalMoveButtons" style={moveButtonsStyle}>
                       <button
                         className="iconButton"
                         type="button"
@@ -817,9 +891,10 @@ export default function ThermalPrinter() {
                       </button>
                     </div>
 
-                    <label className="thermalQuantityField">
+                    <label className="thermalQuantityField" style={quantityFieldStyle}>
                       Qty
                       <input
+                        style={quantityInputStyle}
                         type="number"
                         min="1"
                         step="1"
