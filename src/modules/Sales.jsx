@@ -641,7 +641,7 @@ export default function Sales() {
           label="Net Sales"
           value={loading ? "..." : money(salesSummary.totalNetSales)}
           sub="after discounts and fees"
-          accent="sales"
+          accent="pricing"
         />
         <StatCard
           icon={ClipboardList}
@@ -662,7 +662,7 @@ export default function Sales() {
           label="Best Sales Day"
           value={loading ? "..." : money(salesSummary.bestSalesDay?.total || 0)}
           sub={salesSummary.bestSalesDay?.date ? formatDate(salesSummary.bestSalesDay.date) : "no sales yet"}
-          accent="sales"
+          accent="market"
         />
       </section>
 
