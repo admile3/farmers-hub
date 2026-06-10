@@ -343,6 +343,14 @@ export default function ThermalPrinter() {
 
   const labelControlsStyle = {
     display: "grid",
+    gridTemplateRows: "16px 40px",
+    justifyContent: "end",
+    alignItems: "center",
+    gap: 4
+  };
+
+  const labelControlsRowStyle = {
+    display: "grid",
     gridTemplateColumns: "auto 150px 40px",
     alignItems: "center",
     justifyContent: "end",
@@ -356,19 +364,18 @@ export default function ThermalPrinter() {
     height: 40
   };
 
-  const quantityFieldStyle = {
-    width: 150,
-    minWidth: 0,
-    display: "grid",
-    gridTemplateRows: "16px 38px",
-    gap: 4,
-    margin: 0,
-    alignSelf: "center"
+  const quantityHeadingStyle = {
+    gridColumn: "2 / 3",
+    fontSize: "0.8rem",
+    fontWeight: 800,
+    lineHeight: "16px",
+    margin: 0
   };
 
   const quantityInputStyle = {
-    height: 38,
-    lineHeight: "38px",
+    width: 150,
+    height: 40,
+    lineHeight: "40px",
     textAlign: "center",
     margin: 0
   };
@@ -869,31 +876,33 @@ export default function ThermalPrinter() {
                   </div>
 
                   <div className="thermalLabelControls" style={labelControlsStyle}>
-                    <div className="thermalMoveButtons" style={moveButtonsStyle}>
-                      <button
-                        className="iconButton"
-                        type="button"
-                        onClick={() => moveLabel(label.id, "up")}
-                        disabled={index === 0}
-                        aria-label="Move label up"
-                      >
-                        <ArrowUp size={15} />
-                      </button>
+                    <span style={quantityHeadingStyle}>Qty</span>
 
-                      <button
-                        className="iconButton"
-                        type="button"
-                        onClick={() => moveLabel(label.id, "down")}
-                        disabled={index === labels.length - 1}
-                        aria-label="Move label down"
-                      >
-                        <ArrowDown size={15} />
-                      </button>
-                    </div>
+                    <div style={labelControlsRowStyle}>
+                      <div className="thermalMoveButtons" style={moveButtonsStyle}>
+                        <button
+                          className="iconButton"
+                          type="button"
+                          onClick={() => moveLabel(label.id, "up")}
+                          disabled={index === 0}
+                          aria-label="Move label up"
+                        >
+                          <ArrowUp size={15} />
+                        </button>
 
-                    <label className="thermalQuantityField" style={quantityFieldStyle}>
-                      Qty
+                        <button
+                          className="iconButton"
+                          type="button"
+                          onClick={() => moveLabel(label.id, "down")}
+                          disabled={index === labels.length - 1}
+                          aria-label="Move label down"
+                        >
+                          <ArrowDown size={15} />
+                        </button>
+                      </div>
+
                       <input
+                        className="thermalQuantityInput"
                         style={quantityInputStyle}
                         type="number"
                         min="1"
@@ -901,17 +910,18 @@ export default function ThermalPrinter() {
                         value={label.quantity}
                         onChange={(event) => updateQuantity(label.id, event.target.value)}
                         onWheel={(event) => event.currentTarget.blur()}
+                        aria-label={`Quantity for ${label.name}`}
                       />
-                    </label>
 
-                    <button
-                      className="iconButton danger"
-                      type="button"
-                      onClick={() => removeLabel(label.id)}
-                      aria-label="Remove label"
-                    >
-                      <Trash2 size={15} />
-                    </button>
+                      <button
+                        className="iconButton danger"
+                        type="button"
+                        onClick={() => removeLabel(label.id)}
+                        aria-label="Remove label"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))
