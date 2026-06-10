@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   BarChart3,
   CalendarDays,
+  CircleDollarSign,
   CircleHelp,
   DollarSign,
   FileCheck2,
@@ -635,7 +636,7 @@ export default function Sales() {
 
       <section className="hubStatGrid salesStatGrid">
         <StatCard
-          icon={DollarSign}
+          icon={CircleDollarSign}
           label="Net Sales"
           value={loading ? "..." : money(salesSummary.totalNetSales)}
           sub="after discounts and fees"
@@ -656,7 +657,7 @@ export default function Sales() {
           accent="pricing"
         />
         <StatCard
-          icon={BarChart3}
+          icon={CalendarDays}
           label="Best Sales Day"
           value={loading ? "..." : money(salesSummary.bestSalesDay?.total || 0)}
           sub={salesSummary.bestSalesDay?.date ? formatDate(salesSummary.bestSalesDay.date) : "no sales yet"}
