@@ -9,7 +9,7 @@ import {
   ChefHat,
   CircleHelp,
   ClipboardList,
-  Dollarsign,
+  DollarSign,
   FileText,
   FlaskConical,
   Flower2,
