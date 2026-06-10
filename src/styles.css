@@ -17688,3 +17688,60 @@ input[type="number"] {
     justify-self: end;
   }
 }
+/* Sales module color fixes */
+.salesModule {
+  --module-accent: #d89b2b;
+  --module-accent-dark: #b97812;
+  --module-accent-soft: rgba(216, 155, 43, 0.14);
+}
+
+.salesHero {
+  border-top-color: #d89b2b !important;
+}
+
+.salesHero .eyebrow,
+.salesModule .eyebrow {
+  color: #b97812;
+}
+
+.salesHero .primaryButton,
+.salesModule .primaryButton {
+  background: #d89b2b;
+  border-color: #d89b2b;
+}
+
+.salesHero .primaryButton:hover,
+.salesModule .primaryButton:hover {
+  background: #b97812;
+  border-color: #b97812;
+}
+
+.salesStatGrid .statCard,
+.salesStatGrid .hubStatCard {
+  --module-accent: #d89b2b;
+}
+
+.salesStatGrid .statCardIcon,
+.salesStatGrid .hubStatIcon {
+  background: #d89b2b;
+  color: #ffffff;
+}
+
+.modernNavLink.sales {
+  background: #d89b2b;
+  color: #ffffff;
+}
+
+.modernNavLink.sales:hover,
+.modernNavLink.sales.active {
+  background: #b97812;
+  color: #ffffff;
+}
+
+.salesModule::before,
+.salesHero::before,
+.salesModule .moduleTopBar,
+.salesModule .farmModuleTopBar {
+  background: #d89b2b !important;
+  border-color: #d89b2b !important;
+}
