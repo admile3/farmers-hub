@@ -17807,3 +17807,30 @@ input[type="number"] {
   color: #ffffff !important;
   stroke: currentColor !important;
 }
+/* Full app loading screen, prevents sidebar density flicker */
+.appLoadingScreen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  padding: 2rem;
+}
+
+.appLoadingCard {
+  width: min(420px, 100%);
+  padding: 1.5rem;
+  border-radius: 18px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.appLoadingCard h2 {
+  margin: 0 0 0.5rem;
+}
+
+.appLoadingCard p {
+  margin: 0;
+  color: var(--muted);
+}
