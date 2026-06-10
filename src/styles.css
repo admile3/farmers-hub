@@ -16801,3 +16801,128 @@ input[type="number"] {
 .thermalPrinterModule .thermalLabelControls .iconButton {
   flex: 0 0 auto;
 }
+/* Thermal Printer final layout tightening */
+.thermalPrinterModule {
+  gap: 14px !important;
+}
+
+.thermalPrinterModule .farmModuleHero {
+  margin-bottom: 8px !important;
+}
+
+.thermalPrinterModule .thermalPrinterStatGrid {
+  margin-top: 0 !important;
+  margin-bottom: 10px !important;
+}
+
+.thermalPrinterModule .toolGrid {
+  margin-top: 0 !important;
+  margin-bottom: 10px !important;
+}
+
+.thermalPrinterModule .thermalModePanel {
+  margin-top: 0 !important;
+  margin-bottom: 14px !important;
+}
+
+.thermalPrinterModule .thermalPrinterLayout {
+  margin-top: 0 !important;
+}
+
+/* Selected print mode highlight */
+.thermalPrinterModule .thermalModeCard.selected {
+  background: rgba(226, 241, 232, 0.72) !important;
+  border-color: rgba(55, 93, 72, 0.7) !important;
+  box-shadow:
+    0 0 0 3px rgba(55, 93, 72, 0.14),
+    0 10px 24px rgba(28, 43, 35, 0.08) !important;
+}
+
+/* Label row preview and controls */
+.thermalPrinterModule .thermalLabelItem {
+  grid-template-columns: 280px minmax(0, 1fr) 330px !important;
+  align-items: center !important;
+  min-height: 170px !important;
+  overflow: visible !important;
+}
+
+.thermalPrinterModule .thermalLabelThumb {
+  width: 280px !important;
+  height: 150px !important;
+  padding: 10px !important;
+  overflow: visible !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.thermalPrinterModule .thermalLabelThumb img {
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+
+.thermalPrinterModule .thermalLabelControls {
+  display: grid !important;
+  grid-template-columns: auto 140px 40px !important;
+  align-items: center !important;
+  justify-content: end !important;
+  gap: 10px !important;
+}
+
+.thermalPrinterModule .thermalMoveButtons {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  height: 40px !important;
+}
+
+.thermalPrinterModule .thermalLabelControls .iconButton {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.thermalPrinterModule .thermalQuantityField {
+  min-width: 0 !important;
+  width: 140px !important;
+  display: grid !important;
+  grid-template-rows: 16px 38px !important;
+  gap: 4px !important;
+  margin: 0 !important;
+  align-self: center !important;
+}
+
+.thermalPrinterModule .thermalQuantityField input {
+  height: 38px !important;
+  line-height: 38px !important;
+  text-align: center !important;
+  margin: 0 !important;
+}
+
+@media (max-width: 900px) {
+  .thermalPrinterModule .thermalLabelItem {
+    grid-template-columns: 1fr !important;
+  }
+
+  .thermalPrinterModule .thermalLabelThumb {
+    width: 100% !important;
+    height: 180px !important;
+    overflow: hidden !important;
+  }
+
+  .thermalPrinterModule .thermalLabelControls {
+    grid-template-columns: auto 1fr auto !important;
+    justify-content: stretch !important;
+  }
+
+  .thermalPrinterModule .thermalQuantityField {
+    width: 100% !important;
+  }
+}
