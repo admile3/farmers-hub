@@ -16966,3 +16966,14 @@ input[type="number"] {
   background: rgba(63, 111, 125, 0.13);
   border-color: rgba(63, 111, 125, 0.55);
 }
+/* Flower Studio accent fixes */
+.flowerStudioModule::before,
+.flowerStudioModule:before {
+  background: #c65a93 !important;
+}
+
+.flowerStudioModule {
+  --module-accent: #c65a93;
+  --module-accent-dark: #a94679;
+  --module-accent-soft: rgba(198, 90, 147, 0.14);
+}
