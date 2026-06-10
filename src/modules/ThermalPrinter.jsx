@@ -307,6 +307,16 @@ export default function ThermalPrinter() {
     marginBottom: 10
   };
 
+  const thermalActionCardStyle = {
+    borderLeftColor: "#3f6f7d",
+    "--tool-accent": "#3f6f7d",
+    "--module-accent": "#3f6f7d"
+  };
+
+  const thermalActionIconStyle = {
+    color: "#3f6f7d"
+  };
+
   const selectedModeStyle = {
     background: "rgba(63, 111, 125, 0.12)",
     borderColor: "rgba(63, 111, 125, 0.72)",
@@ -687,60 +697,63 @@ export default function ThermalPrinter() {
           label="Mode"
           value={printMode === "universal" ? "Universal" : "Direct"}
           sub={printMode === "universal" ? "browser print" : directMethod}
-          accent="thermal"
+          accent="pricing"
         />
         <StatCard
           icon={FileImage}
           label="Uploaded"
           value={labels.length}
           sub="PNG files"
-          accent="thermal"
+          accent="orders"
         />
         <StatCard
           icon={Printer}
           label="To Print"
           value={totalLabels}
           sub="total labels"
-          accent="thermal"
+          accent="market"
         />
         <StatCard
           icon={Settings2}
           label="Speed / Density"
           value={printMode === "direct" ? `${printSpeed} / ${printDensity}` : "Driver"}
           sub={printMode === "direct" ? "TSPL controls" : "browser controlled"}
-          accent="thermal"
+          accent="spice"
         />
       </section>
 
       <section className="toolGrid compactToolGrid" style={sectionTightStyle}>
         <button
-          className="toolCard compactToolCard clickableToolCard thermalToolCard"
+          className="toolCard compactToolCard clickableToolCard"
+          style={thermalActionCardStyle}
           type="button"
           onClick={() => fileInputRef.current?.click()}
         >
-          <Upload size={22} />
+          <Upload size={22} style={thermalActionIconStyle} />
           <h3>Upload Labels</h3>
           <p>Select or drag in one or more PNG files.</p>
         </button>
 
         <button
-          className="toolCard compactToolCard clickableToolCard thermalToolCard"
+          className="toolCard compactToolCard clickableToolCard"
+          style={thermalActionCardStyle}
           type="button"
           onClick={resetQuantities}
           disabled={!labels.length}
         >
-          <RotateCcw size={22} />
+          <RotateCcw size={22} style={thermalActionIconStyle} />
           <h3>Reset Quantities</h3>
           <p>Set every uploaded label quantity back to 1.</p>
         </button>
 
         <button
-          className="toolCard compactToolCard clickableToolCard thermalToolCard"
+          className="toolCard compactToolCard clickableToolCard"
+          style={thermalActionCardStyle}
           type="button"
           onClick={handlePrint}
           disabled={!labels.length || printing}
         >
-          <Printer size={22} />
+          <Printer size={22} style={thermalActionIconStyle} />
           <h3>{printing ? "Printing..." : "Print Batch"}</h3>
           <p>Print the current labels in the order shown.</p>
         </button>
