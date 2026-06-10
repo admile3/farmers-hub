@@ -9,6 +9,7 @@ import {
   ChefHat,
   CircleHelp,
   ClipboardList,
+  Dollarsign,
   FileText,
   FlaskConical,
   Flower2,
@@ -140,6 +141,15 @@ const modules = [
     path: "/pricing",
     icon: Calculator,
     accent: "pricing"
+  },
+  {
+  key: "sales",
+  title: "Sales",
+  description:
+    "Track product sales, daily totals, completed order revenue, market performance, and revenue trends.",
+  path: "/sales",
+  icon: DollarSign,
+  accent: "sales"
   },
   {
     key: "spice",
