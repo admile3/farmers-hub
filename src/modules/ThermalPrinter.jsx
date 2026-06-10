@@ -16,6 +16,7 @@ import {
 
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import StatCard from "../components/StatCard.jsx";
+import ThermalPrinterGuideContent from "../components/ThermalPrinterGuideContent.jsx";
 
 const DEFAULT_LABEL_WIDTH = "3";
 const DEFAULT_LABEL_HEIGHT = "2";
@@ -231,40 +232,6 @@ async function sendBluetoothJob({ characteristic, jobBytes }) {
     const chunk = jobBytes.slice(index, index + chunkSize);
     await characteristic.writeValueWithoutResponse(chunk);
   }
-}
-
-function ThermalPrinterGuideContent() {
-  return (
-    <div className="moduleGuideContent">
-      <section>
-        <p className="eyebrow">Two print modes</p>
-        <h3>Universal mode and direct mode</h3>
-        <p>
-          Universal Print uses the browser print dialog and should work for most
-          people. Direct Print is experimental and sends TSPL commands through
-          WebUSB or Web Bluetooth so compatible printers can use speed and density.
-        </p>
-      </section>
-
-      <section>
-        <h4>Direct mode requirements</h4>
-        <p>
-          Direct mode requires Chrome or Edge, HTTPS, user permission to connect
-          to the printer, and a printer that accepts TSPL commands. Some Bluetooth
-          printers use classic Bluetooth instead of BLE, which browsers cannot
-          access.
-        </p>
-      </section>
-
-      <section>
-        <h4>Fine text tips</h4>
-        <p>
-          For tiny text or QR labels, try speed 1 or 2, density 10 to 12, and
-          adjust the black threshold until the PNG prints crisp without filling in.
-        </p>
-      </section>
-    </div>
-  );
 }
 
 export default function ThermalPrinter() {
