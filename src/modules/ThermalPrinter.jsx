@@ -308,9 +308,9 @@ export default function ThermalPrinter() {
   };
 
   const selectedModeStyle = {
-    background: "rgba(226, 241, 232, 0.78)",
-    borderColor: "rgba(55, 93, 72, 0.72)",
-    boxShadow: "0 0 0 3px rgba(55, 93, 72, 0.14), 0 10px 24px rgba(28, 43, 35, 0.08)"
+    background: "rgba(63, 111, 125, 0.12)",
+    borderColor: "rgba(63, 111, 125, 0.72)",
+    boxShadow: "0 0 0 3px rgba(63, 111, 125, 0.14), 0 10px 24px rgba(31, 56, 64, 0.08)"
   };
 
   const labelRowStyle = {
@@ -687,34 +687,34 @@ export default function ThermalPrinter() {
           label="Mode"
           value={printMode === "universal" ? "Universal" : "Direct"}
           sub={printMode === "universal" ? "browser print" : directMethod}
-          accent="pricing"
+          accent="thermal"
         />
         <StatCard
           icon={FileImage}
           label="Uploaded"
           value={labels.length}
           sub="PNG files"
-          accent="orders"
+          accent="thermal"
         />
         <StatCard
           icon={Printer}
           label="To Print"
           value={totalLabels}
           sub="total labels"
-          accent="market"
+          accent="thermal"
         />
         <StatCard
           icon={Settings2}
           label="Speed / Density"
           value={printMode === "direct" ? `${printSpeed} / ${printDensity}` : "Driver"}
           sub={printMode === "direct" ? "TSPL controls" : "browser controlled"}
-          accent="spice"
+          accent="thermal"
         />
       </section>
 
       <section className="toolGrid compactToolGrid" style={sectionTightStyle}>
         <button
-          className="toolCard compactToolCard clickableToolCard"
+          className="toolCard compactToolCard clickableToolCard thermalToolCard"
           type="button"
           onClick={() => fileInputRef.current?.click()}
         >
@@ -724,7 +724,7 @@ export default function ThermalPrinter() {
         </button>
 
         <button
-          className="toolCard compactToolCard clickableToolCard"
+          className="toolCard compactToolCard clickableToolCard thermalToolCard"
           type="button"
           onClick={resetQuantities}
           disabled={!labels.length}
@@ -735,7 +735,7 @@ export default function ThermalPrinter() {
         </button>
 
         <button
-          className="toolCard compactToolCard clickableToolCard"
+          className="toolCard compactToolCard clickableToolCard thermalToolCard"
           type="button"
           onClick={handlePrint}
           disabled={!labels.length || printing}
