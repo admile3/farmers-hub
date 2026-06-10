@@ -977,7 +977,18 @@ function AccountStatusCard({ compact = false }) {
 }
 
 function AppShell({ children }) {
-  const { accountProfile } = useAuth();
+  const { accountProfile, authLoading, accountLoading } = useAuth();
+
+  if (authLoading || accountLoading) {
+    return (
+      <div className="appLoadingScreen">
+        <div className="appLoadingCard">
+          <h2>Loading Farmers Hub...</h2>
+          <p>Checking your account and workspace settings.</p>
+        </div>
+      </div>
+    );
+  }
   const location = useLocation();
   const [mobileModulesOpen, setMobileModulesOpen] = useState(false);
 
