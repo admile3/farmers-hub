@@ -634,37 +634,6 @@ export default function ThermalPrinter() {
         />
       </section>
 
-      <section className="thermalModePanel workspacePanel compactPanel">
-        <div className="workspaceHeader compactPanelHeader">
-          <div>
-            <p className="eyebrow">Print Mode</p>
-            <h3>Choose how Farmers Hub should print</h3>
-          </div>
-        </div>
-
-        <div className="thermalModeGrid">
-          <button
-            type="button"
-            className={`thermalModeCard ${printMode === "universal" ? "selected" : ""}`}
-            onClick={() => setPrintMode("universal")}
-          >
-            <Printer size={22} />
-            <strong>Universal Print</strong>
-            <span>Works for most users through the browser print dialog. Speed and density are handled by the printer driver.</span>
-          </button>
-
-          <button
-            type="button"
-            className={`thermalModeCard ${printMode === "direct" ? "selected" : ""}`}
-            onClick={() => setPrintMode("direct")}
-          >
-            <PlugZap size={22} />
-            <strong>Direct Print, Experimental</strong>
-            <span>Sends TSPL commands with speed and density through WebUSB or Web Bluetooth when compatible.</span>
-          </button>
-        </div>
-      </section>
-
       <section className="toolGrid compactToolGrid">
         <button
           className="toolCard compactToolCard clickableToolCard"
@@ -699,6 +668,37 @@ export default function ThermalPrinter() {
         </button>
       </section>
 
+      <section className="thermalModePanel workspacePanel compactPanel">
+        <div className="workspaceHeader compactPanelHeader">
+          <div>
+            <p className="eyebrow">Print Mode</p>
+            <h3>Choose how Farmers Hub should print</h3>
+          </div>
+        </div>
+
+        <div className="thermalModeGrid">
+          <button
+            type="button"
+            className={`thermalModeCard ${printMode === "universal" ? "selected" : ""}`}
+            onClick={() => setPrintMode("universal")}
+          >
+            <Printer size={22} />
+            <strong>Universal Print</strong>
+            <span>Works for most users through the browser print dialog. Speed and density are handled by the printer driver.</span>
+          </button>
+
+          <button
+            type="button"
+            className={`thermalModeCard ${printMode === "direct" ? "selected" : ""}`}
+            onClick={() => setPrintMode("direct")}
+          >
+            <PlugZap size={22} />
+            <strong>Direct Print, Experimental</strong>
+            <span>Sends TSPL commands with speed and density through WebUSB or Web Bluetooth when compatible.</span>
+          </button>
+        </div>
+      </section>
+
       <input
         ref={fileInputRef}
         className="hiddenFileInput"
@@ -717,6 +717,15 @@ export default function ThermalPrinter() {
             </div>
 
             <div className="formActions compactActions">
+              <button
+                className="secondaryButton compactButton"
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload size={15} />
+                Upload PNGs
+              </button>
+
               <button
                 className="secondaryButton compactButton"
                 type="button"
