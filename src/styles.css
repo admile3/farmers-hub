@@ -17834,3 +17834,45 @@ input[type="number"] {
   margin: 0;
   color: var(--muted);
 }
+/* Sales trend range controls */
+
+.salesChartHeader {
+  align-items: flex-start;
+}
+
+.salesChartControls {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.salesChartRangeToggle {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.06);
+}
+
+.salesChartRangeToggle button {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.42rem 0.65rem;
+  background: transparent;
+  color: var(--muted-text, #64748b);
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.salesChartRangeToggle button.active {
+  background: #ffffff;
+  color: #111827;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.salesChartBar.zero .salesChartBarTrack span {
+  opacity: 0.25;
+}
