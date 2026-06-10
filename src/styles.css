@@ -17721,3 +17721,32 @@ input[type="number"] {
   background: #d89b2b !important;
   border-color: #d89b2b !important;
 }
+/* Fix Sales stat card icons without forcing all Sales stats to one color */
+
+.salesStatGrid .hubStatIcon svg {
+  display: block;
+  color: #ffffff !important;
+  stroke: currentColor !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.salesStatGrid .hubStatIcon.pricing {
+  background: #6f8f3d !important;
+  color: #ffffff !important;
+}
+
+.salesStatGrid .hubStatIcon.orders {
+  background: #9a6b45 !important;
+  color: #ffffff !important;
+}
+
+.salesStatGrid .hubStatIcon.market {
+  background: #2f7d6d !important;
+  color: #ffffff !important;
+}
+
+.salesStatGrid .hubStatIcon.green {
+  background: #5f7f3f !important;
+  color: #ffffff !important;
+}
