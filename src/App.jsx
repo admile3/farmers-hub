@@ -5,6 +5,7 @@ import {
   CalendarDays,
   ChefHat,
   ClipboardList,
+  DollarSign,
   Eye,
   EyeOff,
   FileText,
@@ -40,6 +41,7 @@ import Lists from "./modules/Lists.jsx";
 import Calendar from "./modules/Calendar.jsx";
 import Customers from "./modules/Customers.jsx";
 import Orders from "./modules/Orders.jsx";
+import Sales from "./modules/Sales.jsx";
 import Inventory from "./modules/Inventory.jsx";
 import PlantingScheduler from "./modules/PlantingScheduler.jsx";
 import ThermalPrinter from "./modules/ThermalPrinter.jsx";
@@ -122,6 +124,15 @@ const modules = [
     path: "/orders",
     icon: PackageCheck,
     accent: "orders"
+  },
+  {
+    key: "sales",
+    title: "Sales",
+    description:
+      "Track product sales, daily totals, completed order revenue, market performance, and revenue trends.",
+    path: "/sales",
+    icon: DollarSign,
+    accent: "sales"
   },
   {
     key: "permit-grants",
@@ -1322,6 +1333,7 @@ export default function App() {
         <Route path="/calendar" element={<AccessGate><Calendar /></AccessGate>} />
         <Route path="/customers" element={<AccessGate><Customers /></AccessGate>} />
         <Route path="/orders" element={<AccessGate><Orders /></AccessGate>} />
+        <Route path="/sales" element={<AccessGate><Sales /></AccessGate>} />
         <Route path="/inventory" element={<AccessGate><Inventory /></AccessGate>} />
         <Route path="/thermal-printer" element={<AccessGate><ThermalPrinter /></AccessGate>} />
         <Route path="*" element={<NotFound />} />
