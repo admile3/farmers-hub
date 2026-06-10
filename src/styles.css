@@ -16926,3 +16926,43 @@ input[type="number"] {
     width: 100% !important;
   }
 }
+/* Thermal Printer unique module color */
+.modernNavLink.moduleNav.thermal,
+.planModuleButton.thermal,
+.dashboardWorkspaceCard.thermal,
+.dashboardWorkspaceIcon.thermal,
+.dashboardRowIcon.thermal,
+.hubStatCard.thermal {
+  --module-accent: #3f6f7d;
+  --module-accent-dark: #315b68;
+  --module-accent-soft: rgba(63, 111, 125, 0.13);
+}
+
+.modernNavLink.moduleNav.thermal {
+  background: #3f6f7d;
+  color: #ffffff;
+}
+
+.modernNavLink.moduleNav.thermal:hover,
+.modernNavLink.moduleNav.thermal.active {
+  background: #315b68;
+  color: #ffffff;
+}
+
+.dashboardWorkspaceCard.thermal .dashboardWorkspaceAccent {
+  background: #3f6f7d;
+}
+
+.dashboardWorkspaceIcon.thermal {
+  background: rgba(63, 111, 125, 0.14);
+  color: #315b68;
+}
+
+.planModuleButton.thermal {
+  border-color: rgba(63, 111, 125, 0.28);
+}
+
+.planModuleButton.thermal.selected {
+  background: rgba(63, 111, 125, 0.13);
+  border-color: rgba(63, 111, 125, 0.55);
+}
