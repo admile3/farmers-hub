@@ -17007,3 +17007,38 @@ input[type="number"] {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
+/* Thermal Printer accent fixes */
+.thermalPrinterModule::before,
+.thermalPrinterModule:before {
+  background: #3f6f7d !important;
+}
+
+.thermalPrinterModule {
+  --module-accent: #3f6f7d;
+  --module-accent-dark: #315b68;
+  --module-accent-soft: rgba(63, 111, 125, 0.14);
+}
+
+.thermalPrinterModule .toolCard,
+.thermalPrinterModule .compactToolCard {
+  border-left-color: #3f6f7d !important;
+}
+
+.thermalPrinterModule .toolCard svg,
+.thermalPrinterModule .compactToolCard svg {
+  color: #3f6f7d !important;
+}
+
+.thermalPrinterModule .toolCard:hover,
+.thermalPrinterModule .compactToolCard:hover {
+  border-color: rgba(63, 111, 125, 0.4) !important;
+  box-shadow: 0 10px 24px rgba(63, 111, 125, 0.12) !important;
+}
+
+.thermalPrinterModule .primaryButton {
+  background: #3f6f7d !important;
+}
+
+.thermalPrinterModule .primaryButton:hover {
+  background: #315b68 !important;
+}
