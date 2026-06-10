@@ -126,15 +126,6 @@ const modules = [
     accent: "orders"
   },
   {
-    key: "sales",
-    title: "Sales",
-    description:
-      "Track product sales, daily totals, completed order revenue, market performance, and revenue trends.",
-    path: "/sales",
-    icon: DollarSign,
-    accent: "sales"
-  },
-  {
     key: "permit-grants",
     title: "Permit & Grant Tracker",
     description:
@@ -169,6 +160,15 @@ const modules = [
     path: "/pricing",
     icon: Calculator,
     accent: "pricing"
+  },
+  {
+    key: "sales",
+    title: "Sales",
+    description:
+      "Track product sales, daily totals, completed order revenue, market performance, and revenue trends.",
+    path: "/sales",
+    icon: DollarSign,
+    accent: "sales"
   },
   {
     key: "spice",
