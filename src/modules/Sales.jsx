@@ -278,6 +278,62 @@ function buildChartRows(sales, chartRange = "week") {
   });
 }
 
+function formatChartDateLabel(dateString, chartRange) {
+  const [year, month, day] = String(dateString).split("-").map(Number);
+  if (!year || !month || !day) return dateString;
+
+  const date = new Date(year, month - 1, day);
+
+  if (chartRange === "week" || chartRange === "month") {
+    return `${month}/${day}`;
+  }
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric"
+  });
+}
+
+function getChartTickIndexes(rows, chartRange) {
+  if (!rows.length) return [];
+
+  const tickCounts = {
+    week: 7,
+    month: 8,
+    quarter: 8,
+    year: 12
+  };
+
+  const tickCount = Math.min(tickCounts[chartRange] || 7, rows.length);
+  const lastIndex = rows.length - 1;
+
+  return Array.from({ length: tickCount }, (_, index) =>
+    Math.round((index / Math.max(tickCount - 1, 1)) * lastIndex)
+  ).filter((value, index, array) => array.indexOf(value) === index);
+}
+
+function buildYAxisTicks(maxValue) {
+  const normalizedMax = Math.max(Number(maxValue) || 0, 100);
+  const magnitude = 10 ** Math.floor(Math.log10(normalizedMax));
+  const normalized = normalizedMax / magnitude;
+
+  let roundedMax;
+
+  if (normalized <= 1) {
+    roundedMax = magnitude;
+  } else if (normalized <= 2) {
+    roundedMax = 2 * magnitude;
+  } else if (normalized <= 5) {
+    roundedMax = 5 * magnitude;
+  } else {
+    roundedMax = 10 * magnitude;
+  }
+
+  const step = roundedMax / 4;
+
+  return Array.from({ length: 5 }, (_, index) => step * index);
+}
+
 export default function Sales() {
   const { user, loginWithGoogle } = useAuth();
 
@@ -335,12 +391,8 @@ export default function Sales() {
 
   const salesSummary = useMemo(() => summarizeSales(filteredSales), [filteredSales]);
   const chartRows = useMemo(
-  () => buildChartRows(filteredSales, chartRange),
-  [filteredSales, chartRange]
-);
-  const chartMax = useMemo(
-    () => Math.max(...chartRows.map((row) => row.total), 1),
-    [chartRows]
+    () => buildChartRows(filteredSales, chartRange),
+    [filteredSales, chartRange]
   );
   const saleTotals = useMemo(() => calculateSaleTotals(saleDraft), [saleDraft]);
 
@@ -366,14 +418,18 @@ export default function Sales() {
   }
 
   useEffect(() => {
-  if (!user?.uid) return;
+    loadData();
+  }, [user?.uid]);
 
-  const guideHidden = localStorage.getItem("hideModuleGuide_sales") === "true";
+  useEffect(() => {
+    if (!user?.uid) return;
 
-  if (!guideHidden) {
-    setShowGuide(true);
-  }
-}, [user?.uid]);
+    const guideHidden = localStorage.getItem("hideModuleGuide_sales") === "true";
+
+    if (!guideHidden) {
+      setShowGuide(true);
+    }
+  }, [user?.uid]);
 
   useEffect(() => {
     if (!statusMessage) return;
@@ -701,68 +757,164 @@ export default function Sales() {
       <section className="salesOverviewGrid">
         <div className="workspacePanel compactPanel salesChartPanel">
           <div className="workspaceHeader compactPanelHeader salesChartHeader">
-  <div>
-    <p className="eyebrow">Reporting</p>
-    <h3>Sales Trend</h3>
-  </div>
+            <div>
+              <p className="eyebrow">Reporting</p>
+              <h3>Sales Trend</h3>
+            </div>
 
-  <div className="salesChartControls">
-    <div className="salesChartRangeToggle">
-      <button
-        type="button"
-        className={chartRange === "week" ? "active" : ""}
-        onClick={() => setChartRange("week")}
-      >
-        Week
-      </button>
-      <button
-        type="button"
-        className={chartRange === "month" ? "active" : ""}
-        onClick={() => setChartRange("month")}
-      >
-        Month
-      </button>
-      <button
-        type="button"
-        className={chartRange === "quarter" ? "active" : ""}
-        onClick={() => setChartRange("quarter")}
-      >
-        Qtr
-      </button>
-      <button
-        type="button"
-        className={chartRange === "year" ? "active" : ""}
-        onClick={() => setChartRange("year")}
-      >
-        Year
-      </button>
-    </div>
+            <div className="salesChartControls">
+              <div className="salesChartRangeToggle">
+                <button
+                  type="button"
+                  className={chartRange === "week" ? "active" : ""}
+                  onClick={() => setChartRange("week")}
+                >
+                  Week
+                </button>
+                <button
+                  type="button"
+                  className={chartRange === "month" ? "active" : ""}
+                  onClick={() => setChartRange("month")}
+                >
+                  Month
+                </button>
+                <button
+                  type="button"
+                  className={chartRange === "quarter" ? "active" : ""}
+                  onClick={() => setChartRange("quarter")}
+                >
+                  Qtr
+                </button>
+                <button
+                  type="button"
+                  className={chartRange === "year" ? "active" : ""}
+                  onClick={() => setChartRange("year")}
+                >
+                  Year
+                </button>
+              </div>
 
-    <button className="secondaryButton compactButton" type="button" onClick={loadData}>
-      <RefreshCw size={15} />
-      Refresh
-    </button>
-  </div>
-</div>
+              <button className="secondaryButton compactButton" type="button" onClick={loadData}>
+                <RefreshCw size={15} />
+                Refresh
+              </button>
+            </div>
+          </div>
 
           {chartRows.length ? (
-            <div className="salesChart">
-              {chartRows.map((row) => (
-                <div className="salesChartBar" key={row.date}>
-                  <div className="salesChartBarTrack">
-                    <span style={{ height: `${Math.max((row.total / chartMax) * 100, 8)}%` }} />
-                  </div>
-                  <small>{formatDate(row.date).replace(", 2026", "")}</small>
-                  <strong>{money(row.total)}</strong>
-                </div>
-              ))}
+            <div className="salesLineChart">
+              {(() => {
+                const chartHeight = 300;
+                const chartWidth = 1000;
+                const paddingLeft = 58;
+                const paddingRight = 22;
+                const paddingTop = 24;
+                const paddingBottom = 42;
+                const maxValue = Math.max(...chartRows.map((row) => row.total), 100);
+                const yTicks = buildYAxisTicks(maxValue);
+                const yMax = Math.max(...yTicks, 100);
+                const tickIndexes = getChartTickIndexes(chartRows, chartRange);
+
+                const plotWidth = chartWidth - paddingLeft - paddingRight;
+                const plotHeight = chartHeight - paddingTop - paddingBottom;
+
+                const points = chartRows.map((row, index) => {
+                  const x =
+                    paddingLeft +
+                    (index / Math.max(chartRows.length - 1, 1)) * plotWidth;
+
+                  const y =
+                    paddingTop +
+                    plotHeight -
+                    (row.total / Math.max(yMax, 1)) * plotHeight;
+
+                  return {
+                    ...row,
+                    x,
+                    y
+                  };
+                });
+
+                const linePoints = points
+                  .map((point) => `${point.x},${point.y}`)
+                  .join(" ");
+
+                return (
+                  <svg
+                    className="salesLineChartSvg"
+                    viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+                    role="img"
+                    aria-label="Sales trend line chart"
+                  >
+                    {yTicks.map((tick) => {
+                      const y =
+                        paddingTop +
+                        plotHeight -
+                        (tick / Math.max(yMax, 1)) * plotHeight;
+
+                      return (
+                        <g key={tick}>
+                          <line
+                            x1={paddingLeft}
+                            x2={chartWidth - paddingRight}
+                            y1={y}
+                            y2={y}
+                            className="salesChartGridLine"
+                          />
+                          <text
+                            x={paddingLeft - 10}
+                            y={y + 4}
+                            textAnchor="end"
+                            className="salesChartAxisLabel"
+                          >
+                            {money(tick).replace(".00", "")}
+                          </text>
+                        </g>
+                      );
+                    })}
+
+                    <polyline
+                      points={linePoints}
+                      fill="none"
+                      className="salesChartLine"
+                    />
+
+                    {points
+                      .filter((point) => point.total > 0 && chartRange !== "year")
+                      .map((point) => (
+                        <circle
+                          key={`${point.date}-dot`}
+                          cx={point.x}
+                          cy={point.y}
+                          r="3.5"
+                          className="salesChartPoint"
+                        />
+                      ))}
+
+                    {tickIndexes.map((index) => {
+                      const point = points[index];
+
+                      return (
+                        <text
+                          key={`${point.date}-${index}`}
+                          x={point.x}
+                          y={chartHeight - 12}
+                          textAnchor="middle"
+                          className="salesChartDateLabel"
+                        >
+                          {formatChartDateLabel(point.date, chartRange)}
+                        </text>
+                      );
+                    })}
+                  </svg>
+                );
+              })()}
             </div>
           ) : (
             <p className="dashboardEmpty">
               {loading ? "Loading sales trend..." : "No sales in this view yet."}
             </p>
-          )}
-        </div>
+          )}        </div>
 
         <div className="workspacePanel compactPanel squareImportPanel">
           <div className="workspaceHeader compactPanelHeader">
