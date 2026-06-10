@@ -8,6 +8,7 @@ import {
   PackagePlus,
   Plus,
   Receipt,
+  RefreshCw,
   Save,
   Search,
   SquareStack,
@@ -18,7 +19,6 @@ import {
 
 import { useAuth } from "../AuthContext.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
-import ModuleHero from "../components/ModuleHero.jsx";
 import SalesGuideContent from "../components/SalesGuideContent.jsx";
 import StatCard from "../components/StatCard.jsx";
 import { getProducts } from "../services/productService.js";
@@ -156,6 +156,7 @@ function blankSale() {
 
 function blankDailyEntry() {
   return {
+    id: "",
     saleDate: todayString(),
     saleType: "Market Day",
     marketName: "",
@@ -166,7 +167,8 @@ function blankDailyEntry() {
     tax: "",
     tips: "",
     netSales: "",
-    notes: ""
+    notes: "",
+    createdAt: ""
   };
 }
 
@@ -260,24 +262,34 @@ export default function Sales() {
   const [activeMode, setActiveMode] = useState("line-items");
   const [saleDraft, setSaleDraft] = useState(blankSale);
   const [dailyDraft, setDailyDraft] = useState(blankDailyEntry);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [queryText, setQueryText] = useState("");
   const [timeframe, setTimeframe] = useState("30");
-  const [saleTypeFilter, setSaleTypeFilter] = useState("All");
+  const [saleTypeFilter, setSaleTypeFilter] = useState("All sales");
   const [statusMessage, setStatusMessage] = useState("");
-  const [statusType, setStatusType] = useState("success");
-  const [isGuideOpen, setIsGuideOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const saleTotals = useMemo(() => calculateSaleTotals(saleDraft), [saleDraft]);
+  const productOptions = useMemo(() => {
+    return products
+      .map((product) => ({
+        id: product.id || "",
+        name: getProductDisplayName(product),
+        category: getProductCategory(product),
+        retailPrice: getProductRetailPrice(product),
+        wholesalePrice: getProductWholesalePrice(product),
+        unit: getProductUnit(product)
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [products]);
 
   const filteredSales = useMemo(() => {
     const startDate = startDateForTimeframe(timeframe);
-    const search = searchTerm.toLowerCase().trim();
+    const search = String(queryText || "").toLowerCase().trim();
 
     return sales.filter((sale) => {
       const matchesDate = !startDate || String(sale.saleDate || "") >= startDate;
       const matchesType =
-        saleTypeFilter === "All" || sale.saleType === saleTypeFilter;
+        saleTypeFilter === "All sales" || sale.saleType === saleTypeFilter;
 
       const searchableText = [
         sale.saleType,
@@ -294,7 +306,7 @@ export default function Sales() {
 
       return matchesDate && matchesType && matchesSearch;
     });
-  }, [sales, searchTerm, timeframe, saleTypeFilter]);
+  }, [sales, queryText, timeframe, saleTypeFilter]);
 
   const salesSummary = useMemo(() => summarizeSales(filteredSales), [filteredSales]);
   const chartRows = useMemo(() => buildChartRows(filteredSales), [filteredSales]);
@@ -302,29 +314,12 @@ export default function Sales() {
     () => Math.max(...chartRows.map((row) => row.total), 1),
     [chartRows]
   );
+  const saleTotals = useMemo(() => calculateSaleTotals(saleDraft), [saleDraft]);
 
-  const productOptions = useMemo(() => {
-    return products
-      .map((product) => ({
-        id: product.id || "",
-        name: getProductDisplayName(product),
-        category: getProductCategory(product),
-        retailPrice: getProductRetailPrice(product),
-        wholesalePrice: getProductWholesalePrice(product),
-        unit: getProductUnit(product)
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [products]);
-
-  function showStatus(message, type = "success") {
-    setStatusMessage(message);
-    setStatusType(type);
-  }
-
-  async function loadSalesModuleData() {
+  async function loadData() {
     if (!user?.uid) return;
 
-    setIsLoading(true);
+    setLoading(true);
 
     try {
       const [savedSales, savedProducts] = await Promise.all([
@@ -335,15 +330,15 @@ export default function Sales() {
       setSales(savedSales);
       setProducts(savedProducts);
     } catch (error) {
-      console.error(error);
-      showStatus("Could not load Sales data.", "error");
+      console.error("Could not load sales:", error);
+      setStatusMessage("Could not load Sales data.");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    loadSalesModuleData();
+    loadData();
   }, [user?.uid]);
 
   useEffect(() => {
@@ -431,24 +426,25 @@ export default function Sales() {
     }));
   }
 
-  function startEditSale(sale) {
+  function startNewProductSale() {
+    setActiveMode("line-items");
+    setSaleDraft(blankSale());
+  }
+
+  function startNewDailyTotal() {
+    setActiveMode("daily-total");
+    setDailyDraft(blankDailyEntry());
+  }
+
+  function editSale(sale) {
     if (sale.entryMode === "daily-total") {
       setActiveMode("daily-total");
       setDailyDraft({
-        id: sale.id,
-        saleDate: sale.saleDate || todayString(),
-        saleType: sale.saleType || "Market Day",
-        marketName: sale.marketName || "",
-        paymentMethod: sale.paymentMethod || "Not Recorded",
-        grossSales: sale.grossSales || "",
-        discounts: sale.discounts || "",
-        fees: sale.fees || "",
-        tax: sale.tax || "",
-        tips: sale.tips || "",
-        netSales: sale.netSales || "",
-        notes: sale.notes || "",
-        createdAt: sale.createdAt || ""
+        ...blankDailyEntry(),
+        ...sale,
+        netSales: sale.netSales || ""
       });
+      setStatusMessage("Daily total loaded.");
       return;
     }
 
@@ -458,17 +454,18 @@ export default function Sales() {
       ...sale,
       lines: Array.isArray(sale.lines) && sale.lines.length ? sale.lines : [blankLineItem()]
     });
+    setStatusMessage("Sale loaded.");
   }
 
   async function handleSaveLineItemSale() {
     if (!user?.uid) {
-      showStatus("Sign in before saving a sale.", "error");
+      setStatusMessage("Sign in before saving a sale.");
       return;
     }
 
     const filledLines = saleDraft.lines.filter((line) => {
       return (
-        line.productName.trim() ||
+        String(line.productName || "").trim() ||
         line.productId ||
         numberValue(line.quantity) ||
         numberValue(line.unitPrice)
@@ -476,7 +473,7 @@ export default function Sales() {
     });
 
     if (!filledLines.length) {
-      showStatus("Add at least one product or manual line item.", "error");
+      setStatusMessage("Add at least one product or manual line item.");
       return;
     }
 
@@ -498,22 +495,22 @@ export default function Sales() {
       });
 
       setSaleDraft(blankSale());
-      await loadSalesModuleData();
-      showStatus("Sale saved.");
+      await loadData();
+      setStatusMessage("Sale saved.");
     } catch (error) {
-      console.error(error);
-      showStatus("Could not save that sale.", "error");
+      console.error("Could not save sale:", error);
+      setStatusMessage("Could not save that sale.");
     }
   }
 
   async function handleSaveDailyEntry() {
     if (!user?.uid) {
-      showStatus("Sign in before saving a daily total.", "error");
+      setStatusMessage("Sign in before saving a daily total.");
       return;
     }
 
     if (!dailyDraft.grossSales && !dailyDraft.netSales) {
-      showStatus("Enter at least a gross or net sales number.", "error");
+      setStatusMessage("Enter at least a gross or net sales number.");
       return;
     }
 
@@ -524,55 +521,83 @@ export default function Sales() {
       });
 
       setDailyDraft(blankDailyEntry());
-      await loadSalesModuleData();
-      showStatus("Daily sales total saved.");
+      await loadData();
+      setStatusMessage("Daily sales total saved.");
     } catch (error) {
-      console.error(error);
-      showStatus("Could not save that daily total.", "error");
+      console.error("Could not save daily total:", error);
+      setStatusMessage("Could not save that daily total.");
     }
   }
 
-  async function handleDeleteSale(saleId) {
-    if (!user?.uid || !saleId) return;
+  async function handleDeleteSale(sale) {
+    if (!user?.uid || !sale?.id) return;
 
     const confirmed = window.confirm("Delete this sales record?");
     if (!confirmed) return;
 
     try {
-      await deleteSale(user.uid, saleId);
-      await loadSalesModuleData();
-      showStatus("Sale deleted.");
+      await deleteSale(user.uid, sale.id);
+      await loadData();
+      setStatusMessage("Sale deleted.");
     } catch (error) {
-      console.error(error);
-      showStatus("Could not delete that sale.", "error");
+      console.error("Could not delete sale:", error);
+      setStatusMessage("Could not delete that sale.");
     }
+  }
+
+  function saleTitle(sale) {
+    if (sale.entryMode === "daily-total") {
+      return sale.marketName || sale.saleType || "Daily Total";
+    }
+
+    return sale.customerName || sale.marketName || sale.saleType || "Sale";
   }
 
   if (!user) {
     return (
-      <div className="salesModule">
-        <ModuleHero
-          eyebrow="Sales"
-          title="Sign in to track sales."
-          description="Track product sales, daily totals, market revenue, and completed order revenue."
-          className="salesHero"
-          actions={[
-            {
-              label: "Sign in with Google",
-              icon: DollarSign,
-              onClick: loginWithGoogle
-            }
-          ]}
-        />
+      <div className="salesModule modulePage">
+        <ModuleGuideModal
+          isOpen={showGuide}
+          moduleKey="sales"
+          title="How to Use Sales"
+          onClose={() => setShowGuide(false)}
+        >
+          <SalesGuideContent />
+        </ModuleGuideModal>
+
+        <section className="farmModuleHero salesHero">
+          <div className="farmModuleHeroText salesHeroText">
+            <p className="eyebrow">Sales</p>
+            <h2>Sign in to track sales.</h2>
+            <p>
+              Track product sales, daily totals, market revenue, and completed
+              order revenue.
+            </p>
+          </div>
+
+          <div className="farmModuleHeroActions salesHeroActions">
+            <button className="primaryButton farmHeroAction" type="button" onClick={loginWithGoogle}>
+              Sign in with Google
+            </button>
+          </div>
+        </section>
       </div>
     );
   }
 
   return (
-    <div className="salesModule">
+    <div className="salesModule modulePage">
+      <ModuleGuideModal
+        isOpen={showGuide}
+        moduleKey="sales"
+        title="How to Use Sales"
+        onClose={() => setShowGuide(false)}
+      >
+        <SalesGuideContent />
+      </ModuleGuideModal>
+
       {statusMessage ? (
-        <div className={`floatingStatus ${statusType}`}>
-          <span>ⓘ</span>
+        <div className="floatingStatus" role="status">
           <span>{statusMessage}</span>
           <button type="button" onClick={() => setStatusMessage("")}>
             <X size={16} />
@@ -580,104 +605,123 @@ export default function Sales() {
         </div>
       ) : null}
 
-      <ModuleHero
-        eyebrow="Sales"
-        title="Track revenue across your farm business."
-        description="Log individual sales, record quick daily totals, review sales trends, and keep completed order revenue connected."
-        className="salesHero"
-        actions={[
-          {
-            label: "Add Sale",
-            icon: Plus,
-            onClick: () => setActiveMode("line-items")
-          },
-          {
-            label: "Add Daily Total",
-            icon: CalendarDays,
-            onClick: () => setActiveMode("daily-total"),
-            variant: "secondary"
-          },
-          {
-            label: "Guide",
-            icon: CircleHelp,
-            onClick: () => setIsGuideOpen(true),
-            variant: "secondary"
-          }
-        ]}
-      />
+      <section className="farmModuleHero salesHero">
+        <div className="farmModuleHeroText salesHeroText">
+          <p className="eyebrow">Sales</p>
+          <h2>Track revenue across your farm business.</h2>
+          <p>
+            Log individual sales, record quick daily totals, review sales trends,
+            and keep completed order revenue connected.
+          </p>
+        </div>
 
-      <div className="statsGrid salesStatsGrid">
+        <div className="farmModuleHeroActions salesHeroActions">
+          <button className="primaryButton compactPrimary farmHeroAction" type="button" onClick={startNewProductSale}>
+            <Plus size={16} />
+            Add Sale
+          </button>
+
+          <button className="secondaryButton compactButton farmHeroAction" type="button" onClick={startNewDailyTotal}>
+            <CalendarDays size={16} />
+            Daily Total
+          </button>
+
+          <button className="secondaryButton compactButton farmHeroAction" type="button" onClick={() => setShowGuide(true)}>
+            <CircleHelp size={16} />
+            Guide
+          </button>
+        </div>
+      </section>
+
+      <section className="hubStatGrid salesStatGrid">
         <StatCard
           icon={DollarSign}
           label="Net Sales"
-          value={money(salesSummary.totalNetSales)}
-          tone="sales"
+          value={loading ? "..." : money(salesSummary.totalNetSales)}
+          sub="after discounts and fees"
+          accent="sales"
         />
         <StatCard
           icon={Receipt}
           label="Sales Records"
-          value={salesSummary.totalSalesCount}
-          tone="sales"
+          value={loading ? "..." : salesSummary.totalSalesCount}
+          sub="in current view"
+          accent="orders"
         />
         <StatCard
           icon={TrendingUp}
           label="Average Sale"
-          value={money(salesSummary.averageSale)}
-          tone="sales"
+          value={loading ? "..." : money(salesSummary.averageSale)}
+          sub="current filters"
+          accent="pricing"
         />
         <StatCard
           icon={BarChart3}
           label="Best Sales Day"
-          value={money(salesSummary.bestSalesDay?.total || 0)}
-          helper={salesSummary.bestSalesDay?.date ? formatDate(salesSummary.bestSalesDay.date) : ""}
-          tone="sales"
+          value={loading ? "..." : money(salesSummary.bestSalesDay?.total || 0)}
+          sub={salesSummary.bestSalesDay?.date ? formatDate(salesSummary.bestSalesDay.date) : "no sales yet"}
+          accent="sales"
         />
-      </div>
-
-      <section className="salesToolbar moduleToolbar">
-        <div className="searchBox">
-          <Search size={16} />
-          <input
-            type="search"
-            placeholder="Search sales..."
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-          />
-        </div>
-
-        <select
-          value={timeframe}
-          onChange={(event) => setTimeframe(event.target.value)}
-        >
-          {TIMEFRAME_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={saleTypeFilter}
-          onChange={(event) => setSaleTypeFilter(event.target.value)}
-        >
-          <option value="All">All sale types</option>
-          {SALE_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
       </section>
 
-      <section className="salesGrid">
-        <div className="panelCard salesEntryPanel">
-          <div className="panelHeader">
+      <section className="salesOverviewGrid">
+        <div className="workspacePanel compactPanel salesChartPanel">
+          <div className="workspaceHeader compactPanelHeader">
+            <div>
+              <p className="eyebrow">Reporting</p>
+              <h3>Sales Trend</h3>
+            </div>
+
+            <button className="secondaryButton compactButton" type="button" onClick={loadData}>
+              <RefreshCw size={15} />
+              Refresh
+            </button>
+          </div>
+
+          {chartRows.length ? (
+            <div className="salesChart">
+              {chartRows.map((row) => (
+                <div className="salesChartBar" key={row.date}>
+                  <div className="salesChartBarTrack">
+                    <span style={{ height: `${Math.max((row.total / chartMax) * 100, 8)}%` }} />
+                  </div>
+                  <small>{formatDate(row.date).replace(", 2026", "")}</small>
+                  <strong>{money(row.total)}</strong>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="dashboardEmpty">
+              {loading ? "Loading sales trend..." : "No sales in this view yet."}
+            </p>
+          )}
+        </div>
+
+        <div className="workspacePanel compactPanel squareImportPanel">
+          <div className="workspaceHeader compactPanelHeader">
+            <div>
+              <p className="eyebrow">Coming Soon</p>
+              <h3>Square Import</h3>
+            </div>
+            <SquareStack size={22} />
+          </div>
+
+          <p className="dashboardEmpty">
+            Future upgrade: pull Square daily totals into Sales for quick daily,
+            weekly, or monthly reporting without manual entry.
+          </p>
+        </div>
+      </section>
+
+      <section className="salesWorkspaceGrid">
+        <div className="workspacePanel compactPanel salesEntryPanel">
+          <div className="workspaceHeader compactPanelHeader">
             <div>
               <p className="eyebrow">Entry</p>
               <h3>{activeMode === "line-items" ? "Product Sale" : "Daily Sales Total"}</h3>
             </div>
 
-            <div className="segmentedControl">
+            <div className="salesModeToggle">
               <button
                 type="button"
                 className={activeMode === "line-items" ? "active" : ""}
@@ -697,7 +741,7 @@ export default function Sales() {
 
           {activeMode === "line-items" ? (
             <div className="salesFormStack">
-              <div className="formGrid three">
+              <div className="salesFormGrid three">
                 <label>
                   Sale Date
                   <input
@@ -725,9 +769,7 @@ export default function Sales() {
                   Payment
                   <select
                     value={saleDraft.paymentMethod}
-                    onChange={(event) =>
-                      updateSaleDraft("paymentMethod", event.target.value)
-                    }
+                    onChange={(event) => updateSaleDraft("paymentMethod", event.target.value)}
                   >
                     {PAYMENT_METHODS.map((method) => (
                       <option key={method} value={method}>
@@ -738,15 +780,13 @@ export default function Sales() {
                 </label>
               </div>
 
-              <div className="formGrid two">
+              <div className="salesFormGrid two">
                 <label>
                   Customer or Buyer
                   <input
                     type="text"
                     value={saleDraft.customerName}
-                    onChange={(event) =>
-                      updateSaleDraft("customerName", event.target.value)
-                    }
+                    onChange={(event) => updateSaleDraft("customerName", event.target.value)}
                     placeholder="Optional"
                   />
                 </label>
@@ -756,23 +796,21 @@ export default function Sales() {
                   <input
                     type="text"
                     value={saleDraft.marketName}
-                    onChange={(event) =>
-                      updateSaleDraft("marketName", event.target.value)
-                    }
+                    onChange={(event) => updateSaleDraft("marketName", event.target.value)}
                     placeholder="Optional"
                   />
                 </label>
               </div>
 
-              <div className="salesLineItems">
-                <div className="salesLineItemsHeader">
-                  <h4>Line Items</h4>
-                  <button type="button" className="secondaryButton compactPrimary" onClick={addLineItem}>
-                    <Plus size={15} />
-                    Add Line
-                  </button>
-                </div>
+              <div className="salesLineItemsHeader">
+                <h4>Line Items</h4>
+                <button type="button" className="secondaryButton compactButton" onClick={addLineItem}>
+                  <Plus size={15} />
+                  Add Line
+                </button>
+              </div>
 
+              <div className="salesLineItems">
                 {saleDraft.lines.map((line) => (
                   <div className="salesLineItem" key={line.id}>
                     <label>
@@ -795,9 +833,7 @@ export default function Sales() {
                       <input
                         type="text"
                         value={line.productName}
-                        onChange={(event) =>
-                          updateLineItem(line.id, "productName", event.target.value)
-                        }
+                        onChange={(event) => updateLineItem(line.id, "productName", event.target.value)}
                         placeholder="Product name"
                       />
                     </label>
@@ -809,25 +845,19 @@ export default function Sales() {
                         min="0"
                         step="1"
                         value={line.quantity}
-                        onChange={(event) =>
-                          updateLineItem(line.id, "quantity", event.target.value)
-                        }
+                        onChange={(event) => updateLineItem(line.id, "quantity", event.target.value)}
                       />
                     </label>
 
                     <label>
-                      Unit Price
+                      Price
                       <input
                         type="number"
                         min="0"
                         step="0.01"
                         value={line.unitPrice}
-                        onChange={(event) =>
-                          updateLineItem(line.id, "unitPrice", event.target.value)
-                        }
-                        onBlur={(event) =>
-                          updateLineItem(line.id, "unitPrice", cleanCurrencyInput(event.target.value))
-                        }
+                        onChange={(event) => updateLineItem(line.id, "unitPrice", event.target.value)}
+                        onBlur={(event) => updateLineItem(line.id, "unitPrice", cleanCurrencyInput(event.target.value))}
                       />
                     </label>
 
@@ -838,12 +868,8 @@ export default function Sales() {
                         min="0"
                         step="0.01"
                         value={line.discount}
-                        onChange={(event) =>
-                          updateLineItem(line.id, "discount", event.target.value)
-                        }
-                        onBlur={(event) =>
-                          updateLineItem(line.id, "discount", cleanCurrencyInput(event.target.value))
-                        }
+                        onChange={(event) => updateLineItem(line.id, "discount", event.target.value)}
+                        onBlur={(event) => updateLineItem(line.id, "discount", cleanCurrencyInput(event.target.value))}
                       />
                     </label>
 
@@ -864,18 +890,16 @@ export default function Sales() {
                 ))}
               </div>
 
-              <div className="formGrid three">
+              <div className="salesFormGrid three">
                 <label>
-                  Sale-Level Discount
+                  Sale Discount
                   <input
                     type="number"
                     min="0"
                     step="0.01"
                     value={saleDraft.discounts}
                     onChange={(event) => updateSaleDraft("discounts", event.target.value)}
-                    onBlur={(event) =>
-                      updateSaleDraft("discounts", cleanCurrencyInput(event.target.value))
-                    }
+                    onBlur={(event) => updateSaleDraft("discounts", cleanCurrencyInput(event.target.value))}
                   />
                 </label>
 
@@ -887,9 +911,7 @@ export default function Sales() {
                     step="0.01"
                     value={saleDraft.fees}
                     onChange={(event) => updateSaleDraft("fees", event.target.value)}
-                    onBlur={(event) =>
-                      updateSaleDraft("fees", cleanCurrencyInput(event.target.value))
-                    }
+                    onBlur={(event) => updateSaleDraft("fees", cleanCurrencyInput(event.target.value))}
                   />
                 </label>
 
@@ -901,9 +923,7 @@ export default function Sales() {
                     step="0.01"
                     value={saleDraft.tax}
                     onChange={(event) => updateSaleDraft("tax", event.target.value)}
-                    onBlur={(event) =>
-                      updateSaleDraft("tax", cleanCurrencyInput(event.target.value))
-                    }
+                    onBlur={(event) => updateSaleDraft("tax", cleanCurrencyInput(event.target.value))}
                   />
                 </label>
               </div>
@@ -935,7 +955,7 @@ export default function Sales() {
             </div>
           ) : (
             <div className="salesFormStack">
-              <div className="formGrid three">
+              <div className="salesFormGrid three">
                 <label>
                   Date
                   <input
@@ -963,9 +983,7 @@ export default function Sales() {
                   Payment
                   <select
                     value={dailyDraft.paymentMethod}
-                    onChange={(event) =>
-                      updateDailyDraft("paymentMethod", event.target.value)
-                    }
+                    onChange={(event) => updateDailyDraft("paymentMethod", event.target.value)}
                   >
                     {PAYMENT_METHODS.map((method) => (
                       <option key={method} value={method}>
@@ -986,7 +1004,7 @@ export default function Sales() {
                 />
               </label>
 
-              <div className="formGrid three">
+              <div className="salesFormGrid three">
                 <label>
                   Gross Sales
                   <input
@@ -995,9 +1013,7 @@ export default function Sales() {
                     step="0.01"
                     value={dailyDraft.grossSales}
                     onChange={(event) => updateDailyDraft("grossSales", event.target.value)}
-                    onBlur={(event) =>
-                      updateDailyDraft("grossSales", cleanCurrencyInput(event.target.value))
-                    }
+                    onBlur={(event) => updateDailyDraft("grossSales", cleanCurrencyInput(event.target.value))}
                   />
                 </label>
 
@@ -1009,9 +1025,7 @@ export default function Sales() {
                     step="0.01"
                     value={dailyDraft.discounts}
                     onChange={(event) => updateDailyDraft("discounts", event.target.value)}
-                    onBlur={(event) =>
-                      updateDailyDraft("discounts", cleanCurrencyInput(event.target.value))
-                    }
+                    onBlur={(event) => updateDailyDraft("discounts", cleanCurrencyInput(event.target.value))}
                   />
                 </label>
 
@@ -1023,14 +1037,12 @@ export default function Sales() {
                     step="0.01"
                     value={dailyDraft.fees}
                     onChange={(event) => updateDailyDraft("fees", event.target.value)}
-                    onBlur={(event) =>
-                      updateDailyDraft("fees", cleanCurrencyInput(event.target.value))
-                    }
+                    onBlur={(event) => updateDailyDraft("fees", cleanCurrencyInput(event.target.value))}
                   />
                 </label>
               </div>
 
-              <div className="formGrid two">
+              <div className="salesFormGrid two">
                 <label>
                   Tax
                   <input
@@ -1039,9 +1051,7 @@ export default function Sales() {
                     step="0.01"
                     value={dailyDraft.tax}
                     onChange={(event) => updateDailyDraft("tax", event.target.value)}
-                    onBlur={(event) =>
-                      updateDailyDraft("tax", cleanCurrencyInput(event.target.value))
-                    }
+                    onBlur={(event) => updateDailyDraft("tax", cleanCurrencyInput(event.target.value))}
                   />
                 </label>
 
@@ -1053,9 +1063,7 @@ export default function Sales() {
                     step="0.01"
                     value={dailyDraft.netSales}
                     onChange={(event) => updateDailyDraft("netSales", event.target.value)}
-                    onBlur={(event) =>
-                      updateDailyDraft("netSales", cleanCurrencyInput(event.target.value))
-                    }
+                    onBlur={(event) => updateDailyDraft("netSales", cleanCurrencyInput(event.target.value))}
                     placeholder={money(calculateDailyNet(dailyDraft))}
                   />
                 </label>
@@ -1085,136 +1093,105 @@ export default function Sales() {
           )}
         </div>
 
-        <div className="panelCard salesChartPanel">
-          <div className="panelHeader">
+        <div className="workspacePanel compactPanel salesDirectoryPanel">
+          <div className="workspaceHeader compactPanelHeader">
             <div>
-              <p className="eyebrow">Reporting</p>
-              <h3>Sales Trend</h3>
+              <p className="eyebrow">Directory</p>
+              <h3>Sales Log</h3>
             </div>
-            <BarChart3 size={22} />
+
+            <button className="secondaryButton compactButton" type="button" onClick={loadData}>
+              <RefreshCw size={15} />
+              Refresh
+            </button>
           </div>
 
-          {chartRows.length ? (
-            <div className="salesChart">
-              {chartRows.map((row) => (
-                <div className="salesChartBar" key={row.date}>
-                  <div className="salesChartBarTrack">
-                    <span style={{ height: `${Math.max((row.total / chartMax) * 100, 8)}%` }} />
-                  </div>
-                  <small>{formatDate(row.date).replace(", 2026", "")}</small>
-                  <strong>{money(row.total)}</strong>
-                </div>
-              ))}
+          <div className="salesFilterGrid">
+            <div className="searchBox compactSearch customersSearchBox">
+              <Search size={17} />
+              <input
+                type="search"
+                value={queryText}
+                onChange={(event) => setQueryText(event.target.value)}
+                placeholder="Search sales, buyers, markets, or products"
+              />
             </div>
-          ) : (
-            <div className="emptyState salesEmptyState">
-              <BarChart3 size={28} />
-              <h4>No sales in this view yet.</h4>
-              <p>Add a sale or daily total to start seeing trend data.</p>
-            </div>
-          )}
 
-          <div className="squareComingSoon">
-            <SquareStack size={18} />
-            <div>
-              <strong>Square import placeholder</strong>
-              <span>
-                Future upgrade: pull Square daily totals into this report without manual entry.
-              </span>
-            </div>
+            <label>
+              Timeframe
+              <select
+                value={timeframe}
+                onChange={(event) => setTimeframe(event.target.value)}
+              >
+                {TIMEFRAME_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              Type
+              <select
+                value={saleTypeFilter}
+                onChange={(event) => setSaleTypeFilter(event.target.value)}
+              >
+                <option>All sales</option>
+                {SALE_TYPES.map((type) => (
+                  <option key={type}>{type}</option>
+                ))}
+              </select>
+            </label>
           </div>
-        </div>
-      </section>
 
-      <section className="panelCard salesLogPanel">
-        <div className="panelHeader">
-          <div>
-            <p className="eyebrow">Sales Log</p>
-            <h3>Saved Sales</h3>
-          </div>
-          {isLoading ? <span className="subtleText">Loading...</span> : null}
-        </div>
-
-        {filteredSales.length ? (
-          <div className="salesLogList">
-            {filteredSales.map((sale) => (
-              <article className="salesLogCard" key={sale.id}>
-                <div className="salesLogMain">
-                  <div className="salesLogIcon">
-                    {sale.entryMode === "daily-total" ? (
-                      <CalendarDays size={18} />
-                    ) : sale.source === "order" ? (
-                      <FileCheck2 size={18} />
-                    ) : (
-                      <Receipt size={18} />
-                    )}
-                  </div>
-
-                  <div>
-                    <h4>
-                      {sale.entryMode === "daily-total"
-                        ? sale.marketName || sale.saleType || "Daily Total"
-                        : sale.customerName || sale.marketName || sale.saleType || "Sale"}
-                    </h4>
-                    <p>
-                      {formatDate(sale.saleDate)} · {sale.saleType || "Sale"} ·{" "}
+          <div className="salesList">
+            {filteredSales.length ? (
+              filteredSales.map((sale) => (
+                <div className="salesListItem" key={sale.id}>
+                  <button type="button" onClick={() => editSale(sale)}>
+                    <strong>{saleTitle(sale)}</strong>
+                    <span>
+                      {formatDate(sale.saleDate)} • {sale.saleType || "Sale"} •{" "}
                       {sale.paymentMethod || "Not Recorded"}
-                    </p>
+                    </span>
 
                     {sale.lines?.length ? (
-                      <div className="salesLineSummary">
-                        {sale.lines.slice(0, 3).map((line) => (
-                          <span key={line.id || line.productName}>
-                            {line.quantity} × {line.productName || "Item"}
-                          </span>
-                        ))}
-                        {sale.lines.length > 3 ? <span>+{sale.lines.length - 3} more</span> : null}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div className="salesLogTotals">
-                  <span>Net</span>
-                  <strong>{money(sale.netSales)}</strong>
-                </div>
-
-                <div className="salesLogActions">
-                  <button
-                    type="button"
-                    className="secondaryButton compactPrimary"
-                    onClick={() => startEditSale(sale)}
-                  >
-                    Edit
+                      <small>
+                        {sale.lines
+                          .slice(0, 2)
+                          .map((line) => `${line.quantity} × ${line.productName || "Item"}`)
+                          .join(" • ")}
+                        {sale.lines.length > 2 ? ` • +${sale.lines.length - 2} more` : ""}
+                      </small>
+                    ) : (
+                      <small>{sale.notes || "Daily total entry"}</small>
+                    )}
                   </button>
+
+                  <div className="salesListValue">
+                    <span>Net</span>
+                    <strong>{money(sale.netSales)}</strong>
+                  </div>
+
                   <button
-                    type="button"
                     className="iconButton danger"
-                    onClick={() => handleDeleteSale(sale.id)}
+                    type="button"
+                    onClick={() => handleDeleteSale(sale)}
                     aria-label="Delete sale"
                   >
                     <Trash2 size={16} />
                   </button>
                 </div>
-              </article>
-            ))}
+              ))
+            ) : (
+              <p className="dashboardEmpty">
+                {loading ? "Loading sales..." : "No saved sales match this view."}
+              </p>
+            )}
           </div>
-        ) : (
-          <div className="emptyState salesEmptyState">
-            <PackagePlus size={28} />
-            <h4>No saved sales match this view.</h4>
-            <p>Try changing your filters or add your first sales record.</p>
-          </div>
-        )}
+        </div>
       </section>
-
-      <ModuleGuideModal
-        isOpen={isGuideOpen}
-        onClose={() => setIsGuideOpen(false)}
-        title="Sales Guide"
-      >
-        <SalesGuideContent />
-      </ModuleGuideModal>
     </div>
   );
 }
