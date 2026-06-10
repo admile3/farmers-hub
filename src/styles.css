@@ -17750,3 +17750,31 @@ input[type="number"] {
   background: #5f7f3f !important;
   color: #ffffff !important;
 }
+/* =====================================================
+   DASHBOARD WORKSPACE COLOR FIXES
+===================================================== */
+
+/* Sales workspace card should match the Sales module gold */
+.modernModuleIcon.sales,
+.moduleCard.sales .moduleIcon {
+  background: #d89b2b !important;
+  color: #ffffff !important;
+}
+
+.modernModuleFooter.sales,
+.moduleCard.sales .moduleFooter {
+  color: #b97812 !important;
+}
+
+/* Thermal Printer dashboard icon should match the other filled module icons */
+.modernModuleIcon.thermal,
+.moduleCard.thermal .moduleIcon {
+  background: #2f6f84 !important;
+  color: #ffffff !important;
+}
+
+.modernModuleIcon.thermal svg,
+.moduleCard.thermal .moduleIcon svg {
+  color: #ffffff !important;
+  stroke: currentColor !important;
+}
