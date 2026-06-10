@@ -17042,3 +17042,11 @@ input[type="number"] {
 .thermalPrinterModule .primaryButton:hover {
   background: #315b68 !important;
 }
+/* Thermal Printer action card accents */
+.thermalPrinterModule .toolCard.compactToolCard.clickableToolCard {
+  border-left: 4px solid #3f6f7d !important;
+}
+
+.thermalPrinterModule .toolCard.compactToolCard.clickableToolCard svg {
+  color: #3f6f7d !important;
+}
