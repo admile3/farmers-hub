@@ -17778,3 +17778,32 @@ input[type="number"] {
   color: #ffffff !important;
   stroke: currentColor !important;
 }
+/* Dashboard workspace color fixes */
+
+.dashboardWorkspaceCard.sales .dashboardWorkspaceAccent {
+  background: #d89b2b !important;
+}
+
+.dashboardWorkspaceCard.sales .dashboardWorkspaceIcon {
+  background: #d89b2b !important;
+  color: #ffffff !important;
+}
+
+.dashboardWorkspaceCard.sales .dashboardWorkspaceIcon svg {
+  color: #ffffff !important;
+  stroke: currentColor !important;
+}
+
+.dashboardWorkspaceCard.thermal .dashboardWorkspaceAccent {
+  background: #2f6f84 !important;
+}
+
+.dashboardWorkspaceCard.thermal .dashboardWorkspaceIcon {
+  background: #2f6f84 !important;
+  color: #ffffff !important;
+}
+
+.dashboardWorkspaceCard.thermal .dashboardWorkspaceIcon svg {
+  color: #ffffff !important;
+  stroke: currentColor !important;
+}
