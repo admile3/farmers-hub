@@ -341,8 +341,14 @@ export default function Sales() {
   }
 
   useEffect(() => {
-    loadData();
-  }, [user?.uid]);
+  if (!user?.uid) return;
+
+  const guideHidden = localStorage.getItem("hideModuleGuide_sales") === "true";
+
+  if (!guideHidden) {
+    setShowGuide(true);
+  }
+}, [user?.uid]);
 
   useEffect(() => {
     if (!statusMessage) return;
