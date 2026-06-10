@@ -1,210 +1,98 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Archive,
+  ArrowUp,
   Calculator,
-  CalendarDays,
-  ChefHat,
-  ClipboardList,
-  Eye,
-  EyeOff,
-  FileText,
-  FlaskConical,
-  Flower2,
-  Home,
-  ListChecks,
-  LogIn,
-  LogOut,
-  Menu,
-  PackageCheck,
-  Printer,
-  Settings,
-  Sprout,
-  Users,
-  Wheat,
+  DollarSign,
+  Package,
+  Plus,
+  Save,
+  Search,
+  Tag,
+  Target,
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  CircleHelp,
+  Image,
+  Upload,
   X
 } from "lucide-react";
+
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebase";
+import { useAuth } from "../AuthContext.jsx";
+import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import {
-  Navigate,
-  Route,
-  Routes,
-  useLocation,
-  useNavigate
-} from "react-router-dom";
-import SpiceKitchen from "./modules/SpiceKitchen.jsx";
-import PreservedFoods from "./modules/PreservedFoods.jsx";
-import BakingPlanner from "./modules/BakingPlanner.jsx";
-import MarketPrepPlanner from "./modules/MarketPrepPlanner.jsx";
-import PricingCalculator from "./modules/PricingCalculator.jsx";
-import PermitGrantTracker from "./modules/PermitGrantTracker.jsx";
-import Lists from "./modules/Lists.jsx";
-import Calendar from "./modules/Calendar.jsx";
-import Customers from "./modules/Customers.jsx";
-import Orders from "./modules/Orders.jsx";
-import Inventory from "./modules/Inventory.jsx";
-import PlantingScheduler from "./modules/PlantingScheduler.jsx";
-import ThermalPrinter from "./modules/ThermalPrinter.jsx";
-import AccountSettings from "./modules/AccountSettings.jsx";
-import Onboarding from "./modules/Onboarding.jsx";
-import Dashboard from "./modules/Dashboard.jsx";
-import FlowerStudio from "./modules/FlowerStudio.jsx";
-import { useAuth } from "./AuthContext.jsx";
-import { useUnsavedChanges } from "./UnsavedChangesContext.jsx";
+  deleteProduct,
+  getProducts,
+  saveProduct
+} from "../services/productService.js";
+import {
+  deleteStorageFile,
+  uploadProductImage
+} from "../services/storageService.js";
+import {
+  getSpiceRecipes,
+  updateSpiceRecipe,
+  updateSpiceRecipeProductPackage
+} from "../services/spiceKitchenService.js";
+import {
+  getFlowerArrangements,
+  updateFlowerArrangement
+} from "../services/flowerStudioService.js";
+import StatCard from "../components/StatCard.jsx";
+import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
+import PricingGuideContent from "../components/PricingGuideContent.jsx";
 
-const modules = [
-  {
-    key: "spice",
-    title: "Spice Kitchen",
-    description:
-      "Build seasoning recipes, scale batches, manage ingredients, and calculate production needs.",
-    path: "/spice-kitchen",
-    icon: ChefHat,
-    accent: "spice"
-  },
-  {
-    key: "preserved-foods",
-    title: "Preserved Foods",
-    description:
-      "Build preserved food recipes, calculate brines, log batches, track pH, and add finished jars to inventory.",
-    path: "/preserved-foods",
-    icon: FlaskConical,
-    accent: "preserved"
-  },
-  {
-  key: "flower-studio",
-  title: "Flower Studio",
-  description:
-    "Build flower pantries, import zone-friendly stems, create arrangements, calculate production, and add finished bouquets to inventory.",
-  path: "/flower-studio",
-  icon: Flower2,
-  accent: "flowers"
-},
-  {
-    key: "baking",
-    title: "Baking Planner",
-    description:
-      "Plan production schedules, baking timelines, dough calculations, and batch workflow.",
-    path: "/baking-planner",
-    icon: Wheat,
-    accent: "sourdough"
-  },
-  {
-    key: "market",
-    title: "Market Prep Planner",
-    description:
-      "Estimate harvest, packing, inventory, and product quantities before each market.",
-    path: "/market-prep",
-    icon: ClipboardList,
-    accent: "market"
-  },
-  {
-    key: "planting",
-    title: "Planting Scheduler",
-    description:
-      "Create crop templates, schedule planting batches, and track grow tasks from seed to harvest.",
-    path: "/planting-scheduler",
-    icon: Sprout,
-    accent: "planting"
-  },
-  {
-    key: "customers",
-    title: "Customers",
-    description:
-      "Track market regulars, wholesale buyers, custom order clients, contact notes, interests, and follow-ups.",
-    path: "/customers",
-    icon: Users,
-    accent: "customers"
-  },
-  {
-    key: "orders",
-    title: "Orders",
-    description:
-      "Create customer orders, add line items, track fulfillment, and manage order totals.",
-    path: "/orders",
-    icon: PackageCheck,
-    accent: "orders"
-  },
-  {
-    key: "inventory",
-    title: "Inventory",
-    description:
-      "Track stock counts, storage locations, reorder points, inventory value, and expiring goods.",
-    path: "/inventory",
-    icon: Archive,
-    accent: "inventory"
-  },
-  {
-    key: "thermal-printer",
-    title: "Thermal Printer",
-    description:
-      "Batch upload PNG labels, set quantities, reorder print jobs, and print through universal or direct thermal printer modes.",
-    path: "/thermal-printer",
-    icon: Printer,
-    accent: "inventory"
-  },
-  {
-    key: "pricing",
-    title: "Products & Pricing",
-    description:
-      "Manage your product list, retail prices, wholesale prices, costs, margins, and profitability.",
-    path: "/pricing",
-    icon: Calculator,
-    accent: "pricing"
-  },
-  {
-    key: "permit-grants",
-    title: "Permit & Grant Tracker",
-    description:
-      "Track renewals, permits, grants, deadlines, required documents, and funding opportunities.",
-    path: "/permit-grants",
-    icon: FileText,
-    accent: "grant"
-  },
-  {
-    key: "lists",
-    title: "Lists",
-    description:
-      "Create reusable checklists for market prep, production, shopping, permits, delivery, and ideas.",
-    path: "/lists",
-    icon: ListChecks,
-    accent: "lists"
-  },
-  {
-    key: "calendar",
-    title: "Calendar",
-    description:
-      "View market plans, permit deadlines, grant renewals, production dates, and manual events.",
-    path: "/calendar",
-    icon: CalendarDays,
-    accent: "calendar"
-  }
+const categories = [
+  "Produce",
+  "Red Meat",
+  "Poultry",
+  "Protein",
+  "Plant Starts",
+  "Bread",
+  "Spices",
+  "Condiments",
+  "Eggs",
+  "Dairy",
+  "Baked Goods",
+  "Prepared Foods",
+  "Flowers",
+  "Candles",
+  "Soap / Body Care",
+  "Jewelry",
+  "Crafts",
+  "Other"
 ];
 
-const pricingPlans = [
-  {
-    plan: "basic",
-    eyebrow: "Basic",
-    price: "$5/month",
-    description:
-      "Choose 1 module after your trial. Best for vendors who only need one focused tool.",
-    feature: "1 module"
-  },
-  {
-    plan: "growth",
-    eyebrow: "Growth",
-    price: "$10/month",
-    description:
-      "Choose 3 modules after your trial. Best for vendors managing regular production.",
-    feature: "3 modules"
-  },
-  {
-    plan: "pro",
-    eyebrow: "Pro",
-    price: "$15/month",
-    description:
-      "Unlock every Farmers Hub module after your trial. Best for full business management.",
-    feature: "All modules"
-  }
-];
+const productStatuses = ["Active", "Seasonal", "Draft", "Retired"];
+
+function makeId() {
+  return `product-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function round(value, digits = 2) {
+  const factor = Math.pow(10, digits);
+  return Math.round((Number(value) || 0) * factor) / factor;
+}
+
+function money(value) {
+  return `$${round(value).toFixed(2)}`;
+}
+
+function moneyValue(value) {
+  if (value === "" || value === null || value === undefined) return "";
+  const number = Number(value);
+  return Number.isFinite(number) ? number.toFixed(2) : "";
+}
+
+function percent(value) {
+  return `${round(value, 1).toFixed(1)}%`;
+}
+
+function normalize(value) {
+  return String(value || "").toLowerCase().trim();
+}
 
 function toDate(value) {
   if (!value) return null;
@@ -214,1119 +102,1859 @@ function toDate(value) {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
-function daysUntil(date) {
-  if (!date) return null;
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const target = new Date(date);
-  target.setHours(0, 0, 0, 0);
-
-  return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-}
-
-function formatShortDate(date) {
-  if (!date) return "";
+function formatShortDate(value) {
+  const date = toDate(value);
+  if (!date) return "Not saved yet";
 
   return date.toLocaleDateString("en-US", {
     month: "short",
-    day: "numeric"
+    day: "numeric",
+    year: "numeric"
   });
 }
 
-function formatDueLabel(days) {
-  if (days === null) return "No date";
-  if (days < 0) return "Past due";
-  if (days === 0) return "Due today";
-  if (days === 1) return "Due in 1 day";
-  return `Due in ${days} days`;
+function blankProduct() {
+  return {
+    id: "",
+    name: "",
+    category: "Produce",
+    status: "Active",
+    sku: "",
+    unitLabel: "each",
+    description: "",
+    retailPrice: "",
+    wholesalePrice: "",
+    targetRetailMargin: 70,
+    targetWholesaleMargin: 50,
+    batchIngredientCost: "",
+    batchUnits: "",
+    packagingCostPerUnit: "",
+    laborHours: "",
+    laborRate: "",
+    overheadCost: "",
+    notes: "",
+    imageUrl: "",
+    imagePath: "",
+    selectedVariantId: "",
+    selectedVariantName: ""
+  };
 }
 
-function formatActivityTime(date) {
-  if (!date) return "";
-
-  const diffMs = Date.now() - date.getTime();
-  const diffMinutes = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMinutes / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMinutes < 1) return "Just now";
-  if (diffMinutes < 60) return `${diffMinutes}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) return `${diffDays}d ago`;
-
-  return formatShortDate(date);
+function sampleProduct() {
+  return {
+    ...blankProduct(),
+    name: "Sample Product",
+    category: "Prepared Foods",
+    status: "Active",
+    sku: "SAMPLE-001",
+    unitLabel: "each",
+    description: "Example product. Edit or delete anytime.",
+    retailPrice: 8,
+    wholesalePrice: 5,
+    targetRetailMargin: 70,
+    targetWholesaleMargin: 50,
+    batchIngredientCost: 32,
+    batchUnits: 24,
+    packagingCostPerUnit: 0.35,
+    laborHours: 1.5,
+    laborRate: 18,
+    overheadCost: 6,
+    notes: "Replace this sample with one of your real products.",
+    imageUrl: "",
+    imagePath: ""
+  };
 }
 
-function friendlyAuthError(error) {
-  const code = error?.code || "";
-
-  if (code.includes("email-already-in-use")) {
-    return "That email already has an account. Try signing in instead.";
-  }
-
-  if (code.includes("invalid-email")) {
-    return "Please enter a valid email address.";
-  }
-
-  if (code.includes("weak-password")) {
-    return "Please use a stronger password, at least 6 characters.";
-  }
-
-  if (code.includes("wrong-password") || code.includes("invalid-credential")) {
-    return "The email or password was not correct.";
-  }
-
-  if (code.includes("user-not-found")) {
-    return "No account was found with that email. Try creating an account.";
-  }
-
-  return "Something went wrong. Please try again.";
+function formatPackageSize(size, unit) {
+  const amount = Number(size) || 0;
+  if (!amount) return "";
+  return `${Number(amount.toFixed(3)).toString()} ${unit || ""}`.trim();
 }
 
-async function startStripeCheckout({
-  plan,
-  user,
-  selectedModules,
-  setCheckoutLoading
-}) {
-  try {
-    setCheckoutLoading(plan);
+function numberOrFallback(...values) {
+  for (const value of values) {
+    if (value === "" || value === null || value === undefined) continue;
+    const number = Number(value);
+    if (Number.isFinite(number)) return number;
+  }
 
-    const response = await fetch("/api/create-checkout-session", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        plan,
-        uid: user?.uid || null,
-        email: user?.email || null,
-        selectedModules: selectedModules || []
-      })
+  return "";
+}
+
+function getTargetRetailMargin(product) {
+  return numberOrFallback(product?.targetRetailMargin, product?.targetMargin, 70);
+}
+
+function getTargetWholesaleMargin(product) {
+  return numberOrFallback(product?.targetWholesaleMargin, 50);
+}
+
+function buildSpiceDirectoryProducts(spiceRecipes = []) {
+  const products = [];
+
+  spiceRecipes
+    .filter((recipe) => recipe?.listInProductDirectory)
+    .forEach((recipe) => {
+      const packageRows = Array.isArray(recipe.productPackages)
+        ? recipe.productPackages
+        : [];
+      const costPerOunce = Number(recipe.formulaCostPerOunce) || 0;
+      const listSizesAsUniqueProducts = Boolean(recipe.listSizesAsUniqueProducts);
+
+      if (listSizesAsUniqueProducts) {
+        packageRows.forEach((packageItem, index) => {
+          const packageName =
+            packageItem.name ||
+            formatPackageSize(packageItem.size, packageItem.unit) ||
+            `Size ${index + 1}`;
+          const ingredientCost =
+            Number(packageItem.ingredientCost) ||
+            (Number(packageItem.packageOunces) || 0) * costPerOunce;
+
+          products.push({
+            id: `spice-${recipe.id}-${index}`,
+            sourceType: "spice",
+            sourceLabel: "Spice Kitchen",
+            sourceRecipeId: recipe.id,
+            sourceVariantIndex: index,
+            isGeneratedProduct: true,
+            isVariantProduct: true,
+            parentName: recipe.name,
+            name: `${recipe.name} - ${packageName}`,
+            category: "Spices",
+            status: "Active",
+            sku: packageItem.sku || "",
+            unitLabel: packageName,
+            description: recipe.notes || "",
+            retailPrice: moneyValue(packageItem.retailPrice),
+            wholesalePrice: moneyValue(packageItem.wholesalePrice),
+            targetRetailMargin: numberOrFallback(packageItem.targetRetailMargin, 70),
+            targetWholesaleMargin: numberOrFallback(packageItem.targetWholesaleMargin, 50),
+            batchIngredientCost: moneyValue(ingredientCost),
+            batchUnits: numberOrFallback(packageItem.batchUnits, 1),
+            packagingCostPerUnit: moneyValue(packageItem.packagingCostPerUnit),
+            laborHours: packageItem.laborHours || "",
+            laborRate: moneyValue(packageItem.laborRate),
+            overheadCost: moneyValue(packageItem.overheadCost),
+            notes: "Generated from Spice Kitchen.",
+            imageUrl: recipe.imageUrl || "",
+            imagePath: recipe.imagePath || "",
+            generatedVariants: [],
+            updatedAt: recipe.updatedAt || recipe.createdAt || ""
+          });
+        });
+
+        return;
+      }
+
+      const variants = packageRows.map((packageItem, index) => {
+        const packageName =
+          packageItem.name ||
+          formatPackageSize(packageItem.size, packageItem.unit) ||
+          `Size ${index + 1}`;
+        const ingredientCost =
+          Number(packageItem.ingredientCost) ||
+          (Number(packageItem.packageOunces) || 0) * costPerOunce;
+
+        return {
+          id: `spice-${recipe.id}-variant-${index}`,
+          packageIndex: index,
+          name: packageName,
+          size: packageItem.size,
+          unit: packageItem.unit,
+          packageOunces: packageItem.packageOunces,
+          ingredientCost: moneyValue(ingredientCost),
+          costPerUnit: moneyValue(ingredientCost),
+          sku: packageItem.sku || "",
+          retailPrice: moneyValue(packageItem.retailPrice),
+          wholesalePrice: moneyValue(packageItem.wholesalePrice),
+          targetRetailMargin: numberOrFallback(packageItem.targetRetailMargin, 70),
+          targetWholesaleMargin: numberOrFallback(packageItem.targetWholesaleMargin, 50),
+          packagingCostPerUnit: moneyValue(packageItem.packagingCostPerUnit),
+          batchUnits: numberOrFallback(packageItem.batchUnits, 1),
+          laborHours: packageItem.laborHours || "",
+          laborRate: moneyValue(packageItem.laborRate),
+          overheadCost: moneyValue(packageItem.overheadCost)
+        };
+      });
+
+      const firstVariant = variants[0] || null;
+
+      products.push({
+        id: `spice-${recipe.id}`,
+        sourceType: "spice",
+        sourceLabel: "Spice Kitchen",
+        sourceRecipeId: recipe.id,
+        isGeneratedProduct: true,
+        name: recipe.name || "Untitled Spice Blend",
+        category: "Spices",
+        status: "Active",
+        sku: firstVariant?.sku || "",
+        unitLabel: firstVariant?.name || "package",
+        description: recipe.notes || "",
+        retailPrice: firstVariant?.retailPrice || "",
+        wholesalePrice: firstVariant?.wholesalePrice || "",
+        targetRetailMargin: firstVariant?.targetRetailMargin || 70,
+        targetWholesaleMargin: firstVariant?.targetWholesaleMargin || 50,
+        batchIngredientCost: firstVariant?.ingredientCost || moneyValue(costPerOunce),
+        batchUnits: firstVariant?.batchUnits || 1,
+        packagingCostPerUnit: firstVariant?.packagingCostPerUnit || "",
+        laborHours: firstVariant?.laborHours || "",
+        laborRate: firstVariant?.laborRate || "",
+        overheadCost: firstVariant?.overheadCost || "",
+        notes: "Generated from Spice Kitchen. Package sizes are shown as variants.",
+        imageUrl: recipe.imageUrl || "",
+        imagePath: recipe.imagePath || "",
+        formulaCostPerOunce: costPerOunce,
+        generatedVariants: variants,
+        listSizesAsUniqueProducts,
+        selectedVariantId: firstVariant?.id || "",
+        selectedVariantName: firstVariant?.name || "",
+        updatedAt: recipe.updatedAt || recipe.createdAt || ""
+      });
     });
 
-    const data = await response.json();
-
-    if (!response.ok || !data.url) {
-      console.error("Stripe checkout response:", data);
-      alert(data.error || "Could not start checkout. Please try again.");
-      return;
-    }
-
-    window.location.href = data.url;
-  } catch (error) {
-    console.error("Stripe checkout error:", error);
-    alert("Could not start checkout session. Please try again.");
-  } finally {
-    setCheckoutLoading("");
-  }
+  return products;
 }
 
-function GuardedLink({ to, children, onClick, ...props }) {
-  const navigate = useNavigate();
-  const { isDirty, requestNavigation } = useUnsavedChanges();
+function buildBakingDirectoryProducts(bakingRecipes = []) {
+  return bakingRecipes
+    .filter((recipe) => recipe?.listInProductDirectory)
+    .map((recipe) => {
+      const directory = recipe.productDirectory || {};
+      const productName = directory.productName || recipe.name || "Untitled Baking Product";
+      const unitsPerBatch = Number(directory.unitsPerBatch) || Number(recipe.ovenCapacityUnits) || 1;
+      const laborHours = Number(directory.laborHoursPerBatch) || "";
+      const batchIngredientCost =
+        recipe.pricingSummary?.totalCost ||
+        recipe.productDirectory?.batchIngredientCost ||
+        "";
 
-  function handleClick(event) {
-    if (onClick) onClick(event);
-    if (event.defaultPrevented) return;
+      return {
+        id: `baking-${recipe.id}`,
+        sourceType: "baking",
+        sourceLabel: "Baking Planner",
+        sourceRecipeId: recipe.id,
+        isGeneratedProduct: true,
+        name: productName,
+        category:
+          recipe.category === "Loaf" ||
+          recipe.category === "Baguette" ||
+          recipe.category === "Pan Loaf"
+            ? "Bread"
+            : "Baked Goods",
+        status: "Active",
+        sku: "",
+        unitLabel: directory.sellingUnit || recipe.unitsLabel || "unit",
+        description: directory.notes || "",
+        retailPrice: "",
+        wholesalePrice: "",
+        targetRetailMargin: 70,
+        targetWholesaleMargin: 50,
+        batchIngredientCost: moneyValue(batchIngredientCost),
+        batchUnits: unitsPerBatch,
+        packagingCostPerUnit: "",
+        laborHours,
+        laborRate: "",
+        overheadCost: "",
+        notes: "Generated from Baking Planner.",
+        imageUrl: directory.imageUrl || recipe.imageUrl || "",
+        imagePath: directory.imagePath || recipe.imagePath || "",
+        generatedVariants: [],
+        updatedAt: recipe.updatedAt || ""
+      };
+    });
+}
 
-    if (
-      event.metaKey ||
-      event.ctrlKey ||
-      event.shiftKey ||
-      event.altKey ||
-      event.button !== 0
-    ) {
-      return;
-    }
 
-    event.preventDefault();
+function buildFlowerDirectoryProducts(arrangements = []) {
+  return arrangements
+    .filter((arrangement) => arrangement?.listInProductDirectory !== false)
+    .map((arrangement) => {
+      const estimatedCost = Number(arrangement.estimatedCost) || 0;
+      const packagingCost = Number(arrangement.packagingCost) || 0;
+      const containerCost = Number(arrangement.containerCost) || 0;
+      const materialCost = estimatedCost || packagingCost + containerCost;
 
-    if (isDirty) {
-      requestNavigation(to);
-      return;
-    }
+      return {
+        id: `flower-${arrangement.id}`,
+        sourceType: "flower",
+        sourceLabel: "Flower Studio",
+        sourceArrangementId: arrangement.id,
+        isGeneratedProduct: true,
+        name: arrangement.name || "Untitled Arrangement",
+        category: "Flowers",
+        status: "Active",
+        sku: "",
+        unitLabel: arrangement.containerName || arrangement.category || "arrangement",
+        description: arrangement.description || "",
+        retailPrice: moneyValue(arrangement.retailPrice),
+        wholesalePrice: moneyValue(arrangement.wholesalePrice),
+        targetRetailMargin: 70,
+        targetWholesaleMargin: 50,
+        batchIngredientCost: moneyValue(materialCost),
+        batchUnits: 1,
+        packagingCostPerUnit: "",
+        laborHours: "",
+        laborRate: "",
+        overheadCost: "",
+        notes: arrangement.description || "Generated from Flower Studio.",
+        imageUrl: arrangement.imageUrl || "",
+        imagePath: arrangement.imagePath || "",
+        generatedVariants: [],
+        updatedAt: arrangement.updatedAt || arrangement.createdAt || ""
+      };
+    });
+}
 
-    navigate(to);
+function productSourceLabel(product) {
+  if (product?.sourceLabel) return product.sourceLabel;
+  if (product?.sourceType === "manual") return "Manual";
+  return "Manual";
+}
+
+function applyVariantToProduct(product, variantId) {
+  const variants = Array.isArray(product?.generatedVariants)
+    ? product.generatedVariants
+    : [];
+
+  if (!variants.length) {
+    return {
+      ...blankProduct(),
+      ...product,
+      batchIngredientCost: moneyValue(product?.batchIngredientCost),
+      packagingCostPerUnit: moneyValue(product?.packagingCostPerUnit),
+      laborRate: moneyValue(product?.laborRate),
+      overheadCost: moneyValue(product?.overheadCost),
+      retailPrice: moneyValue(product?.retailPrice),
+      wholesalePrice: moneyValue(product?.wholesalePrice),
+      targetRetailMargin: getTargetRetailMargin(product),
+      targetWholesaleMargin: getTargetWholesaleMargin(product),
+      selectedVariantId: product?.selectedVariantId || "",
+      selectedVariantName: product?.selectedVariantName || ""
+    };
   }
 
+  const variant =
+    variants.find((item) => item.id === variantId) ||
+    variants.find((item) => item.id === product?.selectedVariantId) ||
+    variants[0];
+
+  return {
+    ...blankProduct(),
+    ...product,
+    sku: variant.sku || product.sku || "",
+    unitLabel: variant.name || product.unitLabel || "package",
+    retailPrice: moneyValue(variant.retailPrice || product.retailPrice),
+    wholesalePrice: moneyValue(variant.wholesalePrice || product.wholesalePrice),
+    packagingCostPerUnit: moneyValue(
+      variant.packagingCostPerUnit || product.packagingCostPerUnit
+    ),
+    batchIngredientCost: moneyValue(
+      variant.ingredientCost || variant.costPerUnit || product.batchIngredientCost
+    ),
+    batchUnits: variant.batchUnits || product.batchUnits || 1,
+    laborHours: variant.laborHours || product.laborHours || "",
+    laborRate: moneyValue(variant.laborRate || product.laborRate),
+    overheadCost: moneyValue(variant.overheadCost || product.overheadCost),
+    targetRetailMargin: numberOrFallback(
+      variant.targetRetailMargin,
+      product.targetRetailMargin,
+      product.targetMargin,
+      70
+    ),
+    targetWholesaleMargin: numberOrFallback(
+      variant.targetWholesaleMargin,
+      product.targetWholesaleMargin,
+      50
+    ),
+    selectedVariantId: variant.id,
+    selectedVariantName: variant.name
+  };
+}
+
+function calculateProduct(product) {
+  const batchIngredientCost = Number(product.batchIngredientCost) || 0;
+  const batchUnits = Number(product.batchUnits) || 0;
+  const packagingCostPerUnit = Number(product.packagingCostPerUnit) || 0;
+  const laborHours = Number(product.laborHours) || 0;
+  const laborRate = Number(product.laborRate) || 0;
+  const overheadCost = Number(product.overheadCost) || 0;
+  const retailPrice = Number(product.retailPrice) || 0;
+  const wholesalePrice = Number(product.wholesalePrice) || 0;
+  const targetRetailMargin = Number(getTargetRetailMargin(product)) || 0;
+  const targetWholesaleMargin = Number(getTargetWholesaleMargin(product)) || 0;
+
+  const laborCost = laborHours * laborRate;
+  const packagingTotal = packagingCostPerUnit * batchUnits;
+  const totalBatchCost =
+    batchIngredientCost + packagingTotal + laborCost + overheadCost;
+  const costPerUnit = batchUnits > 0 ? totalBatchCost / batchUnits : 0;
+
+  const retailProfitPerUnit = retailPrice - costPerUnit;
+  const wholesaleProfitPerUnit = wholesalePrice - costPerUnit;
+
+  const retailMargin =
+    retailPrice > 0 ? (retailProfitPerUnit / retailPrice) * 100 : 0;
+  const wholesaleMargin =
+    wholesalePrice > 0 ? (wholesaleProfitPerUnit / wholesalePrice) * 100 : 0;
+
+  const suggestedRetailPrice =
+    targetRetailMargin > 0 && targetRetailMargin < 100
+      ? costPerUnit / (1 - targetRetailMargin / 100)
+      : costPerUnit;
+
+  const suggestedWholesalePrice =
+    targetWholesaleMargin > 0 && targetWholesaleMargin < 100
+      ? costPerUnit / (1 - targetWholesaleMargin / 100)
+      : costPerUnit;
+
+  return {
+    laborCost,
+    packagingTotal,
+    totalBatchCost,
+    costPerUnit,
+    retailProfitPerUnit,
+    wholesaleProfitPerUnit,
+    retailMargin,
+    wholesaleMargin,
+    suggestedRetailPrice,
+    suggestedWholesalePrice
+  };
+}
+
+function MoneyInput({ label, value, onChange, placeholder = "0.00" }) {
   return (
-    <a href={to} onClick={handleClick} {...props}>
-      {children}
-    </a>
+    <label>
+      {label}
+      <div className="moneyInputWrap">
+        <span className="moneyPrefix" aria-hidden="true">$</span>
+        <input
+          type="number"
+          step="0.01"
+          value={value}
+          onWheel={(event) => event.currentTarget.blur()}
+          onChange={(event) => onChange(event.target.value)}
+          onBlur={(event) => onChange(moneyValue(event.target.value))}
+          placeholder={placeholder}
+        />
+      </div>
+    </label>
   );
 }
 
-function UnsavedChangesPrompt() {
-  const navigate = useNavigate();
+function NumberInput({ label, value, onChange, placeholder = "0", step = "1" }) {
+  return (
+    <label>
+      {label}
+      <input
+        type="number"
+        step={step}
+        value={value}
+        onWheel={(event) => event.currentTarget.blur()}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+      />
+    </label>
+  );
+}
+
+export default function PricingCalculator() {
+  const { user, loginWithGoogle } = useAuth();
   const {
-    isDirty,
-    source,
-    pendingNavigation,
-    cancelNavigation,
-    leaveWithoutSaving,
-    saveAndContinue
+    isDirty: hasUnsavedChanges,
+    markUnsaved,
+    markSaved
   } = useUnsavedChanges();
 
-  if (!isDirty || !pendingNavigation) return null;
+  const directoryRef = useRef(null);
+  const detailsRef = useRef(null);
+  const pricingRef = useRef(null);
+  const imageInputRef = useRef(null);
 
-  async function handleSaveAndContinue() {
-    const nextPath = await saveAndContinue();
-    if (nextPath) navigate(nextPath);
-  }
+  const [products, setProducts] = useState([]);
+  const [spiceRecipes, setSpiceRecipes] = useState([]);
+  const [spiceProducts, setSpiceProducts] = useState([]);
+  const [flowerArrangements, setFlowerArrangements] = useState([]);
+  const [flowerProducts, setFlowerProducts] = useState([]);
+  const [bakingProducts, setBakingProducts] = useState([]);
+  const [expandedProductIds, setExpandedProductIds] = useState({});
+  const [directoryVariantSelections, setDirectoryVariantSelections] = useState({});
+  const [selectedProductId, setSelectedProductId] = useState("");
+  const [selectedVariantId, setSelectedVariantId] = useState("");
+  const [form, setForm] = useState(blankProduct());
+  const [queryText, setQueryText] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("All categories");
+  const [statusFilter, setStatusFilter] = useState("All statuses");
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
+  const [zoomedProductImage, setZoomedProductImage] = useState(null);
 
-  function handleLeaveWithoutSaving() {
-    const nextPath = leaveWithoutSaving();
-    if (nextPath) navigate(nextPath);
-  }
+  const allDirectoryProducts = useMemo(() => {
+    const manualProducts = products.map((product) => ({
+      ...product,
+      sourceType: product.sourceType || "manual",
+      sourceLabel: product.sourceLabel || "Manual",
+      generatedVariants: product.generatedVariants || [],
+      targetRetailMargin: getTargetRetailMargin(product),
+      targetWholesaleMargin: getTargetWholesaleMargin(product)
+    }));
 
-  return (
-    <div className="unsavedPromptOverlay" role="dialog" aria-modal="true">
-      <div className="unsavedPrompt">
-        <p className="eyebrow">Unsaved changes</p>
-        <h2>Leave without saving?</h2>
-        <p>
-          You have unsaved changes in {source || "this module"}. Save before
-          leaving, discard your changes, or stay on this page.
-        </p>
+    return [...manualProducts, ...spiceProducts, ...flowerProducts, ...bakingProducts];
+  }, [products, spiceProducts, flowerProducts, bakingProducts]);
 
-        <div className="unsavedPromptActions">
-          <button className="secondaryButton" type="button" onClick={cancelNavigation}>
-            Stay Here
-          </button>
-          <button
-            className="secondaryButton dangerButton"
-            type="button"
-            onClick={handleLeaveWithoutSaving}
-          >
-            Leave Without Saving
-          </button>
-          <button className="primaryButton" type="button" onClick={handleSaveAndContinue}>
-            Save Changes
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+  const selectedProduct = useMemo(() => {
+    return allDirectoryProducts.find((product) => product.id === selectedProductId) || null;
+  }, [allDirectoryProducts, selectedProductId]);
 
-function ScrollToTop() {
-  const location = useLocation();
+  const selectedProductVariants = useMemo(() => {
+    return Array.isArray(selectedProduct?.generatedVariants)
+      ? selectedProduct.generatedVariants
+      : [];
+  }, [selectedProduct]);
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [location.pathname]);
+  const calculation = useMemo(() => calculateProduct(form), [form]);
 
-  return null;
-}
+  const filteredProducts = useMemo(() => {
+    const search = normalize(queryText);
 
-function getCurrentModuleTitle(pathname) {
-  if (pathname === "/") return "Dashboard";
-  if (pathname === "/subscribe") return "Plans";
-  if (pathname === "/account-settings") return "Account";
-  if (pathname === "/onboarding") return "Setup";
+    return allDirectoryProducts.filter((product) => {
+      const variantNames = Array.isArray(product.generatedVariants)
+        ? product.generatedVariants.map((variant) => variant.name).join(" ")
+        : "";
 
-  return modules.find((module) => module.path === pathname)?.title || "Farmers Hub";
-}
+      const matchesSearch = search
+        ? [
+            product.name,
+            product.category,
+            product.sku,
+            product.description,
+            product.notes,
+            product.unitLabel,
+            variantNames
+          ]
+            .map(normalize)
+            .some((value) => value.includes(search))
+        : true;
 
-function TrialSignupBox() {
-  const { loginWithGoogle, createAccountWithEmail, loginWithEmail } = useAuth();
+      const matchesCategory =
+        categoryFilter === "All categories" || product.category === categoryFilter;
 
-  const [authMode, setAuthMode] = useState("create");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [authActionLoading, setAuthActionLoading] = useState("");
-  const [authError, setAuthError] = useState("");
+      const matchesStatus =
+        statusFilter === "All statuses" || product.status === statusFilter;
 
-  async function handleGoogle() {
-    try {
-      setAuthError("");
-      setAuthActionLoading("google");
-      await loginWithGoogle();
-    } catch (error) {
-      console.error("Google sign-in error:", error);
-      setAuthError(friendlyAuthError(error));
-    } finally {
-      setAuthActionLoading("");
-    }
-  }
+      return matchesSearch && matchesCategory && matchesStatus;
+    });
+  }, [allDirectoryProducts, queryText, categoryFilter, statusFilter]);
 
-  async function handleEmailAuth(event) {
-    event.preventDefault();
+  const stats = useMemo(() => {
+    const activeProducts = allDirectoryProducts.filter((product) => product.status === "Active");
+    const productsWithPricing = allDirectoryProducts.filter((product) => {
+      const variantId =
+        directoryVariantSelections[product.id] ||
+        product.selectedVariantId ||
+        product.generatedVariants?.[0]?.id ||
+        "";
+      const productForCalc = applyVariantToProduct(product, variantId);
+      const calc = calculateProduct(productForCalc);
+      return calc.costPerUnit > 0 && Number(productForCalc.retailPrice) > 0;
+    });
 
-    try {
-      setAuthError("");
-      setAuthActionLoading("email");
+    const averageRetailMargin = productsWithPricing.length
+      ? productsWithPricing.reduce((sum, product) => {
+          const variantId =
+            directoryVariantSelections[product.id] ||
+            product.selectedVariantId ||
+            product.generatedVariants?.[0]?.id ||
+            "";
+          const productForCalc = applyVariantToProduct(product, variantId);
+          return sum + calculateProduct(productForCalc).retailMargin;
+        }, 0) / productsWithPricing.length
+      : 0;
 
-      if (authMode === "create") {
-        await createAccountWithEmail(email, password);
-      } else {
-        await loginWithEmail(email, password);
-      }
-    } catch (error) {
-      console.error("Email auth error:", error);
-      setAuthError(friendlyAuthError(error));
-    } finally {
-      setAuthActionLoading("");
-    }
-  }
+    return {
+      activeCount: activeProducts.length,
+      averageRetailMargin,
+      productsWithPricing: productsWithPricing.length
+    };
+  }, [allDirectoryProducts, directoryVariantSelections]);
 
-  return (
-    <div className="workspacePanel compactPanel trialSignupBox">
-      <p className="eyebrow">Start your trial</p>
-      <h3>Create your account</h3>
-      <p className="importExportText">
-        Start with 15 days of full access. No subscription is required today.
-      </p>
-
-      <button
-        className="primaryButton fullButton"
-        type="button"
-        onClick={handleGoogle}
-        disabled={authActionLoading === "google"}
-      >
-        <LogIn size={16} />
-        {authActionLoading === "google" ? "Opening Google..." : "Continue with Google"}
-      </button>
-
-      <form className="trialEmailForm" onSubmit={handleEmailAuth}>
-        <label>
-          Email
-          <input
-            type="email"
-            value={email}
-            autoComplete="email"
-            onChange={(event) => setEmail(event.target.value)}
-            required
-          />
-        </label>
-
-        <label>
-          Password
-          <div className="passwordInputWrap">
-            <input
-              type={showPassword ? "text" : "password"}
-              value={password}
-              autoComplete={authMode === "create" ? "new-password" : "current-password"}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              minLength={6}
-            />
-
-            <button
-              className="passwordVisibilityButton"
-              type="button"
-              onClick={() => setShowPassword((current) => !current)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              <span>{showPassword ? "Hide" : "Show"}</span>
-            </button>
-          </div>
-        </label>
-
-        {authError ? <p className="authErrorText">{authError}</p> : null}
-
-        <button
-          className="secondaryButton fullButton"
-          type="submit"
-          disabled={authActionLoading === "email"}
-        >
-          {authActionLoading === "email"
-            ? "Working..."
-            : authMode === "create"
-              ? "Create account and start trial"
-              : "Sign in with email"}
-        </button>
-      </form>
-
-      <button
-        className="textButton authSwitchButton"
-        type="button"
-        onClick={() => {
-          setAuthError("");
-          setAuthMode(authMode === "create" ? "signin" : "create");
-        }}
-      >
-        {authMode === "create"
-          ? "Already have an account? Sign in"
-          : "Need an account? Create one"}
-      </button>
-    </div>
-  );
-}
-
-function ModuleSelector({ selectedModules, setSelectedModules, limit }) {
-  const selectedCount = selectedModules.length;
-  const remainingCount = Math.max(limit - selectedCount, 0);
-  const isComplete = selectedCount === limit;
-
-  function toggleModule(moduleKey) {
-    const alreadySelected = selectedModules.includes(moduleKey);
-
-    if (alreadySelected) {
-      setSelectedModules(selectedModules.filter((key) => key !== moduleKey));
-      return;
-    }
-
-    if (selectedModules.length >= limit) return;
-
-    setSelectedModules([...selectedModules, moduleKey]);
-  }
-
-  return (
-    <div className="modulePickerBlock">
-      <div className={`modulePickerProgress ${isComplete ? "complete" : ""}`}>
-        <span>{selectedCount} of {limit} selected</span>
-        <strong>
-          {isComplete
-            ? "Ready to choose plan"
-            : `${remainingCount} more ${remainingCount === 1 ? "module" : "modules"} needed`}
-        </strong>
-      </div>
-
-      <div className="planModulePicker">
-        {modules.map((module) => {
-          const Icon = module.icon;
-          const isSelected = selectedModules.includes(module.key);
-          const isDisabled = !isSelected && selectedModules.length >= limit;
-
-          return (
-            <button
-              key={module.key}
-              type="button"
-              className={`planModuleButton ${module.accent} ${
-                isSelected ? "selected" : ""
-              } ${isDisabled ? "disabled" : ""}`}
-              onClick={() => toggleModule(module.key)}
-              disabled={isDisabled}
-              aria-pressed={isSelected}
-              title={
-                isSelected
-                  ? `${module.title} selected`
-                  : isDisabled
-                    ? `Deselect another module before choosing ${module.title}`
-                    : `Select ${module.title}`
-              }
-            >
-              <Icon size={16} />
-              <span>{module.title}</span>
-              {isSelected ? <strong className="moduleSelectedCheck">Selected</strong> : null}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function PricingCards({
-  mode = "trial",
-  checkoutLoading,
-  setCheckoutLoading
-}) {
-  const { user, loginWithGoogle } = useAuth();
-  const [basicModules, setBasicModules] = useState([]);
-  const [growthModules, setGrowthModules] = useState([]);
-
-  async function handlePlanClick(plan) {
-    if (mode === "trial") {
-      await loginWithGoogle();
-      return;
-    }
-
-    if (!user) {
-      await loginWithGoogle();
-      return;
-    }
-
-    let selectedModules = [];
-
-    if (plan === "basic") {
-      selectedModules = basicModules;
-
-      if (selectedModules.length !== 1) {
-        alert("Please choose 1 module for the Basic plan.");
-        return;
-      }
-    }
-
-    if (plan === "growth") {
-      selectedModules = growthModules;
-
-      if (selectedModules.length !== 3) {
-        alert("Please choose 3 modules for the Growth plan.");
-        return;
-      }
-    }
-
-    if (plan === "pro") {
-      selectedModules = modules.map((module) => module.key);
-    }
-
-    await startStripeCheckout({
-      plan,
-      user,
-      selectedModules,
-      setCheckoutLoading
+  function markProductsDirty() {
+    markUnsaved({
+      source: "Products & Pricing",
+      onSave: saveCurrentProduct
     });
   }
 
-  return (
-    <section className="pricingPlanGrid subscriptionPricingGrid">
-      {pricingPlans.map((plan) => {
-        const isBasic = plan.plan === "basic";
-        const isGrowth = plan.plan === "growth";
-        const isPro = plan.plan === "pro";
-
-        return (
-          <div
-            className={`workspacePanel compactPanel subscriptionPlanCard subscriptionPlanCard-${plan.plan}`}
-            key={plan.plan}
-          >
-            <div className="subscriptionPlanIntro">
-              <p className="eyebrow">{plan.eyebrow}</p>
-              <h3>{plan.price}</h3>
-              <p className="importExportText">{plan.description}</p>
-              <p className="importExportText subscriptionPlanFeature">
-                <strong>{plan.feature}</strong>
-              </p>
-            </div>
-
-            {mode === "checkout" && isBasic ? (
-              <>
-                <p className="modulePickerHint">Select 1 module:</p>
-                <ModuleSelector
-                  selectedModules={basicModules}
-                  setSelectedModules={setBasicModules}
-                  limit={1}
-                />
-              </>
-            ) : null}
-
-            {mode === "checkout" && isGrowth ? (
-              <>
-                <p className="modulePickerHint">Select 3 modules:</p>
-                <ModuleSelector
-                  selectedModules={growthModules}
-                  setSelectedModules={setGrowthModules}
-                  limit={3}
-                />
-              </>
-            ) : null}
-
-            {mode === "checkout" && isPro ? (
-              <>
-                <p className="modulePickerHint">Included modules:</p>
-
-                <div className="modulePickerBlock proModulePickerBlock">
-                  <div className="modulePickerProgress complete">
-                    <span>{modules.length} of {modules.length} included</span>
-                    <strong>All modules included</strong>
-                  </div>
-
-                  <div className="planModulePicker proIncludedModules">
-                    {modules.map((module) => {
-                      const Icon = module.icon;
-
-                      return (
-                        <div
-                          key={module.key}
-                          className={`planModuleButton ${module.accent} selected proIncludedModule`}
-                        >
-                          <Icon size={16} />
-                          <span>{module.title}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </>
-            ) : null}
-
-            {mode === "checkout" ? (
-              <button
-                className="primaryButton compactPrimary subscriptionChooseButton"
-                type="button"
-                onClick={() => handlePlanClick(plan.plan)}
-                disabled={checkoutLoading === plan.plan}
-              >
-                {checkoutLoading === plan.plan ? "Opening Checkout..." : "Choose Plan"}
-              </button>
-            ) : null}
-          </div>
-        );
-      })}
-    </section>
-  );
-}
-
-function WelcomePricingModal({ onClose }) {
-  const [checkoutLoading, setCheckoutLoading] = useState("");
-
-  return (
-    <div className="pricingModalOverlay">
-      <div className="pricingModal pricingModalCompact">
-        <button className="modalCloseButton" type="button" onClick={onClose}>
-          <X size={18} />
-        </button>
-
-        <div className="pricingModalScroll">
-          <div className="pricingModalHeader compactSignupHeader">
-            <p className="eyebrow">Welcome to Farmers Hub</p>
-            <h2>Start with full access for 15 days.</h2>
-            <p>
-              Create your account to try every Farmers Hub module free for 15 days.
-              No subscription is required to start. After the trial, choose the plan
-              that fits how many tools you want to keep using.
-            </p>
-          </div>
-
-          <div className="pricingFeatureGrid compactFeatureGrid">
-            <div>
-              <strong>Plan your market day</strong>
-              <span>Prep lists, packing quantities, harvest needs, and reusable checklists.</span>
-            </div>
-
-            <div>
-              <strong>Price with confidence</strong>
-              <span>Manage products, costs, margins, retail prices, wholesale prices, and profitability.</span>
-            </div>
-
-            <div>
-              <strong>Manage recipes and products</strong>
-              <span>Build seasoning recipes, scale batches, and organize production notes.</span>
-            </div>
-
-            <div>
-              <strong>Track business details</strong>
-              <span>Keep permits, grants, deadlines, documents, lists, and backups organized.</span>
-            </div>
-          </div>
-
-          <PricingCards
-            mode="trial"
-            checkoutLoading={checkoutLoading}
-            setCheckoutLoading={setCheckoutLoading}
-          />
-
-          <TrialSignupBox />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function AccountStatusCard({ compact = false }) {
-  const {
-    user,
-    accountProfile,
-    loginWithGoogle,
-    logout,
-    authLoading,
-    accountLoading,
-    accessStatus,
-    isAdmin,
-    isTrial,
-    isExpired,
-    daysRemaining
-  } = useAuth();
-
-  if (authLoading || accountLoading) {
-    if (compact) {
-      return (
-        <div className="mobileAccountPill loading">
-          Checking...
-        </div>
-      );
+  useEffect(() => {
+    function handleScroll() {
+      setShowBackToTop(window.scrollY > 50);
     }
 
-    return (
-      <div className="authCard">
-        <p>Checking sign-in...</p>
-      </div>
-    );
-  }
+    window.addEventListener("scroll", handleScroll);
+    handleScroll();
 
-  if (!user) {
-    if (compact) {
-      return (
-        <button className="mobileAccountPill" type="button" onClick={loginWithGoogle}>
-          <LogIn size={15} />
-          Account
-        </button>
-      );
-    }
-
-    return (
-      <div className="authCard">
-        <p className="eyebrow">Account</p>
-        <h3>Start your free trial</h3>
-        <p>Sign in once to start your 15-day trial and save your Farmers Hub data.</p>
-
-        <button className="primaryButton fullButton" onClick={loginWithGoogle}>
-          <LogIn size={16} />
-          Start with Google
-        </button>
-
-        <GuardedLink to="/subscribe" className="secondaryButton fullButton">
-          View Plans
-        </GuardedLink>
-      </div>
-    );
-  }
-
-  const displayName =
-    accountProfile?.displayName?.trim() ||
-    user.displayName ||
-    "Signed in";
-
-  const statusLabel = isAdmin
-    ? "Admin"
-    : isTrial
-      ? `${daysRemaining}d trial`
-      : accessStatus.status === "active"
-        ? "Active"
-        : isExpired
-          ? "Upgrade"
-          : "Account";
-
-  if (compact) {
-    return (
-      <GuardedLink
-        to="/account-settings"
-        className={`mobileAccountPill ${accessStatus.status}`}
-        title={user.email || displayName}
-      >
-        {user.photoURL ? (
-          <img src={user.photoURL} alt={displayName} />
-        ) : (
-          <span className="mobileAccountInitial">
-            {(displayName || user.email || "U").charAt(0)}
-          </span>
-        )}
-        <span>{statusLabel}</span>
-      </GuardedLink>
-    );
-  }
-
-  return (
-    <div className="authCard desktopAccountCard">
-      <p className="eyebrow">Account</p>
-
-      <div className="userRow">
-        {user.photoURL ? (
-          <img src={user.photoURL} alt={displayName} />
-        ) : (
-          <div className="userInitial">
-            {(displayName || user.email || "U").charAt(0)}
-          </div>
-        )}
-
-        <div>
-          <strong>{displayName}</strong>
-          <p>{user.email}</p>
-        </div>
-      </div>
-
-      <div className={`accountStatusPill ${accessStatus.status}`}>
-        {isAdmin ? "Admin access" : null}
-        {isTrial ? `${daysRemaining} trial days left` : null}
-        {accessStatus.status === "active" ? "Active subscription" : null}
-        {isExpired ? "Subscription required" : null}
-      </div>
-
-      {accountProfile?.onboardingComplete ? null : (
-        <GuardedLink to="/onboarding" className="primaryButton fullButton">
-          Finish Setup
-        </GuardedLink>
-      )}
-
-      {isExpired ? (
-        <GuardedLink to="/subscribe" className="primaryButton fullButton">
-          Upgrade Account
-        </GuardedLink>
-      ) : null}
-
-      <GuardedLink to="/account-settings" className="secondaryButton fullButton">
-        <Settings size={16} />
-        Account Settings
-      </GuardedLink>
-
-      <button className="secondaryButton" onClick={logout}>
-        <LogOut size={16} />
-        Sign out
-      </button>
-    </div>
-  );
-}
-
-function AppShell({ children }) {
-  const { accountProfile } = useAuth();
-  const location = useLocation();
-  const [mobileModulesOpen, setMobileModulesOpen] = useState(false);
-
-  const densityClass =
-    accountProfile?.settings?.dashboardDensity === "compact"
-      ? "compactDensity"
-      : "comfortableDensity";
-
-  const currentTitle = getCurrentModuleTitle(location.pathname);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
-    setMobileModulesOpen(false);
-  }, [location.pathname]);
+    const guideHidden = localStorage.getItem("hideModuleGuide_pricing") === "true";
+    if (!guideHidden) setShowGuide(true);
+  }, []);
 
-  return (
-    <div className={`app ${densityClass}`}>
-      <aside className="sidebar modernSidebar">
-        <div className="mobileTopBar">
-          <GuardedLink to="/" className="brand mobileBrand">
-            <div className="brandIcon">
-              <Sprout size={23} />
-            </div>
+  useEffect(() => {
+    if (!statusMessage) return undefined;
 
-            <div>
-              <h1>Farmers Hub</h1>
-              <p>{currentTitle}</p>
-            </div>
-          </GuardedLink>
+    const timer = window.setTimeout(() => setStatusMessage(""), 3000);
+    return () => window.clearTimeout(timer);
+  }, [statusMessage]);
 
-          <div className="mobileTopActions">
-            <button
-              className="mobileModulesToggle"
-              type="button"
-              onClick={() => setMobileModulesOpen((current) => !current)}
-              aria-expanded={mobileModulesOpen}
-              aria-controls="farmers-hub-mobile-nav"
-            >
-              <Menu size={16} />
-              Modules
-            </button>
+  useEffect(() => {
+    if (user) {
+      loadProducts();
+    } else {
+      setProducts([]);
+      setSpiceRecipes([]);
+      setSpiceProducts([]);
+      setFlowerArrangements([]);
+      setFlowerProducts([]);
+      setBakingProducts([]);
+      setSelectedProductId("");
+      setSelectedVariantId("");
+      setForm(blankProduct());
+    }
+  }, [user]);
 
-            <AccountStatusCard compact />
-          </div>
-        </div>
+  async function loadProducts() {
+    if (!user) return;
 
-        <GuardedLink to="/" className="brand desktopBrand">
-          <div className="brandIcon">
-            <Sprout size={26} />
-          </div>
+    setLoadingProducts(true);
 
-          <div>
-            <h1>Farmers Hub</h1>
-            <p>Vendor tools</p>
-          </div>
-        </GuardedLink>
+    try {
+      const [saved, spiceRecipeRows, flowerArrangementRows, bakingSnapshot] = await Promise.all([
+        getProducts(user.uid),
+        getSpiceRecipes(user.uid).catch((error) => {
+          console.error(error);
+          return [];
+        }),
+        getFlowerArrangements(user.uid).catch((error) => {
+          console.error(error);
+          return [];
+        }),
+        getDoc(doc(db, "users", user.uid, "bakingPlanner", "main")).catch((error) => {
+          console.error(error);
+          return null;
+        })
+      ]);
 
-        <nav
-          id="farmers-hub-mobile-nav"
-          className={`nav modernNav ${mobileModulesOpen ? "mobileOpen" : ""}`}
-        >
-          <GuardedLink
-            to="/"
-            className={`navLink modernNavLink dashboardNav ${
-              location.pathname === "/" ? "active" : ""
-            }`}
-          >
-            <Home size={18} />
-            <span>Dashboard</span>
-          </GuardedLink>
+      const bakingRecipes = bakingSnapshot?.exists?.()
+        ? bakingSnapshot.data()?.recipes || []
+        : [];
 
-          {modules.map((module) => {
-            const Icon = module.icon;
+      setProducts(Array.isArray(saved) ? saved : []);
+      const safeFlowerArrangements = Array.isArray(flowerArrangementRows) ? flowerArrangementRows : [];
 
-            return (
-              <GuardedLink
-                key={module.path}
-                to={module.path}
-                className={`navLink modernNavLink moduleNav ${module.accent} ${
-                  location.pathname === module.path ? "active" : ""
-                }`}
-              >
-                <Icon size={18} />
-                <span>{module.title}</span>
-              </GuardedLink>
-            );
-          })}
-        </nav>
-
-        <AccountStatusCard />
-      </aside>
-
-      <main className="main modernMain">{children}</main>
-    </div>
-  );
-}
-
-function AccessGate({ children }) {
-  const {
-    user,
-    authLoading,
-    accountLoading,
-    accountProfile,
-    loginWithGoogle,
-    hasAccess,
-    isExpired
-  } = useAuth();
-
-  const location = useLocation();
-
-  if (authLoading || accountLoading) {
-    return (
-      <AppShell>
-        <div className="emptyState">
-          <h2>Checking account access...</h2>
-          <p>Please wait while Farmers Hub verifies your trial or subscription.</p>
-        </div>
-      </AppShell>
-    );
+      setSpiceRecipes(Array.isArray(spiceRecipeRows) ? spiceRecipeRows : []);
+      setFlowerArrangements(safeFlowerArrangements);
+      setSpiceProducts(buildSpiceDirectoryProducts(spiceRecipeRows));
+      setFlowerProducts(buildFlowerDirectoryProducts(safeFlowerArrangements));
+      setBakingProducts(buildBakingDirectoryProducts(bakingRecipes));
+    } catch (error) {
+      console.error(error);
+      setStatusMessage("Could not load products.");
+    } finally {
+      setLoadingProducts(false);
+    }
   }
+
+  function scrollToSection(ref) {
+    ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function loadProduct(product, options = {}) {
+    const variantId =
+      options.variantId ||
+      directoryVariantSelections[product.id] ||
+      product.selectedVariantId ||
+      product.generatedVariants?.[0]?.id ||
+      "";
+
+    const productForForm = applyVariantToProduct(product, variantId);
+
+    setSelectedProductId(product.id || "");
+    setSelectedVariantId(variantId);
+    setForm(productForForm);
+    markSaved();
+
+    if (!options.silent) {
+      setStatusMessage("Product loaded.");
+      scrollToSection(detailsRef);
+    }
+  }
+
+  function changeVariant(variantId) {
+    if (!selectedProduct) return;
+
+    const productForForm = applyVariantToProduct(selectedProduct, variantId);
+
+    setSelectedVariantId(variantId);
+    setDirectoryVariantSelections((current) => ({
+      ...current,
+      [selectedProduct.id]: variantId
+    }));
+    setForm(productForForm);
+    markSaved();
+    setStatusMessage("Variant loaded.");
+  }
+
+  function changeDirectoryVariant(productId, variantId) {
+    setDirectoryVariantSelections((current) => ({
+      ...current,
+      [productId]: variantId
+    }));
+  }
+
+  function startNewProduct() {
+    setSelectedProductId("");
+    setSelectedVariantId("");
+    setForm(blankProduct());
+    markProductsDirty();
+    setStatusMessage("Started a new product.");
+    scrollToSection(detailsRef);
+  }
+
+  function loadSampleProduct() {
+    setSelectedProductId("");
+    setSelectedVariantId("");
+    setForm(sampleProduct());
+    markProductsDirty();
+    setStatusMessage("Sample product loaded. Edit it, then save when ready.");
+    scrollToSection(detailsRef);
+  }
+
+  function updateField(field, value) {
+    markProductsDirty();
+    setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  async function handleProductImageUpload(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file || !user) return;
+
+    if (!file.type?.startsWith("image/")) {
+      setStatusMessage("Please choose an image file.");
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setStatusMessage("Image must be 5 MB or smaller.");
+      return;
+    }
+
+    const productId = form.id || selectedProductId || makeId();
+
+    setUploadingImage(true);
+
+    try {
+      const uploadResult = await uploadProductImage({
+        userId: user.uid,
+        productId,
+        file,
+        previousPath: form.imagePath || ""
+      });
+
+      const updatedForm = {
+        ...form,
+        id: productId,
+        imageUrl: uploadResult.url,
+        imagePath: uploadResult.path
+      };
+
+      setSelectedProductId(productId);
+      setForm(updatedForm);
+
+      if (updatedForm.sourceType === "spice" && updatedForm.sourceRecipeId) {
+        await updateSpiceRecipe(user.uid, updatedForm.sourceRecipeId, {
+          imageUrl: uploadResult.url,
+          imagePath: uploadResult.path
+        });
+
+        setSpiceRecipes((current) =>
+          current.map((recipe) =>
+            recipe.id === updatedForm.sourceRecipeId
+              ? {
+                  ...recipe,
+                  imageUrl: uploadResult.url,
+                  imagePath: uploadResult.path
+                }
+              : recipe
+          )
+        );
+
+        setSpiceProducts((current) =>
+          current.map((product) =>
+            product.sourceRecipeId === updatedForm.sourceRecipeId
+              ? {
+                  ...product,
+                  imageUrl: uploadResult.url,
+                  imagePath: uploadResult.path
+                }
+              : product
+          )
+        );
+      }
+
+      if (updatedForm.sourceType === "flower" && updatedForm.sourceArrangementId) {
+        const existingArrangement = flowerArrangements.find(
+          (arrangement) => arrangement.id === updatedForm.sourceArrangementId
+        );
+
+        await updateFlowerArrangement(user.uid, updatedForm.sourceArrangementId, {
+          ...(existingArrangement || {}),
+          imageUrl: uploadResult.url,
+          imagePath: uploadResult.path,
+          imageSource: "uploaded",
+          listInProductDirectory: true
+        });
+
+        setFlowerArrangements((current) =>
+          current.map((arrangement) =>
+            arrangement.id === updatedForm.sourceArrangementId
+              ? {
+                  ...arrangement,
+                  imageUrl: uploadResult.url,
+                  imagePath: uploadResult.path,
+                  imageSource: "uploaded",
+                  listInProductDirectory: true
+                }
+              : arrangement
+          )
+        );
+
+        setFlowerProducts((current) =>
+          current.map((product) =>
+            product.sourceArrangementId === updatedForm.sourceArrangementId
+              ? {
+                  ...product,
+                  imageUrl: uploadResult.url,
+                  imagePath: uploadResult.path
+                }
+              : product
+          )
+        );
+      }
+
+      setProducts((current) =>
+        current.map((product) =>
+          product.id === productId
+            ? {
+                ...product,
+                imageUrl: uploadResult.url,
+                imagePath: uploadResult.path
+              }
+            : product
+        )
+      );
+
+      setStatusMessage("Product image uploaded. Click Save Product to keep it attached.");
+      markProductsDirty();
+    } catch (error) {
+      console.error(error);
+      setStatusMessage("Could not upload product image.");
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
+  async function removeProductImage() {
+    if (!form.imageUrl && !form.imagePath) return;
+
+    const confirmed = window.confirm("Remove this product image?");
+    if (!confirmed) return;
+
+    try {
+      if (form.imagePath) {
+        await deleteStorageFile(form.imagePath);
+      }
+
+      const removingSpiceImage = form.sourceType === "spice" && form.sourceRecipeId;
+
+      if (removingSpiceImage) {
+        await updateSpiceRecipe(user.uid, form.sourceRecipeId, {
+          imageUrl: "",
+          imagePath: ""
+        });
+
+        setSpiceRecipes((current) =>
+          current.map((recipe) =>
+            recipe.id === form.sourceRecipeId
+              ? {
+                  ...recipe,
+                  imageUrl: "",
+                  imagePath: ""
+                }
+              : recipe
+          )
+        );
+
+        setSpiceProducts((current) =>
+          current.map((product) =>
+            product.sourceRecipeId === form.sourceRecipeId
+              ? {
+                  ...product,
+                  imageUrl: "",
+                  imagePath: ""
+                }
+              : product
+          )
+        );
+      }
+
+      const removingFlowerImage = form.sourceType === "flower" && form.sourceArrangementId;
+
+      if (removingFlowerImage) {
+        const existingArrangement = flowerArrangements.find(
+          (arrangement) => arrangement.id === form.sourceArrangementId
+        );
+
+        await updateFlowerArrangement(user.uid, form.sourceArrangementId, {
+          ...(existingArrangement || {}),
+          imageUrl: "",
+          imagePath: "",
+          imageSource: "",
+          listInProductDirectory: true
+        });
+
+        setFlowerArrangements((current) =>
+          current.map((arrangement) =>
+            arrangement.id === form.sourceArrangementId
+              ? {
+                  ...arrangement,
+                  imageUrl: "",
+                  imagePath: "",
+                  imageSource: "",
+                  listInProductDirectory: true
+                }
+              : arrangement
+          )
+        );
+
+        setFlowerProducts((current) =>
+          current.map((product) =>
+            product.sourceArrangementId === form.sourceArrangementId
+              ? {
+                  ...product,
+                  imageUrl: "",
+                  imagePath: ""
+                }
+              : product
+          )
+        );
+      }
+
+      setForm((current) => ({
+        ...current,
+        imageUrl: "",
+        imagePath: ""
+      }));
+      markProductsDirty();
+      setStatusMessage("Product image removed. Save the product to keep this change.");
+    } catch (error) {
+      console.error(error);
+      setStatusMessage("Could not remove product image.");
+    }
+  }
+
+  async function saveSpiceKitchenVariant() {
+    const recipeId = form.sourceRecipeId;
+    const recipe = spiceRecipes.find((item) => item.id === recipeId);
+
+    if (!recipe) {
+      setStatusMessage("Could not find the linked Spice Kitchen recipe.");
+      return false;
+    }
+
+    const packageRows = Array.isArray(recipe.productPackages)
+      ? recipe.productPackages
+      : [];
+
+    const variant = selectedProductVariants.find((item) => item.id === selectedVariantId);
+    const packageIndex =
+      typeof variant?.packageIndex === "number"
+        ? variant.packageIndex
+        : Number(form.sourceVariantIndex);
+
+    if (!Number.isInteger(packageIndex) || !packageRows[packageIndex]) {
+      setStatusMessage("Could not find the selected package variant.");
+      return false;
+    }
+
+    const updatedPackages = packageRows.map((packageItem, index) => {
+      if (index !== packageIndex) return packageItem;
+
+      return {
+        ...packageItem,
+        sku: form.sku || packageItem.sku || "",
+        retailPrice: Number(form.retailPrice) || 0,
+        wholesalePrice: Number(form.wholesalePrice) || 0,
+        targetRetailMargin: Number(form.targetRetailMargin) || 70,
+        targetWholesaleMargin: Number(form.targetWholesaleMargin) || 50,
+        packagingCostPerUnit: Number(form.packagingCostPerUnit) || 0,
+        batchUnits: Number(form.batchUnits) || 1,
+        laborHours: Number(form.laborHours) || 0,
+        laborRate: Number(form.laborRate) || 0,
+        overheadCost: Number(form.overheadCost) || 0
+      };
+    });
+
+    await updateSpiceRecipeProductPackage(user.uid, recipeId, updatedPackages);
+    return true;
+  }
+
+  async function saveCurrentProduct() {
+    const productDirectoryGridColumns =
+    "72px minmax(210px, 1.5fr) minmax(145px, 0.8fr) minmax(110px, 0.65fr) minmax(90px, 0.5fr) minmax(105px, 0.6fr) minmax(90px, 0.5fr) minmax(120px, 0.7fr) 90px";
+
+  if (!user) {
+      setStatusMessage("Sign in from the Farmers Hub sidebar to save products.");
+      return;
+    }
+
+    if (!form.name.trim()) {
+      setStatusMessage("Product name is required.");
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      if (form.isGeneratedProduct && form.sourceType === "flower" && form.sourceArrangementId) {
+        const existingArrangement = flowerArrangements.find(
+          (arrangement) => arrangement.id === form.sourceArrangementId
+        );
+
+        await updateFlowerArrangement(user.uid, form.sourceArrangementId, {
+          ...(existingArrangement || {}),
+          name: form.name.trim(),
+          category: existingArrangement?.category || form.category || "Arrangement",
+          description: form.description || form.notes || existingArrangement?.description || "",
+          retailPrice: form.retailPrice === "" ? "" : Number(form.retailPrice) || 0,
+          wholesalePrice: form.wholesalePrice === "" ? "" : Number(form.wholesalePrice) || 0,
+          imageUrl: form.imageUrl || "",
+          imagePath: form.imagePath || "",
+          imageSource: form.imageUrl ? "uploaded" : "",
+          listInProductDirectory: true,
+          estimatedCost: Number(form.batchIngredientCost) || existingArrangement?.estimatedCost || 0
+        });
+
+        markSaved();
+        setStatusMessage("Flower Studio arrangement pricing saved.");
+        await loadProducts();
+        return;
+      }
+
+      if (form.isGeneratedProduct && form.sourceType === "spice") {
+        const savedLinkedVariant = await saveSpiceKitchenVariant();
+
+        if (savedLinkedVariant) {
+          markSaved();
+          setStatusMessage("Spice Kitchen package pricing saved.");
+          await loadProducts();
+        }
+
+        return;
+      }
+
+      const productToSave = {
+        ...form,
+        id:
+          form.isGeneratedProduct ||
+          String(selectedProductId).startsWith("baking-")
+            ? makeId()
+            : selectedProductId || form.id || makeId(),
+        name: form.name.trim(),
+        category: form.category || "Other",
+        status: form.status || "Active",
+        sourceType: form.isGeneratedProduct ? "manual" : form.sourceType || "manual",
+        sourceLabel: form.isGeneratedProduct ? "Manual" : form.sourceLabel || "Manual",
+        isGeneratedProduct: false,
+        selectedVariantId,
+        selectedVariantName: form.selectedVariantName || "",
+        targetRetailMargin: getTargetRetailMargin(form),
+        targetWholesaleMargin: getTargetWholesaleMargin(form),
+        pricingSummary: calculation
+      };
+
+      const savedId = await saveProduct(user.uid, productToSave);
+      setSelectedProductId(savedId);
+      setForm((current) => ({
+  ...current,
+  id: savedId,
+  imageUrl: productToSave.imageUrl || current.imageUrl || "",
+  imagePath: productToSave.imagePath || current.imagePath || ""
+}));
+      markSaved();
+      setStatusMessage("Product saved.");
+      await loadProducts();
+    } catch (error) {
+      console.error(error);
+      setStatusMessage("Could not save product.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function removeProduct(productId) {
+    if (!user || !productId) return;
+
+    const product = products.find((item) => item.id === productId);
+
+    if (!product) {
+      setStatusMessage("Generated products are managed in their source module.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete ${product?.name || "this product"}? This cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      if (product.imagePath) {
+        await deleteStorageFile(product.imagePath);
+      }
+
+      await deleteProduct(user.uid, productId);
+
+      if (selectedProductId === productId) {
+        setSelectedProductId("");
+        setSelectedVariantId("");
+        setForm(blankProduct());
+        markSaved();
+      }
+
+      setStatusMessage("Product deleted.");
+      await loadProducts();
+    } catch (error) {
+      console.error(error);
+      setStatusMessage("Could not delete product.");
+    }
+  }
+
+  function toggleProductExpanded(productId) {
+    setExpandedProductIds((current) => ({
+      ...current,
+      [productId]: !current[productId]
+    }));
+  }
+
+  const sectionCards = [
+    {
+      title: "Product Directory",
+      description: "Browse, filter, and load saved products.",
+      icon: Package,
+      ref: directoryRef
+    },
+    {
+      title: "Product Details",
+      description: "Edit product names, variants, categories, SKU, status, and notes.",
+      icon: Tag,
+      ref: detailsRef
+    },
+    {
+      title: "Pricing Analysis",
+      description: "Review costs, prices, margins, and suggested pricing.",
+      icon: Calculator,
+      ref: pricingRef
+    }
+  ];
 
   if (!user) {
     return (
-      <AppShell>
-        <div className="emptyState">
-          <h2>Start your 15-day trial</h2>
-          <p>Create an account to use every Farmers Hub module free for 15 days.</p>
-
-          <button className="primaryButton" onClick={loginWithGoogle}>
-            <LogIn size={16} />
-            Start with Google
-          </button>
-
-          <GuardedLink to="/subscribe" className="secondaryButton">
-            View all sign-in options
-          </GuardedLink>
-        </div>
-      </AppShell>
-    );
-  }
-
-  if (!hasAccess || isExpired) {
-    return (
-      <AppShell>
-        <Subscribe />
-      </AppShell>
-    );
-  }
-
-  const canSkipOnboardingRedirect =
-    location.pathname === "/onboarding" ||
-    location.pathname === "/account-settings" ||
-    location.pathname === "/subscribe";
-
-  if (!accountProfile?.onboardingComplete && !canSkipOnboardingRedirect) {
-    return <Navigate to="/onboarding" replace />;
-  }
-
-  return <AppShell>{children}</AppShell>;
-}
-
-function OnboardingRoute() {
-  const {
-    user,
-    authLoading,
-    accountLoading,
-    accountProfile,
-    loginWithGoogle,
-    hasAccess,
-    isExpired
-  } = useAuth();
-
-  if (authLoading || accountLoading) {
-    return (
-      <AppShell>
-        <div className="emptyState">
-          <h2>Loading setup...</h2>
-          <p>Please wait while Farmers Hub checks your account.</p>
-        </div>
-      </AppShell>
-    );
-  }
-
-  if (!user) {
-    return (
-      <AppShell>
-        <div className="emptyState">
-          <h2>Create an account to set up Farmers Hub</h2>
-          <p>Start your 15-day trial, then choose whether to begin fresh or load sample data.</p>
-
-          <button className="primaryButton" onClick={loginWithGoogle}>
-            <LogIn size={16} />
-            Start with Google
-          </button>
-
-          <GuardedLink to="/subscribe" className="secondaryButton">
-            View all sign-in options
-          </GuardedLink>
-        </div>
-      </AppShell>
-    );
-  }
-
-  if (!hasAccess || isExpired) {
-    return (
-      <AppShell>
-        <Subscribe />
-      </AppShell>
-    );
-  }
-
-  if (accountProfile?.onboardingComplete) {
-    return <Navigate to="/" replace />;
-  }
-
-  return (
-    <AppShell>
-      <Onboarding />
-    </AppShell>
-  );
-}
-
-function Subscribe() {
-  const { user } = useAuth();
-  const [checkoutLoading, setCheckoutLoading] = useState("");
-
-  if (!user) {
-    return (
-      <div className="subscribePage">
-        <section className="moduleHero compactHero noActionHero">
-          <div>
-            <p className="eyebrow">15-day free trial</p>
-            <h2>Try every Farmers Hub module before choosing a plan.</h2>
+      <div className="modulePage pricingPage compactSpicePage">
+        <section className="farmModuleHero pricingHero">
+          <div className="farmModuleHeroText">
+            <p className="eyebrow">Products & Pricing</p>
+            <h2>Sign in to save your product list.</h2>
             <p>
-              Create an account to start your free trial. You will not need to pick
-              a paid plan until the trial ends or you decide to upgrade early.
+              Build a product directory, calculate costs, set prices, and save your
+              product records to your Farmers Hub account.
             </p>
           </div>
+
+          <div className="farmModuleHeroActions">
+            <button className="primaryButton farmHeroAction" type="button" onClick={loginWithGoogle}>
+              Sign in with Google
+            </button>
+          </div>
         </section>
-
-        <PricingCards
-          mode="trial"
-          checkoutLoading={checkoutLoading}
-          setCheckoutLoading={setCheckoutLoading}
-        />
-
-        <TrialSignupBox />
       </div>
     );
   }
 
   return (
-    <div className="subscribePage">
-      <section className="moduleHero compactHero noActionHero">
-        <div>
-          <p className="eyebrow">Choose your plan</p>
-          <h2>Keep Farmers Hub active after your trial.</h2>
+    <div className="modulePage pricingPage compactSpicePage">
+      {statusMessage ? (
+        <div className="floatingStatus success">
+          <span>ⓘ</span>
+          <span>{statusMessage}</span>
+          <button type="button" onClick={() => setStatusMessage("")}>×</button>
+        </div>
+      ) : null}
+
+      <section className="farmModuleHero pricingHero">
+        <div className="farmModuleHeroText">
+          <p className="eyebrow">Products & Pricing</p>
+          <h2>Build your product list and price each item with confidence.</h2>
           <p>
-            Choose the plan that fits your workflow. Basic includes 1 module, Growth
-            includes 3 modules, and Pro unlocks every Farmers Hub module.
+            Keep a central product directory for anything you sell, then select a
+            product and package variant to edit its cost breakdown, retail price,
+            wholesale price, and margins.
           </p>
+        </div>
+
+        <div className="farmModuleHeroActions">
+          <button className="primaryButton compactPrimary farmHeroAction" type="button" onClick={startNewProduct}>
+            <Plus size={18} />
+            Add Product
+          </button>
+          <button className="secondaryButton compactButton farmHeroAction" type="button" onClick={() => setShowGuide(true)}>
+            <CircleHelp size={16} />
+            Guide
+          </button>
         </div>
       </section>
 
-      <PricingCards
-        mode="checkout"
-        checkoutLoading={checkoutLoading}
-        setCheckoutLoading={setCheckoutLoading}
-      />
+      <section className="hubStatGrid pricingStatGrid">
+        <StatCard icon={Package} label="Products" value={loadingProducts ? "..." : allDirectoryProducts.length} sub="manual + module products" accent="pricing" />
+        <StatCard icon={Tag} label="Active" value={loadingProducts ? "..." : stats.activeCount} sub="currently available" accent="market" />
+        <StatCard icon={Target} label="Avg Margin" value={loadingProducts ? "..." : percent(stats.averageRetailMargin)} sub="retail margin" accent="spice" />
+        <StatCard icon={Calculator} label="Priced" value={loadingProducts ? "..." : stats.productsWithPricing} sub="cost + retail price" accent="sourdough" />
+      </section>
+
+      <section className="toolGrid compactToolGrid">
+        {sectionCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <button
+              className="toolCard compactToolCard clickableToolCard"
+              key={card.title}
+              type="button"
+              onClick={() => scrollToSection(card.ref)}
+            >
+              <Icon size={22} />
+              <h3>{card.title}</h3>
+              <p>{card.description}</p>
+            </button>
+          );
+        })}
+      </section>
+
+      <section className="workspacePanel compactPanel scrollAnchor" ref={directoryRef}>
+        <div className="workspaceHeader compactPanelHeader">
+          <div>
+            <p className="eyebrow">Directory</p>
+            <h3>Product Directory</h3>
+          </div>
+
+          <div className="formActions compactActions">
+            <button className="secondaryButton compactButton" type="button" onClick={loadProducts}>Refresh</button>
+            <button className="secondaryButton compactButton" type="button" onClick={loadSampleProduct}><Package size={15} />Load Sample</button>
+            <button className="primaryButton compactPrimary" type="button" onClick={startNewProduct}><Plus size={15} />New Product</button>
+          </div>
+        </div>
+
+        <div className="customersFilterPanel">
+          <div className="searchBox compactSearch customersSearchBox">
+            <Search size={17} />
+            <input
+              type="search"
+              placeholder="Search products, variants, SKU, category, notes, or description"
+              value={queryText}
+              onChange={(event) => setQueryText(event.target.value)}
+            />
+          </div>
+
+          <label>
+            Category
+            <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
+              <option>All categories</option>
+              {categories.map((category) => <option key={category}>{category}</option>)}
+            </select>
+          </label>
+
+          <label>
+            Status
+            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+              <option>All statuses</option>
+              {productStatuses.map((status) => <option key={status}>{status}</option>)}
+            </select>
+          </label>
+        </div>
+
+        <div
+          className="productDirectoryInlineTable"
+          style={{
+            overflowX: "auto",
+            border: "1px solid var(--border)",
+            borderRadius: "14px",
+            background: "#ffffff"
+          }}
+        >
+          <div
+            className="productDirectoryInlineHeader"
+            style={{
+              display: "grid",
+              gridTemplateColumns: productDirectoryGridColumns,
+              minWidth: "1180px",
+              alignItems: "center",
+              columnGap: "14px",
+              padding: "12px 14px",
+              background: "#fbfaf6",
+              borderBottom: "1px solid var(--border)",
+              color: "var(--muted)",
+              fontSize: "0.72rem",
+              fontWeight: 900,
+              letterSpacing: "0.075em",
+              textTransform: "uppercase"
+            }}
+          >
+            <span>Photo</span>
+            <span>Product</span>
+            <span>Variant</span>
+            <span>Category</span>
+            <span>Retail</span>
+            <span>Wholesale</span>
+            <span>Cost</span>
+            <span>Margin</span>
+            <span style={{ textAlign: "right" }}>Actions</span>
+          </div>
+
+          {filteredProducts.length ? (
+            filteredProducts.map((product) => {
+              const directoryVariantId =
+                directoryVariantSelections[product.id] ||
+                product.selectedVariantId ||
+                product.generatedVariants?.[0]?.id ||
+                "";
+              const productForCalc = applyVariantToProduct(product, directoryVariantId);
+              const calc = calculateProduct(productForCalc);
+
+              return (
+                <div
+                  className="productDirectoryInlineRow"
+                  key={product.id}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: productDirectoryGridColumns,
+                    minWidth: "1180px",
+                    minHeight: "78px",
+                    alignItems: "center",
+                    columnGap: "14px",
+                    padding: "10px 14px",
+                    borderBottom: "1px solid var(--border)"
+                  }}
+                >
+                  <span
+                    className="pricingImageCell"
+                    style={{ display: "flex", alignItems: "center", justifyContent: "flex-start" }}
+                  >
+                    {product.imageUrl ? (
+                      <button
+                        className="productDirectoryImageButton"
+                        type="button"
+                        onClick={() =>
+                          setZoomedProductImage({
+                            url: product.imageUrl,
+                            name: product.name || "Product image"
+                          })
+                        }
+                        aria-label={`View ${product.name || "product"} image`}
+                        style={{
+                          width: "58px",
+                          height: "58px",
+                          padding: 0,
+                          borderRadius: "14px",
+                          overflow: "hidden",
+                          border: "1px solid var(--border)",
+                          background: "#fbfaf6",
+                          cursor: "zoom-in"
+                        }}
+                      >
+                        <img
+                          src={product.imageUrl}
+                          alt={`${product.name || "Product"} product`}
+                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                        />
+                      </button>
+                    ) : (
+                      <span
+                        className="pricingImagePlaceholder"
+                        style={{
+                          width: "58px",
+                          height: "58px",
+                          borderRadius: "14px",
+                          border: "1px solid var(--border)",
+                          background: "#fbfaf6",
+                          display: "grid",
+                          placeItems: "center"
+                        }}
+                      >
+                        <Image size={20} />
+                      </span>
+                    )}
+                  </span>
+
+                  <span className="pricingProductCell" style={{ display: "grid", gap: "3px", minWidth: 0 }}>
+                    <button
+                      className="savedItemLink"
+                      type="button"
+                      onClick={() => loadProduct(product, { variantId: directoryVariantId })}
+                      style={{
+                        maxWidth: "100%",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap"
+                      }}
+                    >
+                      {product.name || "Untitled Product"}
+                    </button>
+                    <small>
+                      {productSourceLabel(product)}
+                      {product.sku ? ` • ${product.sku}` : ""}
+                    </small>
+                  </span>
+
+                  <span className="pricingDirectoryVariantCell" style={{ minWidth: 0 }}>
+                    {product.generatedVariants?.length ? (
+                      <select
+                        className="pricingDirectoryVariantSelect"
+                        value={directoryVariantId}
+                        onChange={(event) => changeDirectoryVariant(product.id, event.target.value)}
+                      >
+                        {product.generatedVariants.map((variant) => (
+                          <option key={variant.id} value={variant.id}>
+                            {variant.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="mutedText">Single unit</span>
+                    )}
+                  </span>
+
+                  <span>{product.category || "Other"}</span>
+                  <span className="pricingMetric" style={{ whiteSpace: "nowrap" }}>{money(productForCalc.retailPrice)}</span>
+                  <span className="pricingMetric" style={{ whiteSpace: "nowrap" }}>{money(productForCalc.wholesalePrice)}</span>
+                  <span className="pricingMetric" style={{ whiteSpace: "nowrap" }}>{money(calc.costPerUnit)}</span>
+
+                  <span className="pricingMetric pricingPositive" style={{ whiteSpace: "nowrap" }}>
+                    {percent(calc.retailMargin)}
+                    <small style={{ display: "block", marginTop: "2px" }}>{money(calc.retailProfitPerUnit)} / unit</small>
+                  </span>
+
+                  <span
+                    className="pricingDirectoryActions"
+                    style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "8px" }}
+                  >
+                    {!product.isGeneratedProduct ? (
+                      <button
+                        className="iconButton danger"
+                        type="button"
+                        onClick={() => removeProduct(product.id)}
+                        aria-label="Delete product"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    ) : null}
+                    <button
+                      className="iconButton"
+                      type="button"
+                      onClick={() => toggleProductExpanded(product.id)}
+                      aria-label="Toggle product details"
+                    >
+                      {expandedProductIds[product.id] ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                    </button>
+                  </span>
+
+                  {expandedProductIds[product.id] ? (
+                    <div
+                      className="pricingExpandedDetails"
+                      style={{ gridColumn: "1 / -1", marginTop: "10px" }}
+                    >
+                      <div>
+                        <strong>Source</strong>
+                        <span>{productSourceLabel(product)}</span>
+                      </div>
+                      <div>
+                        <strong>Status</strong>
+                        <span>{product.status || "Active"}</span>
+                      </div>
+                      <div>
+                        <strong>Updated</strong>
+                        <span>{formatShortDate(product.updatedAt)}</span>
+                      </div>
+                      <div>
+                        <strong>Unit</strong>
+                        <span>{productForCalc.unitLabel || "unit"}</span>
+                      </div>
+                      <div className="pricingExpandedWide">
+                        <strong>Notes</strong>
+                        <span>{product.notes || product.description || "No notes saved."}</span>
+                      </div>
+                      {product.isGeneratedProduct ? (
+                        <div className="pricingExpandedWide">
+                          <strong>Linked Item</strong>
+                          <span>
+                            This product is managed in {productSourceLabel(product)}. Saving edits here updates the linked package variant.
+                          </span>
+                        </div>
+                      ) : null}
+                      {product.generatedVariants?.length ? (
+                        <div className="pricingExpandedWide pricingVariantList">
+                          <strong>Variant Sizes</strong>
+                          {product.generatedVariants.map((variant) => (
+                            <button
+                              className="pricingVariantRow savedItemLink"
+                              type="button"
+                              key={variant.id}
+                              onClick={() => loadProduct(product, { variantId: variant.id })}
+                            >
+                              <span>{variant.name}</span>
+                              <span>{formatPackageSize(variant.size, variant.unit)}</span>
+                              <span>{money(variant.ingredientCost)}</span>
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })
+          ) : (
+            <div className="placeholderBox compactPlaceholder">
+              {loadingProducts ? "Loading products..." : "No products found. Add a product or load the sample to get started."}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="spiceWorkspace compactWorkspace">
+        <div className="workspacePanel compactPanel scrollAnchor" ref={detailsRef}>
+          <div className="workspaceHeader compactPanelHeader">
+            <div>
+              <p className="eyebrow">Product</p>
+              <h3>Product Details</h3>
+            </div>
+            <div className="formActions compactActions">
+              <button
+                className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`}
+                type="button"
+                onClick={saveCurrentProduct}
+                disabled={saving}
+              >
+                <Save size={15} />
+                {saving ? "Saving..." : hasUnsavedChanges ? "Save Changes" : "Save Product"}
+              </button>
+            </div>
+          </div>
+
+          {form.isGeneratedProduct ? (
+            <div className="placeholderBox compactPlaceholder linkedProductNotice">
+              <strong>Linked product:</strong> this product is generated from {productSourceLabel(form)}. Saving edits here will update the linked source package variant.
+            </div>
+          ) : null}
+
+          <div className="productImagePanel">
+            <div className="productImagePreview">
+              {form.imageUrl ? (
+                <img src={form.imageUrl} alt={`${form.name || "Product"} preview`} />
+              ) : (
+                <div className="productImageEmptyState">
+                  <Image size={28} />
+                  <span>No product image yet</span>
+                </div>
+              )}
+            </div>
+
+            <div className="productImageActions">
+              <div>
+                <p className="eyebrow">Product Image</p>
+                <p className="importExportText">
+                  Upload a product photo for the directory. Images are stored in Firebase Storage and saved to this product record.
+                </p>
+              </div>
+
+              <div className="formActions compactActions">
+                <input
+                  ref={imageInputRef}
+                  className="hiddenFileInput"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProductImageUpload}
+                />
+                <button
+                  className="secondaryButton compactButton"
+                  type="button"
+                  onClick={() => imageInputRef.current?.click()}
+                  disabled={uploadingImage}
+                >
+                  <Upload size={15} />
+                  {uploadingImage ? "Uploading..." : form.imageUrl ? "Replace Image" : "Upload Image"}
+                </button>
+                {form.imageUrl ? (
+                  <button
+                    className="secondaryButton compactButton dangerTextButton"
+                    type="button"
+                    onClick={removeProductImage}
+                    disabled={uploadingImage}
+                  >
+                    <X size={15} />
+                    Remove
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          </div>
+
+          <div className="formGrid compactFormGrid">
+            <label>
+              Product Name
+              <input
+                value={form.name}
+                onChange={(event) => updateField("name", event.target.value)}
+                placeholder="e.g., Sourdough Loaf, Soy Candle, Lavender Bouquet"
+              />
+            </label>
+
+            <label>
+              SKU
+              <input
+                value={form.sku}
+                onChange={(event) => updateField("sku", event.target.value)}
+                placeholder="Optional"
+              />
+            </label>
+
+            {selectedProductVariants.length ? (
+              <label>
+                Variant
+                <select value={selectedVariantId} onChange={(event) => changeVariant(event.target.value)}>
+                  {selectedProductVariants.map((variant) => (
+                    <option key={variant.id} value={variant.id}>
+                      {variant.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+
+            <label>
+              Category
+              <select value={form.category} onChange={(event) => updateField("category", event.target.value)}>
+                {categories.map((category) => <option key={category}>{category}</option>)}
+              </select>
+            </label>
+
+            <label>
+              Status
+              <select value={form.status} onChange={(event) => updateField("status", event.target.value)}>
+                {productStatuses.map((status) => <option key={status}>{status}</option>)}
+              </select>
+            </label>
+
+            <label>
+              Unit Label
+              <input
+                value={form.unitLabel}
+                onChange={(event) => updateField("unitLabel", event.target.value)}
+                placeholder="each, jar, bunch, lb, dozen, tray"
+              />
+            </label>
+
+            <NumberInput
+              label="Target Retail Margin %"
+              value={form.targetRetailMargin}
+              onChange={(value) => updateField("targetRetailMargin", value)}
+              placeholder="70"
+              step="0.1"
+            />
+
+            <NumberInput
+              label="Target Wholesale Margin %"
+              value={form.targetWholesaleMargin}
+              onChange={(value) => updateField("targetWholesaleMargin", value)}
+              placeholder="50"
+              step="0.1"
+            />
+
+            <label className="fullSpan">
+              Description
+              <input
+                value={form.description}
+                onChange={(event) => updateField("description", event.target.value)}
+                placeholder="Short internal product description"
+              />
+            </label>
+
+            <label className="fullSpan">
+              Notes
+              <input
+                value={form.notes}
+                onChange={(event) => updateField("notes", event.target.value)}
+                placeholder="Packaging notes, seasonal availability, wholesale details, allergens, or production notes"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div className="workspacePanel compactPanel">
+          <div className="workspaceHeader compactPanelHeader">
+            <div>
+              <p className="eyebrow">Selected</p>
+              <h3>{selectedProduct ? selectedProduct.name : form.name || "Unsaved Product"}</h3>
+              {form.selectedVariantName ? <p className="importExportText">{form.selectedVariantName}</p> : null}
+            </div>
+          </div>
+
+          <div className="hubStatGrid pricingStatGrid">
+            <StatCard icon={DollarSign} label="Retail" value={money(form.retailPrice)} sub={`per ${form.unitLabel || "unit"}`} accent="pricing" />
+            <StatCard icon={DollarSign} label="Wholesale" value={money(form.wholesalePrice)} sub={`per ${form.unitLabel || "unit"}`} accent="sourdough" />
+            <StatCard icon={Target} label="Cost" value={money(calculation.costPerUnit)} sub="estimated per unit" accent="market" />
+            <StatCard icon={Package} label="Suggested Retail" value={money(calculation.suggestedRetailPrice)} sub={`${form.targetRetailMargin || 0}% target`} accent="spice" />
+            <StatCard icon={Package} label="Suggested Wholesale" value={money(calculation.suggestedWholesalePrice)} sub={`${form.targetWholesaleMargin || 0}% target`} accent="pricing" />
+            <StatCard icon={Calculator} label="Retail Margin" value={percent(calculation.retailMargin)} sub={`${money(calculation.retailProfitPerUnit)} profit`} accent="market" />
+            <StatCard icon={Calculator} label="Wholesale Margin" value={percent(calculation.wholesaleMargin)} sub={`${money(calculation.wholesaleProfitPerUnit)} profit`} accent="sourdough" />
+          </div>
+
+          <div className="placeholderBox compactPlaceholder">
+            <strong>Pricing clarity:</strong> select a package variant, then enter material, packaging, labor, and overhead costs below. Farmers Hub will calculate estimated cost per unit, suggested retail price, suggested wholesale price, and profit margins.
+          </div>
+        </div>
+      </section>
+
+      <section className="workspacePanel compactPanel scrollAnchor" ref={pricingRef}>
+        <div className="workspaceHeader compactPanelHeader">
+          <div>
+            <p className="eyebrow">Pricing</p>
+            <h3>Pricing Analysis</h3>
+          </div>
+
+          <div className="formActions compactActions">
+            <label>
+              Select Product
+              <select
+                value={selectedProductId}
+                onChange={(event) => {
+                  const product = allDirectoryProducts.find((item) => item.id === event.target.value);
+                  if (product) loadProduct(product);
+                  if (!event.target.value) {
+                    setSelectedProductId("");
+                    setSelectedVariantId("");
+                    setForm(blankProduct());
+                  }
+                }}
+              >
+                <option value="">Unsaved or new product</option>
+                {allDirectoryProducts.map((product) => (
+                  <option key={product.id} value={product.id}>
+                    {product.name || "Untitled Product"} ({productSourceLabel(product)})
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {selectedProductVariants.length ? (
+              <label>
+                Select Variant
+                <select value={selectedVariantId} onChange={(event) => changeVariant(event.target.value)}>
+                  {selectedProductVariants.map((variant) => (
+                    <option key={variant.id} value={variant.id}>
+                      {variant.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+
+            <button
+              className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`}
+              type="button"
+              onClick={saveCurrentProduct}
+              disabled={saving}
+            >
+              <Save size={15} />
+              {saving ? "Saving..." : hasUnsavedChanges ? "Save Changes" : "Save Product"}
+            </button>
+          </div>
+        </div>
+
+        <div className="formGrid compactFormGrid">
+          <MoneyInput label="Batch Ingredient / Material Cost" value={form.batchIngredientCost} onChange={(value) => updateField("batchIngredientCost", value)} placeholder="32.00" />
+          <NumberInput label="Units Produced Per Batch" value={form.batchUnits} onChange={(value) => updateField("batchUnits", value)} placeholder="24" step="1" />
+          <MoneyInput label="Packaging Cost / Unit" value={form.packagingCostPerUnit} onChange={(value) => updateField("packagingCostPerUnit", value)} placeholder="0.35" />
+          <NumberInput label="Labor Hours Per Batch" value={form.laborHours} onChange={(value) => updateField("laborHours", value)} placeholder="1.5" step="0.01" />
+          <MoneyInput label="Labor Rate / Hour" value={form.laborRate} onChange={(value) => updateField("laborRate", value)} placeholder="18.00" />
+          <MoneyInput label="Overhead / Fees Per Batch" value={form.overheadCost} onChange={(value) => updateField("overheadCost", value)} placeholder="6.00" />
+          <MoneyInput label="Retail Price" value={form.retailPrice} onChange={(value) => updateField("retailPrice", value)} placeholder="8.00" />
+          <MoneyInput label="Wholesale Price" value={form.wholesalePrice} onChange={(value) => updateField("wholesalePrice", value)} placeholder="5.00" />
+        </div>
+
+        <div className="grid four">
+          <div className="workspacePanel compactPanel"><p className="eyebrow">Total Batch Cost</p><h3>{money(calculation.totalBatchCost)}</h3><p className="importExportText">Materials + packaging + labor + overhead.</p></div>
+          <div className="workspacePanel compactPanel"><p className="eyebrow">Cost Per Unit</p><h3>{money(calculation.costPerUnit)}</h3><p className="importExportText">Estimated cost for one {form.unitLabel || "unit"}.</p></div>
+          <div className="workspacePanel compactPanel"><p className="eyebrow">Suggested Retail</p><h3>{money(calculation.suggestedRetailPrice)}</h3><p className="importExportText">Based on {form.targetRetailMargin || 0}% target retail margin.</p></div>
+          <div className="workspacePanel compactPanel"><p className="eyebrow">Suggested Wholesale</p><h3>{money(calculation.suggestedWholesalePrice)}</h3><p className="importExportText">Based on {form.targetWholesaleMargin || 0}% target wholesale margin.</p></div>
+          <div className="workspacePanel compactPanel"><p className="eyebrow">Retail Margin</p><h3>{percent(calculation.retailMargin)}</h3><p className="importExportText">{money(calculation.retailProfitPerUnit)} retail profit per unit.</p></div>
+          <div className="workspacePanel compactPanel"><p className="eyebrow">Wholesale Margin</p><h3>{percent(calculation.wholesaleMargin)}</h3><p className="importExportText">{money(calculation.wholesaleProfitPerUnit)} wholesale profit per unit.</p></div>
+        </div>
+      </section>
+
+      {showBackToTop ? (
+        <button className="backToTopButton" type="button" onClick={scrollToTop}>
+          <ArrowUp size={18} />
+          Top
+        </button>
+      ) : null}
+
+      {zoomedProductImage ? (
+        <div className="productImageZoomOverlay" onClick={() => setZoomedProductImage(null)}>
+          <div className="productImageZoomModal" onClick={(event) => event.stopPropagation()}>
+            <button
+              className="modalCloseButton"
+              type="button"
+              onClick={() => setZoomedProductImage(null)}
+              aria-label="Close image preview"
+            >
+              ×
+            </button>
+            <img src={zoomedProductImage.url} alt={zoomedProductImage.name} />
+            <strong>{zoomedProductImage.name}</strong>
+          </div>
+        </div>
+      ) : null}
+
+      <ModuleGuideModal
+        isOpen={showGuide}
+        moduleKey="pricing"
+        title="How to Use Products & Pricing"
+        onClose={() => setShowGuide(false)}
+      >
+        <PricingGuideContent />
+      </ModuleGuideModal>
     </div>
   );
 }
-
-function DashboardRoute() {
-  const { user, authLoading, accountLoading, accountProfile } = useAuth();
-
-  if (authLoading || accountLoading) {
-    return (
-      <AppShell>
-        <div className="emptyState">
-          <h2>Loading dashboard...</h2>
-          <p>Please wait while Farmers Hub checks your account setup.</p>
-        </div>
-      </AppShell>
-    );
-  }
-
-  if (user && accountProfile && !accountProfile.onboardingComplete) {
-    return <Navigate to="/onboarding" replace />;
-  }
-
-  return (
-    <Dashboard
-      AppShell={AppShell}
-      GuardedLink={GuardedLink}
-      WelcomePricingModal={WelcomePricingModal}
-    />
-  );
-}
-
-function NotFound() {
-  return (
-    <AppShell>
-      <div className="emptyState">
-        <h2>Page not found</h2>
-        <p>This module does not exist yet.</p>
-
-        <GuardedLink to="/" className="primaryButton">
-          Back to Dashboard
-        </GuardedLink>
-      </div>
-    </AppShell>
-  );
-}
-
-export default function App() {
-  return (
-    <>
-      <ScrollToTop />
-      <UnsavedChangesPrompt />
-
-      <Routes>
-        <Route path="/" element={<DashboardRoute />} />
-
-        <Route path="/onboarding" element={<OnboardingRoute />} />
-
-        <Route
-          path="/subscribe"
-          element={
-            <AppShell>
-              <Subscribe />
-            </AppShell>
-          }
-        />
-
-        <Route
-          path="/account-settings"
-          element={
-            <AccessGate>
-              <AccountSettings />
-            </AccessGate>
-          }
-        />
-
-        <Route path="/spice-kitchen" element={<AccessGate><SpiceKitchen /></AccessGate>} />
-        <Route path="/preserved-foods" element={<AccessGate><PreservedFoods /></AccessGate>} />
-        <Route path="/flower-studio" element={<AccessGate><FlowerStudio /></AccessGate>} />
-        <Route path="/baking-planner" element={<AccessGate><BakingPlanner /></AccessGate>} />
-        <Route path="/market-prep" element={<AccessGate><MarketPrepPlanner /></AccessGate>} />
-        <Route path="/planting-scheduler" element={<AccessGate><PlantingScheduler /></AccessGate>} />
-        <Route path="/pricing" element={<AccessGate><PricingCalculator /></AccessGate>} />
-        <Route path="/permit-grants" element={<AccessGate><PermitGrantTracker /></AccessGate>} />
-        <Route path="/lists" element={<AccessGate><Lists /></AccessGate>} />
-        <Route path="/calendar" element={<AccessGate><Calendar /></AccessGate>} />
-        <Route path="/customers" element={<AccessGate><Customers /></AccessGate>} />
-        <Route path="/orders" element={<AccessGate><Orders /></AccessGate>} />
-        <Route path="/inventory" element={<AccessGate><Inventory /></AccessGate>} />
-        <Route path="/thermal-printer" element={<AccessGate><ThermalPrinter /></AccessGate>} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </>
-  );
-}
-  
