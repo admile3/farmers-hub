@@ -810,7 +810,8 @@ export default function Sales() {
                 const paddingRight = 22;
                 const paddingTop = 24;
                 const paddingBottom = 42;
-                const maxValue = Math.max(...chartRows.map((row) => row.total), 100);
+                const highestValue = Math.max(...chartRows.map((row) => row.total), 0);
+                const maxValue = Math.max(Math.ceil((highestValue * 1.1) / 50) * 50, 100);
                 const yTicks = buildYAxisTicks(maxValue);
                 const yMax = Math.max(...yTicks, 100);
                 const tickIndexes = getChartTickIndexes(chartRows, chartRange);
@@ -879,17 +880,15 @@ export default function Sales() {
                       className="salesChartLine"
                     />
 
-                    {points
-                      .filter((point) => point.total > 0 && chartRange !== "year")
-                      .map((point) => (
-                        <circle
-                          key={`${point.date}-dot`}
-                          cx={point.x}
-                          cy={point.y}
-                          r="3.5"
-                          className="salesChartPoint"
-                        />
-                      ))}
+                    {points.map((point) => (
+  <circle
+    key={point.date}
+    cx={point.x}
+    cy={point.y}
+    r={point.total > 0 ? 4 : 2}
+    className="salesChartDot"
+  />
+))}
 
                     {tickIndexes.map((index) => {
                       const point = points[index];
