@@ -242,19 +242,40 @@ function calculateDailyNet(entry) {
   );
 }
 
-function buildChartRows(sales) {
+function buildChartRows(sales, chartRange = "week") {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const rangeDays = {
+    week: 7,
+    month: 30,
+    quarter: 90,
+    year: 365
+  };
+
+  const daysToShow = rangeDays[chartRange] || 7;
+  const startDate = new Date(today);
+  startDate.setDate(today.getDate() - daysToShow + 1);
+
   const totals = sales.reduce((accumulator, sale) => {
-    const date = sale.saleDate || "No date";
+    const date = sale.saleDate || "";
+    if (!date) return accumulator;
+
     accumulator[date] = (accumulator[date] || 0) + numberValue(sale.netSales);
     return accumulator;
   }, {});
 
-  return Object.entries(totals)
-    .sort(([dateA], [dateB]) => String(dateA).localeCompare(String(dateB)))
-    .map(([date, total]) => ({
-      date,
-      total
-    }));
+  return Array.from({ length: daysToShow }, (_, index) => {
+    const date = new Date(startDate);
+    date.setDate(startDate.getDate() + index);
+
+    const key = date.toISOString().slice(0, 10);
+
+    return {
+      date: key,
+      total: totals[key] || 0
+    };
+  });
 }
 
 export default function Sales() {
@@ -268,6 +289,7 @@ export default function Sales() {
   const [queryText, setQueryText] = useState("");
   const [timeframe, setTimeframe] = useState("30");
   const [saleTypeFilter, setSaleTypeFilter] = useState("All sales");
+  const [chartRange, setChartRange] = useState("week");
   const [statusMessage, setStatusMessage] = useState("");
   const [showGuide, setShowGuide] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -312,7 +334,10 @@ export default function Sales() {
   }, [sales, queryText, timeframe, saleTypeFilter]);
 
   const salesSummary = useMemo(() => summarizeSales(filteredSales), [filteredSales]);
-  const chartRows = useMemo(() => buildChartRows(filteredSales), [filteredSales]);
+  const chartRows = useMemo(
+  () => buildChartRows(filteredSales, chartRange),
+  [filteredSales, chartRange]
+);
   const chartMax = useMemo(
     () => Math.max(...chartRows.map((row) => row.total), 1),
     [chartRows]
@@ -675,17 +700,50 @@ export default function Sales() {
 
       <section className="salesOverviewGrid">
         <div className="workspacePanel compactPanel salesChartPanel">
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Reporting</p>
-              <h3>Sales Trend</h3>
-            </div>
+          <div className="workspaceHeader compactPanelHeader salesChartHeader">
+  <div>
+    <p className="eyebrow">Reporting</p>
+    <h3>Sales Trend</h3>
+  </div>
 
-            <button className="secondaryButton compactButton" type="button" onClick={loadData}>
-              <RefreshCw size={15} />
-              Refresh
-            </button>
-          </div>
+  <div className="salesChartControls">
+    <div className="salesChartRangeToggle">
+      <button
+        type="button"
+        className={chartRange === "week" ? "active" : ""}
+        onClick={() => setChartRange("week")}
+      >
+        Week
+      </button>
+      <button
+        type="button"
+        className={chartRange === "month" ? "active" : ""}
+        onClick={() => setChartRange("month")}
+      >
+        Month
+      </button>
+      <button
+        type="button"
+        className={chartRange === "quarter" ? "active" : ""}
+        onClick={() => setChartRange("quarter")}
+      >
+        Qtr
+      </button>
+      <button
+        type="button"
+        className={chartRange === "year" ? "active" : ""}
+        onClick={() => setChartRange("year")}
+      >
+        Year
+      </button>
+    </div>
+
+    <button className="secondaryButton compactButton" type="button" onClick={loadData}>
+      <RefreshCw size={15} />
+      Refresh
+    </button>
+  </div>
+</div>
 
           {chartRows.length ? (
             <div className="salesChart">
