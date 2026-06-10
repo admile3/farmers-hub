@@ -16977,3 +16977,33 @@ input[type="number"] {
   --module-accent-dark: #a94679;
   --module-accent-soft: rgba(198, 90, 147, 0.14);
 }
+/* Flower Studio action cards, 5 across on desktop */
+.flowerStudioModule .toolGrid,
+.flowerStudioModule .compactToolGrid {
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+.flowerStudioModule .toolCard,
+.flowerStudioModule .compactToolCard {
+  padding: 14px 12px !important;
+  min-height: 78px !important;
+}
+
+.flowerStudioModule .toolCard h3,
+.flowerStudioModule .compactToolCard h3 {
+  font-size: 0.95rem !important;
+}
+
+.flowerStudioModule .toolCard p,
+.flowerStudioModule .compactToolCard p {
+  font-size: 0.78rem !important;
+  line-height: 1.3 !important;
+}
+
+@media (max-width: 1200px) {
+  .flowerStudioModule .toolGrid,
+  .flowerStudioModule .compactToolGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
