@@ -1414,3 +1414,4 @@ export default function Sales() {
     </div>
   );
 }
+ 
