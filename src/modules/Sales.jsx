@@ -399,10 +399,29 @@ export default function Sales() {
     });
   }, [sales, queryText, timeframe, saleTypeFilter]);
 
-  const salesSummary = useMemo(() => summarizeSales(filteredSales), [filteredSales]);
+  const reportingSales = useMemo(() => {
+    const chartStartDate = {
+      week: startDateForTimeframe("7"),
+      month: startDateForTimeframe("30"),
+      quarter: startDateForTimeframe("90"),
+      year: startDateForTimeframe("365")
+    }[chartRange];
+
+    return sales.filter((sale) => {
+      return !chartStartDate || String(sale.saleDate || "") >= chartStartDate;
+    });
+  }, [sales, chartRange]);
+
+  const reportingSummary = useMemo(
+    () => summarizeSales(reportingSales),
+    [reportingSales]
+  );
+
+  const allTimeSummary = useMemo(() => summarizeSales(sales), [sales]);
+
   const chartRows = useMemo(
-    () => buildChartRows(sales, chartRange),
-    [sales, chartRange]
+    () => buildChartRows(reportingSales, chartRange),
+    [reportingSales, chartRange]
   );
   const saleTotals = useMemo(() => calculateSaleTotals(saleDraft), [saleDraft]);
 
@@ -831,29 +850,29 @@ export default function Sales() {
         <StatCard
           icon={Banknote}
           label="Net Sales"
-          value={loading ? "..." : money(salesSummary.totalNetSales)}
+          value={loading ? "..." : money(reportingSummary.totalNetSales)}
           sub="after discounts and fees"
           accent="pricing"
         />
         <StatCard
           icon={ClipboardList}
           label="Sales Records"
-          value={loading ? "..." : salesSummary.totalSalesCount}
+          value={loading ? "..." : reportingSummary.totalSalesCount}
           sub="in current view"
           accent="orders"
         />
         <StatCard
           icon={TrendingUp}
           label="Average Sale"
-          value={loading ? "..." : money(salesSummary.averageSale)}
+          value={loading ? "..." : money(reportingSummary.averageSale)}
           sub="current filters"
           accent="pricing"
         />
         <StatCard
           icon={CalendarCheck2}
           label="Best Sales Day"
-          value={loading ? "..." : money(salesSummary.bestSalesDay?.total || 0)}
-          sub={salesSummary.bestSalesDay?.date ? formatDate(salesSummary.bestSalesDay.date) : "no sales yet"}
+          value={loading ? "..." : money(allTimeSummary.bestSalesDay?.total || 0)}
+          sub={allTimeSummary.bestSalesDay?.date ? formatDate(allTimeSummary.bestSalesDay.date) : "no sales yet"}
           accent="market"
         />
       </section>
