@@ -48,7 +48,8 @@ const inventoryStatuses = [
   "In Stock",
   "Low Stock",
   "Out of Stock",
-  "Expiring Soon",
+  "Use/Sell Soon",
+  "Expired",
   "Archived"
 ];
 
@@ -384,7 +385,19 @@ function isLowStock(item) {
   return !isArchived(item) && quantity > 0 && reorderPoint > 0 && quantity <= reorderPoint;
 }
 
-function isExpiringSoon(item) {
+function isExpired(item) {
+  const quantity = parseInventoryNumber(item.quantityOnHand);
+  const bestByDays = daysUntil(item.bestByDate);
+
+  return (
+    !isArchived(item) &&
+    quantity > 0 &&
+    bestByDays !== null &&
+    bestByDays < 0
+  );
+}
+
+function isUseSellSoon(item) {
   const quantity = parseInventoryNumber(item.quantityOnHand);
   const bestByDays = daysUntil(item.bestByDate);
 
@@ -398,27 +411,34 @@ function isExpiringSoon(item) {
 }
 
 function isInStock(item) {
-  return !isArchived(item) && !isOutOfStock(item);
+  return (
+    !isArchived(item) &&
+    !isOutOfStock(item) &&
+    !isLowStock(item) &&
+    !isUseSellSoon(item) &&
+    !isExpired(item)
+  );
 }
 
 function getItemComputedStatus(item) {
   if (isArchived(item)) return "Archived";
+  if (isExpired(item)) return "Expired";
   if (isOutOfStock(item)) return "Out of Stock";
-  if (isLowStock(item) && isExpiringSoon(item)) return "Low Stock + Expiring Soon";
   if (isLowStock(item)) return "Low Stock";
-  if (isExpiringSoon(item)) return "Expiring Soon";
+  if (isUseSellSoon(item)) return "Use/Sell Soon";
 
   return item.status || "In Stock";
 }
 
 function getItemStatusList(item) {
   if (isArchived(item)) return ["Archived"];
-  if (isOutOfStock(item)) return ["Out of Stock"];
 
   const statuses = [];
 
+  if (isExpired(item)) statuses.push("Expired");
+  if (isOutOfStock(item)) statuses.push("Out of Stock");
   if (isLowStock(item)) statuses.push("Low Stock");
-  if (isExpiringSoon(item)) statuses.push("Expiring Soon");
+  if (isUseSellSoon(item)) statuses.push("Use/Sell Soon");
 
   return statuses.length ? statuses : ["In Stock"];
 }
@@ -427,6 +447,7 @@ function getStatusClass(status) {
   return String(status || "")
     .toLowerCase()
     .replaceAll("+", "")
+    .replaceAll("/", "-")
     .replaceAll(" ", "-");
 }
 
@@ -601,7 +622,8 @@ async function loadInventoryItems() {
 
     const lowStockItems = activeItems.filter((item) => isLowStock(item));
     const outOfStockItems = activeItems.filter((item) => isOutOfStock(item));
-    const expiringSoonItems = activeItems.filter((item) => isExpiringSoon(item));
+    const useSellSoonItems = activeItems.filter((item) => isUseSellSoon(item));
+    const expiredItems = activeItems.filter((item) => isExpired(item));
 
     const totalValue = activeItems.reduce(
       (sum, item) => sum + getInventoryValue(item),
@@ -622,7 +644,8 @@ async function loadInventoryItems() {
       activeItems: activeItems.length,
       lowStockItems: lowStockItems.length,
       outOfStockItems: outOfStockItems.length,
-      expiringSoonItems: expiringSoonItems.length,
+      useSellSoonItems: useSellSoonItems.length,
+      expiredItems: expiredItems.length,
       totalValue,
       totalWholesaleValue,
       totalRetailValue
@@ -639,14 +662,10 @@ async function loadInventoryItems() {
         if (statusFilter !== "All") {
           if (statusFilter === "Low Stock" && !isLowStock(item)) return false;
           if (statusFilter === "Out of Stock" && !isOutOfStock(item)) return false;
-          if (statusFilter === "Expiring Soon" && !isExpiringSoon(item)) return false;
+          if (statusFilter === "Use/Sell Soon" && !isUseSellSoon(item)) return false;
+          if (statusFilter === "Expired" && !isExpired(item)) return false;
           if (statusFilter === "Archived" && !isArchived(item)) return false;
-          if (
-            statusFilter === "In Stock" &&
-            (!isInStock(item) || isLowStock(item) || isExpiringSoon(item))
-          ) {
-            return false;
-          }
+          if (statusFilter === "In Stock" && !isInStock(item)) return false;
         }
 
         if (locationFilter !== "All" && item.storageLocation !== locationFilter) return false;
@@ -666,10 +685,10 @@ async function loadInventoryItems() {
       })
       .sort((a, b) => {
         const statusOrder = (item) => {
-          if (isOutOfStock(item)) return 0;
-          if (isLowStock(item) && isExpiringSoon(item)) return 1;
+          if (isExpired(item)) return 0;
+          if (isOutOfStock(item)) return 1;
           if (isLowStock(item)) return 2;
-          if (isExpiringSoon(item)) return 3;
+          if (isUseSellSoon(item)) return 3;
           if (isArchived(item)) return 5;
           return 4;
         };
@@ -704,13 +723,24 @@ async function loadInventoryItems() {
       .slice(0, 6);
   }, [inventoryItems]);
 
-  const expiringSoonItems = useMemo(() => {
+  const useSellSoonItems = useMemo(() => {
     return inventoryItems
       .map((item) => ({
         ...item,
         days: daysUntil(item.bestByDate)
       }))
-      .filter((item) => isExpiringSoon(item))
+      .filter((item) => isUseSellSoon(item))
+      .sort((a, b) => a.days - b.days)
+      .slice(0, 6);
+  }, [inventoryItems]);
+
+  const expiredItems = useMemo(() => {
+    return inventoryItems
+      .map((item) => ({
+        ...item,
+        days: daysUntil(item.bestByDate)
+      }))
+      .filter((item) => isExpired(item))
       .sort((a, b) => a.days - b.days)
       .slice(0, 6);
   }, [inventoryItems]);
@@ -1120,7 +1150,7 @@ showStatus("Inventory quantity updated.", "success");
       <section className="farmModuleHero inventoryHero">
         <div className="farmModuleHeroText">
           <p className="eyebrow">Inventory</p>
-          <h2>Track stock, storage, reorder points, and expiring goods.</h2>
+          <h2>Track stock, storage, reorder points, and rotation.</h2>
           <p>
             Manage finished products, ingredients, packaging, seeds, market supplies,
             and production inventory with clean counts and reorder visibility.
@@ -1167,10 +1197,18 @@ showStatus("Inventory quantity updated.", "success");
 
         <StatCard
           icon={CalendarClock}
-          label="Expiring Soon"
-          value={inventorySummary.expiringSoonItems}
+          label="Use/Sell Soon"
+          value={inventorySummary.useSellSoonItems}
           sub="within 14 days"
           accent="sourdough"
+        />
+
+        <StatCard
+          icon={AlertCircle}
+          label="Expired"
+          value={inventorySummary.expiredItems}
+          sub="past best by date"
+          accent="spice"
         />
 
         <StatCard
@@ -1224,7 +1262,8 @@ showStatus("Inventory quantity updated.", "success");
                       {item.reorderPoint !== "" && item.reorderPoint !== null
                         ? ` • Reorder at ${formatNumber(item.reorderPoint)} ${item.unit || ""}`
                         : ""}
-                      {isExpiringSoon(item) ? " • Also expiring soon" : ""}
+                      {isExpired(item) ? " • Also expired" : ""}
+                      {isUseSellSoon(item) ? " • Also use/sell soon" : ""}
                     </p>
                   </div>
                 </button>
@@ -1241,17 +1280,17 @@ showStatus("Inventory quantity updated.", "success");
           <div className="workspaceHeader compactPanelHeader">
             <div>
               <p className="eyebrow">Rotation</p>
-              <h3>Expiring Soon</h3>
+              <h3>Use / Sell Soon</h3>
             </div>
           </div>
 
           <div className="inventoryMiniList">
-            {expiringSoonItems.length ? (
-              expiringSoonItems.map((item) => (
+            {useSellSoonItems.length ? (
+              useSellSoonItems.map((item) => (
                 <button
                   type="button"
                   className="inventoryMiniItem"
-                  key={`expiring-${item.id}`}
+                  key={`use-soon-${item.id}`}
                   onClick={() => openEditItem(item)}
                 >
                   <span className={`inventoryStatusDot ${getStatusClass(getStatusLabel(item))}`} />
@@ -1271,7 +1310,45 @@ showStatus("Inventory quantity updated.", "success");
               ))
             ) : (
               <div className="placeholderBox compactPlaceholder">
-                No inventory is expiring within the next 30 days.
+                No inventory needs to be used or sold within the next 14 days.
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="workspacePanel compactPanel inventoryInsightPanel">
+          <div className="workspaceHeader compactPanelHeader">
+            <div>
+              <p className="eyebrow">Past Best By</p>
+              <h3>Expired</h3>
+            </div>
+          </div>
+
+          <div className="inventoryMiniList">
+            {expiredItems.length ? (
+              expiredItems.map((item) => (
+                <button
+                  type="button"
+                  className="inventoryMiniItem"
+                  key={`expired-${item.id}`}
+                  onClick={() => openEditItem(item)}
+                >
+                  <span className={`inventoryStatusDot ${getStatusClass(getStatusLabel(item))}`} />
+                  <div>
+                    <strong>{item.name}</strong>
+                    <p>
+                      {formatDate(item.bestByDate)}
+                      {Math.abs(item.days) === 1
+                        ? " • Expired 1 day ago"
+                        : ` • Expired ${Math.abs(item.days)} days ago`}
+                      {isLowStock(item) ? " • Also low stock" : ""}
+                    </p>
+                  </div>
+                </button>
+              ))
+            ) : (
+              <div className="placeholderBox compactPlaceholder">
+                No inventory is past its best by date.
               </div>
             )}
           </div>
