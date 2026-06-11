@@ -11835,8 +11835,10 @@ input[type="number"] {
 }
 
 @media (max-width: 1350px) {
-  .inventoryStatGrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .inventoryModule .inventoryStatGrid,
+  .inventoryModule .inventoryStatGridForced,
+  .inventoryModule .inventoryStatGridSeven {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
   }
 }
 
@@ -11854,10 +11856,12 @@ input[type="number"] {
 
 .inventoryModule .inventoryStatGrid,
 .inventoryModule .inventoryStatGridForced,
+.inventoryModule .inventoryStatGridSeven,
 .inventoryModule section.hubStatGrid.inventoryStatGrid,
-.inventoryModule section.hubStatGrid.inventoryStatGridForced {
+.inventoryModule section.hubStatGrid.inventoryStatGridForced,
+.inventoryModule section.hubStatGrid.inventoryStatGridSeven {
   display: grid !important;
-  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
   gap: 0.65rem !important;
   align-items: stretch !important;
   margin: 0 !important;
