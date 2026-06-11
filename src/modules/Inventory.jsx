@@ -1178,7 +1178,7 @@ showStatus("Inventory quantity updated.", "success");
         </div>
       </section>
 
-      <section className="hubStatGrid inventoryStatGrid inventoryStatGridForced">
+      <section className="hubStatGrid inventoryStatGrid inventoryStatGridForced inventoryStatGridSeven">
         <StatCard
           icon={PackageCheck}
           label="Active Items"
@@ -1236,7 +1236,7 @@ showStatus("Inventory quantity updated.", "success");
         />
       </section>
 
-      <section className="inventoryInsightGrid">
+      <section className="inventoryInsightGrid inventoryInsightGridThree">
         <div className="workspacePanel compactPanel inventoryInsightPanel">
           <div className="workspaceHeader compactPanelHeader">
             <div>
