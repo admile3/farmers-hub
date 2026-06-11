@@ -25,6 +25,7 @@ import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import SalesGuideContent from "../components/SalesGuideContent.jsx";
 import StatCard from "../components/StatCard.jsx";
 import { getProducts } from "../services/productService.js";
+import { connectSquare, importSquareSales } from "../services/squareService.js";
 import {
   deleteSale,
   getSales,
@@ -313,8 +314,23 @@ function getChartTickIndexes(rows, chartRange) {
 }
 
 function buildYAxisTicks(maxValue) {
-  const safeMax = Math.max(Number(maxValue) || 0, 100);
-  const step = safeMax / 4;
+  const normalizedMax = Math.max(Number(maxValue) || 0, 100);
+  const magnitude = 10 ** Math.floor(Math.log10(normalizedMax));
+  const normalized = normalizedMax / magnitude;
+
+  let roundedMax;
+
+  if (normalized <= 1) {
+    roundedMax = magnitude;
+  } else if (normalized <= 2) {
+    roundedMax = 2 * magnitude;
+  } else if (normalized <= 5) {
+    roundedMax = 5 * magnitude;
+  } else {
+    roundedMax = 10 * magnitude;
+  }
+
+  const step = roundedMax / 4;
 
   return Array.from({ length: 5 }, (_, index) => step * index);
 }
@@ -334,6 +350,9 @@ export default function Sales() {
   const [statusMessage, setStatusMessage] = useState("");
   const [showGuide, setShowGuide] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [squareImporting, setSquareImporting] = useState(false);
+  const [squareStartDate, setSquareStartDate] = useState(startDateForTimeframe("7"));
+  const [squareEndDate, setSquareEndDate] = useState(todayString());
 
   const productOptions = useMemo(() => {
     return products
@@ -415,6 +434,22 @@ export default function Sales() {
       setShowGuide(true);
     }
   }, [user?.uid]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const squareStatus = params.get("square");
+    const squareMessage = params.get("message");
+
+    if (squareStatus === "connected") {
+      setStatusMessage("Square connected successfully.");
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    if (squareStatus === "error") {
+      setStatusMessage(squareMessage || "Square connection failed.");
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   useEffect(() => {
     if (!statusMessage) return;
@@ -620,6 +655,62 @@ export default function Sales() {
     }
   }
 
+  async function handleConnectSquare() {
+    if (!user?.uid) {
+      setStatusMessage("Sign in before connecting Square.");
+      return;
+    }
+
+    try {
+      await connectSquare(user.uid);
+    } catch (error) {
+      console.error("Could not connect Square:", error);
+      setStatusMessage(error.message || "Could not connect Square.");
+    }
+  }
+
+  async function handleImportSquareSales() {
+    if (!user?.uid) {
+      setStatusMessage("Sign in before importing Square sales.");
+      return;
+    }
+
+    if (!squareStartDate || !squareEndDate) {
+      setStatusMessage("Choose a Square import start and end date.");
+      return;
+    }
+
+    if (squareStartDate > squareEndDate) {
+      setStatusMessage("Square import start date must be before the end date.");
+      return;
+    }
+
+    setSquareImporting(true);
+
+    try {
+      const result = await importSquareSales({
+        uid: user.uid,
+        startDate: squareStartDate,
+        endDate: squareEndDate
+      });
+
+      await loadData();
+
+      setStatusMessage(
+        `Imported ${result.dailyRecordCount || 0} daily Square sales record${
+          result.dailyRecordCount === 1 ? "" : "s"
+        } from ${result.paymentCount || 0} payment${
+          result.paymentCount === 1 ? "" : "s"
+        }.`
+      );
+    } catch (error) {
+      console.error("Square import failed:", error);
+      setStatusMessage(error.message || "Square import failed.");
+    } finally {
+      setSquareImporting(false);
+    }
+  }
+
   function saleTitle(sale) {
     if (sale.entryMode === "daily-total") {
       return sale.marketName || sale.saleType || "Daily Total";
@@ -795,9 +886,8 @@ export default function Sales() {
                 const paddingRight = 22;
                 const paddingTop = 24;
                 const paddingBottom = 42;
-                const highestValue = Math.max(...chartRows.map((row) => row.total), 0);
-const maxValue = Math.max(highestValue * 1.1, 100);
-const yTicks = buildYAxisTicks(maxValue);
+                const maxValue = Math.max(...chartRows.map((row) => row.total), 100);
+                const yTicks = buildYAxisTicks(maxValue);
                 const yMax = Math.max(...yTicks, 100);
                 const tickIndexes = getChartTickIndexes(chartRows, chartRange);
 
@@ -865,15 +955,17 @@ const yTicks = buildYAxisTicks(maxValue);
                       className="salesChartLine"
                     />
 
-                    {points.map((point) => (
-  <circle
-    key={point.date}
-    cx={point.x}
-    cy={point.y}
-    r={point.total > 0 ? 4 : 2}
-    className="salesChartDot"
-  />
-))}
+                    {points
+                      .filter((point) => point.total > 0 && chartRange !== "year")
+                      .map((point) => (
+                        <circle
+                          key={`${point.date}-dot`}
+                          cx={point.x}
+                          cy={point.y}
+                          r="3.5"
+                          className="salesChartPoint"
+                        />
+                      ))}
 
                     {tickIndexes.map((index) => {
                       const point = points[index];
@@ -898,21 +990,63 @@ const yTicks = buildYAxisTicks(maxValue);
             <p className="dashboardEmpty">
               {loading ? "Loading sales trend..." : "No sales in this view yet."}
             </p>
-          )}        </div>
+          )}
+        </div>
 
-        <div className="workspacePanel compactPanel squareImportPanel">
+        <div className="workspacePanel compactPanel squareImportPanel salesSquarePanel">
           <div className="workspaceHeader compactPanelHeader">
             <div>
-              <p className="eyebrow">Coming Soon</p>
-              <h3>Square Import</h3>
+              <p className="eyebrow">Square Sync</p>
+              <h3>Import Square Sales</h3>
             </div>
             <SquareStack size={22} />
           </div>
 
           <p className="dashboardEmpty">
-            Future upgrade: pull Square daily totals into Sales for quick daily,
-            weekly, or monthly reporting without manual entry.
+            Connect Square, then import completed payments as daily Sales records.
+            Imports are grouped by date and saved as Square daily totals.
           </p>
+
+          <div className="salesSquareDateGrid">
+            <label>
+              Start Date
+              <input
+                type="date"
+                value={squareStartDate}
+                onChange={(event) => setSquareStartDate(event.target.value)}
+              />
+            </label>
+
+            <label>
+              End Date
+              <input
+                type="date"
+                value={squareEndDate}
+                onChange={(event) => setSquareEndDate(event.target.value)}
+              />
+            </label>
+          </div>
+
+          <div className="salesSquareActions">
+            <button
+              className="secondaryButton compactButton"
+              type="button"
+              onClick={handleConnectSquare}
+            >
+              <SquareStack size={15} />
+              Connect Square
+            </button>
+
+            <button
+              className="primaryButton compactPrimary"
+              type="button"
+              onClick={handleImportSquareSales}
+              disabled={squareImporting}
+            >
+              <RefreshCw size={15} />
+              {squareImporting ? "Importing..." : "Import Sales"}
+            </button>
+          </div>
         </div>
       </section>
 
@@ -1398,4 +1532,3 @@ const yTicks = buildYAxisTicks(maxValue);
     </div>
   );
 }
- 
