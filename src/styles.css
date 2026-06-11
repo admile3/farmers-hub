@@ -17986,3 +17986,28 @@ input[type="number"] {
     grid-template-columns: 1fr !important;
   }
 }
+/* Inventory desktop layout fixes */
+
+.inventoryStatGridSeven {
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+}
+
+.inventoryInsightGridThree {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+@media (max-width: 1300px) {
+  .inventoryStatGridSeven {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .inventoryInsightGridThree {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .inventoryStatGridSeven {
+    grid-template-columns: 1fr !important;
+  }
+}
