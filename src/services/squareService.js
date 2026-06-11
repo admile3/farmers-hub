@@ -26,11 +26,27 @@ export async function connectSquare(uid) {
   window.location.href = authUrl;
 }
 
-export async function importSquareSales({
-  uid,
-  startDate,
-  endDate
-}) {
+export async function getSquareConnectionStatus(uid) {
+  if (!uid) {
+    return {
+      connected: false
+    };
+  }
+
+  const response = await fetch(
+    `/api/square-connection-status?uid=${encodeURIComponent(uid)}`
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data?.error || "Could not check Square connection.");
+  }
+
+  return data;
+}
+
+export async function importSquareSales({ uid, startDate, endDate }) {
   if (!uid) {
     throw new Error("User ID is required.");
   }
