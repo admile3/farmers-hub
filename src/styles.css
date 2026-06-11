@@ -33,7 +33,82 @@
 * {
   box-sizing: border-box;
 }
+/* ========================================
+   SALES - SQUARE CONNECTION STATUS
+======================================== */
 
+.salesSquareStatus {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border-color, #d9e2d3);
+  border-radius: 12px;
+  background: var(--card-background, #ffffff);
+}
+
+.salesSquareStatusInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.salesSquareStatusInfo strong {
+  font-size: 0.95rem;
+}
+
+.salesSquareStatusInfo span {
+  font-size: 0.82rem;
+  opacity: 0.75;
+}
+
+.salesSquareConnectedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+
+.salesSquareConnectedBadge::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+}
+
+.salesSquareDisconnectedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+
+.salesSquareDisconnectedBadge::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f59e0b;
+}
+
+@media (max-width: 760px) {
+  .salesSquareStatus {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
 html {
   scroll-behavior: smooth;
 }
