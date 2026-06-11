@@ -17909,3 +17909,20 @@ input[type="number"] {
   font-size: 12px;
   font-weight: 700;
 }
+/* Dashboard workspace hover colors */
+
+/* Sales */
+.dashboardWorkspaceCard.sales:hover .dashboardWorkspaceArrow,
+.dashboardWorkspaceCard.sales:focus-within .dashboardWorkspaceArrow {
+  background: #d89b2b !important;
+  color: #ffffff !important;
+  border-color: #d89b2b !important;
+}
+
+/* Thermal Printer */
+.dashboardWorkspaceCard.thermal:hover .dashboardWorkspaceArrow,
+.dashboardWorkspaceCard.thermal:focus-within .dashboardWorkspaceArrow {
+  background: #2f6f84 !important;
+  color: #ffffff !important;
+  border-color: #2f6f84 !important;
+}
