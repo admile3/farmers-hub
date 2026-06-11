@@ -18027,14 +18027,6 @@ input[type="number"] {
   width: 100% !important;
 }
 
-@media (max-width: 1500px) {
-  .inventoryStatGridSeven,
-  .inventoryStatGridForced.inventoryStatGridSeven,
-  .hubStatGrid.inventoryStatGridSeven {
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  }
-}
-
 @media (max-width: 900px) {
   .inventoryStatGridSeven,
   .inventoryStatGridForced.inventoryStatGridSeven,
@@ -18047,6 +18039,39 @@ input[type="number"] {
   .inventoryStatGridSeven,
   .inventoryStatGridForced.inventoryStatGridSeven,
   .hubStatGrid.inventoryStatGridSeven {
+    grid-template-columns: 1fr !important;
+  }
+}
+/* Final Inventory stat card desktop override */
+
+.inventoryModule .inventoryStatGridSeven,
+.inventoryModule .hubStatGrid.inventoryStatGridSeven,
+.inventoryModule .inventoryStatGrid.inventoryStatGridSeven,
+.inventoryModule .inventoryStatGridForced.inventoryStatGridSeven {
+  display: grid !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  gap: 0.75rem !important;
+}
+
+.inventoryModule .inventoryStatGridSeven > * {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+@media (max-width: 1100px) {
+  .inventoryModule .inventoryStatGridSeven,
+  .inventoryModule .hubStatGrid.inventoryStatGridSeven,
+  .inventoryModule .inventoryStatGrid.inventoryStatGridSeven,
+  .inventoryModule .inventoryStatGridForced.inventoryStatGridSeven {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 620px) {
+  .inventoryModule .inventoryStatGridSeven,
+  .inventoryModule .hubStatGrid.inventoryStatGridSeven,
+  .inventoryModule .inventoryStatGrid.inventoryStatGridSeven,
+  .inventoryModule .inventoryStatGridForced.inventoryStatGridSeven {
     grid-template-columns: 1fr !important;
   }
 }
