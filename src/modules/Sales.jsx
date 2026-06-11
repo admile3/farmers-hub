@@ -25,7 +25,11 @@ import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import SalesGuideContent from "../components/SalesGuideContent.jsx";
 import StatCard from "../components/StatCard.jsx";
 import { getProducts } from "../services/productService.js";
-import { connectSquare, importSquareSales } from "../services/squareService.js";
+import {
+  connectSquare,
+  getSquareConnectionStatus,
+  importSquareSales
+} from "../services/squareService.js";
 import {
   deleteSale,
   getSales,
@@ -351,6 +355,8 @@ export default function Sales() {
   const [showGuide, setShowGuide] = useState(false);
   const [loading, setLoading] = useState(false);
   const [squareImporting, setSquareImporting] = useState(false);
+  const [squareStatusLoading, setSquareStatusLoading] = useState(false);
+  const [squareConnection, setSquareConnection] = useState({ connected: false });
   const [squareStartDate, setSquareStartDate] = useState(startDateForTimeframe("7"));
   const [squareEndDate, setSquareEndDate] = useState(todayString());
 
@@ -395,8 +401,8 @@ export default function Sales() {
 
   const salesSummary = useMemo(() => summarizeSales(filteredSales), [filteredSales]);
   const chartRows = useMemo(
-    () => buildChartRows(filteredSales, chartRange),
-    [filteredSales, chartRange]
+    () => buildChartRows(sales, chartRange),
+    [sales, chartRange]
   );
   const saleTotals = useMemo(() => calculateSaleTotals(saleDraft), [saleDraft]);
 
@@ -421,8 +427,25 @@ export default function Sales() {
     }
   }
 
+  async function loadSquareStatus() {
+    if (!user?.uid) return;
+
+    setSquareStatusLoading(true);
+
+    try {
+      const status = await getSquareConnectionStatus(user.uid);
+      setSquareConnection(status || { connected: false });
+    } catch (error) {
+      console.error("Could not check Square connection:", error);
+      setSquareConnection({ connected: false });
+    } finally {
+      setSquareStatusLoading(false);
+    }
+  }
+
   useEffect(() => {
     loadData();
+    loadSquareStatus();
   }, [user?.uid]);
 
   useEffect(() => {
@@ -436,12 +459,16 @@ export default function Sales() {
   }, [user?.uid]);
 
   useEffect(() => {
+    if (!user?.uid) return;
+
     const params = new URLSearchParams(window.location.search);
     const squareStatus = params.get("square");
     const squareMessage = params.get("message");
 
     if (squareStatus === "connected") {
       setStatusMessage("Square connected successfully.");
+      loadSquareStatus();
+      loadData();
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
@@ -449,7 +476,7 @@ export default function Sales() {
       setStatusMessage(squareMessage || "Square connection failed.");
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-  }, []);
+  }, [user?.uid]);
 
   useEffect(() => {
     if (!statusMessage) return;
@@ -695,6 +722,7 @@ export default function Sales() {
       });
 
       await loadData();
+      await loadSquareStatus();
 
       setStatusMessage(
         `Imported ${result.dailyRecordCount || 0} daily Square sales record${
@@ -886,7 +914,8 @@ export default function Sales() {
                 const paddingRight = 22;
                 const paddingTop = 24;
                 const paddingBottom = 42;
-                const maxValue = Math.max(...chartRows.map((row) => row.total), 100);
+                const highestValue = Math.max(...chartRows.map((row) => row.total), 0);
+                const maxValue = Math.max(highestValue * 1.1, 100);
                 const yTicks = buildYAxisTicks(maxValue);
                 const yMax = Math.max(...yTicks, 100);
                 const tickIndexes = getChartTickIndexes(chartRows, chartRange);
@@ -994,7 +1023,7 @@ export default function Sales() {
         </div>
 
         <div className="workspacePanel compactPanel squareImportPanel salesSquarePanel">
-          <div className="workspaceHeader compactPanelHeader">
+          <div className="workspaceHeader compactPanelHeader salesSquareHeader">
             <div>
               <p className="eyebrow">Square Sync</p>
               <h3>Import Square Sales</h3>
@@ -1002,9 +1031,29 @@ export default function Sales() {
             <SquareStack size={22} />
           </div>
 
+          <div className={`salesSquareConnection ${squareConnection.connected ? "connected" : "notConnected"}`}>
+            <span className="salesSquareConnectionDot" />
+            <div>
+              <strong>
+                {squareStatusLoading
+                  ? "Checking Square connection..."
+                  : squareConnection.connected
+                    ? "Connected"
+                    : "Not connected"}
+              </strong>
+              <p>
+                {squareConnection.connected
+                  ? squareConnection.merchantId
+                    ? `Square merchant ID: ${squareConnection.merchantId}`
+                    : "Square account connected."
+                  : "Connect Square before importing daily sales totals."}
+              </p>
+            </div>
+          </div>
+
           <p className="dashboardEmpty">
-            Connect Square, then import completed payments as daily Sales records.
-            Imports are grouped by date and saved as Square daily totals.
+            Import completed Square payments as daily Sales records. Imports are grouped by
+            date and saved as Square daily totals.
           </p>
 
           <div className="salesSquareDateGrid">
@@ -1028,20 +1077,32 @@ export default function Sales() {
           </div>
 
           <div className="salesSquareActions">
-            <button
-              className="secondaryButton compactButton"
-              type="button"
-              onClick={handleConnectSquare}
-            >
-              <SquareStack size={15} />
-              Connect Square
-            </button>
+            {squareConnection.connected ? (
+              <button
+                className="secondaryButton compactButton"
+                type="button"
+                onClick={loadSquareStatus}
+                disabled={squareStatusLoading}
+              >
+                <RefreshCw size={15} />
+                {squareStatusLoading ? "Checking..." : "Check Status"}
+              </button>
+            ) : (
+              <button
+                className="secondaryButton compactButton"
+                type="button"
+                onClick={handleConnectSquare}
+              >
+                <SquareStack size={15} />
+                Connect Square
+              </button>
+            )}
 
             <button
               className="primaryButton compactPrimary"
               type="button"
               onClick={handleImportSquareSales}
-              disabled={squareImporting}
+              disabled={squareImporting || !squareConnection.connected}
             >
               <RefreshCw size={15} />
               {squareImporting ? "Importing..." : "Import Sales"}
