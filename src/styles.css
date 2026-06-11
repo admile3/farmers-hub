@@ -17961,3 +17961,28 @@ input[type="number"] {
   background: rgba(220, 38, 38, 0.18);
   color: #f87171;
 }
+/* Inventory layout refinements */
+
+.inventoryStatGridForced {
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+}
+
+.inventoryInsightGrid.inventoryInsightGridThree {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+@media (max-width: 1300px) {
+  .inventoryStatGridForced {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .inventoryInsightGrid.inventoryInsightGridThree {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .inventoryStatGridForced {
+    grid-template-columns: 1fr !important;
+  }
+}
