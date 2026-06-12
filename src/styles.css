@@ -18276,3 +18276,23 @@ input[type="number"] {
   pointer-events: none;
   transform: translate(-50%, -115%);
 }
+/* Sales chart tooltip visibility fix */
+
+.salesChartPanel,
+.salesLineChart,
+.salesChartWrapper {
+  overflow: visible !important;
+}
+
+.salesLineChart {
+  position: relative !important;
+}
+
+.salesChartTooltip {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  position: absolute !important;
+  z-index: 9999 !important;
+  pointer-events: none !important;
+}
