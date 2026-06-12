@@ -18194,3 +18194,73 @@ input[type="number"] {
     width: 100%;
   }
 }
+/* ========================================
+   SALES CHART TOOLTIP
+======================================== */
+
+.salesChartWrapper {
+  position: relative;
+}
+
+.salesChartTooltip {
+  position: absolute;
+  z-index: 20;
+  min-width: 180px;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #d7ddd3;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+  transform: translate(-50%, -110%);
+}
+
+.salesChartTooltip::after {
+  content: "";
+  position: absolute;
+  bottom: -7px;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  border-right: 1px solid #d7ddd3;
+  border-bottom: 1px solid #d7ddd3;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.salesChartTooltipDate {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+
+.salesChartTooltipAmount {
+  display: block;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #d79a28; /* Sales gold */
+  margin-bottom: 0.35rem;
+}
+
+.salesChartTooltipMeta {
+  display: block;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.salesChartPoint {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.salesChartPoint:hover {
+  r: 6;
+}
+
+.salesChartPointActive {
+  r: 6;
+}
