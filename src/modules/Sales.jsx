@@ -266,7 +266,13 @@ function buildChartRows(sales, chartRange = "week") {
     const date = sale.saleDate || "";
     if (!date) return accumulator;
 
-    accumulator[date] = (accumulator[date] || 0) + numberValue(sale.netSales);
+    const current = accumulator[date] || { total: 0, count: 0 };
+
+    accumulator[date] = {
+      total: current.total + numberValue(sale.netSales),
+      count: current.count + 1
+    };
+
     return accumulator;
   }, {});
 
@@ -278,7 +284,8 @@ function buildChartRows(sales, chartRange = "week") {
 
     return {
       date: key,
-      total: totals[key] || 0
+      total: totals[key]?.total || 0,
+      count: totals[key]?.count || 0
     };
   });
 }
@@ -359,6 +366,7 @@ export default function Sales() {
   const [squareConnection, setSquareConnection] = useState({ connected: false });
   const [squareStartDate, setSquareStartDate] = useState(startDateForTimeframe("7"));
   const [squareEndDate, setSquareEndDate] = useState(todayString());
+  const [hoveredChartPoint, setHoveredChartPoint] = useState(null);
 
   const productOptions = useMemo(() => {
     return products
@@ -496,6 +504,10 @@ export default function Sales() {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [user?.uid]);
+
+  useEffect(() => {
+    setHoveredChartPoint(null);
+  }, [chartRange]);
 
   useEffect(() => {
     if (!statusMessage) return;
@@ -1010,8 +1022,15 @@ export default function Sales() {
                           key={`${point.date}-dot`}
                           cx={point.x}
                           cy={point.y}
-                          r="3.5"
+                          r={hoveredChartPoint?.date === point.date ? 5 : 3.5}
                           className="salesChartPoint"
+                          tabIndex="0"
+                          role="button"
+                          aria-label={`${formatChartDateLabel(point.date, chartRange)} ${money(point.total)} net sales`}
+                          onMouseEnter={() => setHoveredChartPoint(point)}
+                          onMouseLeave={() => setHoveredChartPoint(null)}
+                          onFocus={() => setHoveredChartPoint(point)}
+                          onBlur={() => setHoveredChartPoint(null)}
                         />
                       ))}
 
@@ -1033,6 +1052,27 @@ export default function Sales() {
                   </svg>
                 );
               })()}
+
+              {hoveredChartPoint ? (
+                <div
+                  className="salesChartTooltip"
+                  style={{
+                    left: `${Math.min(Math.max((hoveredChartPoint.x / 1000) * 100, 8), 82)}%`,
+                    top: `${Math.min(Math.max((hoveredChartPoint.y / 300) * 100, 8), 72)}%`
+                  }}
+                >
+                  <strong>{formatChartDateLabel(hoveredChartPoint.date, chartRange)}</strong>
+                  <div className="salesChartTooltipRow">
+                    <span className="salesChartTooltipSwatch" />
+                    <span>Net sales</span>
+                    <b>{money(hoveredChartPoint.total)}</b>
+                  </div>
+                  <div className="salesChartTooltipDivider" />
+                  <span className="salesChartTooltipMuted">
+                    {hoveredChartPoint.count} sales record{hoveredChartPoint.count === 1 ? "" : "s"}
+                  </span>
+                </div>
+              ) : null}
             </div>
           ) : (
             <p className="dashboardEmpty">
