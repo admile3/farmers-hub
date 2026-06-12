@@ -331,17 +331,23 @@ function buildYAxisTicks(maxValue) {
   const safeMax = Math.max(Number(maxValue) || 0, 100);
 
   let roundedMax;
+  let step;
 
   if (safeMax <= 100) {
     roundedMax = Math.ceil(safeMax / 25) * 25;
+    step = 25;
   } else if (safeMax <= 250) {
     roundedMax = 250;
+    step = 50;
   } else if (safeMax <= 500) {
     roundedMax = 500;
+    step = 125;
   } else if (safeMax <= 750) {
     roundedMax = 750;
+    step = 250;
   } else if (safeMax <= 1000) {
     roundedMax = 1000;
+    step = 250;
   } else {
     const thousands = Math.floor(safeMax / 1000);
     const remainder = safeMax - thousands * 1000;
@@ -357,11 +363,21 @@ function buildYAxisTicks(maxValue) {
     } else {
       roundedMax = (thousands + 1) * 1000;
     }
+
+    step = roundedMax <= 2000 ? 250 : 500;
   }
 
-  const step = roundedMax / 4;
+  const ticks = [];
 
-  return Array.from({ length: 5 }, (_, index) => step * index);
+  for (let value = 0; value <= roundedMax; value += step) {
+    ticks.push(value);
+  }
+
+  if (ticks[ticks.length - 1] !== roundedMax) {
+    ticks.push(roundedMax);
+  }
+
+  return ticks;
 }
 
 export default function Sales() {
