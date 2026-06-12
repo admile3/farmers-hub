@@ -329,7 +329,20 @@ function getChartTickIndexes(rows, chartRange) {
 
 function buildYAxisTicks(maxValue) {
   const safeMax = Math.max(Number(maxValue) || 0, 100);
-  const step = safeMax / 4;
+
+  let roundedMax;
+
+  if (safeMax <= 1000) {
+    roundedMax = Math.ceil(safeMax / 250) * 250;
+  } else if (safeMax <= 5000) {
+    roundedMax = Math.ceil(safeMax / 500) * 500;
+  } else if (safeMax <= 10000) {
+    roundedMax = Math.ceil(safeMax / 1000) * 1000;
+  } else {
+    roundedMax = Math.ceil(safeMax / 2500) * 2500;
+  }
+
+  const step = roundedMax / 4;
 
   return Array.from({ length: 5 }, (_, index) => step * index);
 }
@@ -934,7 +947,7 @@ export default function Sales() {
                 const paddingTop = 24;
                 const paddingBottom = 42;
                 const highestValue = Math.max(...chartRows.map((row) => row.total), 0);
-                const maxValue = Math.max(highestValue * 1.1, 100);
+                const maxValue = Math.max(highestValue, 100);
                 const yTicks = buildYAxisTicks(maxValue);
                 const yMax = Math.max(...yTicks, 100);
                 const tickIndexes = getChartTickIndexes(chartRows, chartRange);
