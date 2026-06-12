@@ -266,7 +266,16 @@ function buildChartRows(sales, chartRange = "week") {
     const date = sale.saleDate || "";
     if (!date) return accumulator;
 
-    accumulator[date] = (accumulator[date] || 0) + numberValue(sale.netSales);
+    const current = accumulator[date] || {
+      total: 0,
+      count: 0
+    };
+
+    accumulator[date] = {
+      total: current.total + numberValue(sale.netSales),
+      count: current.count + 1
+    };
+
     return accumulator;
   }, {});
 
@@ -278,7 +287,8 @@ function buildChartRows(sales, chartRange = "week") {
 
     return {
       date: key,
-      total: totals[key] || 0
+      total: totals[key]?.total || 0,
+      count: totals[key]?.count || 0
     };
   });
 }
