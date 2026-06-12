@@ -332,14 +332,31 @@ function buildYAxisTicks(maxValue) {
 
   let roundedMax;
 
-  if (safeMax <= 1000) {
-    roundedMax = Math.ceil(safeMax / 250) * 250;
-  } else if (safeMax <= 5000) {
-    roundedMax = Math.ceil(safeMax / 500) * 500;
-  } else if (safeMax <= 10000) {
-    roundedMax = Math.ceil(safeMax / 1000) * 1000;
+  if (safeMax <= 100) {
+    roundedMax = Math.ceil(safeMax / 25) * 25;
+  } else if (safeMax <= 250) {
+    roundedMax = 250;
+  } else if (safeMax <= 500) {
+    roundedMax = 500;
+  } else if (safeMax <= 750) {
+    roundedMax = 750;
+  } else if (safeMax <= 1000) {
+    roundedMax = 1000;
   } else {
-    roundedMax = Math.ceil(safeMax / 2500) * 2500;
+    const thousands = Math.floor(safeMax / 1000);
+    const remainder = safeMax - thousands * 1000;
+
+    if (remainder === 0) {
+      roundedMax = safeMax;
+    } else if (remainder <= 250) {
+      roundedMax = thousands * 1000 + 250;
+    } else if (remainder <= 500) {
+      roundedMax = thousands * 1000 + 500;
+    } else if (remainder <= 750) {
+      roundedMax = thousands * 1000 + 750;
+    } else {
+      roundedMax = (thousands + 1) * 1000;
+    }
   }
 
   const step = roundedMax / 4;
