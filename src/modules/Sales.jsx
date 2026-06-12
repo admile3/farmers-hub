@@ -359,6 +359,7 @@ export default function Sales() {
   const [squareConnection, setSquareConnection] = useState({ connected: false });
   const [squareStartDate, setSquareStartDate] = useState(startDateForTimeframe("7"));
   const [squareEndDate, setSquareEndDate] = useState(todayString());
+  const [hoveredChartPoint, setHoveredChartPoint] = useState(null);
 
   const productOptions = useMemo(() => {
     return products
@@ -496,6 +497,10 @@ export default function Sales() {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [user?.uid]);
+
+  useEffect(() => {
+    setHoveredChartPoint(null);
+  }, [chartRange, sales.length]);
 
   useEffect(() => {
     if (!statusMessage) return;
@@ -1006,13 +1011,28 @@ export default function Sales() {
                     {points
                       .filter((point) => point.total > 0 && chartRange !== "year")
                       .map((point) => (
-                        <circle
-                          key={`${point.date}-dot`}
-                          cx={point.x}
-                          cy={point.y}
-                          r="3.5"
-                          className="salesChartPoint"
-                        />
+                        <g key={`${point.date}-dot`}>
+                          <circle
+                            cx={point.x}
+                            cy={point.y}
+                            r={hoveredChartPoint?.date === point.date ? 5 : 3.5}
+                            className="salesChartPoint"
+                          />
+                          <circle
+                            cx={point.x}
+                            cy={point.y}
+                            r="13"
+                            fill="transparent"
+                            className="salesChartHitArea"
+                            tabIndex="0"
+                            role="button"
+                            aria-label={`${formatDate(point.date)} ${money(point.total)} net sales`}
+                            onMouseEnter={() => setHoveredChartPoint(point)}
+                            onMouseLeave={() => setHoveredChartPoint(null)}
+                            onFocus={() => setHoveredChartPoint(point)}
+                            onBlur={() => setHoveredChartPoint(null)}
+                          />
+                        </g>
                       ))}
 
                     {tickIndexes.map((index) => {
@@ -1030,6 +1050,112 @@ export default function Sales() {
                         </text>
                       );
                     })}
+
+                    {hoveredChartPoint && chartRange !== "year" ? (() => {
+                      const tooltipWidth = 190;
+                      const tooltipHeight = 82;
+                      const tooltipGap = 16;
+                      const tooltipX = Math.min(
+                        Math.max(hoveredChartPoint.x - tooltipWidth / 2, paddingLeft + 4),
+                        chartWidth - paddingRight - tooltipWidth - 4
+                      );
+                      const wouldClipTop = hoveredChartPoint.y - tooltipHeight - tooltipGap < 6;
+                      const tooltipY = wouldClipTop
+                        ? hoveredChartPoint.y + tooltipGap
+                        : hoveredChartPoint.y - tooltipHeight - tooltipGap;
+                      const pointerY = wouldClipTop ? tooltipY - 6 : tooltipY + tooltipHeight;
+                      const pointerTipY = wouldClipTop ? tooltipY - tooltipGap + 2 : tooltipY + tooltipHeight + tooltipGap - 2;
+                      const pointerX = Math.min(
+                        Math.max(hoveredChartPoint.x, tooltipX + 18),
+                        tooltipX + tooltipWidth - 18
+                      );
+
+                      return (
+                        <g className="salesChartTooltipSvg" pointerEvents="none">
+                          <line
+                            x1={hoveredChartPoint.x}
+                            x2={hoveredChartPoint.x}
+                            y1={hoveredChartPoint.y}
+                            y2={wouldClipTop ? tooltipY : tooltipY + tooltipHeight}
+                            stroke="rgba(148, 163, 184, 0.35)"
+                            strokeWidth="1"
+                            strokeDasharray="4 4"
+                          />
+                          <rect
+                            x={tooltipX}
+                            y={tooltipY}
+                            width={tooltipWidth}
+                            height={tooltipHeight}
+                            rx="12"
+                            fill="#ffffff"
+                            stroke="#d7ddd3"
+                            strokeWidth="1"
+                            filter="drop-shadow(0px 8px 14px rgba(15, 23, 42, 0.14))"
+                          />
+                          <path
+                            d={
+                              wouldClipTop
+                                ? `M ${pointerX - 8} ${pointerY} L ${pointerX} ${pointerTipY} L ${pointerX + 8} ${pointerY} Z`
+                                : `M ${pointerX - 8} ${pointerY} L ${pointerX} ${pointerTipY} L ${pointerX + 8} ${pointerY} Z`
+                            }
+                            fill="#ffffff"
+                            stroke="#d7ddd3"
+                            strokeWidth="1"
+                          />
+                          <text
+                            x={tooltipX + 14}
+                            y={tooltipY + 22}
+                            fill="#1f2937"
+                            fontSize="13"
+                            fontWeight="800"
+                          >
+                            {formatDate(hoveredChartPoint.date)}
+                          </text>
+                          <circle
+                            cx={tooltipX + 16}
+                            cy={tooltipY + 43}
+                            r="5"
+                            fill="#d89b2b"
+                          />
+                          <text
+                            x={tooltipX + 28}
+                            y={tooltipY + 47}
+                            fill="#334155"
+                            fontSize="12"
+                            fontWeight="700"
+                          >
+                            Net sales
+                          </text>
+                          <text
+                            x={tooltipX + tooltipWidth - 14}
+                            y={tooltipY + 47}
+                            textAnchor="end"
+                            fill="#111827"
+                            fontSize="12"
+                            fontWeight="800"
+                          >
+                            {money(hoveredChartPoint.total)}
+                          </text>
+                          <line
+                            x1={tooltipX + 14}
+                            x2={tooltipX + tooltipWidth - 14}
+                            y1={tooltipY + 58}
+                            y2={tooltipY + 58}
+                            stroke="#e2e8f0"
+                            strokeWidth="1"
+                          />
+                          <text
+                            x={tooltipX + 14}
+                            y={tooltipY + 74}
+                            fill="#64748b"
+                            fontSize="12"
+                            fontWeight="600"
+                          >
+                            {hoveredChartPoint.count} sales record{hoveredChartPoint.count === 1 ? "" : "s"}
+                          </text>
+                        </g>
+                      );
+                    })() : null}
                   </svg>
                 );
               })()}
