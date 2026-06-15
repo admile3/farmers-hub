@@ -18296,3 +18296,37 @@ input[type="number"] {
   z-index: 9999 !important;
   pointer-events: none !important;
 }
+/* Sales and Thermal module color fixes */
+:root {
+  --sales: #d89b2b;
+  --thermal: #6f5fa8;
+}
+
+.modernNavLink.moduleNav.sales,
+.planModuleButton.sales {
+  background: var(--sales) !important;
+  color: #ffffff !important;
+}
+
+.modernNavLink.moduleNav.thermal,
+.planModuleButton.thermal {
+  background: var(--thermal) !important;
+  color: #ffffff !important;
+}
+
+.modernNavLink.moduleNav.sales:hover,
+.modernNavLink.moduleNav.sales.active {
+  background: #b97e1f !important;
+  color: #ffffff !important;
+}
+
+.modernNavLink.moduleNav.thermal:hover,
+.modernNavLink.moduleNav.thermal.active {
+  background: #5d4f91 !important;
+  color: #ffffff !important;
+}
+
+.planModuleButton.sales.selected,
+.planModuleButton.thermal.selected {
+  color: #ffffff !important;
+}
