@@ -196,16 +196,16 @@ const pricingPlans = [
     eyebrow: "Basic",
     price: "$5/month",
     description:
-      "Choose 1 module after your trial. Best for vendors who only need one focused tool.",
-    feature: "1 module"
+      "Choose 2 modules after your trial. Best for vendors who only need a couple of essential tools.",
+    feature: "2 modules"
   },
   {
     plan: "growth",
     eyebrow: "Growth",
     price: "$10/month",
     description:
-      "Choose 3 modules after your trial. Best for vendors managing regular production.",
-    feature: "3 modules"
+      "Choose 4 modules after your trial. Best for vendors managing regular production.",
+    feature: "4 modules"
   },
   {
     plan: "pro",
@@ -660,8 +660,8 @@ function PricingCards({
     if (plan === "basic") {
       selectedModules = basicModules;
 
-      if (selectedModules.length !== 1) {
-        alert("Please choose 1 module for the Basic plan.");
+      if (selectedModules.length !== 2) {
+        alert("Please choose 2 modules for the Basic plan.");
         return;
       }
     }
@@ -669,8 +669,8 @@ function PricingCards({
     if (plan === "growth") {
       selectedModules = growthModules;
 
-      if (selectedModules.length !== 3) {
-        alert("Please choose 3 modules for the Growth plan.");
+      if (selectedModules.length !== 4) {
+        alert("Please choose 4 modules for the Growth plan.");
         return;
       }
     }
@@ -710,22 +710,22 @@ function PricingCards({
 
             {mode === "checkout" && isBasic ? (
               <>
-                <p className="modulePickerHint">Select 1 module:</p>
+                <p className="modulePickerHint">Select 2 modules:</p>
                 <ModuleSelector
                   selectedModules={basicModules}
                   setSelectedModules={setBasicModules}
-                  limit={1}
+                  limit={2}
                 />
               </>
             ) : null}
 
             {mode === "checkout" && isGrowth ? (
               <>
-                <p className="modulePickerHint">Select 3 modules:</p>
+                <p className="modulePickerHint">Select 4 modules:</p>
                 <ModuleSelector
                   selectedModules={growthModules}
                   setSelectedModules={setGrowthModules}
-                  limit={3}
+                  limit={4}
                 />
               </>
             ) : null}
@@ -1246,8 +1246,8 @@ function Subscribe() {
           <p className="eyebrow">Choose your plan</p>
           <h2>Keep Farmers Hub active after your trial.</h2>
           <p>
-            Choose the plan that fits your workflow. Basic includes 1 module, Growth
-            includes 3 modules, and Pro unlocks every Farmers Hub module.
+            Choose the plan that fits your workflow. Basic includes 2 modules, Growth
+            includes 4 modules, and Pro unlocks every Farmers Hub module.
           </p>
         </div>
       </section>
