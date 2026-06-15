@@ -196,16 +196,14 @@ const pricingPlans = [
     eyebrow: "Basic",
     price: "$5/month",
     description:
-      "Choose 2 modules after your trial. Best for vendors who only need a couple of essential tools.",
-    feature: "2 modules"
+      "Includes 2 modules after your trial. Best for vendors who only need a couple of essential tools."
   },
   {
     plan: "growth",
     eyebrow: "Growth",
     price: "$10/month",
     description:
-      "Choose 4 modules after your trial. Best for vendors managing regular production.",
-    feature: "4 modules"
+      "Includes 4 modules after your trial. Best for vendors managing regular production."
   },
   {
     plan: "pro",
@@ -703,14 +701,11 @@ function PricingCards({
               <p className="eyebrow">{plan.eyebrow}</p>
               <h3>{plan.price}</h3>
               <p className="importExportText">{plan.description}</p>
-              <p className="importExportText subscriptionPlanFeature">
-                <strong>{plan.feature}</strong>
-              </p>
             </div>
 
             {mode === "checkout" && isBasic ? (
               <>
-                <p className="modulePickerHint">Select 2 modules:</p>
+                <p className="modulePickerHint">Choose your modules:</p>
                 <ModuleSelector
                   selectedModules={basicModules}
                   setSelectedModules={setBasicModules}
@@ -721,7 +716,7 @@ function PricingCards({
 
             {mode === "checkout" && isGrowth ? (
               <>
-                <p className="modulePickerHint">Select 4 modules:</p>
+                <p className="modulePickerHint">Choose your modules:</p>
                 <ModuleSelector
                   selectedModules={growthModules}
                   setSelectedModules={setGrowthModules}
