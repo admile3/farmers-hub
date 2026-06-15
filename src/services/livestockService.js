@@ -12,81 +12,54 @@ import {
 
 import { db } from "../firebase";
 
-function userCollection(userId, collectionName) {
-  return collection(db, "users", userId, collectionName);
+function livestockCollection(userId) {
+  return collection(db, "users", userId, "livestockBatches");
 }
 
 export async function getLivestockBatches(userId) {
   if (!userId) return [];
 
-  const q = query(
-    userCollection(userId, "livestockBatches"),
-    orderBy("name")
-  );
+  const livestockQuery = query(livestockCollection(userId), orderBy("name", "asc"));
+  const snapshot = await getDocs(livestockQuery);
 
-  const snapshot = await getDocs(q);
-
-  return snapshot.docs.map((docSnap) => ({
-    id: docSnap.id,
-    ...docSnap.data()
+  return snapshot.docs.map((batchDoc) => ({
+    id: batchDoc.id,
+    ...batchDoc.data()
   }));
 }
 
 export async function createLivestockBatch(userId, batch) {
   if (!userId) {
-    throw new Error("User ID is required.");
+    throw new Error("A user ID is required to create a livestock batch.");
   }
 
-  const docRef = await addDoc(
-    userCollection(userId, "livestockBatches"),
-    {
-      ...batch,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    }
-  );
+  const batchRef = await addDoc(livestockCollection(userId), {
+    ...batch,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
 
-  return docRef.id;
+  return batchRef.id;
 }
 
-export async function updateLivestockBatch(
-  userId,
-  batchId,
-  updates
-) {
+export async function updateLivestockBatch(userId, batchId, updates) {
   if (!userId || !batchId) {
-    throw new Error("User ID and batch ID are required.");
+    throw new Error("A user ID and livestock batch ID are required.");
   }
 
-  const docRef = doc(
-    db,
-    "users",
-    userId,
-    "livestockBatches",
-    batchId
-  );
+  const batchRef = doc(db, "users", userId, "livestockBatches", batchId);
 
-  await updateDoc(docRef, {
+  await updateDoc(batchRef, {
     ...updates,
     updatedAt: serverTimestamp()
   });
 }
 
-export async function deleteLivestockBatch(
-  userId,
-  batchId
-) {
+export async function deleteLivestockBatch(userId, batchId) {
   if (!userId || !batchId) {
-    throw new Error("User ID and batch ID are required.");
+    throw new Error("A user ID and livestock batch ID are required.");
   }
 
-  const docRef = doc(
-    db,
-    "users",
-    userId,
-    "livestockBatches",
-    batchId
-  );
-
-  await deleteDoc(docRef);
+  const batchRef = doc(db, "users", userId, "livestockBatches", batchId);
+  await deleteDoc(batchRef);
 }
