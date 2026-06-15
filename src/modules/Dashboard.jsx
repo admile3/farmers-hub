@@ -3,6 +3,7 @@ import {
   Activity,
   Archive,
   ArrowRight,
+  Beef,
   BookOpen,
   Calculator,
   CalendarDays,
@@ -80,6 +81,15 @@ const modules = [
     accent: "inventory"
   },
   {
+    key: "livestock",
+    title: "Livestock",
+    description:
+      "Track animal batches, feed costs, processing yields, finished cuts, and meat inventory.",
+    path: "/livestock",
+    icon: Beef,
+    accent: "livestock"
+  },
+  {
     key: "lists",
     title: "Lists",
     description:
@@ -143,13 +153,13 @@ const modules = [
     accent: "pricing"
   },
   {
-  key: "sales",
-  title: "Sales",
-  description:
-    "Track product sales, daily totals, completed order revenue, market performance, and revenue trends.",
-  path: "/sales",
-  icon: DollarSign,
-  accent: "sales"
+    key: "sales",
+    title: "Sales",
+    description:
+      "Track product sales, daily totals, completed order revenue, market performance, and revenue trends.",
+    path: "/sales",
+    icon: DollarSign,
+    accent: "sales"
   },
   {
     key: "spice",
@@ -687,5 +697,3 @@ export default function Dashboard({
 }
 
 export { modules as dashboardModules };
- 
-
