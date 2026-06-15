@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Archive,
+  Beef,
   Calculator,
   CalendarDays,
   ChefHat,
@@ -43,6 +44,7 @@ import Customers from "./modules/Customers.jsx";
 import Orders from "./modules/Orders.jsx";
 import Sales from "./modules/Sales.jsx";
 import Inventory from "./modules/Inventory.jsx";
+import Livestock from "./modules/Livestock.jsx";
 import PlantingScheduler from "./modules/PlantingScheduler.jsx";
 import ThermalPrinter from "./modules/ThermalPrinter.jsx";
 import AccountSettings from "./modules/AccountSettings.jsx";
@@ -97,6 +99,15 @@ const modules = [
     path: "/inventory",
     icon: Archive,
     accent: "inventory"
+  },
+  {
+    key: "livestock",
+    title: "Livestock",
+    description:
+      "Track animal batches, feed costs, processing yields, finished cuts, and meat inventory.",
+    path: "/livestock",
+    icon: Beef,
+    accent: "livestock"
   },
   {
     key: "lists",
@@ -1341,6 +1352,7 @@ export default function App() {
         <Route path="/orders" element={<AccessGate><Orders /></AccessGate>} />
         <Route path="/sales" element={<AccessGate><Sales /></AccessGate>} />
         <Route path="/inventory" element={<AccessGate><Inventory /></AccessGate>} />
+        <Route path="/livestock" element={<AccessGate><Livestock /></AccessGate>} />
         <Route path="/thermal-printer" element={<AccessGate><ThermalPrinter /></AccessGate>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
