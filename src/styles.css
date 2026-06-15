@@ -18447,3 +18447,120 @@ input[type="number"] {
     width: 100%;
   }
 }
+/* =========================================================
+   Livestock module
+   Add this to the bottom of src/styles.css
+   ========================================================= */
+
+:root {
+  --livestock: #8b5e34;
+  --livestock-dark: #6f4928;
+  --livestock-soft: rgba(139, 94, 52, 0.13);
+}
+
+.modernNavLink.moduleNav.livestock,
+.planModuleButton.livestock {
+  background: var(--livestock) !important;
+  color: #ffffff !important;
+}
+
+.modernNavLink.moduleNav.livestock:hover,
+.modernNavLink.moduleNav.livestock.active {
+  background: var(--livestock-dark) !important;
+  color: #ffffff !important;
+}
+
+.planModuleButton.livestock.selected {
+  color: #ffffff !important;
+}
+
+.livestockHero {
+  --module-accent: var(--livestock);
+  --module-accent-dark: var(--livestock-dark);
+  --module-accent-soft: var(--livestock-soft);
+}
+
+.modernModuleIcon.livestock,
+.moduleCard.livestock .moduleIcon,
+.dashboardWorkspaceIcon.livestock,
+.dashboardRowIcon.livestock,
+.hubStatCard.livestock .hubStatIcon,
+.toolCard.livestock svg {
+  background: var(--livestock-soft);
+  color: var(--livestock-dark);
+}
+
+.dashboardWorkspaceCard.livestock .dashboardWorkspaceAccent {
+  background: var(--livestock);
+}
+
+.livestockFlowGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.livestockBatchList,
+.livestockInputList {
+  max-height: 460px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.livestockBatchItem.selected {
+  border-color: rgba(139, 94, 52, 0.38);
+  background: rgba(139, 94, 52, 0.08);
+}
+
+.livestockCostSummary {
+  margin: 14px 0;
+}
+
+.livestockYieldGrid {
+  margin-top: 16px;
+}
+
+.livestockProductsPanel {
+  min-height: 420px;
+}
+
+.compactSelect {
+  width: min(100%, 280px);
+}
+
+.livestockProductRow {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) 110px 110px minmax(140px, 1fr) 44px;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.livestockProductHeader {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 980px) {
+  .livestockFlowGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .livestockProductRow {
+    grid-template-columns: 1fr;
+    padding: 12px 0;
+  }
+
+  .livestockProductHeader {
+    display: none;
+  }
+
+  .compactSelect {
+    width: 100%;
+  }
+}
