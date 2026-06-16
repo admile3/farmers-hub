@@ -19164,3 +19164,21 @@ input[type="number"] {
     min-width: 1080px;
   }
 }
+/* Farm Apothecary inner stat cards */
+.apothecaryWorkingSummary {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+@media (max-width: 1100px) {
+  .apothecaryWorkingSummary {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .apothecaryWorkingSummary {
+    grid-template-columns: 1fr !important;
+  }
+}
