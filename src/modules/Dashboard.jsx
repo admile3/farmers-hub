@@ -15,6 +15,7 @@ import {
   FlaskConical,
   Flower2,
   Folder,
+  Leaf,
   ListChecks,
   PackageCheck,
   Printer,
@@ -63,6 +64,15 @@ const modules = [
     accent: "customers"
   },
   {
+    key: "farm-apothecary",
+    title: "Farm Apothecary",
+    description:
+      "Track soap, candle, balm, lotion, and infused product batches, materials, production events, finished products, and inventory.",
+    path: "/farm-apothecary",
+    icon: Leaf,
+    accent: "apothecary"
+  },
+  {
     key: "flower-studio",
     title: "Flower Studio",
     description:
@@ -81,15 +91,6 @@ const modules = [
     accent: "inventory"
   },
   {
-    key: "lists",
-    title: "Lists",
-    description:
-      "Create reusable checklists for market prep, production, shopping, permits, delivery, and ideas.",
-    path: "/lists",
-    icon: ListChecks,
-    accent: "lists"
-  },
-    {
     key: "livestock",
     title: "Livestock",
     description:
@@ -97,6 +98,15 @@ const modules = [
     path: "/livestock",
     icon: Beef,
     accent: "livestock"
+  },
+  {
+    key: "lists",
+    title: "Lists",
+    description:
+      "Create reusable checklists for market prep, production, shopping, permits, delivery, and ideas.",
+    path: "/lists",
+    icon: ListChecks,
+    accent: "lists"
   },
   {
     key: "market",
