@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Archive,
+  Beef,
   Calculator,
   CalendarDays,
   ChefHat,
@@ -44,13 +45,14 @@ import Customers from "./modules/Customers.jsx";
 import Orders from "./modules/Orders.jsx";
 import Sales from "./modules/Sales.jsx";
 import Inventory from "./modules/Inventory.jsx";
+import Livestock from "./modules/Livestock.jsx";
 import PlantingScheduler from "./modules/PlantingScheduler.jsx";
 import ThermalPrinter from "./modules/ThermalPrinter.jsx";
 import AccountSettings from "./modules/AccountSettings.jsx";
 import Onboarding from "./modules/Onboarding.jsx";
 import Dashboard from "./modules/Dashboard.jsx";
-import FarmApothecary from "./modules/FarmApothecary.jsx";
 import FlowerStudio from "./modules/FlowerStudio.jsx";
+import FarmApothecary from "./modules/FarmApothecary.jsx";
 import { useAuth } from "./AuthContext.jsx";
 import { useUnsavedChanges } from "./UnsavedChangesContext.jsx";
 
@@ -117,6 +119,15 @@ const modules = [
     path: "/lists",
     icon: ListChecks,
     accent: "lists"
+  },
+  {
+    key: "livestock",
+    title: "Livestock",
+    description:
+      "Track animal batches, feed costs, processing yields, finished cuts, and meat inventory.",
+    path: "/livestock",
+    icon: Beef,
+    accent: "livestock"
   },
   {
     key: "market",
@@ -207,16 +218,14 @@ const pricingPlans = [
     eyebrow: "Basic",
     price: "$5/month",
     description:
-      "Choose 1 module after your trial. Best for vendors who only need one focused tool.",
-    feature: "1 module"
+      "Includes 2 modules after your trial. Best for vendors who only need a couple of essential tools."
   },
   {
     plan: "growth",
     eyebrow: "Growth",
     price: "$10/month",
     description:
-      "Choose 3 modules after your trial. Best for vendors managing regular production.",
-    feature: "3 modules"
+      "Includes 4 modules after your trial. Best for vendors managing regular production."
   },
   {
     plan: "pro",
@@ -671,8 +680,8 @@ function PricingCards({
     if (plan === "basic") {
       selectedModules = basicModules;
 
-      if (selectedModules.length !== 1) {
-        alert("Please choose 1 module for the Basic plan.");
+      if (selectedModules.length !== 2) {
+        alert("Please choose 2 modules for the Basic plan.");
         return;
       }
     }
@@ -680,8 +689,8 @@ function PricingCards({
     if (plan === "growth") {
       selectedModules = growthModules;
 
-      if (selectedModules.length !== 3) {
-        alert("Please choose 3 modules for the Growth plan.");
+      if (selectedModules.length !== 4) {
+        alert("Please choose 4 modules for the Growth plan.");
         return;
       }
     }
@@ -714,29 +723,26 @@ function PricingCards({
               <p className="eyebrow">{plan.eyebrow}</p>
               <h3>{plan.price}</h3>
               <p className="importExportText">{plan.description}</p>
-              <p className="importExportText subscriptionPlanFeature">
-                <strong>{plan.feature}</strong>
-              </p>
             </div>
 
             {mode === "checkout" && isBasic ? (
               <>
-                <p className="modulePickerHint">Select 1 module:</p>
+                <p className="modulePickerHint">Choose your modules:</p>
                 <ModuleSelector
                   selectedModules={basicModules}
                   setSelectedModules={setBasicModules}
-                  limit={1}
+                  limit={2}
                 />
               </>
             ) : null}
 
             {mode === "checkout" && isGrowth ? (
               <>
-                <p className="modulePickerHint">Select 3 modules:</p>
+                <p className="modulePickerHint">Choose your modules:</p>
                 <ModuleSelector
                   selectedModules={growthModules}
                   setSelectedModules={setGrowthModules}
-                  limit={3}
+                  limit={4}
                 />
               </>
             ) : null}
@@ -1257,8 +1263,8 @@ function Subscribe() {
           <p className="eyebrow">Choose your plan</p>
           <h2>Keep Farmers Hub active after your trial.</h2>
           <p>
-            Choose the plan that fits your workflow. Basic includes 1 module, Growth
-            includes 3 modules, and Pro unlocks every Farmers Hub module.
+            Choose the plan that fits your workflow. Basic includes 2 modules, Growth
+            includes 4 modules, and Pro unlocks every Farmers Hub module.
           </p>
         </div>
       </section>
@@ -1358,6 +1364,7 @@ export default function App() {
         <Route path="/orders" element={<AccessGate><Orders /></AccessGate>} />
         <Route path="/sales" element={<AccessGate><Sales /></AccessGate>} />
         <Route path="/inventory" element={<AccessGate><Inventory /></AccessGate>} />
+        <Route path="/livestock" element={<AccessGate><Livestock /></AccessGate>} />
         <Route path="/thermal-printer" element={<AccessGate><ThermalPrinter /></AccessGate>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
