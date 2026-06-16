@@ -132,6 +132,8 @@ function createBlankCut() {
     unit: "lb",
     yieldPercent: "",
     processingEventId: "",
+    costMode: "allocated",
+    manualCostPerUnit: "",
     retailPrice: "",
     wholesalePrice: "",
     notes: ""
@@ -299,6 +301,23 @@ function getCutUnitCost(batch, cut) {
 
 function getCutAllocatedCost(batch, cut) {
   return getCutUnitCost(batch, cut) * getCutQuantity(cut, batch);
+}
+
+function getProductCostModeLabel(cut) {
+  if (cut.costMode === "manual") return "Manual";
+  return "Processing avg";
+}
+
+function getProductUnitCost(batch, cut) {
+  if (cut.costMode === "manual") {
+    return toNumber(cut.manualCostPerUnit);
+  }
+
+  return getCutUnitCost(batch, cut);
+}
+
+function getProductAllocatedCost(batch, cut) {
+  return getProductUnitCost(batch, cut) * getCutQuantity(cut, batch);
 }
 
 
@@ -769,6 +788,8 @@ export default function Livestock() {
           name: cut.name?.trim() || "",
           quantity: cleanNumber(cut.quantity, 2),
           yieldPercent: cleanNumber(cut.yieldPercent, 2),
+          costMode: cut.costMode || "allocated",
+          manualCostPerUnit: cleanCurrency(cut.manualCostPerUnit),
           retailPrice: cleanCurrency(cut.retailPrice),
           wholesalePrice: cleanCurrency(cut.wholesalePrice),
           notes: cut.notes?.trim() || ""
@@ -887,7 +908,7 @@ export default function Livestock() {
               variantName: unit,
               quantityOnHand: 0,
               unit,
-              costPerUnit: cleanCurrency(getCutUnitCost(batchForm, cut)),
+              costPerUnit: cleanCurrency(getProductUnitCost(batchForm, cut)),
               retailPrice: cleanCurrency(cut.retailPrice),
               wholesalePrice: cleanCurrency(cut.wholesalePrice),
               status: "In Stock",
@@ -951,7 +972,7 @@ export default function Livestock() {
             wholesalePrice: cleanCurrency(cut.wholesalePrice),
             targetRetailMargin: 70,
             targetWholesaleMargin: 50,
-            batchIngredientCost: cleanCurrency(getCutAllocatedCost(batchForm, cut)),
+            batchIngredientCost: cleanCurrency(getProductAllocatedCost(batchForm, cut)),
             batchUnits: cleanNumber(quantity, 2),
             packagingCostPerUnit: "",
             laborHours: "",
@@ -1421,99 +1442,91 @@ export default function Livestock() {
                 </div>
 
                 {(batchForm.inputs || []).length ? (
-                  <div className="livestockEditableList">
-                    {batchForm.inputs.map((input, index) => (
-                      <div className="livestockEditableCard" key={input.id || index}>
-                        <div className="livestockCardHeader">
-                          <strong>Input #{index + 1}</strong>
-                          <button type="button" onClick={() => removeInputEntry(index)}>
+                  <div className="livestockTableWrap">
+                    <div className="livestockInputTable livestockEditableTable">
+                      <div className="livestockTableHeader">
+                        <span>Date</span>
+                        <span>Category</span>
+                        <span>Description</span>
+                        <span>Qty</span>
+                        <span>Unit</span>
+                        <span>Cost</span>
+                        <span></span>
+                      </div>
+
+                      {batchForm.inputs.map((input, index) => (
+                        <div className="livestockTableRow" key={input.id || index}>
+                          <input
+                            type="date"
+                            value={input.date}
+                            onChange={(event) =>
+                              updateInputEntry(index, "date", event.target.value)
+                            }
+                          />
+
+                          <select
+                            value={input.category}
+                            onChange={(event) =>
+                              updateInputEntry(index, "category", event.target.value)
+                            }
+                          >
+                            {inputCategories.map((category) => (
+                              <option key={category}>{category}</option>
+                            ))}
+                          </select>
+
+                          <input
+                            value={input.description}
+                            onChange={(event) =>
+                              updateInputEntry(index, "description", event.target.value)
+                            }
+                            placeholder="e.g., feed, processing deposit, hay"
+                          />
+
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={input.quantity}
+                            onChange={(event) =>
+                              updateInputEntry(index, "quantity", event.target.value)
+                            }
+                            placeholder="3"
+                          />
+
+                          <input
+                            value={input.unit}
+                            onChange={(event) =>
+                              updateInputEntry(index, "unit", event.target.value)
+                            }
+                            placeholder="bags"
+                          />
+
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={input.cost}
+                            onChange={(event) =>
+                              updateInputEntry(index, "cost", event.target.value)
+                            }
+                            onBlur={(event) =>
+                              updateInputEntry(index, "cost", cleanCurrency(event.target.value))
+                            }
+                            placeholder="84.50"
+                          />
+
+                          <button
+                            className="iconButton danger"
+                            type="button"
+                            onClick={() => removeInputEntry(index)}
+                          >
                             <Trash2 size={14} />
                           </button>
                         </div>
-
-                        <div className="formGrid compactFormGrid">
-                          <label>
-                            Date
-                            <input
-                              type="date"
-                              value={input.date}
-                              onChange={(event) =>
-                                updateInputEntry(index, "date", event.target.value)
-                              }
-                            />
-                          </label>
-
-                          <label>
-                            Category
-                            <select
-                              value={input.category}
-                              onChange={(event) =>
-                                updateInputEntry(index, "category", event.target.value)
-                              }
-                            >
-                              {inputCategories.map((category) => (
-                                <option key={category}>{category}</option>
-                              ))}
-                            </select>
-                          </label>
-
-                          <label className="fullSpan">
-                            Description
-                            <input
-                              value={input.description}
-                              onChange={(event) =>
-                                updateInputEntry(index, "description", event.target.value)
-                              }
-                              placeholder="e.g., feed, processing deposit, hay, mileage"
-                            />
-                          </label>
-
-                          <label>
-                            Quantity
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={input.quantity}
-                              onChange={(event) =>
-                                updateInputEntry(index, "quantity", event.target.value)
-                              }
-                              placeholder="e.g., 3"
-                            />
-                          </label>
-
-                          <label>
-                            Unit
-                            <input
-                              value={input.unit}
-                              onChange={(event) =>
-                                updateInputEntry(index, "unit", event.target.value)
-                              }
-                              placeholder="e.g., bags, bales, miles"
-                            />
-                          </label>
-
-                          <label>
-                            Cost
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={input.cost}
-                              onChange={(event) =>
-                                updateInputEntry(index, "cost", event.target.value)
-                              }
-                              onBlur={(event) =>
-                                updateInputEntry(index, "cost", cleanCurrency(event.target.value))
-                              }
-                              placeholder="e.g., 84.50"
-                            />
-                          </label>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
+                      ))}
+                    </div>
+                  </div>                ) : (
                   <div className="placeholderBox compactPlaceholder">
                     Add feed, hay, bedding, vet, processing, transportation, packaging, or other costs.
                   </div>
@@ -1741,165 +1754,153 @@ export default function Livestock() {
                 </div>
 
                 {(batchForm.cuts || []).length ? (
-                  <div className="livestockEditableList">
-                    {batchForm.cuts.map((cut, index) => {
-                      const quantity = getCutQuantity(cut, batchForm);
+                  <div className="livestockTableWrap">
+                    <div className="livestockProductTable livestockEditableTable">
+                      <div className="livestockTableHeader">
+                        <span>Product</span>
+                        <span>Qty</span>
+                        <span>Unit</span>
+                        <span>Source</span>
+                        <span>Cost Mode</span>
+                        <span>Manual Cost</span>
+                        <span>Retail</span>
+                        <span>Wholesale</span>
+                        <span>Est. Cost</span>
+                        <span></span>
+                      </div>
 
-                      return (
-                        <div className="livestockEditableCard" key={cut.id || index}>
-                          <div className="livestockCardHeader">
-                            <strong>{cut.name || `Product #${index + 1}`}</strong>
-                            <button type="button" onClick={() => removeCutEntry(index)}>
+                      {batchForm.cuts.map((cut, index) => {
+                        const quantity = getCutQuantity(cut, batchForm);
+
+                        return (
+                          <div className="livestockTableRow" key={cut.id || index}>
+                            <input
+                              value={cut.name}
+                              onChange={(event) =>
+                                updateCutEntry(index, "name", event.target.value)
+                              }
+                              placeholder="Ground Beef"
+                            />
+
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={cut.quantity}
+                              onChange={(event) =>
+                                updateCutEntry(index, "quantity", event.target.value)
+                              }
+                              placeholder="120"
+                            />
+
+                            <select
+                              value={cut.unit}
+                              onChange={(event) =>
+                                updateCutEntry(index, "unit", event.target.value)
+                              }
+                            >
+                              {productUnits.map((unit) => (
+                                <option key={unit}>{unit}</option>
+                              ))}
+                            </select>
+
+                            <select
+                              value={cut.processingEventId || ""}
+                              onChange={(event) =>
+                                updateCutEntry(index, "processingEventId", event.target.value)
+                              }
+                            >
+                              <option value="">Whole batch</option>
+                              {(batchForm.processingEvents || []).map((event, eventIndex) => (
+                                <option key={event.id} value={event.id}>
+                                  Processing #{eventIndex + 1}
+                                  {event.headCountProcessed
+                                    ? `, ${event.headCountProcessed} head`
+                                    : ""}
+                                </option>
+                              ))}
+                            </select>
+
+                            <select
+                              value={cut.costMode || "allocated"}
+                              onChange={(event) =>
+                                updateCutEntry(index, "costMode", event.target.value)
+                              }
+                            >
+                              <option value="allocated">Processing avg</option>
+                              <option value="manual">Manual per unit</option>
+                            </select>
+
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={cut.manualCostPerUnit || ""}
+                              onChange={(event) =>
+                                updateCutEntry(index, "manualCostPerUnit", event.target.value)
+                              }
+                              onBlur={(event) =>
+                                updateCutEntry(
+                                  index,
+                                  "manualCostPerUnit",
+                                  cleanCurrency(event.target.value)
+                                )
+                              }
+                              placeholder="0.00"
+                              disabled={(cut.costMode || "allocated") !== "manual"}
+                            />
+
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={cut.retailPrice}
+                              onChange={(event) =>
+                                updateCutEntry(index, "retailPrice", event.target.value)
+                              }
+                              onBlur={(event) =>
+                                updateCutEntry(index, "retailPrice", cleanCurrency(event.target.value))
+                              }
+                              placeholder="0.00"
+                            />
+
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={cut.wholesalePrice}
+                              onChange={(event) =>
+                                updateCutEntry(index, "wholesalePrice", event.target.value)
+                              }
+                              onBlur={(event) =>
+                                updateCutEntry(
+                                  index,
+                                  "wholesalePrice",
+                                  cleanCurrency(event.target.value)
+                                )
+                              }
+                              placeholder="0.00"
+                            />
+
+                            <div className="livestockTableCost">
+                              <strong>{money(getProductUnitCost(batchForm, cut))}</strong>
+                              <span>
+                                {round(quantity, 2)} {cut.unit}
+                              </span>
+                            </div>
+
+                            <button
+                              className="iconButton danger"
+                              type="button"
+                              onClick={() => removeCutEntry(index)}
+                            >
                               <Trash2 size={14} />
                             </button>
                           </div>
-
-                          <div className="formGrid compactFormGrid">
-                            <label>
-                              Product
-                              <input
-                                value={cut.name}
-                                onChange={(event) =>
-                                  updateCutEntry(index, "name", event.target.value)
-                                }
-                                placeholder="e.g., Ground Beef, Whole Chicken"
-                              />
-                            </label>
-
-                            <label>
-                              Quantity
-                              <input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                value={cut.quantity}
-                                onChange={(event) =>
-                                  updateCutEntry(index, "quantity", event.target.value)
-                                }
-                                placeholder="e.g., 120"
-                              />
-                            </label>
-
-                            <label>
-                              Unit
-                              <select
-                                value={cut.unit}
-                                onChange={(event) =>
-                                  updateCutEntry(index, "unit", event.target.value)
-                                }
-                              >
-                                {productUnits.map((unit) => (
-                                  <option key={unit}>{unit}</option>
-                                ))}
-                              </select>
-                            </label>
-
-                            <label>
-                              Yield %
-                              <input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                value={cut.yieldPercent}
-                                onChange={(event) =>
-                                  updateCutEntry(index, "yieldPercent", event.target.value)
-                                }
-                                placeholder="Optional"
-                              />
-                            </label>
-
-                            <label>
-                              Processing Source
-                              <select
-                                value={cut.processingEventId || ""}
-                                onChange={(event) =>
-                                  updateCutEntry(index, "processingEventId", event.target.value)
-                                }
-                              >
-                                <option value="">Whole batch / unassigned</option>
-                                {(batchForm.processingEvents || []).map((event, eventIndex) => (
-                                  <option key={event.id} value={event.id}>
-                                    Processing #{eventIndex + 1}
-                                    {event.date ? ` • ${event.date}` : ""}
-                                    {event.headCountProcessed
-                                      ? ` • ${event.headCountProcessed} head`
-                                      : ""}
-                                  </option>
-                                ))}
-                              </select>
-                            </label>
-
-                            <label>
-                              Retail Price
-                              <input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                value={cut.retailPrice}
-                                onChange={(event) =>
-                                  updateCutEntry(index, "retailPrice", event.target.value)
-                                }
-                                onBlur={(event) =>
-                                  updateCutEntry(index, "retailPrice", cleanCurrency(event.target.value))
-                                }
-                                placeholder="0.00"
-                              />
-                            </label>
-
-                            <label>
-                              Wholesale Price
-                              <input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                value={cut.wholesalePrice}
-                                onChange={(event) =>
-                                  updateCutEntry(index, "wholesalePrice", event.target.value)
-                                }
-                                onBlur={(event) =>
-                                  updateCutEntry(
-                                    index,
-                                    "wholesalePrice",
-                                    cleanCurrency(event.target.value)
-                                  )
-                                }
-                                placeholder="0.00"
-                              />
-                            </label>
-
-                            <div className="livestockCalculatedField">
-                              <span>Calculated Quantity</span>
-                              <strong>
-                                {round(quantity, 2)} {cut.unit}
-                              </strong>
-                            </div>
-
-                            <div className="livestockCalculatedField">
-                              <span>Estimated Cost / Unit</span>
-                              <strong>{money(getCutUnitCost(batchForm, cut))}</strong>
-                            </div>
-
-                            <div className="livestockCalculatedField">
-                              <span>Allocated Product Cost</span>
-                              <strong>{money(getCutAllocatedCost(batchForm, cut))}</strong>
-                            </div>
-
-                            <label className="fullSpan">
-                              Notes
-                              <textarea
-                                value={cut.notes}
-                                onChange={(event) =>
-                                  updateCutEntry(index, "notes", event.target.value)
-                                }
-                                placeholder="Package size, cut notes, customer notes..."
-                              />
-                            </label>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
+                        );
+                      })}
+                    </div>
+                  </div>                ) : (
                   <div className="placeholderBox compactPlaceholder">
                     Add finished products like Ground Beef, Ribeye, Pork Chops, Sausage, Whole Chicken, Chicken Thighs, or Stew Meat.
                   </div>
