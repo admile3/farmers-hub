@@ -18741,3 +18741,111 @@ input[type="number"] {
 .livestockEditableCard .livestockCalculatedField {
   min-height: 42px;
 }
+/* Livestock table-style inputs and finished products */
+.livestockFlowGrid {
+  grid-template-columns: 1fr !important;
+}
+
+.livestockTableWrap {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.livestockEditableTable {
+  display: grid;
+  gap: 6px;
+  min-width: 980px;
+}
+
+.livestockInputTable .livestockTableHeader,
+.livestockInputTable .livestockTableRow {
+  grid-template-columns: 150px 180px minmax(260px, 1fr) 110px 120px 130px 44px;
+}
+
+.livestockProductTable {
+  min-width: 1320px;
+}
+
+.livestockProductTable .livestockTableHeader,
+.livestockProductTable .livestockTableRow {
+  grid-template-columns:
+    minmax(180px, 1.1fr)
+    90px
+    105px
+    minmax(190px, 1fr)
+    150px
+    120px
+    110px
+    120px
+    130px
+    44px;
+}
+
+.livestockTableHeader,
+.livestockTableRow {
+  display: grid;
+  gap: 8px;
+  align-items: center;
+}
+
+.livestockTableHeader {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0 4px;
+}
+
+.livestockTableRow {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 8px;
+}
+
+.livestockTableRow input,
+.livestockTableRow select {
+  min-height: 38px;
+}
+
+.livestockTableRow input:disabled {
+  opacity: 0.55;
+  background: #f5f2ea;
+}
+
+.livestockTableCost {
+  display: grid;
+  gap: 2px;
+  align-content: center;
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: rgba(139, 94, 52, 0.08);
+}
+
+.livestockTableCost strong {
+  color: var(--livestock-dark);
+  font-size: 0.86rem;
+}
+
+.livestockTableCost span {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.livestockEditableCard {
+  padding: 10px;
+}
+
+@media (max-width: 760px) {
+  .livestockEditableTable {
+    min-width: 860px;
+  }
+
+  .livestockProductTable {
+    min-width: 1180px;
+  }
+}
