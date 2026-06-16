@@ -101,15 +101,6 @@ const modules = [
     accent: "inventory"
   },
   {
-    key: "livestock",
-    title: "Livestock",
-    description:
-      "Track animal batches, feed costs, processing yields, finished cuts, and meat inventory.",
-    path: "/livestock",
-    icon: Beef,
-    accent: "livestock"
-  },
-  {
     key: "lists",
     title: "Lists",
     description:
@@ -117,6 +108,15 @@ const modules = [
     path: "/lists",
     icon: ListChecks,
     accent: "lists"
+  },
+    {
+    key: "livestock",
+    title: "Livestock",
+    description:
+      "Track animal batches, feed costs, processing yields, finished cuts, and meat inventory.",
+    path: "/livestock",
+    icon: Beef,
+    accent: "livestock"
   },
   {
     key: "market",
