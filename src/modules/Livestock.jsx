@@ -76,6 +76,7 @@ const emptyBatch = {
   startingHeadCount: "",
   currentHeadCount: "",
   startingWeight: "",
+  purchasePricePerHead: "",
   purchaseCost: "",
   notes: "",
   inputs: [],
@@ -136,12 +137,23 @@ function getBatchInputTotal(batch) {
   return (batch.inputs || []).reduce((sum, item) => sum + toNumber(item.cost), 0);
 }
 
+function getAnimalPurchaseTotal(batch) {
+  const pricePerHead = toNumber(batch.purchasePricePerHead);
+  const headCount = toNumber(batch.startingHeadCount || batch.currentHeadCount);
+
+  if (pricePerHead && headCount) {
+    return pricePerHead * headCount;
+  }
+
+  return toNumber(batch.purchaseCost);
+}
+
 function getProcessingFee(batch) {
   return toNumber(batch.processing?.processingFee);
 }
 
 function getBatchTotalCost(batch) {
-  return toNumber(batch.purchaseCost) + getBatchInputTotal(batch) + getProcessingFee(batch);
+  return getAnimalPurchaseTotal(batch) + getBatchInputTotal(batch) + getProcessingFee(batch);
 }
 
 function getPackagedWeight(batch) {
@@ -478,7 +490,11 @@ export default function Livestock() {
         0
       ),
       startingWeight: cleanNumberInput(batchForm.startingWeight, 2),
-      purchaseCost: cleanCurrencyInput(batchForm.purchaseCost),
+      purchasePricePerHead: cleanCurrencyInput(batchForm.purchasePricePerHead),
+      purchaseCost: cleanCurrencyInput(
+        toNumber(batchForm.purchasePricePerHead) *
+          toNumber(batchForm.startingHeadCount || batchForm.currentHeadCount)
+      ),
       notes: batchForm.notes.trim(),
       inputs: (batchForm.inputs || []).map((input) => ({
         ...input,
@@ -963,21 +979,29 @@ export default function Livestock() {
             </label>
 
             <label>
-              Animal Purchase Cost
+              Purchase Price Per Head
               <input
                 type="number"
                 step="0.01"
                 min="0"
-                value={batchForm.purchaseCost}
+                value={batchForm.purchasePricePerHead}
                 onChange={(event) =>
-                  updateBatchField("purchaseCost", event.target.value)
+                  updateBatchField("purchasePricePerHead", event.target.value)
                 }
                 onBlur={(event) =>
-                  updateBatchField("purchaseCost", cleanCurrencyInput(event.target.value))
+                  updateBatchField(
+                    "purchasePricePerHead",
+                    cleanCurrencyInput(event.target.value)
+                  )
                 }
-                placeholder="e.g., 450.00"
+                placeholder="e.g., 75.00"
               />
             </label>
+
+            <div className="livestockCalculatedField">
+              <span>Total Animal Cost</span>
+              <strong>{formatCurrency(getAnimalPurchaseTotal(batchForm))}</strong>
+            </div>
 
             <label className="fullSpan">
               Notes
@@ -1166,6 +1190,11 @@ export default function Livestock() {
               </form>
 
               <div className="inventoryDetailGrid livestockCostSummary">
+                <div>
+                  <span>Animal Cost</span>
+                  <strong>{formatCurrency(getAnimalPurchaseTotal(selectedBatch))}</strong>
+                </div>
+
                 <div>
                   <span>Input Cost</span>
                   <strong>{formatCurrency(selectedBatchSummary.inputTotal)}</strong>
@@ -1536,4 +1565,3 @@ export default function Livestock() {
     </div>
   );
 }
-
