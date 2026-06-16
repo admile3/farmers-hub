@@ -18564,3 +18564,41 @@ input[type="number"] {
     width: 100%;
   }
 }
+/* Livestock stat/icon and calculated field cleanup */
+.hubStatCard.livestock .hubStatIcon,
+.hubStatIcon.livestock,
+.livestock .hubStatIcon {
+  background: var(--livestock) !important;
+  color: #ffffff !important;
+}
+
+.hubStatCard.livestock .hubStatIcon svg,
+.hubStatIcon.livestock svg,
+.livestock .hubStatIcon svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.livestockCalculatedField {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(139, 94, 52, 0.08);
+}
+
+.livestockCalculatedField span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.livestockCalculatedField strong {
+  color: var(--livestock-dark);
+  font-size: 1rem;
+  font-weight: 900;
+}
