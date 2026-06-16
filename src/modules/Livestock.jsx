@@ -395,6 +395,33 @@ export default function Livestock() {
     };
   }, [selectedBatch]);
 
+  const processingPreviewBatch = useMemo(() => {
+    if (editingBatchId) return batchForm;
+    return selectedBatch;
+  }, [batchForm, editingBatchId, selectedBatch]);
+
+  const processingPreviewSummary = useMemo(() => {
+    if (!processingPreviewBatch) {
+      return {
+        hangingYield: 0,
+        packagedYield: 0,
+        costPerPackagedPound: 0
+      };
+    }
+
+    return {
+      hangingYield: getYieldPercent(
+        processingPreviewBatch.processing?.hangingWeight,
+        processingPreviewBatch.processing?.liveWeight
+      ),
+      packagedYield: getYieldPercent(
+        processingPreviewBatch.processing?.packagedWeight,
+        processingPreviewBatch.processing?.hangingWeight
+      ),
+      costPerPackagedPound: getCostPerPackagedPound(processingPreviewBatch)
+    };
+  }, [processingPreviewBatch]);
+
   function updateBatchField(field, value) {
     markLivestockDirty();
 
@@ -636,6 +663,29 @@ export default function Livestock() {
       console.error(error);
       showStatus("Could not remove input cost.", "error");
     }
+  }
+
+  function handleProcessingBatchChange(batchId) {
+    setSelectedBatchId(batchId);
+
+    const batch = batches.find((item) => item.id === batchId);
+
+    if (!batch) {
+      clearBatchDraft();
+      return;
+    }
+
+    setEditingBatchId(batch.id);
+    setBatchForm({
+      ...emptyBatch,
+      ...batch,
+      inputs: batch.inputs || [],
+      processing: {
+        ...emptyBatch.processing,
+        ...(batch.processing || {}),
+        products: batch.processing?.products || []
+      }
+    });
   }
 
   function loadSelectedBatchIntoProcessingForm() {
@@ -1255,20 +1305,35 @@ export default function Livestock() {
               <h3>Processing & Yield</h3>
             </div>
 
-            <button
-              className="secondaryButton compactButton"
-              type="button"
-              onClick={loadSelectedBatchIntoProcessingForm}
-              disabled={!selectedBatch}
-            >
-              <Edit3 size={15} />
-              Edit Selected Batch
-            </button>
+            <div className="livestockProcessingControls">
+              <select
+                className="compactSelect"
+                value={selectedBatchId}
+                onChange={(event) => handleProcessingBatchChange(event.target.value)}
+              >
+                <option value="">Select batch</option>
+                {batches.map((batch) => (
+                  <option key={batch.id} value={batch.id}>
+                    {batch.name}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                className="secondaryButton compactButton"
+                type="button"
+                onClick={loadSelectedBatchIntoProcessingForm}
+                disabled={!selectedBatch}
+              >
+                <Edit3 size={15} />
+                Edit Selected Batch
+              </button>
+            </div>
           </div>
 
           <p className="helperText">
-            Processing details are saved on the batch form. Select a batch, click Edit
-            Selected Batch, then update the processing fields below and save the batch.
+            Select the batch you want to update, enter the processing weights and fee,
+            then review the live calculations below before saving.
           </p>
 
           <div className="formGrid compactFormGrid">
@@ -1370,12 +1435,12 @@ export default function Livestock() {
             </div>
           ) : null}
 
-          {selectedBatch ? (
+          {processingPreviewBatch ? (
             <div className="hubStatGrid livestockYieldGrid">
               <StatCard
                 icon={Scale}
                 label="Hanging Yield"
-                value={`${round(selectedBatchSummary.hangingYield, 1)}%`}
+                value={`${round(processingPreviewSummary.hangingYield, 1)}%`}
                 sub="Hanging ÷ live weight"
                 accent="livestock"
               />
@@ -1383,7 +1448,7 @@ export default function Livestock() {
               <StatCard
                 icon={PackageCheck}
                 label="Packaged Yield"
-                value={`${round(selectedBatchSummary.packagedYield, 1)}%`}
+                value={`${round(processingPreviewSummary.packagedYield, 1)}%`}
                 sub="Packaged ÷ hanging weight"
                 accent="inventory"
               />
@@ -1391,7 +1456,7 @@ export default function Livestock() {
               <StatCard
                 icon={DollarSign}
                 label="Cost / Packaged lb"
-                value={formatCurrency(selectedBatchSummary.costPerPackagedPound)}
+                value={formatCurrency(processingPreviewSummary.costPerPackagedPound)}
                 sub="Total cost ÷ packaged weight"
                 accent="pricing"
               />
