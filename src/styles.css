@@ -18725,3 +18725,19 @@ input[type="number"] {
     width: 100%;
   }
 }
+
+/* Livestock clickable batch selector and product cost allocation fields */
+.clickableLivestockBatch {
+  cursor: pointer;
+}
+
+.clickableLivestockBatch:hover,
+.clickableLivestockBatch:focus {
+  border-color: rgba(139, 94, 52, 0.42);
+  background: rgba(139, 94, 52, 0.08);
+  outline: none;
+}
+
+.livestockEditableCard .livestockCalculatedField {
+  min-height: 42px;
+}
