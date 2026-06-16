@@ -131,6 +131,7 @@ function createBlankCut() {
     quantity: "",
     unit: "lb",
     yieldPercent: "",
+    processingEventId: "",
     retailPrice: "",
     wholesalePrice: "",
     notes: ""
@@ -238,6 +239,68 @@ function getCostPerPackagedPound(batch) {
   if (!packagedWeight) return 0;
   return getTotalBatchCost(batch) / packagedWeight;
 }
+
+function getBaseCostPerHead(batch) {
+  const startingHeadCount = toNumber(batch.startingHeadCount || batch.currentHeadCount);
+  if (!startingHeadCount) return 0;
+
+  return (getAnimalPurchaseTotal(batch) + getInputTotal(batch)) / startingHeadCount;
+}
+
+function getProcessingEventAllocatedCost(batch, processingEventId) {
+  const event = (batch.processingEvents || []).find(
+    (item) => item.id === processingEventId
+  );
+
+  if (!event) return 0;
+
+  const baseHeadCost = getBaseCostPerHead(batch);
+  const processedHeadCount = toNumber(event.headCountProcessed);
+
+  return baseHeadCost * processedHeadCount + toNumber(event.processingFee);
+}
+
+function getCutsForProcessingEvent(batch, processingEventId) {
+  return (batch.cuts || []).filter((cut) => cut.processingEventId === processingEventId);
+}
+
+function getProcessingEventProductQuantityTotal(batch, processingEventId) {
+  return getCutsForProcessingEvent(batch, processingEventId).reduce(
+    (sum, cut) => sum + getCutQuantity(cut, batch),
+    0
+  );
+}
+
+function getCutUnitCost(batch, cut) {
+  const quantity = getCutQuantity(cut, batch);
+  if (!quantity) return 0;
+
+  if (cut.processingEventId) {
+    const eventCost = getProcessingEventAllocatedCost(batch, cut.processingEventId);
+    const eventProductQuantity = getProcessingEventProductQuantityTotal(
+      batch,
+      cut.processingEventId
+    );
+
+    if (eventCost && eventProductQuantity) {
+      return eventCost / eventProductQuantity;
+    }
+  }
+
+  const allProductQuantity = (batch.cuts || []).reduce(
+    (sum, item) => sum + getCutQuantity(item, batch),
+    0
+  );
+
+  if (!allProductQuantity) return 0;
+
+  return getTotalBatchCost(batch) / allProductQuantity;
+}
+
+function getCutAllocatedCost(batch, cut) {
+  return getCutUnitCost(batch, cut) * getCutQuantity(cut, batch);
+}
+
 
 function getCutQuantity(cut, batch) {
   const directQuantity = toNumber(cut.quantity);
@@ -799,8 +862,6 @@ export default function Livestock() {
     setSavingInventory(true);
 
     try {
-      const costPerPound = getCostPerPackagedPound(batchForm);
-
       await Promise.all(
         validCuts.map((cut) => {
           const quantity = getCutQuantity(cut, batchForm);
@@ -826,7 +887,7 @@ export default function Livestock() {
               variantName: unit,
               quantityOnHand: 0,
               unit,
-              costPerUnit: unit === "lb" ? cleanCurrency(costPerPound) : "",
+              costPerUnit: cleanCurrency(getCutUnitCost(batchForm, cut)),
               retailPrice: cleanCurrency(cut.retailPrice),
               wholesalePrice: cleanCurrency(cut.wholesalePrice),
               status: "In Stock",
@@ -872,8 +933,6 @@ export default function Livestock() {
 
     try {
       const category = speciesProductCategory[batchForm.species] || "Protein";
-      const costPerPound = getCostPerPackagedPound(batchForm);
-
       await Promise.all(
         validCuts.map((cut) => {
           const quantity = getCutQuantity(cut, batchForm);
@@ -892,8 +951,8 @@ export default function Livestock() {
             wholesalePrice: cleanCurrency(cut.wholesalePrice),
             targetRetailMargin: 70,
             targetWholesaleMargin: 50,
-            batchIngredientCost: cleanCurrency(unit === "lb" ? costPerPound : getTotalBatchCost(batchForm)),
-            batchUnits: unit === "lb" ? 1 : cleanNumber(quantity, 2),
+            batchIngredientCost: cleanCurrency(getCutAllocatedCost(batchForm, cut)),
+            batchUnits: cleanNumber(quantity, 2),
             packagingCostPerUnit: "",
             laborHours: "",
             laborRate: "",
@@ -1101,7 +1160,19 @@ export default function Livestock() {
             <div className="savedList compactSavedList livestockSavedList">
               {filteredBatches.length ? (
                 filteredBatches.map((batch) => (
-                  <div className="savedItem compactSavedItem livestockSavedItem" key={batch.id}>
+                  <div
+                    className="savedItem compactSavedItem livestockSavedItem clickableLivestockBatch"
+                    key={batch.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => chooseExistingBatch(batch.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        chooseExistingBatch(batch.id);
+                      }
+                    }}
+                  >
                     <div>
                       <h4>{batch.name}</h4>
                       <p>
@@ -1115,11 +1186,23 @@ export default function Livestock() {
                     </div>
 
                     <div className="itemActions">
-                      <button type="button" onClick={() => chooseExistingBatch(batch.id)}>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          chooseExistingBatch(batch.id);
+                        }}
+                      >
                         <Edit3 size={14} />
                       </button>
 
-                      <button type="button" onClick={() => removeBatch(batch.id)}>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          removeBatch(batch.id);
+                        }}
+                      >
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -1726,6 +1809,27 @@ export default function Livestock() {
                             </label>
 
                             <label>
+                              Processing Source
+                              <select
+                                value={cut.processingEventId || ""}
+                                onChange={(event) =>
+                                  updateCutEntry(index, "processingEventId", event.target.value)
+                                }
+                              >
+                                <option value="">Whole batch / unassigned</option>
+                                {(batchForm.processingEvents || []).map((event, eventIndex) => (
+                                  <option key={event.id} value={event.id}>
+                                    Processing #{eventIndex + 1}
+                                    {event.date ? ` • ${event.date}` : ""}
+                                    {event.headCountProcessed
+                                      ? ` • ${event.headCountProcessed} head`
+                                      : ""}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+
+                            <label>
                               Retail Price
                               <input
                                 type="number"
@@ -1768,6 +1872,16 @@ export default function Livestock() {
                               <strong>
                                 {round(quantity, 2)} {cut.unit}
                               </strong>
+                            </div>
+
+                            <div className="livestockCalculatedField">
+                              <span>Estimated Cost / Unit</span>
+                              <strong>{money(getCutUnitCost(batchForm, cut))}</strong>
+                            </div>
+
+                            <div className="livestockCalculatedField">
+                              <span>Allocated Product Cost</span>
+                              <strong>{money(getCutAllocatedCost(batchForm, cut))}</strong>
                             </div>
 
                             <label className="fullSpan">
