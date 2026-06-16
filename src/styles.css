@@ -18876,3 +18876,291 @@ input[type="number"] {
   color: #ffffff !important;
   stroke: #ffffff !important;
 }
+/* =========================================================
+   Farm Apothecary module
+   Append this to the bottom of src/styles.css
+   ========================================================= */
+
+:root {
+  --apothecary: #7a5c8e;
+  --apothecary-dark: #5f4772;
+  --apothecary-soft: rgba(122, 92, 142, 0.13);
+}
+
+.modernNavLink.moduleNav.apothecary,
+.planModuleButton.apothecary {
+  background: var(--apothecary) !important;
+  color: #ffffff !important;
+}
+
+.modernNavLink.moduleNav.apothecary:hover,
+.modernNavLink.moduleNav.apothecary.active {
+  background: var(--apothecary-dark) !important;
+  color: #ffffff !important;
+}
+
+.planModuleButton.apothecary.selected {
+  color: #ffffff !important;
+}
+
+.modernModuleIcon.apothecary,
+.moduleCard.apothecary .moduleIcon,
+.hubStatIcon.apothecary,
+.dashboardRowIcon.apothecary,
+.dashboardWorkspaceIcon.apothecary {
+  color: #ffffff !important;
+  background: var(--apothecary) !important;
+}
+
+.hubStatIcon.apothecary svg,
+.dashboardWorkspaceIcon.apothecary svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.modernModuleCard.apothecary::before,
+.dashboardWorkspaceCard.apothecary .dashboardWorkspaceAccent {
+  background: var(--apothecary) !important;
+}
+
+.dashboardWorkspaceCard.apothecary:hover .dashboardWorkspaceArrow {
+  background: var(--apothecary) !important;
+  color: #ffffff !important;
+  border-color: var(--apothecary) !important;
+}
+
+.dashboardWorkspaceCard.apothecary:hover .dashboardWorkspaceArrow svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.apothecaryModule {
+  display: grid;
+  gap: 16px;
+}
+
+.apothecaryHero {
+  --module-accent: var(--apothecary);
+}
+
+.apothecaryStatGrid,
+.apothecaryWorkingSummary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.apothecaryModeGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.apothecaryModeCard {
+  min-height: 112px;
+}
+
+.apothecaryEditorPanel {
+  display: grid;
+  gap: 16px;
+}
+
+.apothecaryEditorActions,
+.apothecaryHeaderActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.apothecarySelectPanel {
+  display: grid;
+  gap: 12px;
+}
+
+.clickableApothecaryBatch {
+  cursor: pointer;
+}
+
+.clickableApothecaryBatch:hover,
+.clickableApothecaryBatch:focus {
+  border-color: rgba(122, 92, 142, 0.42);
+  background: rgba(122, 92, 142, 0.08);
+  outline: none;
+}
+
+.apothecaryFlowGrid {
+  display: grid;
+  grid-template-columns: 1fr !important;
+  gap: 14px;
+}
+
+.apothecarySubPanel {
+  min-width: 0;
+}
+
+.apothecaryCalculatedField {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(122, 92, 142, 0.08);
+}
+
+.apothecaryCalculatedField span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.apothecaryCalculatedField strong {
+  color: var(--apothecary-dark);
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.apothecaryTableWrap {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.apothecaryEditableTable {
+  display: grid;
+  gap: 6px;
+  min-width: 980px;
+}
+
+.apothecaryIngredientTable .apothecaryTableHeader,
+.apothecaryIngredientTable .apothecaryTableRow {
+  grid-template-columns: 150px 180px minmax(240px, 1fr) 110px 110px 120px 170px 44px;
+}
+
+.apothecaryEventTable .apothecaryTableHeader,
+.apothecaryEventTable .apothecaryTableRow {
+  grid-template-columns: 150px 190px 110px 110px minmax(280px, 1fr) 44px;
+}
+
+.apothecaryProductTable {
+  min-width: 1180px;
+}
+
+.apothecaryProductTable .apothecaryTableHeader,
+.apothecaryProductTable .apothecaryTableRow {
+  grid-template-columns: minmax(190px, 1.2fr) 95px 110px 160px 130px 110px 120px 130px 44px;
+}
+
+.apothecaryTableHeader,
+.apothecaryTableRow {
+  display: grid;
+  gap: 8px;
+  align-items: center;
+}
+
+.apothecaryTableHeader {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0 4px;
+}
+
+.apothecaryTableRow {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 8px;
+}
+
+.apothecaryTableRow input,
+.apothecaryTableRow select {
+  min-height: 38px;
+}
+
+.apothecaryTableRow input:disabled {
+  opacity: 0.55;
+  background: #f5f2ea;
+}
+
+.apothecaryTableCost {
+  display: grid;
+  gap: 2px;
+  align-content: center;
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: rgba(122, 92, 142, 0.08);
+}
+
+.apothecaryTableCost strong {
+  color: var(--apothecary-dark);
+  font-size: 0.86rem;
+}
+
+.apothecaryTableCost span {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.apothecaryBatchLog {
+  margin-top: 14px;
+}
+
+.apothecaryLogGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.apothecaryLogGrid > div {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.apothecaryLogGrid h4 {
+  margin: 0 0 8px;
+}
+
+.apothecaryLogGrid p {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 1100px) {
+  .apothecaryStatGrid,
+  .apothecaryWorkingSummary,
+  .apothecaryLogGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .apothecaryStatGrid,
+  .apothecaryWorkingSummary,
+  .apothecaryModeGrid,
+  .apothecaryLogGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .apothecaryEditorActions,
+  .apothecaryEditorActions .primaryButton,
+  .apothecaryEditorActions .secondaryButton,
+  .apothecaryHeaderActions,
+  .apothecaryHeaderActions .primaryButton,
+  .apothecaryHeaderActions .secondaryButton {
+    width: 100%;
+  }
+
+  .apothecaryEditableTable {
+    min-width: 880px;
+  }
+
+  .apothecaryProductTable {
+    min-width: 1080px;
+  }
+}
