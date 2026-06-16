@@ -19182,3 +19182,22 @@ input[type="number"] {
     grid-template-columns: 1fr !important;
   }
 }
+/* Desktop sidebar width and no-wrap module labels */
+@media (min-width: 1051px) {
+  .app {
+    grid-template-columns: 340px 1fr !important;
+  }
+
+  .modernNavLink {
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .modernNavLink span,
+  .modernNavLink .navLabel {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
