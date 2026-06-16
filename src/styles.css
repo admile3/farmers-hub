@@ -18849,3 +18849,30 @@ input[type="number"] {
     min-width: 1180px;
   }
 }
+/* Dashboard Livestock color fix */
+.dashboardWorkspaceCard.livestock .dashboardWorkspaceIcon,
+.dashboardWorkspaceIcon.livestock {
+  background: var(--livestock) !important;
+  color: #ffffff !important;
+}
+
+.dashboardWorkspaceCard.livestock .dashboardWorkspaceIcon svg,
+.dashboardWorkspaceIcon.livestock svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.dashboardWorkspaceCard.livestock .dashboardWorkspaceAccent {
+  background: var(--livestock) !important;
+}
+
+.dashboardWorkspaceCard.livestock:hover .dashboardWorkspaceArrow {
+  background: var(--livestock) !important;
+  color: #ffffff !important;
+  border-color: var(--livestock) !important;
+}
+
+.dashboardWorkspaceCard.livestock:hover .dashboardWorkspaceArrow svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
