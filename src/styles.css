@@ -18602,3 +18602,126 @@ input[type="number"] {
   font-size: 1rem;
   font-weight: 900;
 }
+/* Livestock central editor refinements */
+.livestockEditorPanel {
+  display: grid;
+  gap: 16px;
+}
+
+.livestockModeGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.livestockModeCard {
+  min-height: 112px;
+}
+
+.livestockEditorActions,
+.livestockHeaderActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.livestockWorkingSummary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.livestockSubPanel {
+  min-width: 0;
+}
+
+.livestockSelectPanel {
+  display: grid;
+  gap: 12px;
+}
+
+.livestockEditableList {
+  display: grid;
+  gap: 12px;
+}
+
+.livestockEditableCard {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.74);
+  padding: 12px;
+}
+
+.livestockCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.livestockCardHeader strong {
+  font-size: 0.92rem;
+}
+
+.livestockCardHeader button {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: #fff;
+  color: #b42318;
+  cursor: pointer;
+}
+
+.livestockBatchLog {
+  margin-top: 14px;
+}
+
+.livestockLogGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.livestockLogGrid > div {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  background: #fff;
+}
+
+.livestockLogGrid h4 {
+  margin: 0 0 8px;
+}
+
+.livestockLogGrid p {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 1100px) {
+  .livestockWorkingSummary,
+  .livestockLogGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .livestockModeGrid,
+  .livestockWorkingSummary,
+  .livestockLogGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .livestockEditorActions,
+  .livestockEditorActions .primaryButton,
+  .livestockEditorActions .secondaryButton,
+  .livestockHeaderActions,
+  .livestockHeaderActions .primaryButton,
+  .livestockHeaderActions .secondaryButton {
+    width: 100%;
+  }
+}
