@@ -422,6 +422,20 @@ export default function Livestock() {
     };
   }, [processingPreviewBatch]);
 
+  const hasUnsavedProductChanges = useMemo(() => {
+    if (!editingBatchId) return false;
+
+    const productLines = batchForm.processing?.products || [];
+
+    return productLines.some((product) => {
+      return (
+        product.name?.trim() ||
+        toNumber(product.quantity) > 0 ||
+        product.notes?.trim()
+      );
+    });
+  }, [batchForm.processing?.products, editingBatchId]);
+
   function updateBatchField(field, value) {
     markLivestockDirty();
 
@@ -1472,10 +1486,17 @@ export default function Livestock() {
             </div>
 
             <button
-              className="primaryButton compactPrimary"
+              className={`primaryButton compactPrimary ${
+                hasUnsavedProductChanges ? "dirtySaveButton" : ""
+              }`}
               type="button"
               onClick={addProductsToInventory}
               disabled={!selectedBatch || inventorySaving}
+              title={
+                hasUnsavedProductChanges
+                  ? "Save product yields before adding them to Inventory."
+                  : "Add saved product yields to Inventory."
+              }
             >
               <PackageCheck size={15} />
               {inventorySaving ? "Adding..." : "Add to Inventory"}
