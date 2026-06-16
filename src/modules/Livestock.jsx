@@ -296,8 +296,8 @@ export default function Livestock() {
       const loadedBatches = await getLivestockBatches(user.uid);
       setBatches(loadedBatches);
 
-      if (!selectedBatchId && loadedBatches.length) {
-        setSelectedBatchId(loadedBatches[0].id);
+      if (!editingBatchId) {
+        setSelectedBatchId("");
       }
     } catch (error) {
       console.error(error);
