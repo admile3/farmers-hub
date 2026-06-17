@@ -381,11 +381,232 @@ function isModuleSyncedEvent(event) {
   );
 }
 
+const MODULE_EVENT_ACCENTS = {
+  bakingPlanner: {
+    className: "sourdough",
+    background: "#c48a53",
+    border: "#9f6d3c",
+    text: "#1f150d"
+  },
+  calendar: {
+    className: "calendar",
+    background: "#7a8f97",
+    border: "#5e737c",
+    text: "#ffffff"
+  },
+  customers: {
+    className: "customers",
+    background: "#6f8f77",
+    border: "#56735d",
+    text: "#ffffff"
+  },
+  grant: {
+    className: "grant",
+    background: "#9a846f",
+    border: "#796653",
+    text: "#ffffff"
+  },
+  inventory: {
+    className: "inventory",
+    background: "#6d8792",
+    border: "#566e77",
+    text: "#ffffff"
+  },
+  livestock: {
+    className: "livestock",
+    background: "#8f5f34",
+    border: "#704723",
+    text: "#ffffff"
+  },
+  market: {
+    className: "market",
+    background: "#6a9a6d",
+    border: "#4f7952",
+    text: "#ffffff"
+  },
+  marketPrep: {
+    className: "market",
+    background: "#6a9a6d",
+    border: "#4f7952",
+    text: "#ffffff"
+  },
+  orders: {
+    className: "orders",
+    background: "#7b70b3",
+    border: "#615796",
+    text: "#ffffff"
+  },
+  permitGrant: {
+    className: "grant",
+    background: "#9a846f",
+    border: "#796653",
+    text: "#ffffff"
+  },
+  planting: {
+    className: "planting",
+    background: "#5c8f45",
+    border: "#456d33",
+    text: "#ffffff"
+  },
+  plantingScheduler: {
+    className: "planting",
+    background: "#5c8f45",
+    border: "#456d33",
+    text: "#ffffff"
+  },
+  pricing: {
+    className: "pricing",
+    background: "#5f91a5",
+    border: "#456f80",
+    text: "#ffffff"
+  },
+  spice: {
+    className: "spice",
+    background: "#c45f45",
+    border: "#9e4935",
+    text: "#ffffff"
+  }
+};
+
+const DETAIL_FIELD_ORDER = [
+  "eventLabel",
+  "batchName",
+  "orderNumber",
+  "customerName",
+  "businessName",
+  "cropName",
+  "variety",
+  "species",
+  "breed",
+  "category",
+  "growingMethod",
+  "plantingDate",
+  "germinationDate",
+  "moveToLightDate",
+  "transplantDate",
+  "targetHarvestDate",
+  "fulfillmentType",
+  "quantity",
+  "quantityUnit",
+  "startingHeadCount",
+  "currentHeadCount",
+  "headCountProcessed",
+  "liveWeight",
+  "hangingWeight",
+  "packagedWeight",
+  "processor",
+  "processingFee",
+  "total",
+  "balanceDue",
+  "status",
+  "priority"
+];
+
 function normalizeModuleSource(value) {
-  return String(value || "")
+  const compactValue = String(value || "")
     .trim()
-    .replace(/\s+/g, "")
-    .replace(/^[A-Z]/, (match) => match.toLowerCase());
+    .replace(/[^a-zA-Z0-9]+/g, " ");
+
+  if (!compactValue) return "";
+
+  return compactValue
+    .split(" ")
+    .filter(Boolean)
+    .map((word, index) => {
+      const lower = word.toLowerCase();
+      return index === 0 ? lower : lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join("");
+}
+
+function getModuleAccentKey(event) {
+  const sourceKey =
+    event?.accent ||
+    event?.sourceModuleKey ||
+    event?.source ||
+    normalizeModuleSource(event?.sourceModule) ||
+    "calendar";
+
+  if (MODULE_EVENT_ACCENTS[sourceKey]) return sourceKey;
+
+  const normalized = normalizeModuleSource(sourceKey);
+  if (MODULE_EVENT_ACCENTS[normalized]) return normalized;
+
+  if (normalized.includes("livestock")) return "livestock";
+  if (normalized.includes("planting")) return "planting";
+  if (normalized.includes("order")) return "orders";
+  if (normalized.includes("market")) return "market";
+  if (normalized.includes("permit") || normalized.includes("grant")) return "grant";
+  if (normalized.includes("baking")) return "bakingPlanner";
+  if (normalized.includes("spice")) return "spice";
+  if (normalized.includes("inventory")) return "inventory";
+  if (normalized.includes("customer")) return "customers";
+  if (normalized.includes("pricing") || normalized.includes("product")) return "pricing";
+
+  return "calendar";
+}
+
+function getCalendarEventClassName(event) {
+  const accentKey = getModuleAccentKey(event);
+  return MODULE_EVENT_ACCENTS[accentKey]?.className || accentKey || "calendar";
+}
+
+function getCalendarEventStyle(event) {
+  const accent = MODULE_EVENT_ACCENTS[getModuleAccentKey(event)];
+  if (!accent) return undefined;
+
+  return {
+    backgroundColor: accent.background,
+    borderColor: accent.border,
+    color: accent.text
+  };
+}
+
+function cleanCalendarTitle(title) {
+  return String(title || "")
+    .replace(/^Target processing:\s*/i, "Process: ")
+    .replace(/^Processing #(\d+):\s*/i, "Process $1: ")
+    .replace(/^Pickup:\s*/i, "Pickup: ")
+    .replace(/^Plant\s+/i, "Plant: ")
+    .replace(/^Check germination:\s*/i, "Germination: ")
+    .replace(/^Move to light:\s*/i, "Move: ")
+    .replace(/^Transplant\s+/i, "Transplant: ")
+    .replace(/^Harvest\s+/i, "Harvest: ")
+    .replace(/^Order due:\s*/i, "Order: ")
+    .trim();
+}
+
+function getCalendarEventDisplayTitle(event) {
+  const details = event?.details || {};
+  const title = cleanCalendarTitle(event?.title || "");
+
+  if (event?.sourceModuleKey === "livestock" || event?.source === "livestock") {
+    if (event?.sourceEventType === "target-processing-date") {
+      return `Process: ${details.batchName || title.replace(/^Process:\s*/i, "")}`;
+    }
+
+    if (String(event?.sourceEventType || "").startsWith("processing-event")) {
+      return title;
+    }
+
+    if (event?.sourceEventType === "pickup-date") {
+      return `Pickup: ${details.batchName || title.replace(/^Pickup:\s*/i, "")}`;
+    }
+  }
+
+  if (event?.sourceModuleKey === "orders" || event?.source === "orders") {
+    return details.orderNumber
+      ? `Order: ${details.orderNumber}`
+      : title;
+  }
+
+  if (event?.sourceModuleKey === "plantingScheduler" || event?.source === "plantingScheduler") {
+    return title
+      .replace(/^Plant:\s*/i, "Plant: ")
+      .replace(/^Harvest:\s*/i, "Harvest: ");
+  }
+
+  return title || "Calendar event";
 }
 
 function normalizeStoredModuleEvent(event) {
@@ -395,14 +616,24 @@ function normalizeStoredModuleEvent(event) {
     normalizeModuleSource(event.sourceModule) ||
     "module";
 
-  return {
+  const normalizedEvent = {
     ...event,
     source: sourceModuleKey,
     sourceModuleKey,
     sourceModule: event.sourceModule || sourceModuleKey,
     sourcePath: event.sourcePath || "",
-    accent: event.accent || sourceModuleKey || "calendar",
     details: event.details || {}
+  };
+
+  const accentKey = getModuleAccentKey(normalizedEvent);
+
+  return {
+    ...normalizedEvent,
+    accent: getCalendarEventClassName({
+      ...normalizedEvent,
+      accent: event.accent || accentKey
+    }),
+    displayTitle: getCalendarEventDisplayTitle(normalizedEvent)
   };
 }
 
@@ -423,16 +654,34 @@ function formatDetailValue(value) {
   return String(value);
 }
 
-function getGenericDetailEntries(details = {}) {
-  const hiddenKeys = new Set(["notes", "documentUrl", "documentName"]);
+function getGenericDetailEntries(details = {}, selectedEvent = {}) {
+  const hiddenKeys = new Set([
+    "notes",
+    "documentUrl",
+    "documentName",
+    "location",
+    "organization"
+  ]);
+
+  if (selectedEvent?.details?.status) {
+    hiddenKeys.add("status");
+  }
 
   return Object.entries(details)
     .filter(([key, value]) => !hiddenKeys.has(key) && formatDetailValue(value))
     .map(([key, value]) => ({
       key,
       label: formatDetailLabel(key),
-      value: formatDetailValue(value)
-    }));
+      value: formatDetailValue(value),
+      order:
+        DETAIL_FIELD_ORDER.includes(key)
+          ? DETAIL_FIELD_ORDER.indexOf(key)
+          : DETAIL_FIELD_ORDER.length + 1
+    }))
+    .sort((a, b) => {
+      if (a.order !== b.order) return a.order - b.order;
+      return a.label.localeCompare(b.label);
+    });
 }
 
 function normalizeImportedEvents({ marketPlans, permitItems, bakingData }) {
@@ -1004,12 +1253,14 @@ export default function Calendar() {
                       <button
                         key={event.id}
                         type="button"
-                        className={`calendarEventDot clickableName ${event.accent || "calendar"}`}
+                        className={`calendarEventDot clickableName ${getCalendarEventClassName(event)}`}
+                        style={getCalendarEventStyle(event)}
+                        title={event.title}
                         onClick={(clickEvent) =>
                           openCalendarEventFromName(event, clickEvent)
                         }
                       >
-                        {event.title}
+                        {event.displayTitle || getCalendarEventDisplayTitle(event)}
                       </button>
                     ))}
 
@@ -1052,10 +1303,10 @@ export default function Calendar() {
                     className="calendarAgendaItem"
                     onClick={() => openEditEvent(event)}
                   >
-                    <span className={`calendarAgendaColor ${event.accent || "calendar"}`} />
+                    <span className={`calendarAgendaColor ${getCalendarEventClassName(event)}`} style={getCalendarEventStyle(event)} />
 
                     <div>
-                      <strong className="clickableNameText">{event.title}</strong>
+                      <strong className="clickableNameText">{event.displayTitle || getCalendarEventDisplayTitle(event)}</strong>
                       <p>
                         {event.startTime
                           ? `${event.startTime}${event.endTime ? ` - ${event.endTime}` : ""}`
@@ -1087,10 +1338,10 @@ export default function Calendar() {
                     className="calendarAgendaItem"
                     onClick={() => openEditEvent(event)}
                   >
-                    <span className={`calendarAgendaColor ${event.accent || "calendar"}`} />
+                    <span className={`calendarAgendaColor ${getCalendarEventClassName(event)}`} style={getCalendarEventStyle(event)} />
 
                     <div>
-                      <strong className="clickableNameText">{event.title}</strong>
+                      <strong className="clickableNameText">{event.displayTitle || getCalendarEventDisplayTitle(event)}</strong>
                       <p>
                         {formatDisplayDate(event.date)} • {formatDue(event.days)}
                       </p>
@@ -1109,7 +1360,7 @@ export default function Calendar() {
         <div className="permitModalOverlay" role="dialog" aria-modal="true">
           <div className="permitModal calendarModal">
             <div className="permitModalHeader">
-              <h3>{selectedEvent.title}</h3>
+              <h3>{selectedEvent.displayTitle || getCalendarEventDisplayTitle(selectedEvent)}</h3>
 
               <button type="button" onClick={() => setSelectedEvent(null)}>
                 <X size={20} />
@@ -1247,7 +1498,7 @@ export default function Calendar() {
                 {selectedEvent.sourceModuleKey ? (
                   <>
                     <DetailCard label="Source" value={selectedEvent.sourceModule} />
-                    {getGenericDetailEntries(selectedEvent.details).map((detail) => (
+                    {getGenericDetailEntries(selectedEvent.details, selectedEvent).map((detail) => (
                       <DetailCard
                         key={detail.key}
                         label={detail.label}
