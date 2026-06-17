@@ -32,6 +32,10 @@ import {
   getLivestockBatches,
   updateLivestockBatch
 } from "../services/livestockService.js";
+import {
+  deleteModuleCalendarEventsForRecord,
+  syncModuleCalendarEvents
+} from "../services/moduleCalendarService.js";
 
 const speciesOptions = [
   "Beef",
@@ -342,6 +346,93 @@ function makeProductId(batchId, cutName) {
 
 function defaultBatchName(species) {
   return `${species || "Livestock"} Batch - ${new Date().getFullYear()}`;
+}
+
+function getLivestockCalendarEvents(batch) {
+  if (!batch?.id) return [];
+
+  const batchName = batch.name || defaultBatchName(batch.species);
+  const speciesLabel = batch.species || "Livestock";
+  const events = [];
+
+  if (batch.processingDate) {
+    events.push({
+      sourceModuleKey: "livestock",
+      sourceModule: "Livestock",
+      sourceRecordId: batch.id,
+      sourceEventType: "target-processing-date",
+      title: `Target processing: ${batchName}`,
+      type: "Production",
+      date: batch.processingDate,
+      sourcePath: "/livestock",
+      accent: "livestock",
+      notes: batch.notes || "",
+      details: {
+        batchName,
+        species: speciesLabel,
+        breed: batch.breed || "",
+        status: batch.status || "",
+        startingHeadCount: batch.startingHeadCount || "",
+        currentHeadCount: batch.currentHeadCount || "",
+        eventLabel: "Target Processing Date"
+      }
+    });
+  }
+
+  if (batch.pickupDate) {
+    events.push({
+      sourceModuleKey: "livestock",
+      sourceModule: "Livestock",
+      sourceRecordId: batch.id,
+      sourceEventType: "pickup-date",
+      title: `Pickup: ${batchName}`,
+      type: "Production",
+      date: batch.pickupDate,
+      sourcePath: "/livestock",
+      accent: "livestock",
+      notes: batch.notes || "",
+      details: {
+        batchName,
+        species: speciesLabel,
+        breed: batch.breed || "",
+        status: batch.status || "",
+        eventLabel: "Pickup Date"
+      }
+    });
+  }
+
+  (batch.processingEvents || []).forEach((processingEvent, index) => {
+    if (!processingEvent.date) return;
+
+    events.push({
+      sourceModuleKey: "livestock",
+      sourceModule: "Livestock",
+      sourceRecordId: batch.id,
+      sourceEventType: `processing-event-${processingEvent.id || index}`,
+      title: `Processing #${index + 1}: ${batchName}`,
+      type: "Production",
+      date: processingEvent.date,
+      location: processingEvent.processor || "",
+      sourcePath: "/livestock",
+      accent: "livestock",
+      notes: processingEvent.notes || batch.notes || "",
+      details: {
+        batchName,
+        species: speciesLabel,
+        breed: batch.breed || "",
+        status: batch.status || "",
+        processor: processingEvent.processor || "",
+        headCountProcessed: processingEvent.headCountProcessed || "",
+        liveWeight: processingEvent.liveWeight || "",
+        hangingWeight: processingEvent.hangingWeight || "",
+        packagedWeight: processingEvent.packagedWeight || "",
+        processingFee: processingEvent.processingFee || "",
+        eventLabel: `Processing #${index + 1}`
+      }
+    });
+  });
+
+  return events;
 }
 
 function normalizeBatch(batch) {
@@ -825,6 +916,13 @@ export default function Livestock() {
         id: savedId
       };
 
+      await deleteModuleCalendarEventsForRecord(user.uid, {
+        sourceModuleKey: "livestock",
+        sourceRecordId: savedId
+      });
+
+      await syncModuleCalendarEvents(user.uid, getLivestockCalendarEvents(nextBatch));
+
       setMode("edit");
       setSelectedBatchId(savedId);
       setBatchForm(nextBatch);
@@ -844,6 +942,10 @@ export default function Livestock() {
 
     try {
       await deleteLivestockBatch(user.uid, batchId);
+      await deleteModuleCalendarEventsForRecord(user.uid, {
+        sourceModuleKey: "livestock",
+        sourceRecordId: batchId
+      });
       showStatus("Livestock batch deleted.", "success");
 
       if (selectedBatchId === batchId) {
@@ -1030,7 +1132,7 @@ export default function Livestock() {
         <ModuleHero
           eyebrow="Livestock"
           title="Sign in to manage livestock batches."
-          description="Track animal groups, input costs, processing events, finished products, and inventory from your Farmers Hub account."
+          description="Track animal groups, input costs, processing events, finished products, and inventory from your Market Vendor Toolkit account."
           className="livestockHero"
           actions={[
             {
