@@ -232,7 +232,7 @@ const pricingPlans = [
     eyebrow: "Pro",
     price: "$15/month",
     description:
-      "Unlock every Farmers Hub module after your trial. Best for full business management.",
+      "Unlock every Market Vendor Toolkit module after your trial. Best for full business management.",
     feature: "All modules"
   }
 ];
@@ -460,7 +460,7 @@ function getCurrentModuleTitle(pathname) {
   if (pathname === "/account-settings") return "Account";
   if (pathname === "/onboarding") return "Setup";
 
-  return modules.find((module) => module.path === pathname)?.title || "Farmers Hub";
+  return modules.find((module) => module.path === pathname)?.title || "Market Vendor Toolkit";
 }
 
 function TrialSignupBox() {
@@ -805,10 +805,10 @@ function WelcomePricingModal({ onClose }) {
 
         <div className="pricingModalScroll">
           <div className="pricingModalHeader compactSignupHeader">
-            <p className="eyebrow">Welcome to Farmers Hub</p>
+            <p className="eyebrow">Welcome to Market Vendor Toolkit</p>
             <h2>Start with full access for 15 days.</h2>
             <p>
-              Create your account to try every Farmers Hub module free for 15 days.
+              Create your account to try every Market Vendor Toolkit module free for 15 days.
               No subscription is required to start. After the trial, choose the plan
               that fits how many tools you want to keep using.
             </p>
@@ -894,7 +894,7 @@ function AccountStatusCard({ compact = false }) {
       <div className="authCard">
         <p className="eyebrow">Account</p>
         <h3>Start your free trial</h3>
-        <p>Sign in once to start your 15-day trial and save your Farmers Hub data.</p>
+        <p>Sign in once to start your 15-day trial and save your Market Vendor Toolkit data.</p>
 
         <button className="primaryButton fullButton" onClick={loginWithGoogle}>
           <LogIn size={16} />
@@ -1000,7 +1000,7 @@ function AppShell({ children }) {
     return (
       <div className="appLoadingScreen">
         <div className="appLoadingCard">
-          <h2>Loading Farmers Hub...</h2>
+          <h2>Loading Market Vendor Toolkit...</h2>
           <p>Checking your account and workspace settings.</p>
         </div>
       </div>
@@ -1030,7 +1030,7 @@ function AppShell({ children }) {
             </div>
 
             <div>
-              <h1>Farmers Hub</h1>
+              <h1>Market Vendor Toolkit</h1>
               <p>{currentTitle}</p>
             </div>
           </GuardedLink>
@@ -1057,7 +1057,7 @@ function AppShell({ children }) {
           </div>
 
           <div>
-            <h1>Farmers Hub</h1>
+            <h1>Market Vendor Toolkit</h1>
             <p>Vendor tools</p>
           </div>
         </GuardedLink>
@@ -1120,7 +1120,7 @@ function AccessGate({ children }) {
       <AppShell>
         <div className="emptyState">
           <h2>Checking account access...</h2>
-          <p>Please wait while Farmers Hub verifies your trial or subscription.</p>
+          <p>Please wait while Market Vendor Toolkit verifies your trial or subscription.</p>
         </div>
       </AppShell>
     );
@@ -1131,7 +1131,7 @@ function AccessGate({ children }) {
       <AppShell>
         <div className="emptyState">
           <h2>Start your 15-day trial</h2>
-          <p>Create an account to use every Farmers Hub module free for 15 days.</p>
+          <p>Create an account to use every Market Vendor Toolkit module free for 15 days.</p>
 
           <button className="primaryButton" onClick={loginWithGoogle}>
             <LogIn size={16} />
@@ -1182,7 +1182,7 @@ function OnboardingRoute() {
       <AppShell>
         <div className="emptyState">
           <h2>Loading setup...</h2>
-          <p>Please wait while Farmers Hub checks your account.</p>
+          <p>Please wait while Market Vendor Toolkit checks your account.</p>
         </div>
       </AppShell>
     );
@@ -1192,7 +1192,7 @@ function OnboardingRoute() {
     return (
       <AppShell>
         <div className="emptyState">
-          <h2>Create an account to set up Farmers Hub</h2>
+          <h2>Create an account to set up Market Vendor Toolkit</h2>
           <p>Start your 15-day trial, then choose whether to begin fresh or load sample data.</p>
 
           <button className="primaryButton" onClick={loginWithGoogle}>
@@ -1237,7 +1237,7 @@ function Subscribe() {
         <section className="moduleHero compactHero noActionHero">
           <div>
             <p className="eyebrow">15-day free trial</p>
-            <h2>Try every Farmers Hub module before choosing a plan.</h2>
+            <h2>Try every Market Vendor Toolkit module before choosing a plan.</h2>
             <p>
               Create an account to start your free trial. You will not need to pick
               a paid plan until the trial ends or you decide to upgrade early.
@@ -1261,10 +1261,10 @@ function Subscribe() {
       <section className="moduleHero compactHero noActionHero">
         <div>
           <p className="eyebrow">Choose your plan</p>
-          <h2>Keep Farmers Hub active after your trial.</h2>
+          <h2>Keep Market Vendor Toolkit active after your trial.</h2>
           <p>
             Choose the plan that fits your workflow. Basic includes 2 modules, Growth
-            includes 4 modules, and Pro unlocks every Farmers Hub module.
+            includes 4 modules, and Pro unlocks every Market Vendor Toolkit module.
           </p>
         </div>
       </section>
@@ -1286,7 +1286,7 @@ function DashboardRoute() {
       <AppShell>
         <div className="emptyState">
           <h2>Loading dashboard...</h2>
-          <p>Please wait while Farmers Hub checks your account setup.</p>
+          <p>Please wait while Market Vendor Toolkit checks your account setup.</p>
         </div>
       </AppShell>
     );
