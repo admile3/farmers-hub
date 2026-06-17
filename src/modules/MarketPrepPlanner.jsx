@@ -805,7 +805,10 @@ export default function MarketPrepPlanner() {
 
   if (!user) {
     return (
-      <div className="modulePage marketPrepPage compactSpicePage" onChangeCapture={markMarketPrepDirty}>
+      <div className="modulePage marketPrepPage compactSpicePage" onChangeCapture={(event) => {
+        if (event.target.closest(".moduleGuideOverlay")) return;
+        markMarketPrepDirty();
+      }}>
         <section className="farmModuleHero marketPrepHero">
           <div className="farmModuleHeroText">
             <p className="eyebrow">Market Prep Planner</p>
@@ -827,7 +830,10 @@ export default function MarketPrepPlanner() {
   }
 
   return (
-    <div className="modulePage marketPrepPage compactSpicePage" onChangeCapture={markMarketPrepDirty}>
+    <div className="modulePage marketPrepPage compactSpicePage" onChangeCapture={(event) => {
+        if (event.target.closest(".moduleGuideOverlay")) return;
+        markMarketPrepDirty();
+      }}>
       <section className="farmModuleHero marketPrepHero marketPrepNoPrint">
         <div className="farmModuleHeroText">
           <p className="eyebrow">Market Prep Planner</p>
