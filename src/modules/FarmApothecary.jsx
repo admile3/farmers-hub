@@ -32,6 +32,10 @@ import {
   getApothecaryBatches,
   updateApothecaryBatch
 } from "../services/farmApothecaryService.js";
+import {
+  deleteModuleCalendarEventsForRecord,
+  syncModuleCalendarEvents
+} from "../services/moduleCalendarService.js";
 
 const productTypeOptions = ["Soap", "Candle", "Balm / Salve", "Lotion / Cream", "Infused Oil", "Other"];
 const statusOptions = ["Planning", "In Production", "Curing", "Setting", "Infusing", "Ready for Sale", "Archived"];
@@ -196,6 +200,115 @@ function makeProductId(batchId, productName) {
 
 function defaultBatchName(productType) {
   return `${productType || "Apothecary"} Batch - ${new Date().getFullYear()}`;
+}
+
+function getApothecaryCalendarEvents(batch) {
+  if (!batch?.id) return [];
+
+  const batchName = batch.name || defaultBatchName(batch.productType);
+  const productType = batch.productType || "Apothecary";
+  const events = [];
+  const readyDate = getReadyDate(batch);
+
+  if (readyDate) {
+    events.push({
+      sourceModuleKey: "farm-apothecary",
+      sourceModule: "Farm Apothecary",
+      sourceRecordId: batch.id,
+      sourceEventType: "ready-date",
+      title: `Ready: ${batchName}`,
+      type: "Production",
+      date: readyDate,
+      sourcePath: "/farm-apothecary",
+      accent: "apothecary",
+      notes: batch.notes || "",
+      details: {
+        batchName,
+        productType,
+        status: batch.status || "",
+        targetYield: batch.targetYield || "",
+        actualYield: batch.actualYield || "",
+        yieldUnit: batch.yieldUnit || "",
+        timingLabel: getTimingLabel(productType),
+        readyDate,
+        eventLabel: "Ready Date"
+      }
+    });
+  }
+
+  if (batch.targetReadyDate && batch.targetReadyDate !== readyDate) {
+    events.push({
+      sourceModuleKey: "farm-apothecary",
+      sourceModule: "Farm Apothecary",
+      sourceRecordId: batch.id,
+      sourceEventType: "target-ready-date",
+      title: `Target ready: ${batchName}`,
+      type: "Production",
+      date: batch.targetReadyDate,
+      sourcePath: "/farm-apothecary",
+      accent: "apothecary",
+      notes: batch.notes || "",
+      details: {
+        batchName,
+        productType,
+        status: batch.status || "",
+        targetYield: batch.targetYield || "",
+        yieldUnit: batch.yieldUnit || "",
+        eventLabel: "Target Ready Date"
+      }
+    });
+  }
+
+  if (batch.actualReadyDate && batch.actualReadyDate !== readyDate) {
+    events.push({
+      sourceModuleKey: "farm-apothecary",
+      sourceModule: "Farm Apothecary",
+      sourceRecordId: batch.id,
+      sourceEventType: "actual-ready-date",
+      title: `Actually ready: ${batchName}`,
+      type: "Production",
+      date: batch.actualReadyDate,
+      sourcePath: "/farm-apothecary",
+      accent: "apothecary",
+      notes: batch.notes || "",
+      details: {
+        batchName,
+        productType,
+        status: batch.status || "",
+        actualYield: batch.actualYield || "",
+        yieldUnit: batch.yieldUnit || "",
+        eventLabel: "Actual Ready Date"
+      }
+    });
+  }
+
+  (batch.productionEvents || []).forEach((productionEvent, index) => {
+    if (!productionEvent.date) return;
+
+    events.push({
+      sourceModuleKey: "farm-apothecary",
+      sourceModule: "Farm Apothecary",
+      sourceRecordId: batch.id,
+      sourceEventType: `production-event-${productionEvent.id || index}`,
+      title: `${productionEvent.eventType || "Production"}: ${batchName}`,
+      type: "Production",
+      date: productionEvent.date,
+      sourcePath: "/farm-apothecary",
+      accent: "apothecary",
+      notes: productionEvent.notes || batch.notes || "",
+      details: {
+        batchName,
+        productType,
+        status: batch.status || "",
+        eventType: productionEvent.eventType || "",
+        quantity: productionEvent.quantity || "",
+        unit: productionEvent.unit || batch.yieldUnit || "",
+        eventLabel: productionEvent.eventType || `Production Event #${index + 1}`
+      }
+    });
+  });
+
+  return events;
 }
 
 function normalizeBatch(batch) {
@@ -561,6 +674,13 @@ export default function FarmApothecary() {
 
       const nextBatch = { ...cleanBatch, id: savedId };
 
+      await deleteModuleCalendarEventsForRecord(user.uid, {
+        sourceModuleKey: "farm-apothecary",
+        sourceRecordId: savedId
+      });
+
+      await syncModuleCalendarEvents(user.uid, getApothecaryCalendarEvents(nextBatch));
+
       setMode("edit");
       setSelectedBatchId(savedId);
       setBatchForm(nextBatch);
@@ -580,6 +700,10 @@ export default function FarmApothecary() {
 
     try {
       await deleteApothecaryBatch(user.uid, batchId);
+      await deleteModuleCalendarEventsForRecord(user.uid, {
+        sourceModuleKey: "farm-apothecary",
+        sourceRecordId: batchId
+      });
       showStatus("Apothecary batch deleted.", "success");
 
       if (selectedBatchId === batchId) {
@@ -765,7 +889,7 @@ export default function FarmApothecary() {
         <ModuleHero
           eyebrow="Farm Apothecary"
           title="Sign in to manage apothecary batches."
-          description="Track soaps, candles, balms, lotions, infused oils, materials, production events, finished products, and inventory from your Farmers Hub account."
+          description="Track soaps, candles, balms, lotions, infused oils, materials, production events, finished products, and inventory from your Market Vendor Toolkit account."
           className="apothecaryHero"
           actions={[
             {
