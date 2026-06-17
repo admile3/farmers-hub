@@ -141,6 +141,8 @@ function blankOrder() {
     depositPaid: "",
     internalNotes: "",
     customerNotes: "",
+    calendarSyncEnabled: true,
+    calendarEvent: null,
     createdAt: "",
     updatedAt: ""
   };
@@ -272,6 +274,97 @@ function buildBakingOrderProducts(bakingRecipes = []) {
         costPerUnit: recipe.pricingSummary?.costPerUnit || ""
       };
     });
+}
+
+
+function compactLineSummary(lineItems = []) {
+  return lineItems
+    .filter((item) => String(item?.productName || "").trim())
+    .map((item) => {
+      const quantity = Number(item.quantity) || 0;
+      const unit = String(item.unitLabel || "each").trim();
+      const name = String(item.productName || "Item").trim();
+      return `${quantity} ${unit} ${name}`.trim();
+    })
+    .join(", ");
+}
+
+function buildOrderCalendarEvent(order, savedId = "") {
+  const dueDate = String(order?.dueDate || "").trim();
+  const status = order?.status || "Draft";
+  const customerName = orderCustomerDisplay(order);
+  const orderNumber = order?.orderNumber || "Order";
+  const totals = order?.totals || calculateOrder(order || blankOrder());
+  const lineItems = Array.isArray(order?.lineItems) ? order.lineItems : [];
+  const lineSummary = compactLineSummary(lineItems);
+  const isCalendarVisible = Boolean(dueDate && status !== "Cancelled");
+
+  return {
+    id: `orders-${savedId || order?.id || orderNumber}`,
+    sourceId: savedId || order?.id || "",
+    sourceModule: "orders",
+    moduleKey: "orders",
+    moduleLabel: "Orders",
+    type: "order",
+    title: `${orderNumber} - ${customerName}`,
+    date: dueDate,
+    startDate: dueDate,
+    endDate: dueDate,
+    allDay: true,
+    visible: isCalendarVisible,
+    status,
+    statusLabel: status,
+    customerName,
+    fulfillmentType: order?.fulfillmentType || "",
+    orderNumber,
+    total: Number(totals.total) || 0,
+    balanceDue: Number(totals.balanceDue) || 0,
+    itemCount: lineItems.length,
+    lineSummary,
+    description: [
+      `${status} order for ${customerName}`,
+      order?.fulfillmentType ? `Fulfillment: ${order.fulfillmentType}` : "",
+      lineSummary ? `Items: ${lineSummary}` : "",
+      `Total: ${money(totals.total)}`,
+      Number(totals.balanceDue) > 0 ? `Balance due: ${money(totals.balanceDue)}` : "Paid in full",
+      order?.customerNotes ? `Customer notes: ${order.customerNotes}` : "",
+      order?.internalNotes ? `Internal notes: ${order.internalNotes}` : ""
+    ]
+      .filter(Boolean)
+      .join("\n"),
+    details: {
+      customerName,
+      fulfillmentType: order?.fulfillmentType || "",
+      pricingMode: order?.pricingMode || "retail",
+      orderDate: order?.orderDate || "",
+      dueDate,
+      total: Number(totals.total) || 0,
+      balanceDue: Number(totals.balanceDue) || 0,
+      lineItems: lineItems.map((item) => ({
+        productName: item.productName || "Item",
+        quantity: Number(item.quantity) || 0,
+        unitLabel: item.unitLabel || "each",
+        unitPrice: Number(item.unitPrice) || 0,
+        lineTotal: Number(item.lineTotal) || 0,
+        sourceLabel: item.sourceLabel || "Manual"
+      }))
+    }
+  };
+}
+
+function notifyCalendarModule(action, order) {
+  if (typeof window === "undefined") return;
+
+  window.dispatchEvent(
+    new CustomEvent("farmersHubCalendarSync", {
+      detail: {
+        action,
+        sourceModule: "orders",
+        order,
+        calendarEvent: order?.calendarEvent || null
+      }
+    })
+  );
 }
 
 function getNextOrderNumber(orders = []) {
@@ -608,22 +701,43 @@ export default function Orders() {
         totals
       });
 
-      const savedId = await saveOrder(user.uid, orderToSave);
+      const savedId = await saveOrder(user.uid, {
+        ...orderToSave,
+        calendarEvent: buildOrderCalendarEvent(orderToSave, orderToSave.id || "")
+      });
+
+      const finalizedOrder = {
+        ...orderToSave,
+        id: savedId,
+        calendarSyncEnabled: orderToSave.calendarSyncEnabled !== false,
+        calendarEvent:
+          orderToSave.calendarSyncEnabled === false
+            ? null
+            : buildOrderCalendarEvent(
+                {
+                  ...orderToSave,
+                  id: savedId
+                },
+                savedId
+              )
+      };
+
+      await saveOrder(user.uid, finalizedOrder);
+      notifyCalendarModule("saved", finalizedOrder);
       setSelectedOrderId(savedId);
       setForm({
         ...blankOrder(),
-        ...orderToSave,
-        id: savedId,
+        ...finalizedOrder,
         customerSnapshot: {
           ...blankCustomerSnapshot(),
-          ...(orderToSave.customerSnapshot || {})
+          ...(finalizedOrder.customerSnapshot || {})
         },
-        lineItems: orderToSave.lineItems?.length
-          ? orderToSave.lineItems
+        lineItems: finalizedOrder.lineItems?.length
+          ? finalizedOrder.lineItems
           : [blankLineItem()]
       });
       setEditorOpen(false);
-      setStatusMessage("Order saved.");
+      setStatusMessage("Order saved and calendar updated.");
       await loadData();
     } catch (error) {
       console.error("Could not save order:", error);
@@ -641,6 +755,7 @@ export default function Orders() {
 
     try {
       await deleteOrder(user.uid, order.id);
+      notifyCalendarModule("deleted", order);
 
       if (selectedOrderId === order.id) {
         setSelectedOrderId("");
@@ -1016,6 +1131,19 @@ export default function Orders() {
                   value={form.dueDate}
                   onChange={(event) => updateOrderField("dueDate", event.target.value)}
                 />
+              </label>
+
+              <label>
+                Calendar Sync
+                <select
+                  value={form.calendarSyncEnabled === false ? "off" : "on"}
+                  onChange={(event) =>
+                    updateOrderField("calendarSyncEnabled", event.target.value === "on")
+                  }
+                >
+                  <option value="on">Show due date on Calendar</option>
+                  <option value="off">Do not show on Calendar</option>
+                </select>
               </label>
 
               <label>
