@@ -1507,6 +1507,7 @@ export default function BakingPlanner() {
     settings.bakingPlannerMode || "basic"
   );
   const [hasHandledInitialGuide, setHasHandledInitialGuide] = useState(false);
+  const [hasLoadedCloudData, setHasLoadedCloudData] = useState(false);
 
   function markBakingDirty() {
     markUnsaved({
@@ -1519,6 +1520,7 @@ export default function BakingPlanner() {
     async function loadCloudData() {
       if (!user) {
         setCloudStatus("Local only");
+        setHasLoadedCloudData(true);
         return;
       }
 
@@ -1578,6 +1580,7 @@ export default function BakingPlanner() {
         setCloudStatus("Cloud load failed");
       } finally {
         setCloudLoading(false);
+        setHasLoadedCloudData(true);
       }
     }
 
@@ -1589,13 +1592,15 @@ export default function BakingPlanner() {
   }, [settings.bakingPlannerMode]);
 
   useEffect(() => {
+    if (!hasLoadedCloudData) return;
+
     const guideHidden = localStorage.getItem("hideModuleGuide_bakingPlanner") === "true";
 
     if (settings.bakingPlannerMode && !guideHidden && !hasHandledInitialGuide) {
       setShowGuide(true);
       setHasHandledInitialGuide(true);
     }
-  }, [settings.bakingPlannerMode, hasHandledInitialGuide]);
+  }, [settings.bakingPlannerMode, hasHandledInitialGuide, hasLoadedCloudData]);
 
   const productionRecipes = useMemo(() => {
     return productionItems
@@ -1773,6 +1778,34 @@ export default function BakingPlanner() {
       saveToStorage("bakingPlannerSettings", next);
       return next;
     });
+  }
+
+  async function setBakingPlannerModePreference(mode) {
+    const cleanMode = mode === "advanced" ? "advanced" : "basic";
+    const nextSettings = {
+      ...settings,
+      bakingPlannerMode: cleanMode
+    };
+
+    setSettings(nextSettings);
+    saveToStorage("bakingPlannerSettings", nextSettings);
+
+    if (!user) return;
+
+    try {
+      const ref = doc(db, "users", user.uid, "bakingPlanner", "main");
+
+      await setDoc(
+        ref,
+        {
+          settings: nextSettings,
+          updatedAt: serverTimestamp()
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   const isAdvancedMode = settings.bakingPlannerMode === "advanced";
@@ -2757,7 +2790,7 @@ export default function BakingPlanner() {
     setHasHandledInitialGuide(true);
 
     if (!settings.bakingPlannerMode) {
-      setBakingPlannerMode(guideSelectedMode || "basic");
+      setBakingPlannerModePreference(guideSelectedMode || "basic");
     }
 
     setShowGuide(false);
@@ -2774,8 +2807,8 @@ export default function BakingPlanner() {
   );
 
   return (
-    <div className="bakingPlanner" onChangeCapture={markBakingDirty}>
-      {!cloudLoading && !settings.bakingPlannerMode ? (
+    <div className="bakingPlanner">
+      {hasLoadedCloudData && !cloudLoading && !settings.bakingPlannerMode ? (
         <ModuleGuideModal
           isOpen={!settings.bakingPlannerMode}
           moduleKey="bakingPlanner"
@@ -3257,17 +3290,19 @@ export default function BakingPlanner() {
                     <NumberInput
                       label="Room Temperature"
                       value={env.tempF}
-                      onChange={(v) =>
-                        setEnv((p) => ({ ...p, tempF: Number(v) }))
-                      }
+                      onChange={(v) => {
+                        markBakingDirty();
+                        setEnv((p) => ({ ...p, tempF: Number(v) }));
+                      }}
                       suffix="°F"
                     />
                     <NumberInput
                       label="Room Humidity"
                       value={env.humidityPct}
-                      onChange={(v) =>
-                        setEnv((p) => ({ ...p, humidityPct: Number(v) }))
-                      }
+                      onChange={(v) => {
+                        markBakingDirty();
+                        setEnv((p) => ({ ...p, humidityPct: Number(v) }));
+                      }}
                       suffix="%"
                     />
                   </div>
@@ -4755,7 +4790,10 @@ export default function BakingPlanner() {
                         className="text-field"
                         type="date"
                         value={productionDate}
-                        onChange={(e) => setProductionDate(e.target.value)}
+                        onChange={(e) => {
+                          markBakingDirty();
+                          setProductionDate(e.target.value);
+                        }}
                       />
                     </label>
 
@@ -5154,58 +5192,64 @@ export default function BakingPlanner() {
                   <NumberInput
                     label="Altitude"
                     value={settings.altitudeFt}
-                    onChange={(v) =>
-                      setSettings((p) => ({ ...p, altitudeFt: Number(v) }))
-                    }
+                    onChange={(v) => {
+                      markBakingDirty();
+                      setSettings((p) => ({ ...p, altitudeFt: Number(v) }));
+                    }}
                     suffix="ft"
                   />
                   <NumberInput
                     label="Baseline Temperature"
                     value={settings.baselineTempF}
-                    onChange={(v) =>
-                      setSettings((p) => ({ ...p, baselineTempF: Number(v) }))
-                    }
+                    onChange={(v) => {
+                      markBakingDirty();
+                      setSettings((p) => ({ ...p, baselineTempF: Number(v) }));
+                    }}
                     suffix="°F"
                   />
                   <NumberInput
                     label="Baseline Humidity"
                     value={settings.baselineHumidityPct}
-                    onChange={(v) =>
+                    onChange={(v) => {
+                      markBakingDirty();
                       setSettings((p) => ({
                         ...p,
                         baselineHumidityPct: Number(v)
-                      }))
-                    }
+                      }));
+                    }}
                     suffix="%"
                   />
                   <NumberInput
                     label="Mixer Capacity"
                     value={settings.mixerCapacityG}
-                    onChange={(v) =>
-                      setSettings((p) => ({ ...p, mixerCapacityG: Number(v) }))
-                    }
+                    onChange={(v) => {
+                      markBakingDirty();
+                      setSettings((p) => ({ ...p, mixerCapacityG: Number(v) }));
+                    }}
                     suffix="g dough"
                   />
                   <NumberInput
                     label="Proofing Capacity"
                     value={settings.proofingCapacityUnits}
-                    onChange={(v) =>
+                    onChange={(v) => {
+                      markBakingDirty();
                       setSettings((p) => ({
                         ...p,
                         proofingCapacityUnits: Number(v)
-                      }))
-                    }
+                      }));
+                    }}
                     suffix="units"
                   />
                   <NumberInput
                     label="Ingredient Buffer"
                     value={settings.ingredientBufferPct}
-                    onChange={(v) =>
+                    onChange={(v) => {
+                      markBakingDirty();
                       setSettings((p) => ({
                         ...p,
                         ingredientBufferPct: Number(v)
-                      }))
-                    }
+                      }));
+                    }}
                     suffix="%"
                   />
                   <label className="field">
@@ -5214,12 +5258,13 @@ export default function BakingPlanner() {
                       className="text-field"
                       type="time"
                       value={settings.defaultStartTime}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        markBakingDirty();
                         setSettings((p) => ({
                           ...p,
                           defaultStartTime: e.target.value
-                        }))
-                      }
+                        }));
+                      }}
                     />
                   </label>
                 </div>
