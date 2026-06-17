@@ -372,6 +372,69 @@ function getMarketPlanDetails(plan) {
   };
 }
 
+function isModuleSyncedEvent(event) {
+  return Boolean(
+    event?.sourceModuleKey ||
+      event?.sourceModule ||
+      event?.sourceRecordId ||
+      event?.sourceEventType
+  );
+}
+
+function normalizeModuleSource(value) {
+  return String(value || "")
+    .trim()
+    .replace(/\s+/g, "")
+    .replace(/^[A-Z]/, (match) => match.toLowerCase());
+}
+
+function normalizeStoredModuleEvent(event) {
+  const sourceModuleKey =
+    event.sourceModuleKey ||
+    event.source ||
+    normalizeModuleSource(event.sourceModule) ||
+    "module";
+
+  return {
+    ...event,
+    source: sourceModuleKey,
+    sourceModuleKey,
+    sourceModule: event.sourceModule || sourceModuleKey,
+    sourcePath: event.sourcePath || "",
+    accent: event.accent || sourceModuleKey || "calendar",
+    details: event.details || {}
+  };
+}
+
+function formatDetailLabel(key) {
+  return String(key || "")
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^./, (match) => match.toUpperCase());
+}
+
+function formatDetailValue(value) {
+  if (value === undefined || value === null || value === "") return "";
+  if (typeof value === "number") return value.toLocaleString("en-US");
+  if (Array.isArray(value)) return value.filter(Boolean).join(", ");
+  if (typeof value === "object") return "";
+  return String(value);
+}
+
+function getGenericDetailEntries(details = {}) {
+  const hiddenKeys = new Set(["notes", "documentUrl", "documentName"]);
+
+  return Object.entries(details)
+    .filter(([key, value]) => !hiddenKeys.has(key) && formatDetailValue(value))
+    .map(([key, value]) => ({
+      key,
+      label: formatDetailLabel(key),
+      value: formatDetailValue(value)
+    }));
+}
+
 function normalizeImportedEvents({ marketPlans, permitItems, bakingData }) {
   const events = [];
 
@@ -473,6 +536,7 @@ export default function Calendar() {
   const [viewDate, setViewDate] = useState(() => new Date());
   const [calendarView, setCalendarView] = useState("month");
   const [manualEvents, setManualEvents] = useState([]);
+  const [syncedModuleEvents, setSyncedModuleEvents] = useState([]);
   const [importedEvents, setImportedEvents] = useState([]);
   const [selectedDate, setSelectedDate] = useState(todayISO());
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -498,13 +562,23 @@ export default function Calendar() {
 
       const bakingData = bakingSnapshot.exists() ? bakingSnapshot.data() : {};
 
+      const savedCalendarEvents = Array.isArray(savedEvents) ? savedEvents : [];
+
       setManualEvents(
-        savedEvents.map((event) => ({
-          ...event,
-          source: "manual",
-          accent: "calendar",
-          details: event.details || {}
-        }))
+        savedCalendarEvents
+          .filter((event) => !isModuleSyncedEvent(event))
+          .map((event) => ({
+            ...event,
+            source: "manual",
+            accent: "calendar",
+            details: event.details || {}
+          }))
+      );
+
+      setSyncedModuleEvents(
+        savedCalendarEvents
+          .filter(isModuleSyncedEvent)
+          .map(normalizeStoredModuleEvent)
       );
 
       setImportedEvents(
@@ -527,6 +601,7 @@ export default function Calendar() {
       loadCalendarData();
     } else {
       setManualEvents([]);
+      setSyncedModuleEvents([]);
       setImportedEvents([]);
     }
   }, [user]);
@@ -553,13 +628,13 @@ export default function Calendar() {
   }, [user]);
 
   const allEvents = useMemo(() => {
-    return [...manualEvents, ...importedEvents].sort((a, b) => {
+    return [...manualEvents, ...syncedModuleEvents, ...importedEvents].sort((a, b) => {
       const dateCompare = String(a.date || "").localeCompare(String(b.date || ""));
       if (dateCompare !== 0) return dateCompare;
 
       return String(a.startTime || "").localeCompare(String(b.startTime || ""));
     });
-  }, [manualEvents, importedEvents]);
+  }, [manualEvents, syncedModuleEvents, importedEvents]);
 
   const calendarDays = useMemo(
     () => getCalendarViewDays(viewDate, calendarView),
@@ -764,7 +839,7 @@ export default function Calendar() {
           <h2>See every dated vendor task in one place.</h2>
           <p>
             Market plans, permit deadlines, grant renewals, baking production dates,
-            and manually added events appear together on your calendar.
+            synced module tasks, and manually added events appear together on your calendar.
           </p>
         </div>
 
@@ -809,7 +884,7 @@ export default function Calendar() {
         <StatCard
           icon={LinkIcon}
           label="Imported"
-          value={loading ? "..." : importedEvents.length}
+          value={loading ? "..." : syncedModuleEvents.length + importedEvents.length}
           sub="from other modules"
           accent="market"
         />
@@ -1166,6 +1241,19 @@ export default function Calendar() {
                           : ""
                       }
                     />
+                  </>
+                ) : null}
+
+                {selectedEvent.sourceModuleKey ? (
+                  <>
+                    <DetailCard label="Source" value={selectedEvent.sourceModule} />
+                    {getGenericDetailEntries(selectedEvent.details).map((detail) => (
+                      <DetailCard
+                        key={detail.key}
+                        label={detail.label}
+                        value={detail.value}
+                      />
+                    ))}
                   </>
                 ) : null}
               </div>
