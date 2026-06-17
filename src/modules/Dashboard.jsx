@@ -479,9 +479,9 @@ export default function Dashboard({
 
       <section className="modernHero dashboardHeroV2">
         <div className="modernHeroMain dashboardHeroMainV2">
-          <p className="eyebrow">Your business command center</p>
+          <p className="eyebrow">Market Vendor Toolkit</p>
 
-          <h2>{user ? `Welcome back, ${displayName}` : "One hub for market vendors."}</h2>
+          <h2>{user ? `Welcome back, ${displayName}` : "One toolkit for market vendors."}</h2>
 
           <p className="heroText">
             Manage recipes, products, pricing, customers, deadlines, prep plans,
@@ -506,7 +506,7 @@ export default function Dashboard({
             <p>
               {user
                 ? "Manage account, subscription, and saved tools."
-                : "Try every Farmers Hub tool before choosing a plan."}
+                : "Try every Market Vendor Toolkit tool before choosing a plan."}
             </p>
           </div>
 
@@ -679,7 +679,7 @@ export default function Dashboard({
       <section className="dashboardFooterBanner dashboardSubscriptionBanner">
         <div className="dashboardFooterCopy">
           <p className="eyebrow">Subscription</p>
-          <h3>{isTrial ? "Need more time?" : "Keep your vendor tools active."}</h3>
+          <h3>{isTrial ? "Need more time?" : "Keep your Market Vendor Toolkit active."}</h3>
           <p>
             Manage your subscription or upgrade anytime to keep your saved tools,
             workflows, and records available.
