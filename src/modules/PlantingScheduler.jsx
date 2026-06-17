@@ -28,6 +28,10 @@ import {
   savePlantingBatch,
   savePlantingTemplate
 } from "../services/plantingService.js";
+import {
+  deleteModuleCalendarEventsForRecord,
+  syncModuleCalendarEvents
+} from "../services/moduleCalendarService.js";
 
 const CROP_CATEGORIES = [
   "Microgreens",
@@ -240,6 +244,45 @@ function taskStatus(taskDate) {
   if (days < 0) return "danger";
   if (days <= 2) return "warning";
   return "neutral";
+}
+
+function getPlantingCalendarEvents(batch) {
+  if (!batch?.id) return [];
+
+  const cropLabel = batchLabel(batch);
+  const quantityLabel = `${batch.quantity || 0} ${batch.quantityUnit || "units"}`.trim();
+
+  return batchTaskList(batch).map((task) => ({
+    sourceModuleKey: "plantingScheduler",
+    sourceModule: "Planting Scheduler",
+    sourceRecordId: batch.id,
+    sourceEventType: `planting-${normalize(task.type).replace(/[^a-z0-9]+/g, "-")}`,
+    title: task.label,
+    type: "Production",
+    date: task.date,
+    location: batch.location || "",
+    sourcePath: "/planting-scheduler",
+    accent: "planting",
+    notes: batch.notes || "",
+    details: {
+      cropName: batch.cropName || "",
+      variety: batch.variety || "",
+      cropLabel,
+      category: batch.category || "",
+      growingMethod: batch.growingMethod || "",
+      status: batch.status || "",
+      quantity: batch.quantity || "",
+      quantityUnit: batch.quantityUnit || "",
+      quantityLabel,
+      location: batch.location || "",
+      plantingDate: batch.plantingDate || "",
+      germinationDate: batch.germinationDate || "",
+      moveToLightDate: batch.moveToLightDate || "",
+      transplantDate: batch.transplantDate || "",
+      targetHarvestDate: batch.targetHarvestDate || "",
+      eventLabel: task.type
+    }
+  }));
 }
 
 export default function PlantingScheduler() {
@@ -487,17 +530,27 @@ export default function PlantingScheduler() {
     setSavingBatch(true);
 
     try {
-      const id = await savePlantingBatch(user.uid, {
+      const batchToSave = {
         ...batchForm,
         cropName: batchForm.cropName.trim(),
         variety: batchForm.variety.trim(),
         quantity: Number(batchForm.quantity) || 0
+      };
+
+      const id = await savePlantingBatch(user.uid, batchToSave);
+      const nextBatch = {
+        ...batchToSave,
+        id
+      };
+
+      await deleteModuleCalendarEventsForRecord(user.uid, {
+        sourceModuleKey: "plantingScheduler",
+        sourceRecordId: id
       });
 
-      setBatchForm((current) => ({
-        ...current,
-        id
-      }));
+      await syncModuleCalendarEvents(user.uid, getPlantingCalendarEvents(nextBatch));
+
+      setBatchForm(nextBatch);
 
       setStatusMessage("Planting batch saved.");
       await loadData();
@@ -538,6 +591,10 @@ export default function PlantingScheduler() {
 
     try {
       await deletePlantingBatch(user.uid, batch.id);
+      await deleteModuleCalendarEventsForRecord(user.uid, {
+        sourceModuleKey: "plantingScheduler",
+        sourceRecordId: batch.id
+      });
 
       if (batchForm.id === batch.id) {
         setBatchForm(blankBatch());
