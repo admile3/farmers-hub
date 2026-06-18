@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "../AuthContext.jsx";
-import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import PlantingSchedulerGuideContent from "../components/PlantingSchedulerGuideContent.jsx";
 import StatCard from "../components/StatCard.jsx";
@@ -288,7 +287,6 @@ function getPlantingCalendarEvents(batch) {
 
 export default function PlantingScheduler() {
   const { user, loginWithGoogle } = useAuth();
-  const { markUnsaved, markSaved } = useUnsavedChanges();
 
   const [templates, setTemplates] = useState([]);
   const [batches, setBatches] = useState([]);
@@ -305,8 +303,6 @@ export default function PlantingScheduler() {
   const [savingBatch, setSavingBatch] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [showGuide, setShowGuide] = useState(false);
-  const [isTemplateDirty, setIsTemplateDirty] = useState(false);
-  const [isBatchDirty, setIsBatchDirty] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -316,9 +312,6 @@ export default function PlantingScheduler() {
       setBatches([]);
       setTemplateForm(blankTemplate());
       setBatchForm(blankBatch());
-      setIsTemplateDirty(false);
-      setIsBatchDirty(false);
-      markSaved();
     }
   }, [user]);
 
@@ -336,38 +329,6 @@ export default function PlantingScheduler() {
       setShowGuide(true);
     }
   }, []);
-
-  function markPlantingDirty(target = "batch") {
-    if (target === "template") {
-      setIsTemplateDirty(true);
-      markUnsaved({
-        source: "Planting Scheduler",
-        onSave: handleSaveTemplate
-      });
-      return;
-    }
-
-    setIsBatchDirty(true);
-    markUnsaved({
-      source: "Planting Scheduler",
-      onSave: handleSaveBatch
-    });
-  }
-
-  function clearPlantingDirty(target = "batch") {
-    if (target === "template") {
-      setIsTemplateDirty(false);
-      if (!isBatchDirty) {
-        markSaved();
-      }
-      return;
-    }
-
-    setIsBatchDirty(false);
-    if (!isTemplateDirty) {
-      markSaved();
-    }
-  }
 
   async function loadData() {
     if (!user) return;
@@ -391,7 +352,6 @@ export default function PlantingScheduler() {
   }
 
   function updateTemplateField(field, value) {
-    markPlantingDirty("template");
     setTemplateForm((current) => ({
       ...current,
       [field]: value
@@ -399,7 +359,6 @@ export default function PlantingScheduler() {
   }
 
   function updateBatchField(field, value) {
-    markPlantingDirty("batch");
     setBatchForm((current) => ({
       ...current,
       [field]: value
@@ -407,7 +366,6 @@ export default function PlantingScheduler() {
   }
 
   function updateBatchDateMode(field, value) {
-    markPlantingDirty("batch");
     setBatchForm((current) => {
       const next = {
         ...current,
@@ -460,7 +418,6 @@ export default function PlantingScheduler() {
   }
 
   function applyTemplate(templateId) {
-    markPlantingDirty("batch");
     const template = templates.find((item) => item.id === templateId);
 
     if (!template) {
@@ -497,16 +454,12 @@ export default function PlantingScheduler() {
 
   function startNewTemplate() {
     setTemplateForm(blankTemplate());
-    setIsTemplateDirty(false);
-    if (!isBatchDirty) markSaved();
     setActivePanel("template");
     setStatusMessage("Started a new crop template.");
   }
 
   function startNewBatch() {
     setBatchForm(blankBatch());
-    setIsBatchDirty(false);
-    if (!isTemplateDirty) markSaved();
     setActivePanel("batch");
     setStatusMessage("Started a new planting batch.");
   }
@@ -516,8 +469,6 @@ export default function PlantingScheduler() {
       ...blankTemplate(),
       ...template
     });
-    setIsTemplateDirty(false);
-    if (!isBatchDirty) markSaved();
     setActivePanel("template");
     setStatusMessage("Crop template loaded.");
   }
@@ -527,8 +478,6 @@ export default function PlantingScheduler() {
       ...blankBatch(),
       ...batch
     });
-    setIsBatchDirty(false);
-    if (!isTemplateDirty) markSaved();
     setActivePanel("batch");
     setStatusMessage("Planting batch loaded.");
   }
@@ -555,7 +504,6 @@ export default function PlantingScheduler() {
         id
       }));
 
-      clearPlantingDirty("template");
       setStatusMessage("Crop template saved.");
       await loadData();
     } catch (error) {
@@ -604,7 +552,6 @@ export default function PlantingScheduler() {
 
       setBatchForm(nextBatch);
 
-      clearPlantingDirty("batch");
       setStatusMessage("Planting batch saved.");
       await loadData();
     } catch (error) {
@@ -626,7 +573,6 @@ export default function PlantingScheduler() {
 
       if (templateForm.id === template.id) {
         setTemplateForm(blankTemplate());
-        clearPlantingDirty("template");
       }
 
       setStatusMessage("Crop template deleted.");
@@ -652,7 +598,6 @@ export default function PlantingScheduler() {
 
       if (batchForm.id === batch.id) {
         setBatchForm(blankBatch());
-        clearPlantingDirty("batch");
       }
 
       setStatusMessage("Planting batch deleted.");
@@ -1205,7 +1150,7 @@ export default function PlantingScheduler() {
                   </button>
 
                   <button
-                    className={`primaryButton compactPrimary ${isTemplateDirty ? "dirtySaveButton" : ""}`}
+                    className="primaryButton compactPrimary"
                     type="button"
                     onClick={handleSaveTemplate}
                     disabled={savingTemplate}
@@ -1407,7 +1352,7 @@ export default function PlantingScheduler() {
                   </button>
 
                   <button
-                    className={`primaryButton compactPrimary ${isBatchDirty ? "dirtySaveButton" : ""}`}
+                    className="primaryButton compactPrimary"
                     type="button"
                     onClick={handleSaveBatch}
                     disabled={savingBatch}
