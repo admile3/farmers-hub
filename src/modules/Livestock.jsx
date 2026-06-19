@@ -390,29 +390,128 @@ function getCutQuantity(cut, batch) {
   return 0;
 }
 
+function getCutCostScopeKey(cut) {
+  if (cut.processingEventId) return `event:${cut.processingEventId}`;
+  return "batch";
+}
+
+function getEventCostPoolForMode(batch, processingEventId) {
+  const eventCost = getProcessingEventAllocatedCost(batch, processingEventId);
+
+  if ((batch.costPoolMode || "processed") === "processed") {
+    return eventCost;
+  }
+
+  return eventCost;
+}
+
+function getCostScopeSummaries(batch) {
+  const cuts = batch.cuts || [];
+  const selectedPool = getSelectedCostPool(batch);
+  const eventIdsUsedByProducts = Array.from(
+    new Set(cuts.map((cut) => cut.processingEventId).filter(Boolean))
+  );
+
+  const eventPools = eventIdsUsedByProducts.reduce((map, eventId) => {
+    return {
+      ...map,
+      [`event:${eventId}`]: getEventCostPoolForMode(batch, eventId)
+    };
+  }, {});
+
+  const eventPoolTotal = Object.values(eventPools).reduce((sum, value) => sum + value, 0);
+
+  const scopes = {
+    batch: {
+      key: "batch",
+      label: (batch.costPoolMode || "processed") === "processed" ? "Processed Only" : "Full Batch",
+      pool: Math.max(0, selectedPool - eventPoolTotal),
+      cuts: cuts.filter((cut) => !cut.processingEventId)
+    }
+  };
+
+  eventIdsUsedByProducts.forEach((eventId) => {
+    const eventIndex = (batch.processingEvents || []).findIndex((event) => event.id === eventId);
+
+    scopes[`event:${eventId}`] = {
+      key: `event:${eventId}`,
+      label: eventIndex >= 0 ? `Processing #${eventIndex + 1}` : "Processing event",
+      pool: eventPools[`event:${eventId}`] || 0,
+      cuts: cuts.filter((cut) => cut.processingEventId === eventId)
+    };
+  });
+
+  return Object.values(scopes).map((scope) => {
+    const manualAllocatedCost = scope.cuts.reduce((sum, cut) => {
+      if ((cut.costMode || "allocated") !== "manual") return sum;
+      return sum + toNumber(cut.manualCostPerUnit) * getCutQuantity(cut, batch);
+    }, 0);
+
+    const averageQuantity = scope.cuts.reduce((sum, cut) => {
+      if ((cut.costMode || "allocated") === "manual") return sum;
+      return sum + getCutQuantity(cut, batch);
+    }, 0);
+
+    const averagePool = Math.max(0, scope.pool - manualAllocatedCost);
+    const averageCostPerUnit = averageQuantity ? averagePool / averageQuantity : 0;
+    const averageAllocatedCost = averageQuantity ? averagePool : 0;
+    const totalAllocatedCost = manualAllocatedCost + averageAllocatedCost;
+    const remainingUnallocated = Math.max(0, scope.pool - totalAllocatedCost);
+
+    return {
+      ...scope,
+      manualAllocatedCost,
+      averageQuantity,
+      averagePool,
+      averageCostPerUnit,
+      averageAllocatedCost,
+      totalAllocatedCost,
+      remainingUnallocated
+    };
+  });
+}
+
+function getCostScopeSummaryForCut(batch, cut) {
+  const scopeKey = getCutCostScopeKey(cut);
+  const summaries = getCostScopeSummaries(batch);
+  return summaries.find((summary) => summary.key === scopeKey) || null;
+}
+
 function getFinishedProductCostSummary(batch) {
   const selectedPool = getSelectedCostPool(batch);
-  const cuts = batch.cuts || [];
+  const scopeSummaries = getCostScopeSummaries(batch);
 
-  const manualAllocatedCost = cuts.reduce((sum, cut) => {
-    if ((cut.costMode || "allocated") !== "manual") return sum;
-    return sum + toNumber(cut.manualCostPerUnit) * getCutQuantity(cut, batch);
-  }, 0);
+  const manualAllocatedCost = scopeSummaries.reduce(
+    (sum, scope) => sum + scope.manualAllocatedCost,
+    0
+  );
 
-  const averageQuantity = cuts.reduce((sum, cut) => {
-    if ((cut.costMode || "allocated") === "manual") return sum;
-    return sum + getCutQuantity(cut, batch);
-  }, 0);
+  const averageQuantity = scopeSummaries.reduce(
+    (sum, scope) => sum + scope.averageQuantity,
+    0
+  );
 
-  const averagePool = Math.max(0, selectedPool - manualAllocatedCost);
-  const averageCostPerUnit = averageQuantity ? averagePool / averageQuantity : 0;
+  const averagePool = scopeSummaries.reduce(
+    (sum, scope) => sum + scope.averagePool,
+    0
+  );
 
-  const averageAllocatedCost = averageQuantity ? averagePool : 0;
-  const totalAllocatedCost = manualAllocatedCost + averageAllocatedCost;
+  const averageAllocatedCost = scopeSummaries.reduce(
+    (sum, scope) => sum + scope.averageAllocatedCost,
+    0
+  );
+
+  const totalAllocatedCost = scopeSummaries.reduce(
+    (sum, scope) => sum + scope.totalAllocatedCost,
+    0
+  );
+
   const remainingUnallocated = Math.max(0, selectedPool - totalAllocatedCost);
+  const averageCostPerUnit = averageQuantity ? averagePool / averageQuantity : 0;
 
   return {
     selectedPool,
+    scopeSummaries,
     manualAllocatedCost,
     averageQuantity,
     averagePool,
@@ -436,12 +535,14 @@ function getProductUnitCost(batch, cut) {
     return toNumber(cut.manualCostPerUnit);
   }
 
-  return getFinishedProductCostSummary(batch).averageCostPerUnit;
+  const scopeSummary = getCostScopeSummaryForCut(batch, cut);
+  return scopeSummary?.averageCostPerUnit || 0;
 }
 
 function getProductAllocatedCost(batch, cut) {
   return getProductUnitCost(batch, cut) * getCutQuantity(cut, batch);
 }
+
 
 function getCutsForProcessingEvent(batch, processingEventId) {
   return (batch.cuts || []).filter((cut) => cut.processingEventId === processingEventId);
