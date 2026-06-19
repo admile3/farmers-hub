@@ -19201,3 +19201,458 @@ input[type="number"] {
     white-space: nowrap;
   }
 }
+/* =========================================================
+   Livestock Finished Products Cost Pool + Allocation Styles
+   Append this to the bottom of src/styles.css
+   ========================================================= */
+
+:root {
+  --livestock: #8a6f4d;
+  --inventory: #6f7f4f;
+}
+
+.modernNavLink.moduleNav.livestock,
+.planModuleButton.livestock {
+  background: var(--livestock);
+}
+
+.modernModuleIcon.livestock,
+.moduleCard.livestock .moduleIcon,
+.hubStatIcon.livestock,
+.dashboardRowIcon.livestock {
+  color: #ffffff;
+  background: var(--livestock);
+}
+
+.modernModuleIcon.inventory,
+.moduleCard.inventory .moduleIcon,
+.hubStatIcon.inventory,
+.dashboardRowIcon.inventory {
+  color: #ffffff;
+  background: var(--inventory);
+}
+
+.modernModuleCard.livestock::before {
+  background: var(--livestock);
+}
+
+.modernModuleFooter.livestock,
+.moduleCard.livestock .moduleFooter {
+  color: #725b3f;
+}
+
+.app:has(.livestockModule) .modulePage::before,
+.app:has(.livestockModule) .livestockModule::before {
+  background: var(--livestock);
+}
+
+.app:has(.livestockModule) .clickableToolCard::before {
+  background: var(--livestock);
+}
+
+.app:has(.livestockModule) .clickableToolCard:hover {
+  border-color: rgba(138, 111, 77, 0.36);
+}
+
+.livestockModule {
+  display: grid;
+  gap: 16px;
+}
+
+.livestockStatGrid,
+.livestockWorkingSummary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.livestockWorkingSummary {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.livestockModeGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.livestockEditorActions,
+.livestockHeaderActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.livestockEditorActions .secondaryButton,
+.livestockEditorActions .primaryButton,
+.livestockHeaderActions .secondaryButton,
+.livestockHeaderActions .primaryButton {
+  width: fit-content;
+  white-space: nowrap;
+}
+
+.livestockFlowGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+.livestockSubPanel {
+  min-width: 0;
+}
+
+.livestockCalculatedField {
+  border: 1px solid rgba(138, 111, 77, 0.2);
+  border-radius: 14px;
+  background: #fbfaf6;
+  padding: 11px 13px;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+}
+
+.livestockCalculatedField span,
+.livestockCostBreakdown span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.livestockCalculatedField strong,
+.livestockCostBreakdown strong {
+  color: var(--text);
+  font-size: 1.12rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.livestockTableWrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.livestockEditableTable {
+  min-width: 1120px;
+}
+
+.livestockInputTable .livestockTableHeader,
+.livestockInputTable .livestockTableRow,
+.livestockProductTable .livestockTableHeader,
+.livestockProductTable .livestockTableRow {
+  display: grid;
+  gap: 8px;
+  align-items: center;
+}
+
+.livestockInputTable .livestockTableHeader,
+.livestockInputTable .livestockTableRow {
+  grid-template-columns:
+    minmax(130px, 0.7fr)
+    minmax(150px, 0.8fr)
+    minmax(220px, 1.4fr)
+    minmax(90px, 0.45fr)
+    minmax(90px, 0.45fr)
+    minmax(105px, 0.5fr)
+    42px;
+}
+
+.livestockProductTable .livestockTableHeader,
+.livestockProductTable .livestockTableRow {
+  grid-template-columns:
+    minmax(170px, 1fr)
+    minmax(82px, 0.42fr)
+    minmax(105px, 0.5fr)
+    minmax(165px, 0.9fr)
+    minmax(145px, 0.75fr)
+    minmax(110px, 0.55fr)
+    minmax(100px, 0.5fr)
+    minmax(110px, 0.55fr)
+    minmax(130px, 0.65fr)
+    42px;
+}
+
+.livestockTableHeader {
+  padding: 11px 12px;
+  background: #fbfaf6;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.livestockTableRow {
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+}
+
+.livestockTableRow input,
+.livestockTableRow select {
+  min-height: 36px;
+  padding: 8px 10px;
+}
+
+.livestockTableCost {
+  display: grid;
+  gap: 3px;
+  font-variant-numeric: tabular-nums;
+}
+
+.livestockTableCost strong {
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.1;
+}
+
+.livestockTableCost span {
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.25;
+}
+
+.livestockYieldGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 10px 0 12px;
+}
+
+.livestockEditableList {
+  display: grid;
+  gap: 10px;
+}
+
+.livestockEditableCard {
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: #ffffff;
+  padding: 13px;
+  display: grid;
+  gap: 12px;
+}
+
+.livestockCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.livestockCardHeader strong {
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.livestockCardHeader button {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(197, 35, 24, 0.2);
+  background: #fff7f5;
+  color: var(--danger);
+  cursor: pointer;
+}
+
+.livestockCostModePanel {
+  margin: 2px 0 12px;
+  border: 1px solid rgba(138, 111, 77, 0.2);
+  border-radius: 16px;
+  background: #fbfaf6;
+  padding: 13px;
+  display: grid;
+  grid-template-columns: minmax(250px, auto) minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+}
+
+.livestockCostModePanel p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.livestockCostModeToggle {
+  width: fit-content;
+  margin-top: 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #ffffff;
+  padding: 3px;
+  display: inline-flex;
+  gap: 3px;
+}
+
+.livestockCostModeToggle button {
+  min-height: 32px;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.livestockCostModeToggle button.selected {
+  background: rgba(138, 111, 77, 0.14);
+  color: #725b3f;
+}
+
+.livestockFinishedStatGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 12px 0;
+}
+
+.livestockCostBreakdown {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.livestockCostBreakdown > div {
+  min-width: 0;
+  border: 1px solid rgba(138, 111, 77, 0.16);
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 12px;
+  display: grid;
+  gap: 5px;
+}
+
+.livestockBatchLog {
+  margin-top: 0;
+}
+
+.livestockLogGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.livestockLogGrid > div {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fbfaf6;
+  padding: 13px;
+  min-width: 0;
+}
+
+.livestockLogGrid h4 {
+  margin: 0 0 8px;
+  color: var(--text);
+  font-size: 0.92rem;
+}
+
+.livestockLogGrid p {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.livestockLogGrid p:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 1200px) {
+  .livestockStatGrid,
+  .livestockWorkingSummary,
+  .livestockFinishedStatGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .livestockCostBreakdown,
+  .livestockLogGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .livestockModeGrid,
+  .livestockYieldGrid,
+  .livestockCostBreakdown,
+  .livestockLogGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .livestockCostModePanel {
+    grid-template-columns: 1fr;
+  }
+
+  .livestockHeaderActions,
+  .livestockEditorActions {
+    justify-content: stretch;
+  }
+
+  .livestockHeaderActions .secondaryButton,
+  .livestockHeaderActions .primaryButton,
+  .livestockEditorActions .secondaryButton,
+  .livestockEditorActions .primaryButton {
+    width: 100%;
+  }
+}
+
+@media (max-width: 760px) {
+  .livestockModule .hubStatGrid,
+  .livestockWorkingSummary,
+  .livestockFinishedStatGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .livestockCostModeToggle {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .livestockCostModeToggle button {
+    width: 100%;
+    padding-inline: 8px;
+  }
+
+  .livestockEditableTable {
+    min-width: 0;
+  }
+
+  .livestockInputTable .livestockTableHeader,
+  .livestockProductTable .livestockTableHeader {
+    display: none;
+  }
+
+  .livestockInputTable .livestockTableRow,
+  .livestockProductTable .livestockTableRow {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .livestockTableRow .iconButton {
+    width: 100%;
+  }
+
+  .livestockTableCost {
+    border: 1px solid rgba(138, 111, 77, 0.16);
+    border-radius: 12px;
+    background: #fbfaf6;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 430px) {
+  .livestockModule .hubStatGrid,
+  .livestockWorkingSummary,
+  .livestockFinishedStatGrid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
