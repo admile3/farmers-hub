@@ -11,42 +11,52 @@ export default function RecordList({
   renderActions = null,
   emptyMessage = "No records to display.",
   onRecordClick,
+  onRecordDoubleClick,
   className = ""
 }) {
   if (!records.length) {
     return <div className="farmhubRecordListEmpty">{emptyMessage}</div>;
   }
 
-  function handleOpen(record) {
-    if (onRecordClick) {
-      onRecordClick(record);
+  function handleRecordClick(record) {
+    onRecordClick?.(record);
+  }
+
+  function handleRecordDoubleClick(record) {
+    if (onRecordDoubleClick) {
+      onRecordDoubleClick(record);
+      return;
     }
+
+    onRecordClick?.(record);
   }
 
   return (
     <div className={clsx("farmhubRecordList", className)}>
-      {records.map((record) => {
-        const recordId = getRecordId(record);
+      {records.map((record, recordIndex) => {
+        const recordId = getRecordId(record) || recordIndex;
         const title = getTitle(record);
         const subtitle = getSubtitle(record);
         const meta = getMeta(record) || [];
-        const isSelected = selectedRecordId === recordId;
+        const isClickable = Boolean(onRecordClick || onRecordDoubleClick);
+        const isSelected =
+          selectedRecordId && String(selectedRecordId) === String(recordId);
 
         return (
           <article
             key={recordId}
             className={clsx(
               "farmhubRecordCard",
-              onRecordClick ? "clickable" : "",
+              isClickable ? "clickable" : "",
               isSelected ? "selected" : ""
             )}
-            onDoubleClick={() => handleOpen(record)}
+            onDoubleClick={() => handleRecordDoubleClick(record)}
           >
             <div className="farmhubRecordCardMain">
               <button
                 type="button"
                 className="farmhubRecordCardTitle"
-                onClick={() => handleOpen(record)}
+                onClick={() => handleRecordClick(record)}
               >
                 {title}
               </button>
@@ -57,9 +67,23 @@ export default function RecordList({
 
               {meta.length ? (
                 <div className="farmhubRecordCardMeta">
-                  {meta.map((item) => (
-                    <span key={item}>{item}</span>
-                  ))}
+                  {meta.map((item) => {
+                    const label = item?.label;
+                    const value = item?.value ?? item;
+
+                    if (!value) return null;
+
+                    return (
+                      <span className="farmhubRecordCardMetaItem" key={`${label || "meta"}-${value}`}>
+                        {label ? (
+                          <span className="farmhubRecordCardMetaLabel">
+                            {label}:
+                          </span>
+                        ) : null}
+                        <span>{value}</span>
+                      </span>
+                    );
+                  })}
                 </div>
               ) : null}
             </div>
