@@ -5,6 +5,7 @@ export default function WorkspacePanel({
   title,
   description,
   actions = [],
+  toolbar = null,
   children,
   className = "",
   bodyClassName = "",
@@ -21,7 +22,7 @@ export default function WorkspacePanel({
     >
       {(eyebrow || title || description || actions.length) ? (
         <div className="workspaceHeader compactPanelHeader farmhubWorkspaceHeader">
-          <div>
+          <div className="farmhubWorkspaceTitleBlock">
             {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
             {title ? <h3>{title}</h3> : null}
             {description ? (
@@ -55,6 +56,8 @@ export default function WorkspacePanel({
           ) : null}
         </div>
       ) : null}
+
+      {toolbar ? <div className="farmhubWorkspaceToolbar">{toolbar}</div> : null}
 
       <div className={clsx("farmhubWorkspaceBody", bodyClassName)}>
         {children}
