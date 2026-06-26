@@ -1,26 +1,33 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  AlertCircle,
   Beef,
   CalendarDays,
   CircleHelp,
-  ClipboardList,
   DollarSign,
   Edit3,
   History,
   Layers,
   MapPin,
   Plus,
-  Save,
-  Search,
-  Trash2,
-  X
+  RefreshCw,
+  Trash2
 } from "lucide-react";
 
-import ModuleHero from "../components/ModuleHero.jsx";
-import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
+import ActionMenu from "../components/ActionMenu.jsx";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import EmptyState from "../components/EmptyState.jsx";
+import FilterBar from "../components/FilterBar.jsx";
+import FormField from "../components/FormField.jsx";
 import HerdTrackerGuideContent from "../components/HerdTrackerGuideContent.jsx";
+import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
+import ModuleHero from "../components/ModuleHero.jsx";
+import RecordList from "../components/RecordList.jsx";
+import SaveButton from "../components/SaveButton.jsx";
 import StatCard from "../components/StatCard.jsx";
+import StatusPill from "../components/StatusPill.jsx";
+import Toast from "../components/Toast.jsx";
+import WorkspacePanel from "../components/WorkspacePanel.jsx";
+
 import {
   HERD_EVENT_TYPES,
   HERD_PURPOSE_OPTIONS,
@@ -144,7 +151,42 @@ function formatDate(value) {
 }
 
 function getDisplayName(record) {
-  return record.tagId || record.name || record.name || "Unnamed Record";
+  return record.tagId || record.name || "Unnamed Record";
+}
+
+function getStatusVariant(status) {
+  switch (status) {
+    case "Active":
+    case "Ready for Processing":
+      return "success";
+    case "Quarantine":
+    case "Withdrawal":
+    case "Watch":
+      return "warning";
+    case "Sold":
+    case "Deceased":
+    case "Culled":
+      return "danger";
+    case "Inactive":
+      return "neutral";
+    default:
+      return "primary";
+  }
+}
+
+function timelineTitle(event) {
+  return event.type || "Timeline Event";
+}
+
+function timelineSubtitle(event) {
+  const pieces = [
+    event.date ? formatDate(event.date) : "No date",
+    event.cost ? `Cost: ${money(event.cost)}` : "",
+    event.salePrice ? `Sale: ${money(event.salePrice)}` : "",
+    event.weight ? `${event.weight} lb` : ""
+  ].filter(Boolean);
+
+  return pieces.join(" • ");
 }
 
 export default function HerdTracker() {
@@ -161,12 +203,25 @@ export default function HerdTracker() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [speciesFilter, setSpeciesFilter] = useState("All");
   const [showGuide, setShowGuide] = useState(false);
-  const [statusMessage, setStatusMessage] = useState("");
-  const [statusType, setStatusType] = useState("info");
+  const [toast, setToast] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
-  function showStatus(message, type = "info") {
-    setStatusMessage(message);
-    setStatusType(type);
+  const [animalDirty, setAnimalDirty] = useState(false);
+  const [animalSaving, setAnimalSaving] = useState(false);
+  const [animalSaved, setAnimalSaved] = useState(false);
+  const [animalSaveError, setAnimalSaveError] = useState(false);
+
+  const [groupDirty, setGroupDirty] = useState(false);
+  const [groupSaving, setGroupSaving] = useState(false);
+  const [groupSaved, setGroupSaved] = useState(false);
+  const [groupSaveError, setGroupSaveError] = useState(false);
+
+  function showToast(nextToast) {
+    setToast(nextToast);
+
+    window.setTimeout(() => {
+      setToast(null);
+    }, 3000);
   }
 
   function loadData() {
@@ -179,17 +234,9 @@ export default function HerdTracker() {
   }, []);
 
   useEffect(() => {
-    if (!statusMessage) return undefined;
+    const guideHidden =
+      localStorage.getItem("hideModuleGuide_herd-tracker") === "true";
 
-    const timer = window.setTimeout(() => {
-      setStatusMessage("");
-    }, 3000);
-
-    return () => window.clearTimeout(timer);
-  }, [statusMessage]);
-
-  useEffect(() => {
-    const guideHidden = localStorage.getItem("hideModuleGuide_herd-tracker") === "true";
     if (!guideHidden) setShowGuide(true);
   }, []);
 
@@ -232,7 +279,8 @@ export default function HerdTracker() {
 
       const matchesSearch = !search || searchableText.includes(search);
       const matchesStatus = statusFilter === "All" || animal.status === statusFilter;
-      const matchesSpecies = speciesFilter === "All" || animal.species === speciesFilter;
+      const matchesSpecies =
+        speciesFilter === "All" || animal.species === speciesFilter;
 
       return matchesSearch && matchesStatus && matchesSpecies;
     });
@@ -254,7 +302,8 @@ export default function HerdTracker() {
 
       const matchesSearch = !search || searchableText.includes(search);
       const matchesStatus = statusFilter === "All" || group.status === statusFilter;
-      const matchesSpecies = speciesFilter === "All" || group.species === speciesFilter;
+      const matchesSpecies =
+        speciesFilter === "All" || group.species === speciesFilter;
 
       return matchesSearch && matchesStatus && matchesSpecies;
     });
@@ -267,11 +316,28 @@ export default function HerdTracker() {
     });
   }
 
+  function resetAnimalSaveState() {
+    setAnimalDirty(false);
+    setAnimalSaving(false);
+    setAnimalSaved(false);
+    setAnimalSaveError(false);
+  }
+
+  function resetGroupSaveState() {
+    setGroupDirty(false);
+    setGroupSaving(false);
+    setGroupSaved(false);
+    setGroupSaveError(false);
+  }
+
   function startNewAnimal() {
     setActiveView("animals");
     setSelectedAnimalId("");
     setAnimalForm(blankAnimal);
     resetEventForm();
+    setAnimalDirty(true);
+    setAnimalSaved(false);
+    setAnimalSaveError(false);
   }
 
   function startNewGroup() {
@@ -279,6 +345,9 @@ export default function HerdTracker() {
     setSelectedGroupId("");
     setGroupForm(blankGroup);
     resetEventForm();
+    setGroupDirty(true);
+    setGroupSaved(false);
+    setGroupSaveError(false);
   }
 
   function editAnimal(animal) {
@@ -293,6 +362,7 @@ export default function HerdTracker() {
       events: animal.events || []
     });
     resetEventForm();
+    resetAnimalSaveState();
   }
 
   function editGroup(group) {
@@ -307,9 +377,14 @@ export default function HerdTracker() {
       events: group.events || []
     });
     resetEventForm();
+    resetGroupSaveState();
   }
 
   function updateAnimalField(field, value) {
+    setAnimalDirty(true);
+    setAnimalSaved(false);
+    setAnimalSaveError(false);
+
     setAnimalForm((current) => ({
       ...current,
       [field]: value
@@ -317,100 +392,14 @@ export default function HerdTracker() {
   }
 
   function updateGroupField(field, value) {
+    setGroupDirty(true);
+    setGroupSaved(false);
+    setGroupSaveError(false);
+
     setGroupForm((current) => ({
       ...current,
       [field]: value
     }));
-  }
-
-  function saveAnimal(event) {
-    event?.preventDefault?.();
-
-    if (!animalForm.tagId.trim() && !animalForm.name.trim()) {
-      showStatus("Add a Tag ID or animal name before saving.", "error");
-      return;
-    }
-
-    const savedAnimal = saveHerdAnimal({
-      ...animalForm,
-      id: selectedAnimalId || animalForm.id,
-      tagId: animalForm.tagId.trim(),
-      name: animalForm.name.trim(),
-      breed: animalForm.breed.trim(),
-      purchaseCost: cleanCurrency(animalForm.purchaseCost),
-      estimatedValue: cleanCurrency(animalForm.estimatedValue),
-      acquisitionWeight: cleanNumber(animalForm.acquisitionWeight, 2),
-      currentWeight: cleanNumber(animalForm.currentWeight, 2),
-      notes: animalForm.notes.trim()
-    });
-
-    loadData();
-    setSelectedAnimalId(savedAnimal.id);
-    setAnimalForm({
-      ...savedAnimal,
-      purchaseCost: savedAnimal.purchaseCost || "",
-      estimatedValue: savedAnimal.estimatedValue || ""
-    });
-
-    showStatus("Animal record saved.", "success");
-  }
-
-  function saveGroup(event) {
-    event?.preventDefault?.();
-
-    if (!groupForm.name.trim()) {
-      showStatus("Add a group or lot name before saving.", "error");
-      return;
-    }
-
-    const savedGroup = saveHerdGroup({
-      ...groupForm,
-      id: selectedGroupId || groupForm.id,
-      name: groupForm.name.trim(),
-      startingCount: cleanWholeNumber(groupForm.startingCount),
-      currentCount: cleanWholeNumber(groupForm.currentCount),
-      purchaseCost: cleanCurrency(groupForm.purchaseCost),
-      estimatedValue: cleanCurrency(groupForm.estimatedValue),
-      notes: groupForm.notes.trim()
-    });
-
-    loadData();
-    setSelectedGroupId(savedGroup.id);
-    setGroupForm({
-      ...savedGroup,
-      purchaseCost: savedGroup.purchaseCost || "",
-      estimatedValue: savedGroup.estimatedValue || ""
-    });
-
-    showStatus("Group record saved.", "success");
-  }
-
-  function removeAnimal(animalId) {
-    const confirmed = window.confirm("Delete this animal record? This cannot be undone.");
-    if (!confirmed) return;
-
-    deleteHerdAnimal(animalId);
-    loadData();
-
-    if (selectedAnimalId === animalId) {
-      startNewAnimal();
-    }
-
-    showStatus("Animal record deleted.", "success");
-  }
-
-  function removeGroup(groupId) {
-    const confirmed = window.confirm("Delete this group or lot? This cannot be undone.");
-    if (!confirmed) return;
-
-    deleteHerdGroup(groupId);
-    loadData();
-
-    if (selectedGroupId === groupId) {
-      startNewGroup();
-    }
-
-    showStatus("Group record deleted.", "success");
   }
 
   function updateEventField(field, value) {
@@ -420,16 +409,254 @@ export default function HerdTracker() {
     }));
   }
 
+  function saveAnimal(event) {
+    event?.preventDefault?.();
+
+    if (!animalForm.tagId.trim() && !animalForm.name.trim()) {
+      setAnimalSaveError(true);
+      showToast({
+        variant: "error",
+        title: "Animal needs a name",
+        message: "Add a Tag ID or animal name before saving."
+      });
+      return;
+    }
+
+    setAnimalSaving(true);
+    setAnimalSaveError(false);
+
+    try {
+      const savedAnimal = saveHerdAnimal({
+        ...animalForm,
+        id: selectedAnimalId || animalForm.id,
+        tagId: animalForm.tagId.trim(),
+        name: animalForm.name.trim(),
+        breed: animalForm.breed.trim(),
+        purchaseCost: cleanCurrency(animalForm.purchaseCost),
+        estimatedValue: cleanCurrency(animalForm.estimatedValue),
+        acquisitionWeight: cleanNumber(animalForm.acquisitionWeight, 2),
+        currentWeight: cleanNumber(animalForm.currentWeight, 2),
+        notes: animalForm.notes.trim()
+      });
+
+      loadData();
+      setSelectedAnimalId(savedAnimal.id);
+      setAnimalForm({
+        ...savedAnimal,
+        purchaseCost: savedAnimal.purchaseCost || "",
+        estimatedValue: savedAnimal.estimatedValue || ""
+      });
+
+      setAnimalDirty(false);
+      setAnimalSaved(true);
+
+      showToast({
+        variant: "success",
+        title: "Animal saved",
+        message: "Animal record saved successfully."
+      });
+
+      window.setTimeout(() => {
+        setAnimalSaved(false);
+      }, 1200);
+    } catch (error) {
+      console.error("Could not save animal:", error);
+      setAnimalSaveError(true);
+      showToast({
+        variant: "error",
+        title: "Animal could not be saved",
+        message: "Please check the record and try again."
+      });
+    } finally {
+      setAnimalSaving(false);
+    }
+  }
+
+  function saveGroup(event) {
+    event?.preventDefault?.();
+
+    if (!groupForm.name.trim()) {
+      setGroupSaveError(true);
+      showToast({
+        variant: "error",
+        title: "Group needs a name",
+        message: "Add a group or lot name before saving."
+      });
+      return;
+    }
+
+    setGroupSaving(true);
+    setGroupSaveError(false);
+
+    try {
+      const savedGroup = saveHerdGroup({
+        ...groupForm,
+        id: selectedGroupId || groupForm.id,
+        name: groupForm.name.trim(),
+        startingCount: cleanWholeNumber(groupForm.startingCount),
+        currentCount: cleanWholeNumber(groupForm.currentCount),
+        purchaseCost: cleanCurrency(groupForm.purchaseCost),
+        estimatedValue: cleanCurrency(groupForm.estimatedValue),
+        notes: groupForm.notes.trim()
+      });
+
+      loadData();
+      setSelectedGroupId(savedGroup.id);
+      setGroupForm({
+        ...savedGroup,
+        purchaseCost: savedGroup.purchaseCost || "",
+        estimatedValue: savedGroup.estimatedValue || ""
+      });
+
+      setGroupDirty(false);
+      setGroupSaved(true);
+
+      showToast({
+        variant: "success",
+        title: "Group saved",
+        message: "Group or lot record saved successfully."
+      });
+
+      window.setTimeout(() => {
+        setGroupSaved(false);
+      }, 1200);
+    } catch (error) {
+      console.error("Could not save group:", error);
+      setGroupSaveError(true);
+      showToast({
+        variant: "error",
+        title: "Group could not be saved",
+        message: "Please check the record and try again."
+      });
+    } finally {
+      setGroupSaving(false);
+    }
+  }
+
+  function requestDeleteAnimal(animal) {
+    setDeleteTarget({
+      type: "animal",
+      id: animal.id,
+      title: animal.tagId || animal.name || "this animal",
+      message: "Delete this animal record? This action cannot be undone."
+    });
+  }
+
+  function requestDeleteGroup(group) {
+    setDeleteTarget({
+      type: "group",
+      id: group.id,
+      title: group.name || "this group",
+      message: "Delete this group or lot? This action cannot be undone."
+    });
+  }
+
+  function requestDeleteEvent(eventId, eventType) {
+    setDeleteTarget({
+      type: activeView === "animals" ? "animalEvent" : "groupEvent",
+      id: eventId,
+      title: eventType || "timeline event",
+      message: "Delete this timeline event? This action cannot be undone."
+    });
+  }
+
+  function confirmDelete() {
+    if (!deleteTarget) return;
+
+    if (deleteTarget.type === "animal") {
+      deleteHerdAnimal(deleteTarget.id);
+      loadData();
+
+      if (selectedAnimalId === deleteTarget.id) {
+        startNewAnimal();
+      }
+
+      showToast({
+        variant: "success",
+        title: "Animal deleted",
+        message: "Animal record deleted."
+      });
+    }
+
+    if (deleteTarget.type === "group") {
+      deleteHerdGroup(deleteTarget.id);
+      loadData();
+
+      if (selectedGroupId === deleteTarget.id) {
+        startNewGroup();
+      }
+
+      showToast({
+        variant: "success",
+        title: "Group deleted",
+        message: "Group or lot record deleted."
+      });
+    }
+
+    if (deleteTarget.type === "animalEvent") {
+      const updatedAnimal = removeHerdEvent(selectedAnimalId, deleteTarget.id);
+      loadData();
+
+      if (updatedAnimal) {
+        setAnimalForm({
+          ...updatedAnimal,
+          purchaseCost: updatedAnimal.purchaseCost || "",
+          estimatedValue: updatedAnimal.estimatedValue || ""
+        });
+      }
+
+      showToast({
+        variant: "success",
+        title: "Event removed",
+        message: "Animal timeline event removed."
+      });
+    }
+
+    if (deleteTarget.type === "groupEvent") {
+      const updatedGroup = removeHerdGroupEvent(selectedGroupId, deleteTarget.id);
+      loadData();
+
+      if (updatedGroup) {
+        setGroupForm({
+          ...updatedGroup,
+          purchaseCost: updatedGroup.purchaseCost || "",
+          estimatedValue: updatedGroup.estimatedValue || ""
+        });
+      }
+
+      showToast({
+        variant: "success",
+        title: "Event removed",
+        message: "Group timeline event removed."
+      });
+    }
+
+    setDeleteTarget(null);
+  }
+
   function saveAnimalEvent(event) {
     event?.preventDefault?.();
 
     if (!selectedAnimalId) {
-      showStatus("Save or select an animal before adding timeline events.", "error");
+      showToast({
+        variant: "error",
+        title: "Select an animal first",
+        message: "Save or select an animal before adding timeline events."
+      });
       return;
     }
 
-    if (!eventForm.description.trim() && !eventForm.cost && !eventForm.weight && !eventForm.salePrice) {
-      showStatus("Add a note, cost, sale price, or weight before saving this event.", "error");
+    if (
+      !eventForm.description.trim() &&
+      !eventForm.cost &&
+      !eventForm.weight &&
+      !eventForm.salePrice
+    ) {
+      showToast({
+        variant: "error",
+        title: "Event needs details",
+        message: "Add a note, cost, sale price, or weight before saving this event."
+      });
       return;
     }
 
@@ -452,19 +679,32 @@ export default function HerdTracker() {
     }
 
     resetEventForm();
-    showStatus("Animal timeline event added.", "success");
+
+    showToast({
+      variant: "success",
+      title: "Event added",
+      message: "Animal timeline event added."
+    });
   }
 
   function saveGroupEvent(event) {
     event?.preventDefault?.();
 
     if (!selectedGroupId) {
-      showStatus("Save or select a group before adding timeline events.", "error");
+      showToast({
+        variant: "error",
+        title: "Select a group first",
+        message: "Save or select a group before adding timeline events."
+      });
       return;
     }
 
     if (!eventForm.description.trim() && !eventForm.cost && !eventForm.salePrice) {
-      showStatus("Add a note, cost, or sale price before saving this event.", "error");
+      showToast({
+        variant: "error",
+        title: "Event needs details",
+        message: "Add a note, cost, or sale price before saving this event."
+      });
       return;
     }
 
@@ -487,41 +727,12 @@ export default function HerdTracker() {
     }
 
     resetEventForm();
-    showStatus("Group timeline event added.", "success");
-  }
 
-  function deleteAnimalEvent(eventId) {
-    if (!selectedAnimalId) return;
-
-    const updatedAnimal = removeHerdEvent(selectedAnimalId, eventId);
-    loadData();
-
-    if (updatedAnimal) {
-      setAnimalForm({
-        ...updatedAnimal,
-        purchaseCost: updatedAnimal.purchaseCost || "",
-        estimatedValue: updatedAnimal.estimatedValue || ""
-      });
-    }
-
-    showStatus("Timeline event removed.", "success");
-  }
-
-  function deleteGroupEvent(eventId) {
-    if (!selectedGroupId) return;
-
-    const updatedGroup = removeHerdGroupEvent(selectedGroupId, eventId);
-    loadData();
-
-    if (updatedGroup) {
-      setGroupForm({
-        ...updatedGroup,
-        purchaseCost: updatedGroup.purchaseCost || "",
-        estimatedValue: updatedGroup.estimatedValue || ""
-      });
-    }
-
-    showStatus("Timeline event removed.", "success");
+    showToast({
+      variant: "success",
+      title: "Event added",
+      message: "Group timeline event added."
+    });
   }
 
   function markAnimalReady(animal) {
@@ -538,7 +749,11 @@ export default function HerdTracker() {
       estimatedValue: updatedAnimal.estimatedValue || ""
     });
 
-    showStatus("Animal added to the Butcher Board queue.", "success");
+    showToast({
+      variant: "success",
+      title: "Ready for processing",
+      message: "Animal added to the Butcher Board queue."
+    });
   }
 
   function markGroupReady(group) {
@@ -555,39 +770,40 @@ export default function HerdTracker() {
       estimatedValue: updatedGroup.estimatedValue || ""
     });
 
-    showStatus("Group added to the Butcher Board queue.", "success");
+    showToast({
+      variant: "success",
+      title: "Ready for processing",
+      message: "Group added to the Butcher Board queue."
+    });
   }
 
   function renderEventExtraFields() {
     if (eventForm.type === "Health Treatment" || eventForm.type === "Vaccine") {
       return (
         <>
-          <label>
-            Medication
+          <FormField label="Medication">
             <input
               value={eventForm.medication}
               onChange={(event) => updateEventField("medication", event.target.value)}
               placeholder="Medication or vaccine"
             />
-          </label>
+          </FormField>
 
-          <label>
-            Dosage
+          <FormField label="Dosage">
             <input
               value={eventForm.dosage}
               onChange={(event) => updateEventField("dosage", event.target.value)}
               placeholder="Dosage"
             />
-          </label>
+          </FormField>
 
-          <label>
-            Withdrawal Date
+          <FormField label="Withdrawal Date">
             <input
               type="date"
               value={eventForm.withdrawalDate}
               onChange={(event) => updateEventField("withdrawalDate", event.target.value)}
             />
-          </label>
+          </FormField>
         </>
       );
     }
@@ -595,32 +811,29 @@ export default function HerdTracker() {
     if (eventForm.type === "Feed Cost") {
       return (
         <>
-          <label>
-            Feed Type
+          <FormField label="Feed Type">
             <input
               value={eventForm.feedType}
               onChange={(event) => updateEventField("feedType", event.target.value)}
               placeholder="Feed, hay, mineral, etc."
             />
-          </label>
+          </FormField>
 
-          <label>
-            Quantity
+          <FormField label="Quantity">
             <input
               value={eventForm.quantity}
               onChange={(event) => updateEventField("quantity", event.target.value)}
               placeholder="Quantity"
             />
-          </label>
+          </FormField>
 
-          <label>
-            Unit
+          <FormField label="Unit">
             <input
               value={eventForm.unit}
               onChange={(event) => updateEventField("unit", event.target.value)}
               placeholder="bags, bales, lb"
             />
-          </label>
+          </FormField>
         </>
       );
     }
@@ -628,45 +841,92 @@ export default function HerdTracker() {
     if (eventForm.type === "Sale") {
       return (
         <>
-          <label>
-            Buyer
+          <FormField label="Buyer">
             <input
               value={eventForm.buyer}
               onChange={(event) => updateEventField("buyer", event.target.value)}
               placeholder="Buyer or customer"
             />
-          </label>
+          </FormField>
 
-          <label>
-            Sale Price
+          <FormField label="Sale Price">
             <input
               type="number"
               min="0"
               step="0.01"
               value={eventForm.salePrice}
               onChange={(event) => updateEventField("salePrice", event.target.value)}
-              onBlur={(event) => updateEventField("salePrice", cleanCurrency(event.target.value))}
+              onBlur={(event) =>
+                updateEventField("salePrice", cleanCurrency(event.target.value))
+              }
               placeholder="0.00"
             />
-          </label>
+          </FormField>
         </>
       );
     }
 
     if (eventForm.type === "Pasture Move") {
       return (
-        <label>
-          Location
+        <FormField label="Location">
           <input
             value={eventForm.location}
             onChange={(event) => updateEventField("location", event.target.value)}
             placeholder="Pasture, pen, barn, or paddock"
           />
-        </label>
+        </FormField>
       );
     }
 
     return null;
+  }
+
+  function getAnimalActions(animal) {
+    return [
+      {
+        label: "Edit",
+        icon: Edit3,
+        onClick: () => editAnimal(animal)
+      },
+      {
+        label: "Ready for Butcher Board",
+        icon: CalendarDays,
+        onClick: () => markAnimalReady(animal)
+      },
+      {
+        divider: true
+      },
+      {
+        label: "Delete",
+        icon: Trash2,
+        destructive: true,
+        onClick: () => requestDeleteAnimal(animal)
+      }
+    ];
+  }
+
+  function getGroupActions(group) {
+    return [
+      {
+        label: "Edit",
+        icon: Edit3,
+        onClick: () => editGroup(group)
+      },
+      {
+        label: "Ready for Butcher Board",
+        icon: CalendarDays,
+        onClick: () => markGroupReady(group)
+      },
+      {
+        divider: true
+      },
+      {
+        label: "Delete",
+        icon: Trash2,
+        destructive: true,
+        onClick: () => requestDeleteGroup(group)
+      }
+    ];
   }
 
   const currentTimeline =
@@ -674,21 +934,12 @@ export default function HerdTracker() {
 
   return (
     <div className="modulePage herdTrackerModule">
-      {statusMessage ? (
-        <div className={`floatingStatus ${statusType}`}>
-          <AlertCircle size={18} />
-          <span>{statusMessage}</span>
-          <button type="button" onClick={() => setStatusMessage("")}>
-            <X size={16} />
-          </button>
-        </div>
-      ) : null}
-
       <ModuleHero
         eyebrow="Herd Management"
+        accent="herd"
+        icon={Beef}
         title="Track animals, groups, costs, locations, health events, and processing readiness."
         description="Use individual animal records for cattle and breeding stock, or group lots for poultry, feeder pigs, lambs, rabbits, and other batch-style livestock."
-        className="herdHero"
         actions={[
           {
             label: "Guide",
@@ -743,231 +994,211 @@ export default function HerdTracker() {
         />
       </section>
 
-      <section className="workspacePanel compactPanel herdQueuePanel">
-        <div className="workspaceHeader compactPanelHeader">
-          <div>
-            <p className="eyebrow">Butcher Board Queue</p>
-            <h3>Ready for Processing</h3>
-          </div>
-        </div>
-
-        <div className="herdReadyGrid">
-          {readyRecords.animals.length || readyRecords.groups.length ? (
-            <>
-              {readyRecords.animals.map((animal) => (
-                <button
-                  className="herdReadyCard"
-                  key={animal.id}
-                  type="button"
-                  onClick={() => editAnimal(animal)}
-                >
-                  <Beef size={18} />
-                  <div>
-                    <strong>{animal.tagId || animal.name || "Unnamed Animal"}</strong>
-                    <span>
-                      {animal.species}
-                      {animal.projectedProcessingDate
-                        ? ` • ${formatDate(animal.projectedProcessingDate)}`
-                        : ""}
-                    </span>
-                  </div>
-                </button>
-              ))}
-
-              {readyRecords.groups.map((group) => (
-                <button
-                  className="herdReadyCard"
-                  key={group.id}
-                  type="button"
-                  onClick={() => editGroup(group)}
-                >
-                  <Layers size={18} />
-                  <div>
-                    <strong>{group.name || "Unnamed Group"}</strong>
-                    <span>
-                      {group.species}
-                      {group.currentCount ? ` • ${group.currentCount} head` : ""}
-                      {group.projectedProcessingDate
-                        ? ` • ${formatDate(group.projectedProcessingDate)}`
-                        : ""}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </>
-          ) : (
-            <div className="placeholderBox compactPlaceholder">
-              No animals or groups are marked Ready for Processing yet.
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section className="workspacePanel compactPanel herdDirectoryPanel">
-        <div className="workspaceHeader compactPanelHeader">
-          <div>
-            <p className="eyebrow">Directory</p>
-            <h3>{activeView === "animals" ? "Individual Animals" : "Groups / Lots"}</h3>
-          </div>
-
-          <div className="herdViewToggle">
-            <button
-              type="button"
-              className={activeView === "animals" ? "selected" : ""}
-              onClick={() => setActiveView("animals")}
-            >
-              Animals
-            </button>
-            <button
-              type="button"
-              className={activeView === "groups" ? "selected" : ""}
-              onClick={() => setActiveView("groups")}
-            >
-              Groups / Lots
-            </button>
-          </div>
-        </div>
-
-        <div className="inventoryToolbar herdToolbar">
-          <div className="searchBox compactSearch">
-            <Search size={17} />
-            <input
-              value={activeView === "animals" ? animalSearch : groupSearch}
-              onChange={(event) =>
-                activeView === "animals"
-                  ? setAnimalSearch(event.target.value)
-                  : setGroupSearch(event.target.value)
-              }
-              placeholder={
-                activeView === "animals"
-                  ? "Search tag, name, breed..."
-                  : "Search group, lot, location..."
-              }
-            />
-          </div>
-
-          <select value={speciesFilter} onChange={(event) => setSpeciesFilter(event.target.value)}>
-            <option value="All">All Species</option>
-            {HERD_SPECIES_OPTIONS.map((species) => (
-              <option key={species} value={species}>
-                {species}
-              </option>
-            ))}
-          </select>
-
-          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-            <option value="All">All Statuses</option>
-            {HERD_STATUS_OPTIONS.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {activeView === "animals" ? (
-          <div className="savedList compactSavedList herdSavedList">
-            {filteredAnimals.length ? (
-              filteredAnimals.map((animal) => (
-                <div className="savedItem compactSavedItem herdSavedItem" key={animal.id}>
-                  <div>
-                    <h4>{animal.tagId || animal.name || "Unnamed Animal"}</h4>
-                    <p>
-                      {animal.species}
-                      {animal.breed ? ` • ${animal.breed}` : ""}
-                      {animal.purpose ? ` • ${animal.purpose}` : ""}
-                      {animal.status ? ` • ${animal.status}` : ""}
-                    </p>
-                    <p>
-                      Cost basis: {money(calculateAnimalCostBasis(animal))}
-                      {animal.currentWeight ? ` • ${animal.currentWeight} lb` : ""}
-                      {animal.location ? ` • ${animal.location}` : ""}
-                    </p>
-                  </div>
-
-                  <div className="itemActions">
-                    <button type="button" onClick={() => editAnimal(animal)}>
-                      <Edit3 size={14} />
-                    </button>
-
-                    <button type="button" onClick={() => removeAnimal(animal.id)}>
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="placeholderBox compactPlaceholder">
-                No animal records found. Use Add Animal to start individual herd records.
-              </div>
+      <WorkspacePanel
+        eyebrow="Butcher Board Queue"
+        title="Ready for Processing"
+        description="Animals and groups marked ready will appear here for processing planning."
+      >
+        {readyRecords.animals.length || readyRecords.groups.length ? (
+          <RecordList
+            records={[
+              ...readyRecords.animals.map((animal) => ({
+                ...animal,
+                recordType: "animal"
+              })),
+              ...readyRecords.groups.map((group) => ({
+                ...group,
+                recordType: "group"
+              }))
+            ]}
+            selectedRecordId={
+              activeView === "animals" ? selectedAnimalId : selectedGroupId
+            }
+            getRecordId={(record) => `${record.recordType}-${record.id}`}
+            onRecordClick={(record) =>
+              record.recordType === "animal" ? editAnimal(record) : editGroup(record)
+            }
+            getTitle={(record) =>
+              record.recordType === "animal"
+                ? record.tagId || record.name || "Unnamed Animal"
+                : record.name || "Unnamed Group"
+            }
+            getSubtitle={(record) =>
+              record.recordType === "animal"
+                ? `${record.species || "Animal"}${
+                    record.projectedProcessingDate
+                      ? ` • ${formatDate(record.projectedProcessingDate)}`
+                      : ""
+                  }`
+                : `${record.species || "Group"}${
+                    record.currentCount ? ` • ${record.currentCount} head` : ""
+                  }${
+                    record.projectedProcessingDate
+                      ? ` • ${formatDate(record.projectedProcessingDate)}`
+                      : ""
+                  }`
+            }
+            getMeta={(record) => [
+              { label: "Type", value: record.recordType === "animal" ? "Animal" : "Group" },
+              { label: "Location", value: record.location || "Not set" }
+            ]}
+            renderStatus={(record) => (
+              <StatusPill
+                label={record.status || "Ready"}
+                variant={getStatusVariant(record.status)}
+              />
             )}
-          </div>
+          />
         ) : (
-          <div className="savedList compactSavedList herdSavedList">
-            {filteredGroups.length ? (
-              filteredGroups.map((group) => (
-                <div className="savedItem compactSavedItem herdSavedItem" key={group.id}>
-                  <div>
-                    <h4>{group.name || "Unnamed Group"}</h4>
-                    <p>
-                      {group.species}
-                      {group.purpose ? ` • ${group.purpose}` : ""}
-                      {group.status ? ` • ${group.status}` : ""}
-                      {group.currentCount ? ` • ${group.currentCount} head` : ""}
-                    </p>
-                    <p>
-                      Cost basis: {money(calculateGroupCostBasis(group))}
-                      {group.location ? ` • ${group.location}` : ""}
-                    </p>
-                  </div>
-
-                  <div className="itemActions">
-                    <button type="button" onClick={() => editGroup(group)}>
-                      <Edit3 size={14} />
-                    </button>
-
-                    <button type="button" onClick={() => removeGroup(group.id)}>
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="placeholderBox compactPlaceholder">
-                No group or lot records found. Use Add Group for batch-style tracking.
-              </div>
-            )}
-          </div>
+          <EmptyState
+            icon={CalendarDays}
+            title="No records ready yet"
+            message="Animals or groups marked Ready for Processing will appear here."
+          />
         )}
-      </section>
+      </WorkspacePanel>
+
+      <WorkspacePanel
+        eyebrow="Directory"
+        title={activeView === "animals" ? "Individual Animals" : "Groups / Lots"}
+        actions={[
+          {
+            label: activeView === "animals" ? "Add Animal" : "Add Group",
+            icon: Plus,
+            onClick: activeView === "animals" ? startNewAnimal : startNewGroup
+          },
+          {
+            label: "Refresh",
+            icon: RefreshCw,
+            variant: "secondary",
+            onClick: loadData
+          }
+        ]}
+        toolbar={
+          <FilterBar
+            searchValue={activeView === "animals" ? animalSearch : groupSearch}
+            onSearchChange={(value) =>
+              activeView === "animals" ? setAnimalSearch(value) : setGroupSearch(value)
+            }
+            searchPlaceholder={
+              activeView === "animals"
+                ? "Search tag, name, breed..."
+                : "Search group, lot, location..."
+            }
+            filters={[
+              {
+                label: "View",
+                value: activeView,
+                onChange: setActiveView,
+                options: [
+                  { label: "Animals", value: "animals" },
+                  { label: "Groups / Lots", value: "groups" }
+                ]
+              },
+              {
+                label: "Species",
+                value: speciesFilter,
+                onChange: setSpeciesFilter,
+                options: ["All", ...HERD_SPECIES_OPTIONS]
+              },
+              {
+                label: "Status",
+                value: statusFilter,
+                onChange: setStatusFilter,
+                options: ["All", ...HERD_STATUS_OPTIONS]
+              }
+            ]}
+          />
+        }
+      >
+        {activeView === "animals" ? (
+          <RecordList
+            records={filteredAnimals}
+            selectedRecordId={selectedAnimalId}
+            onRecordClick={editAnimal}
+            emptyMessage="No animal records found. Use Add Animal to start individual herd records."
+            getTitle={(animal) => animal.tagId || animal.name || "Unnamed Animal"}
+            getSubtitle={(animal) =>
+              [
+                animal.species,
+                animal.breed,
+                animal.purpose
+              ]
+                .filter(Boolean)
+                .join(" • ")
+            }
+            getMeta={(animal) => [
+              { label: "Cost Basis", value: money(calculateAnimalCostBasis(animal)) },
+              { label: "Weight", value: animal.currentWeight ? `${animal.currentWeight} lb` : "" },
+              { label: "Location", value: animal.location || "Not set" }
+            ]}
+            renderStatus={(animal) => (
+              <StatusPill
+                label={animal.status || "Active"}
+                variant={getStatusVariant(animal.status)}
+              />
+            )}
+            renderActions={(animal) => (
+              <ActionMenu items={getAnimalActions(animal)} />
+            )}
+          />
+        ) : (
+          <RecordList
+            records={filteredGroups}
+            selectedRecordId={selectedGroupId}
+            onRecordClick={editGroup}
+            emptyMessage="No group or lot records found. Use Add Group for batch-style tracking."
+            getTitle={(group) => group.name || "Unnamed Group"}
+            getSubtitle={(group) =>
+              [
+                group.species,
+                group.purpose,
+                group.currentCount ? `${group.currentCount} head` : ""
+              ]
+                .filter(Boolean)
+                .join(" • ")
+            }
+            getMeta={(group) => [
+              { label: "Cost Basis", value: money(calculateGroupCostBasis(group)) },
+              { label: "Location", value: group.location || "Not set" }
+            ]}
+            renderStatus={(group) => (
+              <StatusPill
+                label={group.status || "Active"}
+                variant={getStatusVariant(group.status)}
+              />
+            )}
+            renderActions={(group) => (
+              <ActionMenu items={getGroupActions(group)} />
+            )}
+          />
+        )}
+      </WorkspacePanel>
 
       <section className="herdWorkspaceGrid compactWorkspace">
         {activeView === "animals" ? (
-          <div className="workspacePanel compactPanel herdAnimalPanel">
-            <div className="workspaceHeader compactPanelHeader">
-              <div>
-                <p className="eyebrow">Animal Record</p>
-                <h3>{selectedAnimalId ? "Edit Animal" : "Add Animal"}</h3>
-              </div>
-
-              <button className="primaryButton compactPrimary" type="button" onClick={saveAnimal}>
-                <Save size={15} />
-                Save Animal
-              </button>
-            </div>
-
+          <WorkspacePanel
+            eyebrow="Animal Record"
+            title={selectedAnimalId ? "Edit Animal" : "Add Animal"}
+            className="herdAnimalPanel"
+            actions={[
+              {
+                label: "Clear",
+                variant: "secondary",
+                onClick: startNewAnimal
+              }
+            ]}
+          >
             <form className="formGrid compactFormGrid" onSubmit={saveAnimal}>
-              <label>
-                Tag ID
+              <FormField label="Tag ID">
                 <input
                   value={animalForm.tagId}
                   onChange={(event) => updateAnimalField("tagId", event.target.value)}
                   placeholder="e.g., 104"
                 />
-              </label>
+              </FormField>
 
-              <label>
-                Tag Type
+              <FormField label="Tag Type">
                 <select
                   value={animalForm.tagType}
                   onChange={(event) => updateAnimalField("tagType", event.target.value)}
@@ -978,19 +1209,17 @@ export default function HerdTracker() {
                     </option>
                   ))}
                 </select>
-              </label>
+              </FormField>
 
-              <label>
-                Name
+              <FormField label="Name">
                 <input
                   value={animalForm.name}
                   onChange={(event) => updateAnimalField("name", event.target.value)}
                   placeholder="Optional"
                 />
-              </label>
+              </FormField>
 
-              <label>
-                Species
+              <FormField label="Species">
                 <select
                   value={animalForm.species}
                   onChange={(event) => updateAnimalField("species", event.target.value)}
@@ -1001,30 +1230,30 @@ export default function HerdTracker() {
                     </option>
                   ))}
                 </select>
-              </label>
+              </FormField>
 
-              <label>
-                Breed
+              <FormField label="Breed">
                 <input
                   value={animalForm.breed}
                   onChange={(event) => updateAnimalField("breed", event.target.value)}
                   placeholder="e.g., Angus"
                 />
-              </label>
+              </FormField>
 
-              <label>
-                Sex
-                <select value={animalForm.sex} onChange={(event) => updateAnimalField("sex", event.target.value)}>
+              <FormField label="Sex">
+                <select
+                  value={animalForm.sex}
+                  onChange={(event) => updateAnimalField("sex", event.target.value)}
+                >
                   <option value="">Select</option>
                   <option value="Female">Female</option>
                   <option value="Male">Male</option>
                   <option value="Steer">Steer</option>
                   <option value="Unknown">Unknown</option>
                 </select>
-              </label>
+              </FormField>
 
-              <label>
-                Purpose
+              <FormField label="Purpose">
                 <select
                   value={animalForm.purpose}
                   onChange={(event) => updateAnimalField("purpose", event.target.value)}
@@ -1035,10 +1264,9 @@ export default function HerdTracker() {
                     </option>
                   ))}
                 </select>
-              </label>
+              </FormField>
 
-              <label>
-                Group / Lot
+              <FormField label="Group / Lot">
                 <select
                   value={animalForm.groupId}
                   onChange={(event) => updateAnimalField("groupId", event.target.value)}
@@ -1050,10 +1278,9 @@ export default function HerdTracker() {
                     </option>
                   ))}
                 </select>
-              </label>
+              </FormField>
 
-              <label>
-                Source
+              <FormField label="Source">
                 <select
                   value={animalForm.source}
                   onChange={(event) => updateAnimalField("source", event.target.value)}
@@ -1064,10 +1291,9 @@ export default function HerdTracker() {
                     </option>
                   ))}
                 </select>
-              </label>
+              </FormField>
 
-              <label>
-                Status
+              <FormField label="Status">
                 <select
                   value={animalForm.status}
                   onChange={(event) => updateAnimalField("status", event.target.value)}
@@ -1078,137 +1304,160 @@ export default function HerdTracker() {
                     </option>
                   ))}
                 </select>
-              </label>
+              </FormField>
 
-              <label>
-                Birth Date
+              <FormField label="Birth Date">
                 <input
                   type="date"
                   value={animalForm.birthDate}
                   onChange={(event) => updateAnimalField("birthDate", event.target.value)}
                 />
-              </label>
+              </FormField>
 
-              <label>
-                Purchase Date
+              <FormField label="Purchase Date">
                 <input
                   type="date"
                   value={animalForm.purchaseDate}
                   onChange={(event) => updateAnimalField("purchaseDate", event.target.value)}
                 />
-              </label>
+              </FormField>
 
-              <label>
-                Acquisition Weight
+              <FormField label="Acquisition Weight">
                 <input
                   type="number"
                   min="0"
                   step="0.01"
                   value={animalForm.acquisitionWeight}
-                  onChange={(event) => updateAnimalField("acquisitionWeight", event.target.value)}
-                  onBlur={(event) => updateAnimalField("acquisitionWeight", cleanNumber(event.target.value, 2))}
+                  onChange={(event) =>
+                    updateAnimalField("acquisitionWeight", event.target.value)
+                  }
+                  onBlur={(event) =>
+                    updateAnimalField(
+                      "acquisitionWeight",
+                      cleanNumber(event.target.value, 2)
+                    )
+                  }
                   placeholder="lb"
                 />
-              </label>
+              </FormField>
 
-              <label>
-                Current Weight
+              <FormField label="Current Weight">
                 <input
                   type="number"
                   min="0"
                   step="0.01"
                   value={animalForm.currentWeight}
-                  onChange={(event) => updateAnimalField("currentWeight", event.target.value)}
-                  onBlur={(event) => updateAnimalField("currentWeight", cleanNumber(event.target.value, 2))}
+                  onChange={(event) =>
+                    updateAnimalField("currentWeight", event.target.value)
+                  }
+                  onBlur={(event) =>
+                    updateAnimalField("currentWeight", cleanNumber(event.target.value, 2))
+                  }
                   placeholder="lb"
                 />
-              </label>
+              </FormField>
 
-              <label>
-                Last Weight Date
+              <FormField label="Last Weight Date">
                 <input
                   type="date"
                   value={animalForm.lastWeightDate}
-                  onChange={(event) => updateAnimalField("lastWeightDate", event.target.value)}
+                  onChange={(event) =>
+                    updateAnimalField("lastWeightDate", event.target.value)
+                  }
                 />
-              </label>
+              </FormField>
 
-              <label>
-                Projected Processing Date
+              <FormField label="Projected Processing Date">
                 <input
                   type="date"
                   value={animalForm.projectedProcessingDate}
-                  onChange={(event) => updateAnimalField("projectedProcessingDate", event.target.value)}
+                  onChange={(event) =>
+                    updateAnimalField("projectedProcessingDate", event.target.value)
+                  }
                 />
-              </label>
+              </FormField>
 
-              <label>
-                Withdrawal Date
+              <FormField label="Withdrawal Date">
                 <input
                   type="date"
                   value={animalForm.withdrawalDate}
-                  onChange={(event) => updateAnimalField("withdrawalDate", event.target.value)}
+                  onChange={(event) =>
+                    updateAnimalField("withdrawalDate", event.target.value)
+                  }
                 />
-              </label>
+              </FormField>
 
-              <label>
-                Location / Pasture
+              <FormField label="Location / Pasture">
                 <input
                   value={animalForm.location}
                   onChange={(event) => updateAnimalField("location", event.target.value)}
                   placeholder="Pasture, pen, barn, etc."
                 />
-              </label>
+              </FormField>
 
-              <label>
-                Purchase Cost
+              <FormField label="Purchase Cost">
                 <input
                   type="number"
                   min="0"
                   step="0.01"
                   value={animalForm.purchaseCost}
-                  onChange={(event) => updateAnimalField("purchaseCost", event.target.value)}
-                  onBlur={(event) => updateAnimalField("purchaseCost", cleanCurrency(event.target.value))}
+                  onChange={(event) =>
+                    updateAnimalField("purchaseCost", event.target.value)
+                  }
+                  onBlur={(event) =>
+                    updateAnimalField("purchaseCost", cleanCurrency(event.target.value))
+                  }
                   placeholder="0.00"
                 />
-              </label>
+              </FormField>
 
-              <label>
-                Estimated Value
+              <FormField label="Estimated Value">
                 <input
                   type="number"
                   min="0"
                   step="0.01"
                   value={animalForm.estimatedValue}
-                  onChange={(event) => updateAnimalField("estimatedValue", event.target.value)}
-                  onBlur={(event) => updateAnimalField("estimatedValue", cleanCurrency(event.target.value))}
+                  onChange={(event) =>
+                    updateAnimalField("estimatedValue", event.target.value)
+                  }
+                  onBlur={(event) =>
+                    updateAnimalField("estimatedValue", cleanCurrency(event.target.value))
+                  }
                   placeholder="0.00"
                 />
-              </label>
+              </FormField>
 
               <div className="livestockCalculatedField">
                 <span>Current Cost Basis</span>
                 <strong>{money(calculateAnimalCostBasis(animalForm))}</strong>
               </div>
 
-              <label className="fullSpan">
-                Notes
+              <FormField label="Notes" fullWidth>
                 <textarea
                   value={animalForm.notes}
                   onChange={(event) => updateAnimalField("notes", event.target.value)}
                   placeholder="Animal history, temperament, health notes, breeding notes, or processing plans..."
                 />
-              </label>
+              </FormField>
 
               <div className="fullSpan herdEditorActions">
-                <button className="secondaryButton compactButton" type="button" onClick={startNewAnimal}>
+                <button
+                  className="secondaryButton compactButton"
+                  type="button"
+                  onClick={startNewAnimal}
+                >
                   Clear
                 </button>
 
-                <button className="primaryButton compactPrimary" type="submit">
-                  <Save size={15} />
-                  Save Animal
-                </button>
+                <SaveButton
+                  dirty={animalDirty || !selectedAnimalId}
+                  saving={animalSaving}
+                  saved={animalSaved}
+                  error={animalSaveError}
+                  label="Save Animal"
+                  dirtyLabel="Save Animal"
+                  onClick={saveAnimal}
+                />
 
                 {selectedAnimal ? (
                   <button
@@ -1222,33 +1471,30 @@ export default function HerdTracker() {
                 ) : null}
               </div>
             </form>
-          </div>
+          </WorkspacePanel>
         ) : (
-          <div className="workspacePanel compactPanel herdAnimalPanel">
-            <div className="workspaceHeader compactPanelHeader">
-              <div>
-                <p className="eyebrow">Group / Lot Record</p>
-                <h3>{selectedGroupId ? "Edit Group" : "Add Group"}</h3>
-              </div>
-
-              <button className="primaryButton compactPrimary" type="button" onClick={saveGroup}>
-                <Save size={15} />
-                Save Group
-              </button>
-            </div>
-
+          <WorkspacePanel
+            eyebrow="Group / Lot Record"
+            title={selectedGroupId ? "Edit Group" : "Add Group"}
+            className="herdAnimalPanel"
+            actions={[
+              {
+                label: "Clear",
+                variant: "secondary",
+                onClick: startNewGroup
+              }
+            ]}
+          >
             <form className="formGrid compactFormGrid" onSubmit={saveGroup}>
-              <label>
-                Group / Lot Name
+              <FormField label="Group / Lot Name">
                 <input
                   value={groupForm.name}
                   onChange={(event) => updateGroupField("name", event.target.value)}
                   placeholder="e.g., 2026 Feeder Steers"
                 />
-              </label>
+              </FormField>
 
-              <label>
-                Species
+              <FormField label="Species">
                 <select
                   value={groupForm.species}
                   onChange={(event) => updateGroupField("species", event.target.value)}
@@ -1259,10 +1505,9 @@ export default function HerdTracker() {
                     </option>
                   ))}
                 </select>
-              </label>
+              </FormField>
 
-              <label>
-                Purpose
+              <FormField label="Purpose">
                 <select
                   value={groupForm.purpose}
                   onChange={(event) => updateGroupField("purpose", event.target.value)}
@@ -1273,10 +1518,9 @@ export default function HerdTracker() {
                     </option>
                   ))}
                 </select>
-              </label>
+              </FormField>
 
-              <label>
-                Status
+              <FormField label="Status">
                 <select
                   value={groupForm.status}
                   onChange={(event) => updateGroupField("status", event.target.value)}
@@ -1287,110 +1531,129 @@ export default function HerdTracker() {
                     </option>
                   ))}
                 </select>
-              </label>
+              </FormField>
 
-              <label>
-                Start Date
+              <FormField label="Start Date">
                 <input
                   type="date"
                   value={groupForm.startDate}
                   onChange={(event) => updateGroupField("startDate", event.target.value)}
                 />
-              </label>
+              </FormField>
 
-              <label>
-                Projected Processing Date
+              <FormField label="Projected Processing Date">
                 <input
                   type="date"
                   value={groupForm.projectedProcessingDate}
-                  onChange={(event) => updateGroupField("projectedProcessingDate", event.target.value)}
+                  onChange={(event) =>
+                    updateGroupField("projectedProcessingDate", event.target.value)
+                  }
                 />
-              </label>
+              </FormField>
 
-              <label>
-                Starting Count
+              <FormField label="Starting Count">
                 <input
                   type="number"
                   min="0"
                   step="1"
                   value={groupForm.startingCount}
-                  onChange={(event) => updateGroupField("startingCount", event.target.value)}
-                  onBlur={(event) => updateGroupField("startingCount", cleanWholeNumber(event.target.value))}
+                  onChange={(event) =>
+                    updateGroupField("startingCount", event.target.value)
+                  }
+                  onBlur={(event) =>
+                    updateGroupField("startingCount", cleanWholeNumber(event.target.value))
+                  }
                   placeholder="e.g., 25"
                 />
-              </label>
+              </FormField>
 
-              <label>
-                Current Count
+              <FormField label="Current Count">
                 <input
                   type="number"
                   min="0"
                   step="1"
                   value={groupForm.currentCount}
-                  onChange={(event) => updateGroupField("currentCount", event.target.value)}
-                  onBlur={(event) => updateGroupField("currentCount", cleanWholeNumber(event.target.value))}
+                  onChange={(event) =>
+                    updateGroupField("currentCount", event.target.value)
+                  }
+                  onBlur={(event) =>
+                    updateGroupField("currentCount", cleanWholeNumber(event.target.value))
+                  }
                   placeholder="e.g., 25"
                 />
-              </label>
+              </FormField>
 
-              <label>
-                Location / Pasture
+              <FormField label="Location / Pasture">
                 <input
                   value={groupForm.location}
                   onChange={(event) => updateGroupField("location", event.target.value)}
                   placeholder="Pasture, pen, barn, etc."
                 />
-              </label>
+              </FormField>
 
-              <label>
-                Purchase Cost
+              <FormField label="Purchase Cost">
                 <input
                   type="number"
                   min="0"
                   step="0.01"
                   value={groupForm.purchaseCost}
-                  onChange={(event) => updateGroupField("purchaseCost", event.target.value)}
-                  onBlur={(event) => updateGroupField("purchaseCost", cleanCurrency(event.target.value))}
+                  onChange={(event) =>
+                    updateGroupField("purchaseCost", event.target.value)
+                  }
+                  onBlur={(event) =>
+                    updateGroupField("purchaseCost", cleanCurrency(event.target.value))
+                  }
                   placeholder="0.00"
                 />
-              </label>
+              </FormField>
 
-              <label>
-                Estimated Value
+              <FormField label="Estimated Value">
                 <input
                   type="number"
                   min="0"
                   step="0.01"
                   value={groupForm.estimatedValue}
-                  onChange={(event) => updateGroupField("estimatedValue", event.target.value)}
-                  onBlur={(event) => updateGroupField("estimatedValue", cleanCurrency(event.target.value))}
+                  onChange={(event) =>
+                    updateGroupField("estimatedValue", event.target.value)
+                  }
+                  onBlur={(event) =>
+                    updateGroupField("estimatedValue", cleanCurrency(event.target.value))
+                  }
                   placeholder="0.00"
                 />
-              </label>
+              </FormField>
 
               <div className="livestockCalculatedField">
                 <span>Current Cost Basis</span>
                 <strong>{money(calculateGroupCostBasis(groupForm))}</strong>
               </div>
 
-              <label className="fullSpan">
-                Notes
+              <FormField label="Notes" fullWidth>
                 <textarea
                   value={groupForm.notes}
                   onChange={(event) => updateGroupField("notes", event.target.value)}
                   placeholder="Group feed plan, pasture notes, health notes, losses, or processing plans..."
                 />
-              </label>
+              </FormField>
 
               <div className="fullSpan herdEditorActions">
-                <button className="secondaryButton compactButton" type="button" onClick={startNewGroup}>
+                <button
+                  className="secondaryButton compactButton"
+                  type="button"
+                  onClick={startNewGroup}
+                >
                   Clear
                 </button>
 
-                <button className="primaryButton compactPrimary" type="submit">
-                  <Save size={15} />
-                  Save Group
-                </button>
+                <SaveButton
+                  dirty={groupDirty || !selectedGroupId}
+                  saving={groupSaving}
+                  saved={groupSaved}
+                  error={groupSaveError}
+                  label="Save Group"
+                  dirtyLabel="Save Group"
+                  onClick={saveGroup}
+                />
 
                 {selectedGroup ? (
                   <button
@@ -1404,49 +1667,51 @@ export default function HerdTracker() {
                 ) : null}
               </div>
             </form>
-          </div>
+          </WorkspacePanel>
         )}
 
-        <div className="workspacePanel compactPanel herdTimelinePanel">
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Timeline</p>
-              <h3>
-                {activeView === "animals"
-                  ? selectedAnimal
-                    ? getDisplayName(selectedAnimal)
-                    : "Select an Animal"
-                  : selectedGroup
-                    ? selectedGroup.name || "Selected Group"
-                    : "Select a Group"}
-              </h3>
-            </div>
-
-            <div className="herdTimelineMiniMeta">
-              {activeView === "animals" && selectedAnimal?.location ? (
-                <span>
-                  <MapPin size={13} />
-                  {selectedAnimal.location}
-                </span>
-              ) : null}
-
-              {activeView === "groups" && selectedGroup?.location ? (
-                <span>
-                  <MapPin size={13} />
-                  {selectedGroup.location}
-                </span>
-              ) : null}
-            </div>
-          </div>
-
-          {(activeView === "animals" && selectedAnimal) || (activeView === "groups" && selectedGroup) ? (
+        <WorkspacePanel
+          eyebrow="Timeline"
+          title={
+            activeView === "animals"
+              ? selectedAnimal
+                ? getDisplayName(selectedAnimal)
+                : "Select an Animal"
+              : selectedGroup
+                ? selectedGroup.name || "Selected Group"
+                : "Select a Group"
+          }
+          className="herdTimelinePanel"
+          actions={
+            activeView === "animals" && selectedAnimal?.location
+              ? [
+                  {
+                    label: selectedAnimal.location,
+                    icon: MapPin,
+                    variant: "secondary",
+                    onClick: () => {}
+                  }
+                ]
+              : activeView === "groups" && selectedGroup?.location
+                ? [
+                    {
+                      label: selectedGroup.location,
+                      icon: MapPin,
+                      variant: "secondary",
+                      onClick: () => {}
+                    }
+                  ]
+                : []
+          }
+        >
+          {(activeView === "animals" && selectedAnimal) ||
+          (activeView === "groups" && selectedGroup) ? (
             <>
               <form
                 className="formGrid compactFormGrid herdEventForm"
                 onSubmit={activeView === "animals" ? saveAnimalEvent : saveGroupEvent}
               >
-                <label>
-                  Event Type
+                <FormField label="Event Type">
                   <select
                     value={eventForm.type}
                     onChange={(event) => updateEventField("type", event.target.value)}
@@ -1457,55 +1722,59 @@ export default function HerdTracker() {
                       </option>
                     ))}
                   </select>
-                </label>
+                </FormField>
 
-                <label>
-                  Date
+                <FormField label="Date">
                   <input
                     type="date"
                     value={eventForm.date}
                     onChange={(event) => updateEventField("date", event.target.value)}
                   />
-                </label>
+                </FormField>
 
-                <label>
-                  Cost
+                <FormField label="Cost">
                   <input
                     type="number"
                     min="0"
                     step="0.01"
                     value={eventForm.cost}
                     onChange={(event) => updateEventField("cost", event.target.value)}
-                    onBlur={(event) => updateEventField("cost", cleanCurrency(event.target.value))}
+                    onBlur={(event) =>
+                      updateEventField("cost", cleanCurrency(event.target.value))
+                    }
                     placeholder="0.00"
                   />
-                </label>
+                </FormField>
 
                 {activeView === "animals" ? (
-                  <label>
-                    Weight
+                  <FormField label="Weight">
                     <input
                       type="number"
                       min="0"
                       step="0.01"
                       value={eventForm.weight}
-                      onChange={(event) => updateEventField("weight", event.target.value)}
-                      onBlur={(event) => updateEventField("weight", cleanNumber(event.target.value, 2))}
+                      onChange={(event) =>
+                        updateEventField("weight", event.target.value)
+                      }
+                      onBlur={(event) =>
+                        updateEventField("weight", cleanNumber(event.target.value, 2))
+                      }
                       placeholder="lb"
                     />
-                  </label>
+                  </FormField>
                 ) : null}
 
                 {renderEventExtraFields()}
 
-                <label className="fullSpan">
-                  Description
+                <FormField label="Description" fullWidth>
                   <textarea
                     value={eventForm.description}
-                    onChange={(event) => updateEventField("description", event.target.value)}
+                    onChange={(event) =>
+                      updateEventField("description", event.target.value)
+                    }
                     placeholder="Add feed notes, treatment details, weight notes, pasture movement, sale notes, or general history..."
                   />
-                </label>
+                </FormField>
 
                 <div className="fullSpan herdEventActions">
                   <button className="primaryButton compactPrimary" type="submit">
@@ -1517,68 +1786,93 @@ export default function HerdTracker() {
 
               <div className="herdTimelineList">
                 {currentTimeline.length ? (
-                  currentTimeline.map((timelineEvent) => (
-                    <div className="savedItem compactSavedItem herdTimelineItem" key={timelineEvent.id}>
-                      <div>
-                        <h4>{timelineEvent.type}</h4>
-                        <p>
-                          {timelineEvent.date ? formatDate(timelineEvent.date) : "No date"}
-                          {timelineEvent.cost ? ` • Cost: ${money(timelineEvent.cost)}` : ""}
-                          {timelineEvent.salePrice ? ` • Sale: ${money(timelineEvent.salePrice)}` : ""}
-                          {timelineEvent.weight ? ` • ${timelineEvent.weight} lb` : ""}
-                        </p>
-
-                        {timelineEvent.medication || timelineEvent.dosage || timelineEvent.withdrawalDate ? (
-                          <p>
-                            {timelineEvent.medication ? `Medication: ${timelineEvent.medication}` : ""}
-                            {timelineEvent.dosage ? ` • Dosage: ${timelineEvent.dosage}` : ""}
-                            {timelineEvent.withdrawalDate
-                              ? ` • Withdrawal: ${formatDate(timelineEvent.withdrawalDate)}`
-                              : ""}
-                          </p>
-                        ) : null}
-
-                        {timelineEvent.feedType || timelineEvent.quantity || timelineEvent.unit ? (
-                          <p>
-                            {timelineEvent.feedType ? `Feed: ${timelineEvent.feedType}` : ""}
-                            {timelineEvent.quantity ? ` • Qty: ${timelineEvent.quantity}` : ""}
-                            {timelineEvent.unit ? ` ${timelineEvent.unit}` : ""}
-                          </p>
-                        ) : null}
-
-                        {timelineEvent.buyer ? <p>Buyer: {timelineEvent.buyer}</p> : null}
-                        {timelineEvent.location ? <p>Location: {timelineEvent.location}</p> : null}
-                        <p>{timelineEvent.description || "No description added."}</p>
-                      </div>
-
+                  <RecordList
+                    records={currentTimeline}
+                    getRecordId={(event) => event.id}
+                    getTitle={timelineTitle}
+                    getSubtitle={timelineSubtitle}
+                    getMeta={(event) => [
+                      {
+                        label: "Medication",
+                        value: event.medication || ""
+                      },
+                      {
+                        label: "Feed",
+                        value: event.feedType || ""
+                      },
+                      {
+                        label: "Buyer",
+                        value: event.buyer || ""
+                      },
+                      {
+                        label: "Location",
+                        value: event.location || ""
+                      },
+                      {
+                        label: "Note",
+                        value: event.description || "No description added."
+                      }
+                    ]}
+                    renderStatus={(event) => (
+                      <StatusPill label={event.type || "Event"} variant="info" />
+                    )}
+                    renderActions={(event) => (
                       <div className="itemActions">
                         <button
                           type="button"
-                          onClick={() =>
-                            activeView === "animals"
-                              ? deleteAnimalEvent(timelineEvent.id)
-                              : deleteGroupEvent(timelineEvent.id)
-                          }
+                          aria-label="Delete timeline event"
+                          onClick={() => requestDeleteEvent(event.id, event.type)}
                         >
                           <Trash2 size={14} />
                         </button>
                       </div>
-                    </div>
-                  ))
+                    )}
+                  />
                 ) : (
-                  <div className="placeholderBox compactPlaceholder">
-                    No timeline events yet. Add feed costs, weight checks, health treatments, pasture moves, sales, or notes.
-                  </div>
+                  <EmptyState
+                    icon={History}
+                    title="No timeline events yet"
+                    message="Add feed costs, weight checks, health treatments, pasture moves, sales, or notes."
+                  />
                 )}
               </div>
             </>
           ) : (
-            <div className="placeholderBox compactPlaceholder">
-              Select or save a record to begin tracking timeline events.
-            </div>
+            <EmptyState
+              icon={History}
+              title={
+                activeView === "animals" ? "Select an animal" : "Select a group"
+              }
+              message="Select or save a record to begin tracking timeline events."
+            />
           )}
-        </div>
+        </WorkspacePanel>
       </section>
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title={
+          deleteTarget?.type === "animal"
+            ? "Delete Animal?"
+            : deleteTarget?.type === "group"
+              ? "Delete Group?"
+              : "Delete Event?"
+        }
+        message={deleteTarget?.message || "This action cannot be undone."}
+        confirmLabel="Delete"
+        confirmVariant="danger"
+        cancelLabel="Cancel"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      <Toast
+        open={Boolean(toast)}
+        variant={toast?.variant}
+        title={toast?.title}
+        message={toast?.message}
+        onClose={() => setToast(null)}
+      />
 
       <ModuleGuideModal
         isOpen={showGuide}
