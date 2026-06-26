@@ -38,8 +38,8 @@ export default function HerdTrackerGuideContent() {
           <History size={20} />
           <h3>2. Track Timeline Events</h3>
           <p>
-            Log weight checks, vet treatments, feed costs, pasture moves,
-            breeding notes, sales, losses, and general notes.
+            Log weight checks, vet treatments, feed costs, pasture moves, vet
+            treatments, breeding notes, sales, losses, and general notes.
           </p>
         </article>
 
