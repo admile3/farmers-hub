@@ -4,11 +4,10 @@ import {
   CircleHelp,
   ClipboardList,
   DollarSign,
+  Edit3,
   Package,
   Plus,
   RefreshCw,
-  Save,
-  Search,
   Trash2,
   Users,
   X
@@ -17,10 +16,19 @@ import { doc, getDoc } from "firebase/firestore";
 
 import { db } from "../firebase";
 import { useAuth } from "../AuthContext.jsx";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import EmptyState from "../components/EmptyState.jsx";
+import FilterBar from "../components/FilterBar.jsx";
+import FormField from "../components/FormField.jsx";
 import ModuleHero from "../components/ModuleHero.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import OrdersGuideContent from "../components/OrdersGuideContent.jsx";
+import RecordList from "../components/RecordList.jsx";
+import SaveButton from "../components/SaveButton.jsx";
 import StatCard from "../components/StatCard.jsx";
+import StatusPill from "../components/StatusPill.jsx";
+import Toast from "../components/Toast.jsx";
+import WorkspacePanel from "../components/WorkspacePanel.jsx";
 import { getCustomers, saveCustomer } from "../services/customerService.js";
 import { getProducts } from "../services/productService.js";
 import { getSpiceRecipes } from "../services/spiceKitchenService.js";
@@ -277,7 +285,6 @@ function buildBakingOrderProducts(bakingRecipes = []) {
     });
 }
 
-
 function compactLineSummary(lineItems = []) {
   return lineItems
     .filter((item) => String(item?.productName || "").trim())
@@ -288,6 +295,15 @@ function compactLineSummary(lineItems = []) {
       return `${quantity} ${unit} ${name}`.trim();
     })
     .join(", ");
+}
+
+function orderCustomerDisplay(order) {
+  const customer = order.customerSnapshot || {};
+  return (
+    customer.businessName ||
+    customer.name ||
+    (order.customerMode === "oneTime" ? "One-time customer" : "No customer")
+  );
 }
 
 function buildOrderCalendarEvent(order, savedId = "") {
@@ -327,7 +343,9 @@ function buildOrderCalendarEvent(order, savedId = "") {
       order?.fulfillmentType ? `Fulfillment: ${order.fulfillmentType}` : "",
       lineSummary ? `Items: ${lineSummary}` : "",
       `Total: ${money(totals.total)}`,
-      Number(totals.balanceDue) > 0 ? `Balance due: ${money(totals.balanceDue)}` : "Paid in full",
+      Number(totals.balanceDue) > 0
+        ? `Balance due: ${money(totals.balanceDue)}`
+        : "Paid in full",
       order?.customerNotes ? `Customer notes: ${order.customerNotes}` : "",
       order?.internalNotes ? `Internal notes: ${order.internalNotes}` : ""
     ]
@@ -379,17 +397,21 @@ function getNextOrderNumber(orders = []) {
   return `ORD-${String(maxNumber + 1).padStart(6, "0")}`;
 }
 
-function orderCustomerDisplay(order) {
-  const customer = order.customerSnapshot || {};
-  return (
-    customer.businessName ||
-    customer.name ||
-    (order.customerMode === "oneTime" ? "One-time customer" : "No customer")
-  );
-}
-
-function orderStatusClass(status) {
-  return normalize(status).replace(/[^a-z0-9]+/g, "-");
+function getOrderStatusVariant(status) {
+  switch (status) {
+    case "Confirmed":
+    case "Ready":
+    case "Completed":
+      return "success";
+    case "In Production":
+      return "warning";
+    case "Cancelled":
+      return "danger";
+    case "Draft":
+      return "neutral";
+    default:
+      return "primary";
+  }
 }
 
 export default function Orders() {
@@ -405,8 +427,12 @@ export default function Orders() {
   const [statusFilter, setStatusFilter] = useState("Open orders");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [statusMessage, setStatusMessage] = useState("");
+  const [saveDirty, setSaveDirty] = useState(false);
+  const [saveSaved, setSaveSaved] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+  const [toast, setToast] = useState(null);
   const [showGuide, setShowGuide] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -417,15 +443,9 @@ export default function Orders() {
       setProducts([]);
       setForm(blankOrder());
       setSelectedOrderId("");
+      setSaveDirty(false);
     }
   }, [user]);
-
-  useEffect(() => {
-    if (!statusMessage) return undefined;
-
-    const timer = window.setTimeout(() => setStatusMessage(""), 3200);
-    return () => window.clearTimeout(timer);
-  }, [statusMessage]);
 
   useEffect(() => {
     const guideHidden = localStorage.getItem("hideModuleGuide_orders") === "true";
@@ -434,6 +454,20 @@ export default function Orders() {
       setShowGuide(true);
     }
   }, []);
+
+  function showToast(nextToast) {
+    setToast(nextToast);
+
+    window.setTimeout(() => {
+      setToast(null);
+    }, 3000);
+  }
+
+  function markDirty() {
+    setSaveDirty(true);
+    setSaveSaved(false);
+    setSaveError(false);
+  }
 
   async function loadData() {
     if (!user) return;
@@ -477,13 +511,18 @@ export default function Orders() {
       ]);
     } catch (error) {
       console.error("Could not load orders data:", error);
-      setStatusMessage("Could not load Orders data.");
+      showToast({
+        variant: "error",
+        title: "Orders could not load",
+        message: "Please refresh and try again."
+      });
     } finally {
       setLoading(false);
     }
   }
 
   function updateOrderField(field, value) {
+    markDirty();
     setForm((current) => ({
       ...current,
       [field]: value
@@ -491,6 +530,7 @@ export default function Orders() {
   }
 
   function updateCustomerSnapshot(field, value) {
+    markDirty();
     setForm((current) => ({
       ...current,
       customerSnapshot: {
@@ -501,6 +541,7 @@ export default function Orders() {
   }
 
   function updateCustomerMode(value) {
+    markDirty();
     setForm((current) => ({
       ...current,
       customerMode: value,
@@ -510,6 +551,7 @@ export default function Orders() {
   }
 
   function selectSavedCustomer(customerId) {
+    markDirty();
     const customer = customers.find((item) => item.id === customerId);
 
     setForm((current) => ({
@@ -530,6 +572,7 @@ export default function Orders() {
   }
 
   function updatePricingMode(value) {
+    markDirty();
     setForm((current) => ({
       ...current,
       pricingMode: value,
@@ -548,6 +591,7 @@ export default function Orders() {
   }
 
   function updateLineItem(lineId, field, value) {
+    markDirty();
     setForm((current) => ({
       ...current,
       lineItems: current.lineItems.map((item) => {
@@ -578,6 +622,7 @@ export default function Orders() {
   }
 
   function addLineItem() {
+    markDirty();
     setForm((current) => ({
       ...current,
       lineItems: [...current.lineItems, blankLineItem()]
@@ -585,6 +630,7 @@ export default function Orders() {
   }
 
   function removeLineItem(lineId) {
+    markDirty();
     setForm((current) => ({
       ...current,
       lineItems:
@@ -600,8 +646,10 @@ export default function Orders() {
       ...blankOrder(),
       orderNumber: getNextOrderNumber(orders)
     });
+    setSaveDirty(true);
+    setSaveSaved(false);
+    setSaveError(false);
     setEditorOpen(true);
-    setStatusMessage("Started a new order.");
   }
 
   function loadOrder(order) {
@@ -615,8 +663,10 @@ export default function Orders() {
       },
       lineItems: order.lineItems?.length ? order.lineItems : [blankLineItem()]
     });
+    setSaveDirty(false);
+    setSaveSaved(false);
+    setSaveError(false);
     setEditorOpen(true);
-    setStatusMessage("Order loaded.");
   }
 
   async function quickAddCustomerIfNeeded(orderToSave) {
@@ -666,7 +716,12 @@ export default function Orders() {
     ).trim();
 
     if (!customerName) {
-      setStatusMessage("Add a customer name, select a saved customer, or use one-time customer.");
+      setSaveError(true);
+      showToast({
+        variant: "warning",
+        title: "Customer needed",
+        message: "Add a customer name, select a saved customer, or use a one-time customer."
+      });
       return;
     }
 
@@ -676,11 +731,17 @@ export default function Orders() {
       !filledLineItems.length ||
       filledLineItems.every((item) => !String(item.productName || "").trim())
     ) {
-      setStatusMessage("Add at least one line item.");
+      setSaveError(true);
+      showToast({
+        variant: "warning",
+        title: "Line item needed",
+        message: "Add at least one line item before saving."
+      });
       return;
     }
 
     setSaving(true);
+    setSaveError(false);
 
     try {
       const cleanLineItems = filledLineItems.map((item) => ({
@@ -725,6 +786,7 @@ export default function Orders() {
 
       await saveOrder(user.uid, finalizedOrder);
       notifyCalendarModule("saved", finalizedOrder);
+
       setSelectedOrderId(savedId);
       setForm({
         ...blankOrder(),
@@ -737,38 +799,68 @@ export default function Orders() {
           ? finalizedOrder.lineItems
           : [blankLineItem()]
       });
+
+      setSaveDirty(false);
+      setSaveSaved(true);
       setEditorOpen(false);
-      setStatusMessage("Order saved and calendar updated.");
+
+      showToast({
+        variant: "success",
+        title: "Order saved",
+        message: "Order saved and calendar updated."
+      });
+
+      window.setTimeout(() => {
+        setSaveSaved(false);
+      }, 1200);
+
       await loadData();
     } catch (error) {
       console.error("Could not save order:", error);
-      setStatusMessage(error.message || "Could not save order.");
+      setSaveError(true);
+      showToast({
+        variant: "error",
+        title: "Order could not be saved",
+        message: error.message || "Please check the order and try again."
+      });
     } finally {
       setSaving(false);
     }
   }
 
-  async function handleDeleteOrder(order) {
-    if (!user || !order?.id) return;
+  function requestDeleteOrder(order) {
+    if (!order?.id) return;
+    setDeleteTarget(order);
+  }
 
-    const confirmed = window.confirm(`Delete ${order.orderNumber || "this order"}?`);
-    if (!confirmed) return;
+  async function confirmDeleteOrder() {
+    if (!user || !deleteTarget?.id) return;
 
     try {
-      await deleteOrder(user.uid, order.id);
-      notifyCalendarModule("deleted", order);
+      await deleteOrder(user.uid, deleteTarget.id);
+      notifyCalendarModule("deleted", deleteTarget);
 
-      if (selectedOrderId === order.id) {
+      if (selectedOrderId === deleteTarget.id) {
         setSelectedOrderId("");
         setForm(blankOrder());
         setEditorOpen(false);
       }
 
-      setStatusMessage("Order deleted.");
+      showToast({
+        variant: "success",
+        title: "Order deleted",
+        message: `${deleteTarget.orderNumber || "Order"} was removed.`
+      });
+
+      setDeleteTarget(null);
       await loadData();
     } catch (error) {
       console.error("Could not delete order:", error);
-      setStatusMessage("Could not delete order.");
+      showToast({
+        variant: "error",
+        title: "Order could not be deleted",
+        message: "Please try again."
+      });
     }
   }
 
@@ -877,35 +969,26 @@ export default function Orders() {
         <OrdersGuideContent />
       </ModuleGuideModal>
 
-      {statusMessage ? (
-        <div className="floatingStatus" role="status">
-          <span>{statusMessage}</span>
-          <button type="button" onClick={() => setStatusMessage("")}>
-            <X size={16} />
-          </button>
-        </div>
-      ) : null}
-
       <ModuleHero
-  eyebrow="Orders"
-  accent="orders"
-  icon={Package}
-  title="Manage customer orders from request to fulfillment."
-  description="Select saved customers, quick-add new customers, enter one-time orders, and build line items from your product directory or manual entries."
-  actions={[
-    {
-      label: "Guide",
-      icon: CircleHelp,
-      variant: "secondary",
-      onClick: () => setShowGuide(true)
-    },
-    {
-      label: "New Order",
-      icon: Plus,
-      onClick: startNewOrder
-    }
-  ]}
-/>
+        eyebrow="Orders"
+        accent="orders"
+        icon={Package}
+        title="Manage customer orders from request to fulfillment."
+        description="Select saved customers, quick-add new customers, enter one-time orders, and build line items from your product directory or manual entries."
+        actions={[
+          {
+            label: "Guide",
+            icon: CircleHelp,
+            variant: "secondary",
+            onClick: () => setShowGuide(true)
+          },
+          {
+            label: "New Order",
+            icon: Plus,
+            onClick: startNewOrder
+          }
+        ]}
+      />
 
       <section className="hubStatGrid ordersStatGrid">
         <StatCard
@@ -938,170 +1021,159 @@ export default function Orders() {
         />
       </section>
 
-      <section className="ordersTodayPanel workspacePanel compactPanel">
-        <div className="workspaceHeader compactPanelHeader">
-          <div>
-            <p className="eyebrow">Due Today</p>
-            <h3>
-              {loading
-                ? "Checking today's orders..."
-                : `${stats.dueToday} order${stats.dueToday === 1 ? "" : "s"} due today`}
-            </h3>
-          </div>
-
-          <button className="secondaryButton compactButton" type="button" onClick={loadData}>
-            <RefreshCw size={15} />
-            Refresh
-          </button>
-        </div>
-
+      <WorkspacePanel
+        eyebrow="Due Today"
+        title={
+          loading
+            ? "Checking today's orders..."
+            : `${stats.dueToday} order${stats.dueToday === 1 ? "" : "s"} due today`
+        }
+        actions={[
+          {
+            label: "Refresh",
+            icon: RefreshCw,
+            variant: "secondary",
+            onClick: loadData
+          }
+        ]}
+      >
         {dueTodayOrders.length ? (
-          <div className="ordersTodayList">
-            {dueTodayOrders.map((order) => (
-              <button
-                className="ordersTodayCard"
-                type="button"
-                key={order.id}
-                onClick={() => loadOrder(order)}
-              >
-                <strong>{order.orderNumber || "Untitled Order"}</strong>
-                <span>{orderCustomerDisplay(order)}</span>
-                <small>
-                  {order.status || "Draft"} • {money(order.totals?.total || 0)}
-                </small>
-              </button>
-            ))}
-          </div>
-        ) : (
-          <p className="dashboardEmpty">
-            {loading ? "Loading due today..." : "No orders are due today."}
-          </p>
-        )}
-      </section>
-
-      <section className="ordersDirectoryOnlyLayout">
-        <div className="workspacePanel compactPanel ordersDirectoryPanel">
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Directory</p>
-              <h3>Order Directory</h3>
-            </div>
-
-            <button className="secondaryButton compactButton" type="button" onClick={loadData}>
-              <RefreshCw size={15} />
-              Refresh
-            </button>
-          </div>
-
-          <div className="ordersFilterGrid">
-            <div className="searchBox compactSearch customersSearchBox">
-              <Search size={17} />
-              <input
-                type="search"
-                value={queryText}
-                onChange={(event) => setQueryText(event.target.value)}
-                placeholder="Search orders, customers, or products"
+          <RecordList
+            records={dueTodayOrders}
+            selectedRecordId={selectedOrderId}
+            onRecordClick={loadOrder}
+            getTitle={(order) => order.orderNumber || "Untitled Order"}
+            getSubtitle={(order) => orderCustomerDisplay(order)}
+            getMeta={(order) => [
+              { label: "Status", value: order.status || "Draft" },
+              { label: "Total", value: money(order.totals?.total || 0) }
+            ]}
+            renderStatus={(order) => (
+              <StatusPill
+                label={order.status || "Draft"}
+                variant={getOrderStatusVariant(order.status)}
               />
-            </div>
-
-            <label>
-              Status
-              <select
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
-              >
-                <option>Open orders</option>
-                <option>All orders</option>
-                {ORDER_STATUSES.map((status) => (
-                  <option key={status}>{status}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <div className="ordersList">
-            {filteredOrders.length ? (
-              filteredOrders.map((order) => (
-                <div
-                  className={`ordersListItem ${
-                    selectedOrderId === order.id ? "selected" : ""
-                  }`}
-                  key={order.id}
-                >
-                  <button type="button" onClick={() => loadOrder(order)}>
-                    <strong>{order.orderNumber || "Untitled Order"}</strong>
-                    <span>{orderCustomerDisplay(order)}</span>
-                    <small>
-                      {order.dueDate || "No due date"} • {money(order.totals?.total || 0)}
-                    </small>
-                  </button>
-
-                  <span className={`orderStatusPill ${orderStatusClass(order.status)}`}>
-                    {order.status || "Draft"}
-                  </span>
-
-                  <button
-                    className="iconButton danger"
-                    type="button"
-                    onClick={() => handleDeleteOrder(order)}
-                    aria-label="Delete order"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </div>
-              ))
-            ) : (
-              <p className="dashboardEmpty">
-                {loading ? "Loading orders..." : "No orders match your filters."}
-              </p>
             )}
-          </div>
-        </div>
-      </section>
+          />
+        ) : (
+          <EmptyState
+            icon={ClipboardList}
+            title={loading ? "Loading due today..." : "No orders due today"}
+            message={
+              loading
+                ? "Checking your saved orders."
+                : "Orders with today's due date will appear here."
+            }
+          />
+        )}
+      </WorkspacePanel>
+
+      <WorkspacePanel
+        eyebrow="Directory"
+        title="Order Directory"
+        actions={[
+          {
+            label: "Refresh",
+            icon: RefreshCw,
+            variant: "secondary",
+            onClick: loadData
+          }
+        ]}
+        toolbar={
+          <FilterBar
+            searchValue={queryText}
+            onSearchChange={setQueryText}
+            searchPlaceholder="Search orders, customers, or products"
+            filters={[
+              {
+                label: "Status",
+                value: statusFilter,
+                onChange: setStatusFilter,
+                options: ["Open orders", "All orders", ...ORDER_STATUSES]
+              }
+            ]}
+            actions={[
+              {
+                label: "New Order",
+                icon: Plus,
+                onClick: startNewOrder
+              }
+            ]}
+          />
+        }
+      >
+        <RecordList
+          records={filteredOrders}
+          selectedRecordId={selectedOrderId}
+          onRecordClick={loadOrder}
+          emptyMessage={loading ? "Loading orders..." : "No orders match your filters."}
+          getTitle={(order) => order.orderNumber || "Untitled Order"}
+          getSubtitle={(order) => orderCustomerDisplay(order)}
+          getMeta={(order) => [
+            { label: "Due", value: order.dueDate || "No due date" },
+            { label: "Total", value: money(order.totals?.total || 0) },
+            { label: "Fulfillment", value: order.fulfillmentType || "Not set" }
+          ]}
+          renderStatus={(order) => (
+            <StatusPill
+              label={order.status || "Draft"}
+              variant={getOrderStatusVariant(order.status)}
+            />
+          )}
+          renderActions={(order) => (
+            <div className="itemActions">
+              <button type="button" aria-label="Edit order" onClick={() => loadOrder(order)}>
+                <Edit3 size={14} />
+              </button>
+              <button
+                type="button"
+                aria-label="Delete order"
+                onClick={() => requestDeleteOrder(order)}
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          )}
+        />
+      </WorkspacePanel>
 
       {editorOpen ? (
         <div className="ordersEditorOverlay" role="dialog" aria-modal="true">
-          <div className="workspacePanel compactPanel ordersEditorPanel ordersEditorModal">
-            <div className="workspaceHeader compactPanelHeader">
-              <div>
-                <p className="eyebrow">Editor</p>
-                <h3>{form.id ? form.orderNumber || "Edit Order" : "New Order"}</h3>
-              </div>
-
-              <div className="formActions compactActions">
-                <button
-                  className="secondaryButton compactButton"
-                  type="button"
-                  onClick={() => setEditorOpen(false)}
-                >
-                  <X size={15} />
-                  Close
-                </button>
-
-                <button
-                  className="primaryButton compactPrimary"
-                  type="button"
-                  onClick={handleSaveOrder}
-                  disabled={saving}
-                >
-                  <Save size={15} />
-                  {saving ? "Saving..." : "Save Order"}
-                </button>
-              </div>
+          <WorkspacePanel
+            eyebrow="Editor"
+            title={form.id ? form.orderNumber || "Edit Order" : "New Order"}
+            className="ordersEditorPanel ordersEditorModal"
+            actions={[
+              {
+                label: "Close",
+                icon: X,
+                variant: "secondary",
+                onClick: () => setEditorOpen(false)
+              }
+            ]}
+          >
+            <div className="button-row" style={{ justifyContent: "flex-end", marginBottom: "12px" }}>
+              <SaveButton
+                dirty={saveDirty || !form.id}
+                saving={saving}
+                saved={saveSaved}
+                error={saveError}
+                label="Save Order"
+                dirtyLabel="Save Order"
+                onClick={handleSaveOrder}
+              />
             </div>
 
             <div className="formGrid compactFormGrid">
-              <label>
-                Order Number
+              <FormField label="Order Number">
                 <input
                   value={form.orderNumber}
                   onChange={(event) => updateOrderField("orderNumber", event.target.value)}
                   placeholder="ORD-000001"
                 />
-              </label>
+              </FormField>
 
-              <label>
-                Status
+              <FormField label="Status">
                 <select
                   value={form.status}
                   onChange={(event) => updateOrderField("status", event.target.value)}
@@ -1110,28 +1182,25 @@ export default function Orders() {
                     <option key={status}>{status}</option>
                   ))}
                 </select>
-              </label>
+              </FormField>
 
-              <label>
-                Order Date
+              <FormField label="Order Date">
                 <input
                   type="date"
                   value={form.orderDate}
                   onChange={(event) => updateOrderField("orderDate", event.target.value)}
                 />
-              </label>
+              </FormField>
 
-              <label>
-                Due / Fulfillment Date
+              <FormField label="Due / Fulfillment Date">
                 <input
                   type="date"
                   value={form.dueDate}
                   onChange={(event) => updateOrderField("dueDate", event.target.value)}
                 />
-              </label>
+              </FormField>
 
-              <label>
-                Calendar Sync
+              <FormField label="Calendar Sync">
                 <select
                   value={form.calendarSyncEnabled === false ? "off" : "on"}
                   onChange={(event) =>
@@ -1141,10 +1210,9 @@ export default function Orders() {
                   <option value="on">Show due date on Calendar</option>
                   <option value="off">Do not show on Calendar</option>
                 </select>
-              </label>
+              </FormField>
 
-              <label>
-                Fulfillment
+              <FormField label="Fulfillment">
                 <select
                   value={form.fulfillmentType}
                   onChange={(event) =>
@@ -1155,10 +1223,9 @@ export default function Orders() {
                     <option key={type}>{type}</option>
                   ))}
                 </select>
-              </label>
+              </FormField>
 
-              <label>
-                Pricing
+              <FormField label="Pricing">
                 <select
                   value={form.pricingMode}
                   onChange={(event) => updatePricingMode(event.target.value)}
@@ -1166,7 +1233,7 @@ export default function Orders() {
                   <option value="retail">Retail pricing</option>
                   <option value="wholesale">Wholesale pricing</option>
                 </select>
-              </label>
+              </FormField>
             </div>
 
             <div className="ordersSubPanel">
@@ -1194,8 +1261,7 @@ export default function Orders() {
               </div>
 
               {form.customerMode === "saved" ? (
-                <label>
-                  Saved Customer
+                <FormField label="Saved Customer">
                   <select
                     value={form.customerId}
                     onChange={(event) => selectSavedCustomer(event.target.value)}
@@ -1209,22 +1275,20 @@ export default function Orders() {
                       </option>
                     ))}
                   </select>
-                </label>
+                </FormField>
               ) : null}
 
               <div className="formGrid compactFormGrid">
-                <label>
-                  Customer Name
+                <FormField label="Customer Name" required>
                   <input
                     value={form.customerSnapshot.name}
                     disabled={form.customerMode === "saved" && Boolean(form.customerId)}
                     onChange={(event) => updateCustomerSnapshot("name", event.target.value)}
                     placeholder="Customer or contact name"
                   />
-                </label>
+                </FormField>
 
-                <label>
-                  Business Name
+                <FormField label="Business Name">
                   <input
                     value={form.customerSnapshot.businessName}
                     disabled={form.customerMode === "saved" && Boolean(form.customerId)}
@@ -1233,10 +1297,9 @@ export default function Orders() {
                     }
                     placeholder="Optional"
                   />
-                </label>
+                </FormField>
 
-                <label>
-                  Email
+                <FormField label="Email">
                   <input
                     type="email"
                     value={form.customerSnapshot.email}
@@ -1244,22 +1307,20 @@ export default function Orders() {
                     onChange={(event) => updateCustomerSnapshot("email", event.target.value)}
                     placeholder="name@example.com"
                   />
-                </label>
+                </FormField>
 
-                <label>
-                  Phone
+                <FormField label="Phone">
                   <input
                     value={form.customerSnapshot.phone}
                     disabled={form.customerMode === "saved" && Boolean(form.customerId)}
                     onChange={(event) => updateCustomerSnapshot("phone", event.target.value)}
                     placeholder="Optional"
                   />
-                </label>
+                </FormField>
 
                 {form.customerMode === "quickAdd" ? (
                   <>
-                    <label>
-                      Customer Type
+                    <FormField label="Customer Type">
                       <select
                         value={form.customerSnapshot.customerType}
                         onChange={(event) =>
@@ -1270,10 +1331,9 @@ export default function Orders() {
                           <option key={type}>{type}</option>
                         ))}
                       </select>
-                    </label>
+                    </FormField>
 
-                    <label>
-                      Preferred Contact
+                    <FormField label="Preferred Contact">
                       <input
                         value={form.customerSnapshot.preferredContact}
                         onChange={(event) =>
@@ -1281,19 +1341,18 @@ export default function Orders() {
                         }
                         placeholder="Email, Phone, Text"
                       />
-                    </label>
+                    </FormField>
                   </>
                 ) : null}
 
-                <label className="fullSpan">
-                  Customer / Order Notes
+                <FormField label="Customer / Order Notes" fullWidth>
                   <input
                     value={form.customerSnapshot.notes || ""}
                     disabled={form.customerMode === "saved" && Boolean(form.customerId)}
                     onChange={(event) => updateCustomerSnapshot("notes", event.target.value)}
                     placeholder="Preferences, allergies, delivery notes, or context"
                   />
-                </label>
+                </FormField>
               </div>
 
               {form.customerMode === "quickAdd" ? (
@@ -1433,8 +1492,7 @@ export default function Orders() {
               </div>
 
               <div className="ordersTotalsGrid">
-                <label>
-                  Discount $
+                <FormField label="Discount $">
                   <input
                     type="number"
                     step="0.01"
@@ -1444,10 +1502,9 @@ export default function Orders() {
                     }
                     placeholder="0.00"
                   />
-                </label>
+                </FormField>
 
-                <label>
-                  Service / Delivery Fee $
+                <FormField label="Service / Delivery Fee $">
                   <input
                     type="number"
                     step="0.01"
@@ -1457,10 +1514,9 @@ export default function Orders() {
                     }
                     placeholder="0.00"
                   />
-                </label>
+                </FormField>
 
-                <label>
-                  Tax %
+                <FormField label="Tax %">
                   <input
                     type="number"
                     step="0.01"
@@ -1468,10 +1524,9 @@ export default function Orders() {
                     onChange={(event) => updateOrderField("taxRate", event.target.value)}
                     placeholder="0"
                   />
-                </label>
+                </FormField>
 
-                <label>
-                  Deposit Paid $
+                <FormField label="Deposit Paid $">
                   <input
                     type="number"
                     step="0.01"
@@ -1481,7 +1536,7 @@ export default function Orders() {
                     }
                     placeholder="0.00"
                   />
-                </label>
+                </FormField>
 
                 <div>
                   <span>Subtotal</span>
@@ -1510,28 +1565,47 @@ export default function Orders() {
               </div>
 
               <div className="formGrid compactFormGrid">
-                <label className="fullSpan">
-                  Customer Notes
+                <FormField label="Customer Notes" fullWidth>
                   <textarea
                     value={form.customerNotes}
                     onChange={(event) => updateOrderField("customerNotes", event.target.value)}
                     placeholder="Notes visible to the customer, packing slip, or invoice later"
                   />
-                </label>
+                </FormField>
 
-                <label className="fullSpan">
-                  Internal Notes
+                <FormField label="Internal Notes" fullWidth>
                   <textarea
                     value={form.internalNotes}
                     onChange={(event) => updateOrderField("internalNotes", event.target.value)}
                     placeholder="Internal production notes, delivery notes, or reminders"
                   />
-                </label>
+                </FormField>
               </div>
             </div>
-          </div>
+          </WorkspacePanel>
         </div>
       ) : null}
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Delete Order?"
+        message={`Are you sure you want to delete "${
+          deleteTarget?.orderNumber || "this order"
+        }"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        confirmVariant="danger"
+        cancelLabel="Cancel"
+        onConfirm={confirmDeleteOrder}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      <Toast
+        open={Boolean(toast)}
+        variant={toast?.variant}
+        title={toast?.title}
+        message={toast?.message}
+        onClose={() => setToast(null)}
+      />
     </div>
   );
 }
