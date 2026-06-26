@@ -48,10 +48,7 @@ export default function RecordList({
                 className="farmhubRecordCardTitle"
                 onClick={() => handleOpen(record)}
               >
-                <span>{title}</span>
-                {onRecordClick ? (
-                  <span className="farmhubRecordCardArrow">›</span>
-                ) : null}
+                {title}
               </button>
 
               {subtitle ? (
