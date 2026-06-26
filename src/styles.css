@@ -3724,3 +3724,96 @@ tr:last-child td {
     width: 100%;
   }
 }
+/* ==========================================================
+   DataTable
+   ========================================================== */
+
+.farmhubDataTableWrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.farmhubDataTableHeader,
+.farmhubDataTableRow {
+  display: grid;
+  gap: 12px;
+  align-items: center;
+  min-width: 780px;
+}
+
+.farmhubDataTableHeader {
+  padding: 11px 14px;
+  background: #fbfaf6;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.farmhubDataTableRow {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+}
+
+.farmhubDataTableRow:hover {
+  background: #fbfaf6;
+}
+
+.farmhubDataTableCell {
+  min-width: 0;
+  color: var(--text);
+  font-size: 0.88rem;
+}
+
+.farmhubDataTableCell strong,
+.farmhubDataTableCell span,
+.farmhubDataTableCell small {
+  display: block;
+}
+
+.farmhubDataTableCell small,
+.farmhubDataTableCell span {
+  color: var(--muted);
+}
+
+.farmhubDataTableEmpty {
+  padding: 18px;
+  color: var(--muted);
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .farmhubDataTableWrap {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  .farmhubDataTableHeader {
+    display: none;
+  }
+
+  .farmhubDataTableBody {
+    display: grid;
+    gap: 10px;
+  }
+
+  .farmhubDataTableRow {
+    display: grid;
+    grid-template-columns: 1fr !important;
+    min-width: 0;
+    gap: 8px;
+    padding: 13px;
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    background: #ffffff;
+  }
+
+  .farmhubDataTableRow:hover {
+    background: #ffffff;
+  }
+}
