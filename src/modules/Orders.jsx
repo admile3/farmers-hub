@@ -17,6 +17,7 @@ import { doc, getDoc } from "firebase/firestore";
 
 import { db } from "../firebase";
 import { useAuth } from "../AuthContext.jsx";
+import ModuleHero from "../components/ModuleHero.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import OrdersGuideContent from "../components/OrdersGuideContent.jsx";
 import StatCard from "../components/StatCard.jsx";
@@ -847,22 +848,18 @@ export default function Orders() {
           <OrdersGuideContent />
         </ModuleGuideModal>
 
-        <section className="farmModuleHero ordersHero">
-          <div className="farmModuleHeroText ordersHeroText">
-            <p className="eyebrow">Orders</p>
-            <h2>Sign in to manage customer orders.</h2>
-            <p>
-              Create orders, connect customers, add products, and track fulfillment
-              from draft through completion.
-            </p>
-          </div>
-
-          <div className="farmModuleHeroActions ordersHeroActions">
-            <button className="primaryButton farmHeroAction" type="button" onClick={loginWithGoogle}>
-              Sign in with Google
-            </button>
-          </div>
-        </section>
+        <ModuleHero
+          eyebrow="Orders"
+          title="Sign in to manage customer orders."
+          description="Create orders, connect customers, add products, and track fulfillment from draft through completion."
+          className="ordersHero"
+          actions={[
+            {
+              label: "Sign in with Google",
+              onClick: loginWithGoogle
+            }
+          ]}
+        />
       </div>
     );
   }
@@ -887,28 +884,25 @@ export default function Orders() {
         </div>
       ) : null}
 
-      <section className="farmModuleHero ordersHero">
-        <div className="farmModuleHeroText ordersHeroText">
-          <p className="eyebrow">Orders</p>
-          <h2>Manage customer orders from request to fulfillment.</h2>
-          <p>
-            Select saved customers, quick-add new customers, enter one-time orders,
-            and build line items from your product directory or manual entries.
-          </p>
-        </div>
-
-        <div className="farmModuleHeroActions ordersHeroActions">
-          <button className="primaryButton compactPrimary farmHeroAction" type="button" onClick={startNewOrder}>
-            <Plus size={16} />
-            New Order
-          </button>
-
-          <button className="secondaryButton compactButton farmHeroAction" type="button" onClick={() => setShowGuide(true)}>
-            <CircleHelp size={16} />
-            Guide
-          </button>
-        </div>
-      </section>
+      <ModuleHero
+        eyebrow="Orders"
+        title="Manage customer orders from request to fulfillment."
+        description="Select saved customers, quick-add new customers, enter one-time orders, and build line items from your product directory or manual entries."
+        className="ordersHero"
+        actions={[
+          {
+            label: "Guide",
+            icon: CircleHelp,
+            variant: "secondary",
+            onClick: () => setShowGuide(true)
+          },
+          {
+            label: "New Order",
+            icon: Plus,
+            onClick: startNewOrder
+          }
+        ]}
+      />
 
       <section className="hubStatGrid ordersStatGrid">
         <StatCard
