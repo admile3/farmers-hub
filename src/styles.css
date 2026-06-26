@@ -4160,3 +4160,136 @@ tr:last-child td {
   background: rgba(82, 129, 61, 0.45);
   border-color: rgba(168, 210, 150, 0.5);
 }
+/* ==========================
+   Confirm Dialog
+========================== */
+
+.confirmDialogOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 1.25rem;
+
+  background: rgba(26, 24, 20, 0.48);
+  backdrop-filter: blur(4px);
+}
+
+.confirmDialog {
+  position: relative;
+
+  width: min(100%, 430px);
+
+  padding: 1.35rem;
+
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+
+  background: var(--card);
+  box-shadow: 0 24px 60px rgba(26, 24, 20, 0.22);
+}
+
+.confirmDialogClose {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 2rem;
+  height: 2rem;
+
+  border: 1px solid var(--border);
+  border-radius: 999px;
+
+  color: var(--textSecondary);
+  background: var(--surface);
+
+  cursor: pointer;
+}
+
+.confirmDialogClose:hover {
+  color: var(--text);
+  background: var(--surfaceHover);
+}
+
+.confirmDialogIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 2.6rem;
+  height: 2.6rem;
+  margin-bottom: 0.9rem;
+
+  border-radius: 999px;
+
+  color: #a73718;
+  background: #ffe2d6;
+  border: 1px solid #ef9b7b;
+}
+
+.confirmDialogContent h2 {
+  margin: 0;
+
+  font-size: 1.2rem;
+  line-height: 1.2;
+  color: var(--text);
+}
+
+.confirmDialogContent p {
+  margin: 0.55rem 0 0;
+
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--textSecondary);
+}
+
+.confirmDialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+
+  margin-top: 1.35rem;
+}
+
+.dangerButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+
+  border: 1px solid #a73718;
+  border-radius: 999px;
+
+  color: #ffffff;
+  background: #a73718;
+
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.dangerButton:hover {
+  background: #8f2f16;
+  border-color: #8f2f16;
+}
+
+[data-theme="dark"] .confirmDialogOverlay {
+  background: rgba(0, 0, 0, 0.58);
+}
+
+[data-theme="dark"] .confirmDialog {
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+}
+
+[data-theme="dark"] .confirmDialogIcon {
+  color: #ffc7b3;
+  background: rgba(156, 57, 28, 0.45);
+  border-color: rgba(239, 155, 123, 0.5);
+}
