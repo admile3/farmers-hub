@@ -3567,3 +3567,39 @@ tr:last-child td {
     width: 100%;
   }
 }
+/* Shared FilterBar system */
+.farmhubFilterBar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) repeat(auto-fit, minmax(160px, auto));
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.farmhubFilterSearch {
+  width: 100% !important;
+}
+
+.farmhubFilterControl {
+  min-width: 150px;
+}
+
+.farmhubFilterActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+  .farmhubFilterBar {
+    grid-template-columns: 1fr;
+  }
+
+  .farmhubFilterActions {
+    justify-content: flex-start;
+  }
+
+  .farmhubFilterActions button {
+    width: 100%;
+  }
+}
