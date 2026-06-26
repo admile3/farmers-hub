@@ -1,27 +1,75 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Archive,
   CalendarDays,
   CircleHelp,
   DollarSign,
+  Edit3,
   Package,
   Plus,
   RefreshCw,
   Save,
-  Sprout
+  Sprout,
+  Trash2
 } from "lucide-react";
 
+import DataTable from "../components/DataTable.jsx";
 import FilterBar from "../components/FilterBar.jsx";
 import ModuleHero from "../components/ModuleHero.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import StatCard from "../components/StatCard.jsx";
 import WorkspacePanel from "../components/WorkspacePanel.jsx";
 
+const sampleRows = [
+  {
+    id: "order-1",
+    name: "Market Order",
+    customer: "Lexington Farmers Market",
+    category: "Orders",
+    status: "Active",
+    value: "$124.50",
+    date: "Today"
+  },
+  {
+    id: "order-2",
+    name: "Wholesale Delivery",
+    customer: "Chef Account",
+    category: "Customers",
+    status: "Completed",
+    value: "$268.00",
+    date: "Tomorrow"
+  },
+  {
+    id: "order-3",
+    name: "Freezer Inventory",
+    customer: "Internal",
+    category: "Inventory",
+    status: "Archived",
+    value: "$86.25",
+    date: "Jun 28"
+  }
+];
+
 export default function DesignSystemPreview() {
   const [showGuide, setShowGuide] = useState(false);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [status, setStatus] = useState("All");
+
+  const filteredRows = useMemo(() => {
+    return sampleRows.filter((row) => {
+      const searchText = `${row.name} ${row.customer} ${row.category} ${row.status}`
+        .toLowerCase()
+        .trim();
+
+      const matchesSearch =
+        !search.trim() || searchText.includes(search.toLowerCase().trim());
+      const matchesCategory = category === "All" || row.category === category;
+      const matchesStatus = status === "All" || row.status === status;
+
+      return matchesSearch && matchesCategory && matchesStatus;
+    });
+  }, [search, category, status]);
 
   return (
     <div className="modulePage designSystemPreviewModule">
@@ -30,7 +78,7 @@ export default function DesignSystemPreview() {
         accent="orders"
         icon={Package}
         title="Preview shared Farmers Hub layout components."
-        description="Use this page to test shared heroes, stat cards, panels, filters, buttons, forms, lists, and guide modals before applying them across every module."
+        description="Use this page to test shared heroes, stat cards, panels, filters, tables, buttons, forms, lists, and guide modals before applying them across every module."
         actions={[
           {
             label: "Guide",
@@ -81,19 +129,14 @@ export default function DesignSystemPreview() {
       </section>
 
       <WorkspacePanel
-        eyebrow="Workspace Panel"
-        title="Shared Panel Header"
-        description="This panel previews the shared section card used for directories, editors, calculators, logs, and summaries."
+        eyebrow="Directory"
+        title="Shared Directory Pattern"
+        description="This panel demonstrates the standard module directory layout: header, optional toolbar, shared filters, and a responsive data table."
         actions={[
           {
             label: "Refresh",
             icon: RefreshCw,
             variant: "secondary",
-            onClick: () => {}
-          },
-          {
-            label: "Save",
-            icon: Save,
             onClick: () => {}
           }
         ]}
@@ -101,7 +144,7 @@ export default function DesignSystemPreview() {
           <FilterBar
             searchValue={search}
             onSearchChange={setSearch}
-            searchPlaceholder="Search example records..."
+            searchPlaceholder="Search records..."
             filters={[
               {
                 label: "Category",
@@ -126,6 +169,77 @@ export default function DesignSystemPreview() {
           />
         }
       >
+        <DataTable
+          rows={filteredRows}
+          emptyMessage="No sample records match your filters."
+          columns={[
+            {
+              key: "name",
+              label: "Record",
+              width: "minmax(210px, 1.3fr)",
+              render: (row) => (
+                <>
+                  <strong>{row.name}</strong>
+                  <span>{row.customer}</span>
+                </>
+              )
+            },
+            {
+              key: "category",
+              label: "Category",
+              width: "140px"
+            },
+            {
+              key: "status",
+              label: "Status",
+              width: "140px",
+              render: (row) => (
+                <span className={`orderStatusPill ${row.status.toLowerCase()}`}>
+                  {row.status}
+                </span>
+              )
+            },
+            {
+              key: "value",
+              label: "Value",
+              width: "120px"
+            },
+            {
+              key: "date",
+              label: "Date",
+              width: "120px"
+            },
+            {
+              key: "actions",
+              label: "Actions",
+              width: "100px",
+              render: () => (
+                <div className="itemActions">
+                  <button type="button" aria-label="Edit">
+                    <Edit3 size={14} />
+                  </button>
+                  <button type="button" aria-label="Delete">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              )
+            }
+          ]}
+        />
+      </WorkspacePanel>
+
+      <WorkspacePanel
+        eyebrow="Editor"
+        title="Shared Form Pattern"
+        description="This panel demonstrates the standard editor layout used for creating or updating records."
+        actions={[
+          {
+            label: "Save",
+            icon: Save,
+            onClick: () => {}
+          }
+        ]}
+      >
         <div className="formGrid compactFormGrid">
           <label>
             Example Input
@@ -140,6 +254,16 @@ export default function DesignSystemPreview() {
             </select>
           </label>
 
+          <label>
+            Example Date
+            <input type="date" />
+          </label>
+
+          <label>
+            Example Number
+            <input type="number" placeholder="0.00" />
+          </label>
+
           <label className="fullSpan">
             Example Notes
             <textarea placeholder="This previews textarea styling." />
@@ -148,9 +272,9 @@ export default function DesignSystemPreview() {
       </WorkspacePanel>
 
       <WorkspacePanel
-        eyebrow="Directory"
-        title="Shared List Preview"
-        description="This previews saved item rows and action buttons."
+        eyebrow="Cards"
+        title="Shared Card / List Pattern"
+        description="This panel previews compact saved item rows for modules that use card-style directories."
       >
         <div className="savedList compactSavedList">
           {["Market Order", "Wholesale Delivery", "Custom Bundle"].map((item) => (
@@ -161,8 +285,12 @@ export default function DesignSystemPreview() {
               </div>
 
               <div className="itemActions">
-                <button type="button">Edit</button>
-                <button type="button">Delete</button>
+                <button type="button">
+                  <Edit3 size={14} />
+                </button>
+                <button type="button">
+                  <Trash2 size={14} />
+                </button>
               </div>
             </div>
           ))}
@@ -205,7 +333,7 @@ export default function DesignSystemPreview() {
 
             <article className="guideStepCard">
               <h3>Panels</h3>
-              <p>Tests WorkspacePanel headers, actions, forms, and saved rows.</p>
+              <p>Tests WorkspacePanel headers, toolbars, actions, and body spacing.</p>
             </article>
 
             <article className="guideStepCard">
@@ -214,8 +342,13 @@ export default function DesignSystemPreview() {
             </article>
 
             <article className="guideStepCard">
+              <h3>Data Table</h3>
+              <p>Tests reusable desktop table and mobile card-style behavior.</p>
+            </article>
+
+            <article className="guideStepCard">
               <h3>Guide Modal</h3>
-              <p>Tests guide popup layout, scrolling, close behavior, and dismissal checkbox.</p>
+              <p>Tests popup layout, scrolling, close behavior, and dismissal checkbox.</p>
             </article>
           </section>
         </div>
