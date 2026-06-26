@@ -8,12 +8,16 @@ import {
   Users
 } from "lucide-react";
 
+import StatusPill from "./StatusPill.jsx";
+
 export default function OrdersGuideContent() {
   return (
     <div className="moduleGuideContent ordersGuideContent">
       <section className="moduleGuideIntro">
         <p>
-          Orders helps you create customer orders, connect them to customer records, add products or custom line items, and track fulfillment from request to completion.
+          Orders helps you create customer orders, connect them to customer records,
+          add products or custom line items, and track fulfillment from request to
+          completion.
         </p>
       </section>
 
@@ -22,7 +26,9 @@ export default function OrdersGuideContent() {
           <span className="moduleGuideStepNumber">Step 1</span>
           <h3>Start a new order.</h3>
           <p>
-            Create a new order and let the system assign the next order number. Set the order date, due date, status, fulfillment type, and retail or wholesale pricing.
+            Create a new order and let the system assign the next order number. Set
+            the order date, due date, status, fulfillment type, and retail or
+            wholesale pricing.
           </p>
         </div>
 
@@ -36,14 +42,14 @@ export default function OrdersGuideContent() {
               <ClipboardList size={20} />
             </div>
 
-            <div className="guideMiniGrid three">
+            <div className="ordersGuideFieldGrid">
               <div>
                 <span>Order #</span>
                 <strong>ORD-000014</strong>
               </div>
               <div>
                 <span>Status</span>
-                <strong>Draft</strong>
+                <StatusPill label="Draft" variant="neutral" />
               </div>
               <div>
                 <span>Pricing</span>
@@ -59,7 +65,8 @@ export default function OrdersGuideContent() {
           <span className="moduleGuideStepNumber">Step 2</span>
           <h3>Add customer info.</h3>
           <p>
-            Choose a saved customer, quick-add a new customer to Customers, or enter a one-time customer just for this order.
+            Choose a saved customer, quick-add a new customer to Customers, or enter
+            a one-time customer just for this order.
           </p>
         </div>
 
@@ -74,12 +81,12 @@ export default function OrdersGuideContent() {
             </div>
 
             <div className="ordersGuideChoiceGrid">
-              <span>Saved customer</span>
+              <span className="selected">Saved customer</span>
               <span>Quick add</span>
               <span>One-time</span>
             </div>
 
-            <div className="guideMiniGrid">
+            <div className="ordersGuideFieldGrid two">
               <div>
                 <span>Name</span>
                 <strong>Jordan Miller</strong>
@@ -98,7 +105,10 @@ export default function OrdersGuideContent() {
           <span className="moduleGuideStepNumber">Step 3</span>
           <h3>Add line items.</h3>
           <p>
-            Build the order using products you&apos;ve created elsewhere in Farmers Hub. Select products from your product catalog or manually enter custom items when needed. Product pricing, package sizes, and product details can be pulled directly into the order to speed up order entry and improve consistency.
+            Build the order using products you&apos;ve created elsewhere in Farmers
+            Hub. Select products from your product catalog or manually enter custom
+            items when needed. Product pricing, package sizes, and product details
+            can be pulled directly into the order.
           </p>
         </div>
 
@@ -112,11 +122,7 @@ export default function OrdersGuideContent() {
               <Package size={20} />
             </div>
 
-            <div className="guideRecipeRows ordersGuideRows">
-              <div className="guideRecipeHeader">
-                <span>Item</span>
-                <span>Total</span>
-              </div>
+            <div className="ordersGuideLineRows">
               <div>
                 <strong>Country Sourdough</strong>
                 <span>$24.00</span>
@@ -135,7 +141,8 @@ export default function OrdersGuideContent() {
           <span className="moduleGuideStepNumber">Step 4</span>
           <h3>Review order totals.</h3>
           <p>
-            Add discounts, service or delivery fees, tax rate, and deposit paid. The order summary calculates subtotal, tax, total, and balance due.
+            Add discounts, service or delivery fees, tax rate, and deposit paid. The
+            order summary calculates subtotal, tax, total, and balance due.
           </p>
         </div>
 
@@ -149,7 +156,7 @@ export default function OrdersGuideContent() {
               <DollarSign size={20} />
             </div>
 
-            <div className="guideMiniGrid">
+            <div className="ordersGuideFieldGrid two">
               <div>
                 <span>Subtotal</span>
                 <strong>$32.00</strong>
@@ -168,7 +175,8 @@ export default function OrdersGuideContent() {
           <span className="moduleGuideStepNumber">Step 5</span>
           <h3>Track order status.</h3>
           <p>
-            Move orders from Draft to Confirmed, In Production, Ready, Completed, or Cancelled so the dashboard reflects what needs attention.
+            Move orders from Draft to Confirmed, In Production, Ready, Completed,
+            or Cancelled so the dashboard reflects what needs attention.
           </p>
         </div>
 
@@ -183,11 +191,11 @@ export default function OrdersGuideContent() {
             </div>
 
             <div className="ordersGuideStatusFlow">
-              <span>Draft</span>
-              <span>Confirmed</span>
-              <span>In Production</span>
-              <span>Ready</span>
-              <span>Completed</span>
+              <StatusPill label="Draft" variant="neutral" />
+              <StatusPill label="Confirmed" variant="success" />
+              <StatusPill label="In Production" variant="warning" />
+              <StatusPill label="Ready" variant="primary" />
+              <StatusPill label="Completed" variant="success" />
             </div>
           </div>
         </div>
@@ -198,7 +206,8 @@ export default function OrdersGuideContent() {
           <span className="moduleGuideStepNumber">Step 6</span>
           <h3>Use the order directory.</h3>
           <p>
-            Search and filter orders by customer, product, order number, due date, or status. Open any order to update details or delete it.
+            Search and filter orders by customer, product, order number, due date,
+            or status. Open any order to update details or delete it.
           </p>
         </div>
 
@@ -212,14 +221,19 @@ export default function OrdersGuideContent() {
               <Search size={20} />
             </div>
 
-            <div className="guideSavedRecipe">
-              <strong>ORD-000014</strong>
-              <span>Jordan Miller • Ready • $32.00</span>
-            </div>
-
-            <div className="guideSavedRecipe">
-              <strong>ORD-000015</strong>
-              <span>One-time customer • Draft • $18.00</span>
+            <div className="ordersGuideDirectoryRows">
+              <div>
+                <strong>ORD-000014</strong>
+                <span>Jordan Miller</span>
+                <StatusPill label="Ready" variant="primary" />
+                <b>$32.00</b>
+              </div>
+              <div>
+                <strong>ORD-000015</strong>
+                <span>One-time customer</span>
+                <StatusPill label="Draft" variant="neutral" />
+                <b>$18.00</b>
+              </div>
             </div>
           </div>
         </div>
@@ -228,7 +242,8 @@ export default function OrdersGuideContent() {
       <div className="moduleGuideTip ordersGuideTip">
         <Plus size={18} />
         <p>
-          Tip: use saved customer profiles whenever possible so order details stay connected to your CRM and repeat customers are easier to manage.
+          Tip: use saved customer profiles whenever possible so order details stay
+          connected to your CRM and repeat customers are easier to manage.
         </p>
       </div>
     </div>
