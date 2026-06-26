@@ -11,6 +11,7 @@ import {
   Sprout
 } from "lucide-react";
 
+import FilterBar from "../components/FilterBar.jsx";
 import ModuleHero from "../components/ModuleHero.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import StatCard from "../components/StatCard.jsx";
@@ -18,6 +19,9 @@ import WorkspacePanel from "../components/WorkspacePanel.jsx";
 
 export default function DesignSystemPreview() {
   const [showGuide, setShowGuide] = useState(false);
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("All");
+  const [status, setStatus] = useState("All");
 
   return (
     <div className="modulePage designSystemPreviewModule">
@@ -26,7 +30,7 @@ export default function DesignSystemPreview() {
         accent="orders"
         icon={Package}
         title="Preview shared Farmers Hub layout components."
-        description="Use this page to test shared heroes, stat cards, panels, buttons, forms, and guide modals before applying them across every module."
+        description="Use this page to test shared heroes, stat cards, panels, filters, buttons, forms, lists, and guide modals before applying them across every module."
         actions={[
           {
             label: "Guide",
@@ -94,6 +98,33 @@ export default function DesignSystemPreview() {
           }
         ]}
       >
+        <FilterBar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search example records..."
+          filters={[
+            {
+              label: "Category",
+              value: category,
+              onChange: setCategory,
+              options: ["All", "Orders", "Customers", "Inventory"]
+            },
+            {
+              label: "Status",
+              value: status,
+              onChange: setStatus,
+              options: ["All", "Active", "Completed", "Archived"]
+            }
+          ]}
+          actions={[
+            {
+              label: "New Record",
+              icon: Plus,
+              onClick: () => {}
+            }
+          ]}
+        />
+
         <div className="formGrid compactFormGrid">
           <label>
             Example Input
@@ -174,6 +205,11 @@ export default function DesignSystemPreview() {
             <article className="guideStepCard">
               <h3>Panels</h3>
               <p>Tests WorkspacePanel headers, actions, forms, and saved rows.</p>
+            </article>
+
+            <article className="guideStepCard">
+              <h3>Filter Bar</h3>
+              <p>Tests shared search, dropdown filters, and toolbar actions.</p>
             </article>
 
             <article className="guideStepCard">
