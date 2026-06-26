@@ -3502,3 +3502,25 @@ tr:last-child td {
     justify-content: flex-start !important;
   }
 }
+/* ModuleHero accent bar + stronger module color binding */
+.farmhubModuleHero {
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.farmhubModuleHero::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 6px;
+  background: var(--module-color, var(--green));
+}
+
+.farmhubModuleHero .eyebrow {
+  color: var(--module-color, var(--green)) !important;
+}
+
+.farmhubModuleHeroEyebrowIcon {
+  color: var(--module-color, var(--green)) !important;
+  background: color-mix(in srgb, var(--module-color, var(--green)) 14%, #ffffff) !important;
+}
