@@ -7,14 +7,21 @@ export default function DataTable({
   emptyMessage = "No records found.",
   onRowClick,
   onRowDoubleClick,
+  selectedRowId = "",
+  getRowId,
   className = ""
 }) {
   const templateColumns = columns
     .map((column) => column.width || "1fr")
     .join(" ");
 
-  const primaryColumn =
-    columns.find((column) => column.isPrimary) || columns[0] || null;
+  const primaryColumn = columns.find((column) => column.isPrimary) || columns[0] || null;
+
+  function resolveRowId(row, rowIndex) {
+    if (getRowId) return getRowId(row);
+    if (getRowKey) return getRowKey(row);
+    return row.id || rowIndex;
+  }
 
   function getCellContent(column, row) {
     return column.render ? column.render(row) : row[column.key];
@@ -52,16 +59,18 @@ export default function DataTable({
       <div className="farmhubDataTableBody">
         {rows.length ? (
           rows.map((row, rowIndex) => {
-            const rowKey = getRowKey ? getRowKey(row) : row.id || rowIndex;
+            const rowId = resolveRowId(row, rowIndex);
             const isClickable = Boolean(onRowClick || onRowDoubleClick);
+            const isSelected = selectedRowId && String(selectedRowId) === String(rowId);
 
             return (
               <div
                 className={clsx(
                   "farmhubDataTableRow",
-                  isClickable ? "clickable" : ""
+                  isClickable ? "clickable" : "",
+                  isSelected ? "selected" : ""
                 )}
-                key={rowKey}
+                key={rowId}
                 style={{ gridTemplateColumns: templateColumns }}
                 onDoubleClick={() => handleRowDoubleClick(row)}
               >
@@ -86,7 +95,9 @@ export default function DataTable({
                           type="button"
                           onClick={() => handleRowClick(row)}
                         >
-                          <span>{cellContent}</span>
+                          <span className="farmhubDataTablePrimaryContent">
+                            {cellContent}
+                          </span>
                           <span className="farmhubDataTablePrimaryArrow">›</span>
                         </button>
                       ) : (
