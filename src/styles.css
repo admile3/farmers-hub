@@ -4438,3 +4438,49 @@ tr:last-child td {
     gap: 7px;
   }
 }
+/* ==========================
+   Save Button
+========================== */
+
+.farmhubSaveButton {
+  min-width: 116px;
+}
+
+.farmhubSaveButton-dirty {
+  color: #ffffff;
+  background: #b45309;
+  border-color: #b45309;
+  box-shadow: 0 10px 24px rgba(180, 83, 9, 0.22);
+}
+
+.farmhubSaveButton-dirty:hover {
+  background: #92400e;
+  border-color: #92400e;
+}
+
+.farmhubSaveButton-saving {
+  opacity: 0.82;
+  cursor: wait;
+}
+
+.farmhubSaveButton-saved {
+  color: #ffffff;
+  background: #2f6b2f;
+  border-color: #2f6b2f;
+}
+
+.farmhubSaveButton-error {
+  color: #ffffff;
+  background: #a73718;
+  border-color: #a73718;
+}
+
+.farmhubSaveButtonSpinner {
+  animation: farmhubSaveButtonSpin 0.8s linear infinite;
+}
+
+@keyframes farmhubSaveButtonSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
