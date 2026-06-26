@@ -4349,11 +4349,6 @@ tr:last-child td {
   text-decoration: underline;
 }
 
-.farmhubRecordCardArrow {
-  font-size: 1rem;
-  color: var(--muted);
-}
-
 .farmhubRecordCardSubtitle {
   margin: 0.35rem 0 0;
 
