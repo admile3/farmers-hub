@@ -3817,3 +3817,50 @@ tr:last-child td {
     background: #ffffff;
   }
 }
+/* EmptyState */
+.farmhubEmptyState {
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  min-height: 160px;
+  padding: 24px;
+  border: 1px dashed var(--border);
+  border-radius: 18px;
+  background: #fbfaf6;
+  text-align: center;
+}
+
+.farmhubEmptyStateIcon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.farmhubEmptyState h3 {
+  margin: 0 0 6px;
+}
+
+.farmhubEmptyState p {
+  max-width: 520px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.farmhubEmptyStateActions {
+  display: flex;
+  justify-content: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 700px) {
+  .farmhubEmptyStateActions,
+  .farmhubEmptyStateActions button {
+    width: 100%;
+  }
+}
