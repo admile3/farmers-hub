@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import HerdTrackerGuideContent from "./HerdTrackerGuideContent.jsx";
+import HerdTrackerGuideContent from "../components/HerdTrackerGuideContent.jsx";
 import {
   HERD_SOURCE_OPTIONS,
   HERD_SPECIES_OPTIONS,
