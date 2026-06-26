@@ -5,6 +5,7 @@ import {
   CircleHelp,
   DollarSign,
   Edit3,
+  Inbox,
   Package,
   Plus,
   RefreshCw,
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 
 import DataTable from "../components/DataTable.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 import FilterBar from "../components/FilterBar.jsx";
 import ModuleHero from "../components/ModuleHero.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
@@ -78,7 +80,7 @@ export default function DesignSystemPreview() {
         accent="orders"
         icon={Package}
         title="Preview shared Farmers Hub layout components."
-        description="Use this page to test shared heroes, stat cards, panels, filters, tables, buttons, forms, lists, and guide modals before applying them across every module."
+        description="Use this page to test shared heroes, stat cards, panels, filters, tables, empty states, buttons, forms, lists, and guide modals before applying them across every module."
         actions={[
           {
             label: "Guide",
@@ -229,6 +231,31 @@ export default function DesignSystemPreview() {
       </WorkspacePanel>
 
       <WorkspacePanel
+        eyebrow="Empty States"
+        title="Shared Empty State Pattern"
+        description="This previews the standard no-records state used when tables, lists, or directories do not have content yet."
+      >
+        <EmptyState
+          icon={Inbox}
+          title="No sample records yet"
+          message="Use this component whenever a module has no saved records, no filtered results, or no activity yet."
+          actions={[
+            {
+              label: "Add Example",
+              icon: Plus,
+              onClick: () => {}
+            },
+            {
+              label: "Learn More",
+              icon: CircleHelp,
+              variant: "secondary",
+              onClick: () => setShowGuide(true)
+            }
+          ]}
+        />
+      </WorkspacePanel>
+
+      <WorkspacePanel
         eyebrow="Editor"
         title="Shared Form Pattern"
         description="This panel demonstrates the standard editor layout used for creating or updating records."
@@ -344,6 +371,11 @@ export default function DesignSystemPreview() {
             <article className="guideStepCard">
               <h3>Data Table</h3>
               <p>Tests reusable desktop table and mobile card-style behavior.</p>
+            </article>
+
+            <article className="guideStepCard">
+              <h3>Empty State</h3>
+              <p>Tests reusable no-records messaging and empty directory layouts.</p>
             </article>
 
             <article className="guideStepCard">
