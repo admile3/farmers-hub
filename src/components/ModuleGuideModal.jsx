@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import clsx from "clsx";
 
 export default function ModuleGuideModal({
   isOpen,
   moduleKey,
   title,
   eyebrow = "Module Guide",
+  accent = "green",
+  icon: GuideIcon = null,
   children,
   onClose
 }) {
@@ -24,7 +27,8 @@ export default function ModuleGuideModal({
 
     const previousOverflow = document.body.style.overflow;
     const previousPaddingRight = document.body.style.paddingRight;
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    const scrollbarWidth =
+      window.innerWidth - document.documentElement.clientWidth;
 
     document.body.style.overflow = "hidden";
 
@@ -58,6 +62,12 @@ export default function ModuleGuideModal({
     }
   }
 
+  function handleOverlayClick(event) {
+    if (event.target === event.currentTarget) {
+      handleClose();
+    }
+  }
+
   function handleOverlayWheel(event) {
     if (event.target === event.currentTarget) {
       event.preventDefault();
@@ -69,12 +79,22 @@ export default function ModuleGuideModal({
       className="moduleGuideOverlay"
       role="dialog"
       aria-modal="true"
+      onClick={handleOverlayClick}
       onWheel={handleOverlayWheel}
     >
-      <div className="moduleGuideModal">
+      <div className={clsx("moduleGuideModal", accent)}>
         <div className="moduleGuideHeader">
-          <div>
-            <p className="eyebrow">{eyebrow}</p>
+          <div className="moduleGuideHeaderText">
+            <div className="moduleGuideEyebrowRow">
+              {GuideIcon ? (
+                <span className="moduleGuideEyebrowIcon">
+                  <GuideIcon size={16} />
+                </span>
+              ) : null}
+
+              <p className="eyebrow">{eyebrow}</p>
+            </div>
+
             <h2>{title}</h2>
           </div>
 
@@ -100,7 +120,11 @@ export default function ModuleGuideModal({
             <span>Don’t show this guide automatically next time.</span>
           </label>
 
-          <button className="primaryButton compactPrimary" type="button" onClick={handleClose}>
+          <button
+            className="primaryButton compactPrimary"
+            type="button"
+            onClick={handleClose}
+          >
             Got It
           </button>
         </div>
