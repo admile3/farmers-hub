@@ -3173,3 +3173,175 @@ tr:last-child td {
     margin: 0.35in;
   }
 }
+/* Module guide modal compatibility */
+.moduleGuideOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(18, 24, 32, 0.62);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+
+.moduleGuideModal {
+  width: min(980px, 100%);
+  max-height: calc(100dvh - 48px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 22px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.24);
+}
+
+.moduleGuideHeader {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 22px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  background: #ffffff;
+}
+
+.moduleGuideHeader h2 {
+  margin: 4px 0 0;
+  font-size: clamp(1.45rem, 3vw, 2.35rem);
+  line-height: 1.05;
+}
+
+.moduleGuideCloseButton {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  background: #fbfaf6;
+  border: 1px solid var(--border);
+}
+
+.moduleGuideBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 24px 22px;
+}
+
+.moduleGuideFooter {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 15px 24px;
+  border-top: 1px solid var(--border);
+  background: #ffffff;
+}
+
+.moduleGuideDismiss {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.moduleGuideDismiss input {
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+}
+
+.moduleGuideContent {
+  display: grid;
+  gap: 16px;
+}
+
+.moduleGuideSection {
+  display: grid;
+  grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: #fbfaf6;
+}
+
+.moduleGuideIntro,
+.moduleGuideTip,
+.guideMiniPanel {
+  min-width: 0;
+}
+
+.moduleGuideStepText h3 {
+  margin: 0 0 6px;
+}
+
+.moduleGuideStepText p,
+.moduleGuideIntro p,
+.moduleGuideTip p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.moduleGuidePreview,
+.moduleGuideStatPreview {
+  min-width: 0;
+}
+
+.moduleGuideStatPreview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (max-width: 760px) {
+  .moduleGuideOverlay {
+    place-items: stretch;
+    padding: 0;
+  }
+
+  .moduleGuideModal {
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+
+  .moduleGuideHeader {
+    padding: 14px;
+    align-items: center;
+  }
+
+  .moduleGuideHeader h2 {
+    font-size: 1.25rem;
+  }
+
+  .moduleGuideBody {
+    padding: 14px;
+  }
+
+  .moduleGuideFooter {
+    display: grid;
+    grid-template-columns: 1fr;
+    padding: 12px 14px;
+  }
+
+  .moduleGuideFooter .primaryButton {
+    width: 100%;
+  }
+
+  .moduleGuideSection {
+    grid-template-columns: 1fr;
+    padding: 13px;
+  }
+}
