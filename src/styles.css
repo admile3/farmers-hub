@@ -4079,71 +4079,84 @@ tr:last-child td {
   justify-content: center;
   width: fit-content;
   max-width: 100%;
-
-  padding: 0.32rem 0.7rem;
-
+  padding: 0.34rem 0.72rem;
   border-radius: 999px;
   border: 1px solid transparent;
-
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 800;
   line-height: 1;
-
   white-space: nowrap;
   user-select: none;
 }
 
-/* Sizes */
-
-.statusPill-small {
-  font-size: 0.68rem;
-  padding: 0.22rem 0.55rem;
-}
-
-.statusPill-default {
-  font-size: 0.75rem;
-  padding: 0.32rem 0.70rem;
-}
-
-.statusPill-large {
-  font-size: 0.82rem;
-  padding: 0.42rem 0.82rem;
-}
-
-/* Variants */
-
 .statusPill-success {
-  color: #25633f;
-  background: rgba(67, 126, 83, 0.12);
-  border-color: rgba(67, 126, 83, 0.22);
+  color: #1f6b3d;
+  background: #e3f4e8;
+  border-color: #b7dfc3;
 }
 
 .statusPill-warning {
-  color: #8a5a14;
-  background: rgba(194, 132, 36, 0.14);
-  border-color: rgba(194, 132, 36, 0.24);
+  color: #8a4f00;
+  background: #fff0cc;
+  border-color: #f4c76b;
 }
 
 .statusPill-danger {
-  color: #9a3412;
-  background: rgba(194, 65, 12, 0.12);
-  border-color: rgba(194, 65, 12, 0.22);
+  color: #a73718;
+  background: #ffe2d6;
+  border-color: #ef9b7b;
 }
 
 .statusPill-info {
-  color: #25636f;
-  background: rgba(45, 117, 131, 0.12);
-  border-color: rgba(45, 117, 131, 0.22);
+  color: #155f8a;
+  background: #dcefff;
+  border-color: #9ccbed;
 }
 
 .statusPill-neutral {
-  color: var(--textSecondary);
-  background: rgba(120, 120, 120, 0.10);
-  border-color: rgba(120, 120, 120, 0.18);
+  color: #4f5560;
+  background: #eef0f2;
+  border-color: #cfd4da;
 }
 
 .statusPill-primary {
-  color: var(--primary);
-  background: rgba(95, 135, 76, 0.12);
-  border-color: rgba(95, 135, 76, 0.22);
+  color: #285f2f;
+  background: #d9edcf;
+  border-color: #a8d296;
+}
+
+[data-theme="dark"] .statusPill-success {
+  color: #c7f0d2;
+  background: rgba(48, 122, 73, 0.42);
+  border-color: rgba(151, 219, 169, 0.45);
+}
+
+[data-theme="dark"] .statusPill-warning {
+  color: #ffe2a3;
+  background: rgba(166, 104, 0, 0.42);
+  border-color: rgba(244, 199, 107, 0.5);
+}
+
+[data-theme="dark"] .statusPill-danger {
+  color: #ffc7b3;
+  background: rgba(156, 57, 28, 0.45);
+  border-color: rgba(239, 155, 123, 0.5);
+}
+
+[data-theme="dark"] .statusPill-info {
+  color: #c0e5ff;
+  background: rgba(36, 105, 150, 0.42);
+  border-color: rgba(156, 203, 237, 0.5);
+}
+
+[data-theme="dark"] .statusPill-neutral {
+  color: #e4e7eb;
+  background: rgba(99, 108, 118, 0.42);
+  border-color: rgba(207, 212, 218, 0.38);
+}
+
+[data-theme="dark"] .statusPill-primary {
+  color: #d9f2ce;
+  background: rgba(82, 129, 61, 0.45);
+  border-color: rgba(168, 210, 150, 0.5);
 }
