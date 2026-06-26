@@ -3864,3 +3864,198 @@ tr:last-child td {
     width: 100%;
   }
 }
+/* ==========================================================
+   DataTable v2 interactions
+   ========================================================== */
+
+.farmhubDataTableWrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.farmhubDataTableHeader,
+.farmhubDataTableRow {
+  display: grid;
+  gap: 12px;
+  align-items: center;
+  min-width: 780px;
+}
+
+.farmhubDataTableHeader {
+  padding: 11px 14px;
+  background: #fbfaf6;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.farmhubDataTableRow {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+  transition:
+    background 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
+}
+
+.farmhubDataTableRow.clickable {
+  cursor: default;
+}
+
+.farmhubDataTableRow.clickable:hover {
+  background: #fbfaf6;
+  box-shadow: inset 4px 0 0 var(--module-color, var(--green));
+}
+
+.farmhubDataTableRow.selected {
+  background: color-mix(in srgb, var(--module-color, var(--green)) 10%, #ffffff);
+  box-shadow: inset 4px 0 0 var(--module-color, var(--green));
+}
+
+.farmhubDataTableCell {
+  min-width: 0;
+  color: var(--text);
+  font-size: 0.88rem;
+}
+
+.farmhubDataTableCell strong,
+.farmhubDataTableCell span,
+.farmhubDataTableCell small {
+  display: block;
+}
+
+.farmhubDataTableCell small,
+.farmhubDataTableCell span {
+  color: var(--muted);
+}
+
+.farmhubDataTablePrimaryButton {
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  text-align: left;
+}
+
+.farmhubDataTablePrimaryContent {
+  min-width: 0;
+}
+
+.farmhubDataTablePrimaryContent strong {
+  display: inline-block;
+  color: var(--text);
+  font-weight: 900;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 4px;
+}
+
+.farmhubDataTablePrimaryButton:hover strong,
+.farmhubDataTableRow.clickable:hover .farmhubDataTablePrimaryContent strong {
+  color: var(--module-color, var(--green));
+  text-decoration-color: currentColor;
+}
+
+.farmhubDataTablePrimaryArrow {
+  color: var(--module-color, var(--green));
+  font-size: 1.2rem;
+  font-weight: 900;
+  line-height: 1;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease;
+}
+
+.farmhubDataTablePrimaryButton:hover .farmhubDataTablePrimaryArrow,
+.farmhubDataTableRow.clickable:hover .farmhubDataTablePrimaryArrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.farmhubDataTableEmpty {
+  padding: 18px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.farmhubDataTableCell .itemActions {
+  justify-content: flex-start;
+}
+
+@media (max-width: 760px) {
+  .farmhubDataTableWrap {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  .farmhubDataTableHeader {
+    display: none;
+  }
+
+  .farmhubDataTableBody {
+    display: grid;
+    gap: 10px;
+  }
+
+  .farmhubDataTableRow {
+    display: grid;
+    grid-template-columns: 1fr !important;
+    min-width: 0;
+    gap: 9px;
+    padding: 13px;
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    background: #ffffff;
+  }
+
+  .farmhubDataTableRow.clickable:hover {
+    background: #ffffff;
+    box-shadow: inset 4px 0 0 var(--module-color, var(--green));
+  }
+
+  .farmhubDataTableCell {
+    display: grid;
+    gap: 3px;
+  }
+
+  .farmhubDataTableCell::before {
+    content: attr(data-label);
+    display: block;
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-weight: 950;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+
+  .farmhubDataTableCell[data-label=""]::before,
+  .farmhubDataTableCell.primaryCell::before {
+    display: none;
+  }
+
+  .farmhubDataTablePrimaryButton {
+    padding-bottom: 4px;
+  }
+
+  .farmhubDataTablePrimaryContent strong {
+    font-size: 1rem;
+  }
+
+  .farmhubDataTableCell .itemActions {
+    justify-content: flex-start;
+  }
+}
