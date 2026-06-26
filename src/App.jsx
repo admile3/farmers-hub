@@ -46,6 +46,7 @@ import Orders from "./modules/Orders.jsx";
 import Sales from "./modules/Sales.jsx";
 import Inventory from "./modules/Inventory.jsx";
 import Livestock from "./modules/Livestock.jsx";
+import HerdTracker from "./modules/HerdTracker.jsx";
 import PlantingScheduler from "./modules/PlantingScheduler.jsx";
 import ThermalPrinter from "./modules/ThermalPrinter.jsx";
 import AccountSettings from "./modules/AccountSettings.jsx";
@@ -101,6 +102,15 @@ const modules = [
     path: "/flower-studio",
     icon: Flower2,
     accent: "flowers"
+  },
+  {
+    key: "herd-tracker",
+    title: "Herd Tracker",
+    description:
+      "Track individual animals from birth or purchase through care, costs, sale, or processing transfer.",
+    path: "/herd-tracker",
+    icon: Beef,
+    accent: "herd"
   },
   {
     key: "inventory",
@@ -1006,6 +1016,7 @@ function AppShell({ children }) {
       </div>
     );
   }
+
   const location = useLocation();
   const [mobileModulesOpen, setMobileModulesOpen] = useState(false);
 
@@ -1364,6 +1375,7 @@ export default function App() {
         <Route path="/orders" element={<AccessGate><Orders /></AccessGate>} />
         <Route path="/sales" element={<AccessGate><Sales /></AccessGate>} />
         <Route path="/inventory" element={<AccessGate><Inventory /></AccessGate>} />
+        <Route path="/herd-tracker" element={<AccessGate><HerdTracker /></AccessGate>} />
         <Route path="/livestock" element={<AccessGate><Livestock /></AccessGate>} />
         <Route path="/thermal-printer" element={<AccessGate><ThermalPrinter /></AccessGate>} />
         <Route path="*" element={<NotFound />} />
