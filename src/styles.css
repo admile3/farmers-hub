@@ -5110,18 +5110,24 @@ tr:last-child td {
 }
 
 .ordersFloatingSaveBar {
+  position: sticky;
+  top: 12px;
+  z-index: 20;
+
   display: flex;
   justify-content: flex-end;
+
+  height: 0;
+  margin: 0;
+  padding: 0;
+
   pointer-events: none;
 }
 
-.ordersFloatingSaveBar .farmhubSaveButton,
-.ordersFloatingSaveBar button {
-  position: sticky;
-  top: 18px;
-  z-index: 20;
-
+.ordersFloatingSaveBar .farmhubSaveButton {
   pointer-events: auto;
+  transform: translateY(0);
+  box-shadow: 0 12px 26px rgba(180, 83, 9, 0.28);
 }
 
 @media (max-width: 700px) {
@@ -5136,7 +5142,10 @@ tr:last-child td {
   }
 
   .ordersFloatingSaveBar {
+    top: 10px;
     justify-content: stretch;
+    height: auto;
+    margin-bottom: 12px;
   }
 
   .ordersFloatingSaveBar .farmhubSaveButton {
