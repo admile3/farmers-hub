@@ -885,24 +885,25 @@ export default function Orders() {
       ) : null}
 
       <ModuleHero
-        eyebrow="Orders"
-        title="Manage customer orders from request to fulfillment."
-        description="Select saved customers, quick-add new customers, enter one-time orders, and build line items from your product directory or manual entries."
-        className="ordersHero"
-        actions={[
-          {
-            label: "Guide",
-            icon: CircleHelp,
-            variant: "secondary",
-            onClick: () => setShowGuide(true)
-          },
-          {
-            label: "New Order",
-            icon: Plus,
-            onClick: startNewOrder
-          }
-        ]}
-      />
+  eyebrow="Orders"
+  accent="orders"
+  icon={PackageCheck}
+  title="Manage customer orders from request to fulfillment."
+  description="Select saved customers, quick-add new customers, enter one-time orders, and build line items from your product directory or manual entries."
+  actions={[
+    {
+      label: "Guide",
+      icon: CircleHelp,
+      variant: "secondary",
+      onClick: () => setShowGuide(true)
+    },
+    {
+      label: "New Order",
+      icon: Plus,
+      onClick: createNewOrder
+    }
+  ]}
+/>
 
       <section className="hubStatGrid ordersStatGrid">
         <StatCard
