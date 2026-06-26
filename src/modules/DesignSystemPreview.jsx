@@ -295,10 +295,19 @@ export default function DesignSystemPreview() {
           getTitle={(record) => record.name}
           getSubtitle={(record) => record.customer}
           getMeta={(record) => [
-            record.category,
-            record.value,
-            record.date
-          ]}
+  {
+    label: "Category",
+    value: record.category
+  },
+  {
+    label: "Value",
+    value: record.value
+  },
+  {
+    label: "Date",
+    value: record.date
+  }
+]}
           renderStatus={(record) => (
             <StatusPill
               label={record.status}
