@@ -850,6 +850,8 @@ export default function Orders() {
 
         <ModuleHero
           eyebrow="Orders"
+          accent="orders"
+          icon={Package}
           title="Sign in to manage customer orders."
           description="Create orders, connect customers, add products, and track fulfillment from draft through completion."
           className="ordersHero"
@@ -887,7 +889,7 @@ export default function Orders() {
       <ModuleHero
   eyebrow="Orders"
   accent="orders"
-  icon={PackageCheck}
+  icon={Package}
   title="Manage customer orders from request to fulfillment."
   description="Select saved customers, quick-add new customers, enter one-time orders, and build line items from your product directory or manual entries."
   actions={[
@@ -900,7 +902,7 @@ export default function Orders() {
     {
       label: "New Order",
       icon: Plus,
-      onClick: createNewOrder
+      onClick: startNewOrder
     }
   ]}
 />
