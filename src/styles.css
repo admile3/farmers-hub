@@ -5110,22 +5110,18 @@ tr:last-child td {
 }
 
 .ordersFloatingSaveBar {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-
   display: flex;
   justify-content: flex-end;
+  pointer-events: none;
+}
 
-  margin: -4px 0 14px;
-  padding: 8px 0;
+.ordersFloatingSaveBar .farmhubSaveButton,
+.ordersFloatingSaveBar button {
+  position: sticky;
+  top: 18px;
+  z-index: 20;
 
-  background: linear-gradient(
-    180deg,
-    #ffffff 0%,
-    rgba(255, 255, 255, 0.96) 72%,
-    rgba(255, 255, 255, 0) 100%
-  );
+  pointer-events: auto;
 }
 
 @media (max-width: 700px) {
