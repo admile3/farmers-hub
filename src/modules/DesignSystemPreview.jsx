@@ -9,7 +9,6 @@ import {
   Package,
   Plus,
   RefreshCw,
-  Save,
   Sprout,
   Trash2
 } from "lucide-react";
@@ -21,6 +20,7 @@ import FilterBar from "../components/FilterBar.jsx";
 import ModuleHero from "../components/ModuleHero.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import RecordList from "../components/RecordList.jsx";
+import SaveButton from "../components/SaveButton.jsx";
 import StatCard from "../components/StatCard.jsx";
 import StatusPill from "../components/StatusPill.jsx";
 import WorkspacePanel from "../components/WorkspacePanel.jsx";
@@ -78,6 +78,11 @@ export default function DesignSystemPreview() {
   const [status, setStatus] = useState("All");
   const [selectedRowId, setSelectedRowId] = useState("order-1");
 
+  const [saveDirty, setSaveDirty] = useState(false);
+  const [saveSaving, setSaveSaving] = useState(false);
+  const [saveSaved, setSaveSaved] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+
   const filteredRows = useMemo(() => {
     return sampleRows.filter((row) => {
       const searchText = `${row.name} ${row.customer} ${row.category} ${row.status}`
@@ -112,6 +117,50 @@ export default function DesignSystemPreview() {
     setPendingDeleteRow(null);
   }
 
+  function resetSavePreview() {
+    setSaveDirty(false);
+    setSaveSaving(false);
+    setSaveSaved(false);
+    setSaveError(false);
+  }
+
+  function markSaveDirty() {
+    setSaveDirty(true);
+    setSaveSaving(false);
+    setSaveSaved(false);
+    setSaveError(false);
+  }
+
+  function handlePreviewSave() {
+    if (!saveDirty || saveSaving) return;
+
+    setSaveSaving(true);
+    setSaveSaved(false);
+    setSaveError(false);
+
+    window.setTimeout(() => {
+      setSaveSaving(false);
+      setSaveDirty(false);
+      setSaveSaved(true);
+
+      window.setTimeout(() => {
+        setSaveSaved(false);
+      }, 1200);
+    }, 900);
+  }
+
+  function handlePreviewSaveError() {
+    setSaveDirty(false);
+    setSaveSaving(false);
+    setSaveSaved(false);
+    setSaveError(true);
+
+    window.setTimeout(() => {
+      setSaveError(false);
+      setSaveDirty(true);
+    }, 1400);
+  }
+
   return (
     <div className="modulePage designSystemPreviewModule">
       <ModuleHero
@@ -119,7 +168,7 @@ export default function DesignSystemPreview() {
         accent="orders"
         icon={Package}
         title="Preview shared Farmers Hub layout components."
-        description="Use this page to test shared heroes, stat cards, panels, filters, tables, record lists, empty states, buttons, forms, guide modals, status pills, and confirmation dialogs before applying them across every module."
+        description="Use this page to test shared heroes, stat cards, panels, filters, tables, record lists, empty states, buttons, forms, guide modals, status pills, confirmation dialogs, and save states before applying them across every module."
         actions={[
           {
             label: "Guide",
@@ -136,37 +185,10 @@ export default function DesignSystemPreview() {
       />
 
       <section className="hubStatGrid">
-        <StatCard
-          icon={Package}
-          label="Orders"
-          value="24"
-          sub="active records"
-          accent="orders"
-        />
-
-        <StatCard
-          icon={DollarSign}
-          label="Revenue"
-          value="$1,247.50"
-          sub="month to date"
-          accent="pricing"
-        />
-
-        <StatCard
-          icon={Archive}
-          label="Inventory"
-          value="86"
-          sub="items tracked"
-          accent="inventory"
-        />
-
-        <StatCard
-          icon={CalendarDays}
-          label="Events"
-          value="7"
-          sub="upcoming"
-          accent="calendar"
-        />
+        <StatCard icon={Package} label="Orders" value="24" sub="active records" accent="orders" />
+        <StatCard icon={DollarSign} label="Revenue" value="$1,247.50" sub="month to date" accent="pricing" />
+        <StatCard icon={Archive} label="Inventory" value="86" sub="items tracked" accent="inventory" />
+        <StatCard icon={CalendarDays} label="Events" value="7" sub="upcoming" accent="calendar" />
       </section>
 
       <WorkspacePanel
@@ -239,10 +261,7 @@ export default function DesignSystemPreview() {
               label: "Status",
               width: "140px",
               render: (row) => (
-                <StatusPill
-                  label={row.status}
-                  variant={getStatusVariant(row.status)}
-                />
+                <StatusPill label={row.status} variant={getStatusVariant(row.status)} />
               )
             },
             {
@@ -262,18 +281,10 @@ export default function DesignSystemPreview() {
               mobileLabel: false,
               render: (row) => (
                 <div className="itemActions">
-                  <button
-                    type="button"
-                    aria-label="Edit"
-                    onClick={() => handleRowOpen(row)}
-                  >
+                  <button type="button" aria-label="Edit" onClick={() => handleRowOpen(row)}>
                     <Edit3 size={14} />
                   </button>
-                  <button
-                    type="button"
-                    aria-label="Delete"
-                    onClick={() => handleDeleteClick(row)}
-                  >
+                  <button type="button" aria-label="Delete" onClick={() => handleDeleteClick(row)}>
                     <Trash2 size={14} />
                   </button>
                 </div>
@@ -295,44 +306,86 @@ export default function DesignSystemPreview() {
           getTitle={(record) => record.name}
           getSubtitle={(record) => record.customer}
           getMeta={(record) => [
-  {
-    label: "Category",
-    value: record.category
-  },
-  {
-    label: "Value",
-    value: record.value
-  },
-  {
-    label: "Date",
-    value: record.date
-  }
-]}
+            { label: "Category", value: record.category },
+            { label: "Value", value: record.value },
+            { label: "Date", value: record.date }
+          ]}
           renderStatus={(record) => (
-            <StatusPill
-              label={record.status}
-              variant={getStatusVariant(record.status)}
-            />
+            <StatusPill label={record.status} variant={getStatusVariant(record.status)} />
           )}
           renderActions={(record) => (
             <div className="itemActions">
-              <button
-                type="button"
-                aria-label="Edit"
-                onClick={() => handleRowOpen(record)}
-              >
+              <button type="button" aria-label="Edit" onClick={() => handleRowOpen(record)}>
                 <Edit3 size={14} />
               </button>
-              <button
-                type="button"
-                aria-label="Delete"
-                onClick={() => handleDeleteClick(record)}
-              >
+              <button type="button" aria-label="Delete" onClick={() => handleDeleteClick(record)}>
                 <Trash2 size={14} />
               </button>
             </div>
           )}
         />
+      </WorkspacePanel>
+
+      <WorkspacePanel
+        eyebrow="Component"
+        title="Save Button"
+        description="This previews the shared save workflow for unchanged, unsaved, saving, saved, and failed save states."
+        actions={[
+          {
+            label: "Mark Changed",
+            icon: Edit3,
+            variant: "secondary",
+            onClick: markSaveDirty
+          },
+          {
+            label: "Reset",
+            icon: RefreshCw,
+            variant: "secondary",
+            onClick: resetSavePreview
+          }
+        ]}
+      >
+        <div className="placeholderBox compactPlaceholder">
+          Edit the sample field or click <strong>Mark Changed</strong> to preview
+          the orange unsaved state. Click the SaveButton to preview saving and
+          saved states.
+        </div>
+
+        <div className="formGrid compactFormGrid">
+          <label>
+            Example Editable Field
+            <input
+              placeholder="Type here to trigger Save Changes..."
+              onChange={markSaveDirty}
+            />
+          </label>
+
+          <label>
+            Example Select
+            <select defaultValue="one" onChange={markSaveDirty}>
+              <option value="one">Option One</option>
+              <option value="two">Option Two</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="button-row" style={{ marginTop: "12px" }}>
+          <SaveButton
+            dirty={saveDirty}
+            saving={saveSaving}
+            saved={saveSaved}
+            error={saveError}
+            onClick={handlePreviewSave}
+          />
+
+          <button
+            type="button"
+            className="secondaryButton compactButton"
+            onClick={handlePreviewSaveError}
+          >
+            Preview Error
+          </button>
+        </div>
       </WorkspacePanel>
 
       <WorkspacePanel
@@ -370,9 +423,7 @@ export default function DesignSystemPreview() {
             icon: Trash2,
             variant: "secondary",
             onClick: () => {
-              setPendingDeleteRow({
-                name: "Example Record"
-              });
+              setPendingDeleteRow({ name: "Example Record" });
               setShowConfirmDialog(true);
             }
           }
@@ -387,9 +438,7 @@ export default function DesignSystemPreview() {
               label: "Preview Delete Dialog",
               icon: Trash2,
               onClick: () => {
-                setPendingDeleteRow({
-                  name: "Example Record"
-                });
+                setPendingDeleteRow({ name: "Example Record" });
                 setShowConfirmDialog(true);
               }
             }
@@ -446,21 +495,22 @@ export default function DesignSystemPreview() {
         description="This panel demonstrates the standard editor layout used for creating or updating records."
         actions={[
           {
-            label: "Save",
-            icon: Save,
-            onClick: () => {}
+            label: "Mark Changed",
+            icon: Edit3,
+            variant: "secondary",
+            onClick: markSaveDirty
           }
         ]}
       >
         <div className="formGrid compactFormGrid">
           <label>
             Example Input
-            <input placeholder="Type something..." />
+            <input placeholder="Type something..." onChange={markSaveDirty} />
           </label>
 
           <label>
             Example Select
-            <select defaultValue="one">
+            <select defaultValue="one" onChange={markSaveDirty}>
               <option value="one">Option One</option>
               <option value="two">Option Two</option>
             </select>
@@ -468,18 +518,28 @@ export default function DesignSystemPreview() {
 
           <label>
             Example Date
-            <input type="date" />
+            <input type="date" onChange={markSaveDirty} />
           </label>
 
           <label>
             Example Number
-            <input type="number" placeholder="0.00" />
+            <input type="number" placeholder="0.00" onChange={markSaveDirty} />
           </label>
 
           <label className="fullSpan">
             Example Notes
-            <textarea placeholder="This previews textarea styling." />
+            <textarea placeholder="This previews textarea styling." onChange={markSaveDirty} />
           </label>
+        </div>
+
+        <div className="button-row" style={{ marginTop: "12px" }}>
+          <SaveButton
+            dirty={saveDirty}
+            saving={saveSaving}
+            saved={saveSaved}
+            error={saveError}
+            onClick={handlePreviewSave}
+          />
         </div>
       </WorkspacePanel>
 
@@ -553,6 +613,14 @@ export default function DesignSystemPreview() {
               <p>
                 Tests compact record cards for smaller directories, recent activity,
                 side panels, and mobile-friendly record lists.
+              </p>
+            </article>
+
+            <article className="guideStepCard">
+              <h3>Save Button</h3>
+              <p>
+                Tests the shared save workflow for unchanged, unsaved, saving,
+                saved, and failed states.
               </p>
             </article>
 
