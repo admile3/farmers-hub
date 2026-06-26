@@ -23,6 +23,7 @@ import RecordList from "../components/RecordList.jsx";
 import SaveButton from "../components/SaveButton.jsx";
 import StatCard from "../components/StatCard.jsx";
 import StatusPill from "../components/StatusPill.jsx";
+import Toast from "../components/Toast.jsx";
 import WorkspacePanel from "../components/WorkspacePanel.jsx";
 
 const sampleRows = [
@@ -73,6 +74,8 @@ export default function DesignSystemPreview() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingDeleteRow, setPendingDeleteRow] = useState(null);
 
+  const [toast, setToast] = useState(null);
+
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [status, setStatus] = useState("All");
@@ -98,6 +101,14 @@ export default function DesignSystemPreview() {
     });
   }, [search, category, status]);
 
+  function showToast(nextToast) {
+    setToast(nextToast);
+
+    window.setTimeout(() => {
+      setToast(null);
+    }, 3000);
+  }
+
   function handleRowOpen(row) {
     setSelectedRowId(row.id);
   }
@@ -113,6 +124,12 @@ export default function DesignSystemPreview() {
   }
 
   function handleConfirmDelete() {
+    showToast({
+      variant: "success",
+      title: "Record deleted",
+      message: `${pendingDeleteRow?.name || "Record"} was removed.`
+    });
+
     setShowConfirmDialog(false);
     setPendingDeleteRow(null);
   }
@@ -143,6 +160,12 @@ export default function DesignSystemPreview() {
       setSaveDirty(false);
       setSaveSaved(true);
 
+      showToast({
+        variant: "success",
+        title: "Changes saved",
+        message: "Your updates were saved successfully."
+      });
+
       window.setTimeout(() => {
         setSaveSaved(false);
       }, 1200);
@@ -154,6 +177,12 @@ export default function DesignSystemPreview() {
     setSaveSaving(false);
     setSaveSaved(false);
     setSaveError(true);
+
+    showToast({
+      variant: "error",
+      title: "Save failed",
+      message: "Your changes could not be saved. Please try again."
+    });
 
     window.setTimeout(() => {
       setSaveError(false);
@@ -168,7 +197,7 @@ export default function DesignSystemPreview() {
         accent="orders"
         icon={Package}
         title="Preview shared Farmers Hub layout components."
-        description="Use this page to test shared heroes, stat cards, panels, filters, tables, record lists, empty states, buttons, forms, guide modals, status pills, confirmation dialogs, and save states before applying them across every module."
+        description="Use this page to test shared heroes, stat cards, panels, filters, tables, record lists, empty states, buttons, forms, guide modals, status pills, confirmation dialogs, save states, and toast notifications before applying them across every module."
         actions={[
           {
             label: "Guide",
@@ -251,11 +280,7 @@ export default function DesignSystemPreview() {
                 </>
               )
             },
-            {
-              key: "category",
-              label: "Category",
-              width: "140px"
-            },
+            { key: "category", label: "Category", width: "140px" },
             {
               key: "status",
               label: "Status",
@@ -264,16 +289,8 @@ export default function DesignSystemPreview() {
                 <StatusPill label={row.status} variant={getStatusVariant(row.status)} />
               )
             },
-            {
-              key: "value",
-              label: "Value",
-              width: "120px"
-            },
-            {
-              key: "date",
-              label: "Date",
-              width: "120px"
-            },
+            { key: "value", label: "Value", width: "120px" },
+            { key: "date", label: "Date", width: "120px" },
             {
               key: "actions",
               label: "Actions",
@@ -294,11 +311,7 @@ export default function DesignSystemPreview() {
         />
       </WorkspacePanel>
 
-      <WorkspacePanel
-        eyebrow="Component"
-        title="Record List"
-        description="This previews compact record cards for modules that need a lighter directory pattern than a full table."
-      >
+      <WorkspacePanel eyebrow="Component" title="Record List" description="This previews compact record cards for modules that need a lighter directory pattern than a full table.">
         <RecordList
           records={sampleRows}
           selectedRecordId={selectedRowId}
@@ -331,33 +344,18 @@ export default function DesignSystemPreview() {
         title="Save Button"
         description="This previews the shared save workflow for unchanged, unsaved, saving, saved, and failed save states."
         actions={[
-          {
-            label: "Mark Changed",
-            icon: Edit3,
-            variant: "secondary",
-            onClick: markSaveDirty
-          },
-          {
-            label: "Reset",
-            icon: RefreshCw,
-            variant: "secondary",
-            onClick: resetSavePreview
-          }
+          { label: "Mark Changed", icon: Edit3, variant: "secondary", onClick: markSaveDirty },
+          { label: "Reset", icon: RefreshCw, variant: "secondary", onClick: resetSavePreview }
         ]}
       >
         <div className="placeholderBox compactPlaceholder">
-          Edit the sample field or click <strong>Mark Changed</strong> to preview
-          the orange unsaved state. Click the SaveButton to preview saving and
-          saved states.
+          Edit the sample field or click <strong>Mark Changed</strong> to preview the orange unsaved state.
         </div>
 
         <div className="formGrid compactFormGrid">
           <label>
             Example Editable Field
-            <input
-              placeholder="Type here to trigger Save Changes..."
-              onChange={markSaveDirty}
-            />
+            <input placeholder="Type here to trigger Save Changes..." onChange={markSaveDirty} />
           </label>
 
           <label>
@@ -378,11 +376,7 @@ export default function DesignSystemPreview() {
             onClick={handlePreviewSave}
           />
 
-          <button
-            type="button"
-            className="secondaryButton compactButton"
-            onClick={handlePreviewSaveError}
-          >
+          <button type="button" className="secondaryButton compactButton" onClick={handlePreviewSaveError}>
             Preview Error
           </button>
         </div>
@@ -390,9 +384,69 @@ export default function DesignSystemPreview() {
 
       <WorkspacePanel
         eyebrow="Component"
-        title="Status Pill"
-        description="This previews the shared status label used in tables, cards, record summaries, and module dashboards."
+        title="Toast"
+        description="This previews the shared temporary notification used after saves, deletes, edits, archive actions, errors, and general updates."
       >
+        <div className="button-row">
+          <button
+            type="button"
+            className="secondaryButton compactButton"
+            onClick={() =>
+              showToast({
+                variant: "success",
+                title: "Changes saved",
+                message: "Your updates were saved successfully."
+              })
+            }
+          >
+            Success Toast
+          </button>
+
+          <button
+            type="button"
+            className="secondaryButton compactButton"
+            onClick={() =>
+              showToast({
+                variant: "info",
+                title: "Heads up",
+                message: "This is an informational notification."
+              })
+            }
+          >
+            Info Toast
+          </button>
+
+          <button
+            type="button"
+            className="secondaryButton compactButton"
+            onClick={() =>
+              showToast({
+                variant: "warning",
+                title: "Check this",
+                message: "This action may need your attention."
+              })
+            }
+          >
+            Warning Toast
+          </button>
+
+          <button
+            type="button"
+            className="secondaryButton compactButton"
+            onClick={() =>
+              showToast({
+                variant: "error",
+                title: "Something went wrong",
+                message: "Please try again."
+              })
+            }
+          >
+            Error Toast
+          </button>
+        </div>
+      </WorkspacePanel>
+
+      <WorkspacePanel eyebrow="Component" title="Status Pill" description="This previews the shared status label used in tables, cards, record summaries, and module dashboards.">
         <div className="designSystemPreviewStack">
           <div className="designSystemPreviewRow">
             <StatusPill label="Success" variant="success" />
@@ -401,14 +455,6 @@ export default function DesignSystemPreview() {
             <StatusPill label="Info" variant="info" />
             <StatusPill label="Neutral" variant="neutral" />
             <StatusPill label="Primary" variant="primary" />
-          </div>
-
-          <div className="designSystemPreviewRow">
-            <StatusPill label="Open" variant="primary" />
-            <StatusPill label="Paid" variant="success" />
-            <StatusPill label="Low Stock" variant="warning" />
-            <StatusPill label="Expired" variant="danger" />
-            <StatusPill label="Draft" variant="neutral" />
           </div>
         </div>
       </WorkspacePanel>
@@ -446,62 +492,29 @@ export default function DesignSystemPreview() {
         />
       </WorkspacePanel>
 
-      <WorkspacePanel
-        eyebrow="Selected Record"
-        title="Directory Interaction Preview"
-        description="This panel confirms that clicking a record name or edit icon selects the row and can open a future editor."
-      >
+      <WorkspacePanel eyebrow="Selected Record" title="Directory Interaction Preview" description="This panel confirms that clicking a record name or edit icon selects the row and can open a future editor.">
         {selectedRowId ? (
           <div className="placeholderBox compactPlaceholder">
             Selected record: <strong>{selectedRowId}</strong>
           </div>
         ) : (
-          <EmptyState
-            icon={Inbox}
-            title="No record selected"
-            message="Click a record name in the shared directory to select it."
-          />
+          <EmptyState icon={Inbox} title="No record selected" message="Click a record name in the shared directory to select it." />
         )}
       </WorkspacePanel>
 
-      <WorkspacePanel
-        eyebrow="Empty States"
-        title="Shared Empty State Pattern"
-        description="This previews the standard no-records state used when tables, lists, or directories do not have content yet."
-      >
+      <WorkspacePanel eyebrow="Empty States" title="Shared Empty State Pattern" description="This previews the standard no-records state used when tables, lists, or directories do not have content yet.">
         <EmptyState
           icon={Inbox}
           title="No sample records yet"
           message="Use this component whenever a module has no saved records, no filtered results, or no activity yet."
           actions={[
-            {
-              label: "Add Example",
-              icon: Plus,
-              onClick: () => {}
-            },
-            {
-              label: "Learn More",
-              icon: CircleHelp,
-              variant: "secondary",
-              onClick: () => setShowGuide(true)
-            }
+            { label: "Add Example", icon: Plus, onClick: () => {} },
+            { label: "Learn More", icon: CircleHelp, variant: "secondary", onClick: () => setShowGuide(true) }
           ]}
         />
       </WorkspacePanel>
 
-      <WorkspacePanel
-        eyebrow="Editor"
-        title="Shared Form Pattern"
-        description="This panel demonstrates the standard editor layout used for creating or updating records."
-        actions={[
-          {
-            label: "Mark Changed",
-            icon: Edit3,
-            variant: "secondary",
-            onClick: markSaveDirty
-          }
-        ]}
-      >
+      <WorkspacePanel eyebrow="Editor" title="Shared Form Pattern" description="This panel demonstrates the standard editor layout used for creating or updating records.">
         <div className="formGrid compactFormGrid">
           <label>
             Example Input
@@ -533,27 +546,27 @@ export default function DesignSystemPreview() {
         </div>
 
         <div className="button-row" style={{ marginTop: "12px" }}>
-          <SaveButton
-            dirty={saveDirty}
-            saving={saveSaving}
-            saved={saveSaved}
-            error={saveError}
-            onClick={handlePreviewSave}
-          />
+          <SaveButton dirty={saveDirty} saving={saveSaving} saved={saveSaved} error={saveError} onClick={handlePreviewSave} />
         </div>
       </WorkspacePanel>
 
       <ConfirmDialog
         open={showConfirmDialog}
         title="Delete Record?"
-        message={`Are you sure you want to delete "${
-          pendingDeleteRow?.name || "this record"
-        }"? This action cannot be undone.`}
+        message={`Are you sure you want to delete "${pendingDeleteRow?.name || "this record"}"? This action cannot be undone.`}
         confirmLabel="Delete"
         confirmVariant="danger"
         cancelLabel="Cancel"
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
+      />
+
+      <Toast
+        open={Boolean(toast)}
+        variant={toast?.variant}
+        title={toast?.title}
+        message={toast?.message}
+        onClose={() => setToast(null)}
       />
 
       <ModuleGuideModal
@@ -572,83 +585,23 @@ export default function DesignSystemPreview() {
 
             <div>
               <h2>Shared Component Testing</h2>
-              <p>
-                This page lets you test shared Farmers Hub layout components before
-                applying them to production modules.
-              </p>
+              <p>This page lets you test shared Farmers Hub layout components before applying them to production modules.</p>
             </div>
           </section>
 
           <section className="guideStepGrid">
-            <article className="guideStepCard">
-              <h3>Hero</h3>
-              <p>Tests ModuleHero layout, accent color, icon, and action buttons.</p>
-            </article>
-
-            <article className="guideStepCard">
-              <h3>Stats</h3>
-              <p>Tests StatCard colors, spacing, icons, and responsive behavior.</p>
-            </article>
-
-            <article className="guideStepCard">
-              <h3>Panels</h3>
-              <p>Tests WorkspacePanel headers, toolbars, actions, and body spacing.</p>
-            </article>
-
-            <article className="guideStepCard">
-              <h3>Filter Bar</h3>
-              <p>Tests shared search, dropdown filters, and toolbar actions.</p>
-            </article>
-
-            <article className="guideStepCard">
-              <h3>Data Table</h3>
-              <p>
-                Tests clickable record names, selected rows, reusable desktop tables,
-                and mobile card-style behavior.
-              </p>
-            </article>
-
-            <article className="guideStepCard">
-              <h3>Record List</h3>
-              <p>
-                Tests compact record cards for smaller directories, recent activity,
-                side panels, and mobile-friendly record lists.
-              </p>
-            </article>
-
-            <article className="guideStepCard">
-              <h3>Save Button</h3>
-              <p>
-                Tests the shared save workflow for unchanged, unsaved, saving,
-                saved, and failed states.
-              </p>
-            </article>
-
-            <article className="guideStepCard">
-              <h3>Status Pill</h3>
-              <p>
-                Tests shared status labels for records, tables, cards, and module
-                summaries.
-              </p>
-            </article>
-
-            <article className="guideStepCard">
-              <h3>Confirm Dialog</h3>
-              <p>
-                Tests the shared confirmation pattern for delete, archive, discard,
-                and other important actions.
-              </p>
-            </article>
-
-            <article className="guideStepCard">
-              <h3>Empty State</h3>
-              <p>Tests reusable no-records messaging and empty directory layouts.</p>
-            </article>
-
-            <article className="guideStepCard">
-              <h3>Guide Modal</h3>
-              <p>Tests popup layout, scrolling, close behavior, and dismissal checkbox.</p>
-            </article>
+            <article className="guideStepCard"><h3>Hero</h3><p>Tests ModuleHero layout, accent color, icon, and action buttons.</p></article>
+            <article className="guideStepCard"><h3>Stats</h3><p>Tests StatCard colors, spacing, icons, and responsive behavior.</p></article>
+            <article className="guideStepCard"><h3>Panels</h3><p>Tests WorkspacePanel headers, toolbars, actions, and body spacing.</p></article>
+            <article className="guideStepCard"><h3>Filter Bar</h3><p>Tests shared search, dropdown filters, and toolbar actions.</p></article>
+            <article className="guideStepCard"><h3>Data Table</h3><p>Tests clickable record names, selected rows, reusable desktop tables, and mobile card-style behavior.</p></article>
+            <article className="guideStepCard"><h3>Record List</h3><p>Tests compact record cards for smaller directories, recent activity, side panels, and mobile-friendly record lists.</p></article>
+            <article className="guideStepCard"><h3>Save Button</h3><p>Tests the shared save workflow for unchanged, unsaved, saving, saved, and failed states.</p></article>
+            <article className="guideStepCard"><h3>Toast</h3><p>Tests temporary notification messages for saved, deleted, warning, info, and error states.</p></article>
+            <article className="guideStepCard"><h3>Status Pill</h3><p>Tests shared status labels for records, tables, cards, and module summaries.</p></article>
+            <article className="guideStepCard"><h3>Confirm Dialog</h3><p>Tests the shared confirmation pattern for delete, archive, discard, and other important actions.</p></article>
+            <article className="guideStepCard"><h3>Empty State</h3><p>Tests reusable no-records messaging and empty directory layouts.</p></article>
+            <article className="guideStepCard"><h3>Guide Modal</h3><p>Tests popup layout, scrolling, close behavior, and dismissal checkbox.</p></article>
           </section>
         </div>
       </ModuleGuideModal>
