@@ -29,10 +29,8 @@ export default function FilterBar({
             onChange={(event) => filter.onChange?.(event.target.value)}
           >
             {filter.options.map((option) => {
-              const value =
-                typeof option === "string" ? option : option.value;
-              const label =
-                typeof option === "string" ? option : option.label;
+              const value = typeof option === "string" ? option : option.value;
+              const label = typeof option === "string" ? option : option.label;
 
               return (
                 <option key={value} value={value}>
