@@ -4278,3 +4278,141 @@ tr:last-child td {
   background: rgba(156, 57, 28, 0.45);
   border-color: rgba(239, 155, 123, 0.5);
 }
+/* ==========================
+   Record List
+========================== */
+
+.farmhubRecordList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.farmhubRecordCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+
+  padding: 1rem 1.1rem;
+
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.farmhubRecordCard.clickable {
+  cursor: pointer;
+}
+
+.farmhubRecordCard:hover {
+  background: var(--surfaceHover);
+  border-color: var(--borderStrong);
+}
+
+.farmhubRecordCard.selected {
+  border-left: 4px solid var(--primary);
+  padding-left: calc(1.1rem - 3px);
+}
+
+.farmhubRecordCardMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.farmhubRecordCardTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+
+  padding: 0;
+  margin: 0;
+
+  border: none;
+  background: transparent;
+
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.farmhubRecordCardTitle:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.farmhubRecordCardArrow {
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.farmhubRecordCardSubtitle {
+  margin: 0.35rem 0 0;
+
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.farmhubRecordCardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+
+  margin-top: 0.7rem;
+
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.farmhubRecordCardSide {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+
+  flex-shrink: 0;
+}
+
+.farmhubRecordCardStatus {
+  display: flex;
+}
+
+.farmhubRecordCardActions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.farmhubRecordListEmpty {
+  padding: 2rem;
+  text-align: center;
+  color: var(--muted);
+  border: 1px dashed var(--border);
+  border-radius: 16px;
+}
+
+@media (max-width: 640px) {
+  .farmhubRecordCard {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .farmhubRecordCardSide {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .farmhubRecordCardActions {
+    justify-content: flex-end;
+  }
+}
