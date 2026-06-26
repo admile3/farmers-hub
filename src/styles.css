@@ -4059,3 +4059,13 @@ tr:last-child td {
     justify-content: flex-start;
   }
 }
+/* DataTable selected row refinement */
+.farmhubDataTableRow.selected {
+  background: #ffffff !important;
+  box-shadow: inset 4px 0 0 var(--module-color, var(--green)) !important;
+}
+
+.farmhubDataTableRow.selected:hover {
+  background: #fbfaf6 !important;
+  box-shadow: inset 4px 0 0 var(--module-color, var(--green)) !important;
+}
