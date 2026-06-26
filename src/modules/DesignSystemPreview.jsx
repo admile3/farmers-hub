@@ -20,6 +20,7 @@ import EmptyState from "../components/EmptyState.jsx";
 import FilterBar from "../components/FilterBar.jsx";
 import ModuleHero from "../components/ModuleHero.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
+import RecordList from "../components/RecordList.jsx";
 import StatCard from "../components/StatCard.jsx";
 import StatusPill from "../components/StatusPill.jsx";
 import WorkspacePanel from "../components/WorkspacePanel.jsx";
@@ -118,7 +119,7 @@ export default function DesignSystemPreview() {
         accent="orders"
         icon={Package}
         title="Preview shared Farmers Hub layout components."
-        description="Use this page to test shared heroes, stat cards, panels, filters, tables, empty states, buttons, forms, lists, guide modals, status pills, and confirmation dialogs before applying them across every module."
+        description="Use this page to test shared heroes, stat cards, panels, filters, tables, record lists, empty states, buttons, forms, guide modals, status pills, and confirmation dialogs before applying them across every module."
         actions={[
           {
             label: "Guide",
@@ -284,6 +285,49 @@ export default function DesignSystemPreview() {
 
       <WorkspacePanel
         eyebrow="Component"
+        title="Record List"
+        description="This previews compact record cards for modules that need a lighter directory pattern than a full table."
+      >
+        <RecordList
+          records={sampleRows}
+          selectedRecordId={selectedRowId}
+          onRecordClick={handleRowOpen}
+          getTitle={(record) => record.name}
+          getSubtitle={(record) => record.customer}
+          getMeta={(record) => [
+            record.category,
+            record.value,
+            record.date
+          ]}
+          renderStatus={(record) => (
+            <StatusPill
+              label={record.status}
+              variant={getStatusVariant(record.status)}
+            />
+          )}
+          renderActions={(record) => (
+            <div className="itemActions">
+              <button
+                type="button"
+                aria-label="Edit"
+                onClick={() => handleRowOpen(record)}
+              >
+                <Edit3 size={14} />
+              </button>
+              <button
+                type="button"
+                aria-label="Delete"
+                onClick={() => handleDeleteClick(record)}
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          )}
+        />
+      </WorkspacePanel>
+
+      <WorkspacePanel
+        eyebrow="Component"
         title="Status Pill"
         description="This previews the shared status label used in tables, cards, record summaries, and module dashboards."
       >
@@ -328,7 +372,7 @@ export default function DesignSystemPreview() {
         <EmptyState
           icon={Trash2}
           title="Shared confirmation pattern"
-          message="Use the button above, or the delete icon in the table, to preview the reusable confirmation dialog."
+          message="Use the button above, or the delete icon in the table or record list, to preview the reusable confirmation dialog."
           actions={[
             {
               label: "Preview Delete Dialog",
@@ -430,40 +474,6 @@ export default function DesignSystemPreview() {
         </div>
       </WorkspacePanel>
 
-      <WorkspacePanel
-        eyebrow="Cards"
-        title="Shared Card / List Pattern"
-        description="This panel previews compact saved item rows for modules that use card-style directories."
-      >
-        <div className="savedList compactSavedList">
-          {["Market Order", "Wholesale Delivery", "Custom Bundle"].map((item) => (
-            <div className="savedItem compactSavedItem" key={item}>
-              <div>
-                <h4>{item}</h4>
-                <p>Example supporting text, status, date, and value.</p>
-              </div>
-
-              <div className="itemActions">
-                <button type="button">
-                  <Edit3 size={14} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPendingDeleteRow({
-                      name: item
-                    });
-                    setShowConfirmDialog(true);
-                  }}
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </WorkspacePanel>
-
       <ConfirmDialog
         open={showConfirmDialog}
         title="Delete Record?"
@@ -526,6 +536,14 @@ export default function DesignSystemPreview() {
               <p>
                 Tests clickable record names, selected rows, reusable desktop tables,
                 and mobile card-style behavior.
+              </p>
+            </article>
+
+            <article className="guideStepCard">
+              <h3>Record List</h3>
+              <p>
+                Tests compact record cards for smaller directories, recent activity,
+                side panels, and mobile-friendly record lists.
               </p>
             </article>
 
