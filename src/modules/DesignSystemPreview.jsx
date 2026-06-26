@@ -20,6 +20,7 @@ import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import DataTable from "../components/DataTable.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import FilterBar from "../components/FilterBar.jsx";
+import FormField from "../components/FormField.jsx";
 import ModuleHero from "../components/ModuleHero.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import RecordList from "../components/RecordList.jsx";
@@ -76,7 +77,6 @@ export default function DesignSystemPreview() {
   const [showGuide, setShowGuide] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingDeleteRow, setPendingDeleteRow] = useState(null);
-
   const [toast, setToast] = useState(null);
 
   const [search, setSearch] = useState("");
@@ -245,7 +245,7 @@ export default function DesignSystemPreview() {
         accent="orders"
         icon={Package}
         title="Preview shared Farmers Hub layout components."
-        description="Use this page to test shared heroes, stat cards, panels, filters, tables, record lists, empty states, buttons, forms, guide modals, status pills, confirmation dialogs, save states, toast notifications, and action menus before applying them across every module."
+        description="Use this page to test shared heroes, stat cards, panels, filters, tables, record lists, empty states, buttons, forms, guide modals, status pills, confirmation dialogs, save states, toast notifications, action menus, and form fields before applying them across every module."
         actions={[
           {
             label: "Guide",
@@ -384,7 +384,11 @@ export default function DesignSystemPreview() {
         />
       </WorkspacePanel>
 
-      <WorkspacePanel eyebrow="Component" title="Record List" description="This previews compact record cards for modules that need a lighter directory pattern than a full table.">
+      <WorkspacePanel
+        eyebrow="Component"
+        title="Record List"
+        description="This previews compact record cards for modules that need a lighter directory pattern than a full table."
+      >
         <RecordList
           records={sampleRows}
           selectedRecordId={selectedRowId}
@@ -426,18 +430,16 @@ export default function DesignSystemPreview() {
         </div>
 
         <div className="formGrid compactFormGrid">
-          <label>
-            Example Editable Field
+          <FormField label="Example Editable Field">
             <input placeholder="Type here to trigger Save Changes..." onChange={markSaveDirty} />
-          </label>
+          </FormField>
 
-          <label>
-            Example Select
+          <FormField label="Example Select">
             <select defaultValue="one" onChange={markSaveDirty}>
               <option value="one">Option One</option>
               <option value="two">Option Two</option>
             </select>
-          </label>
+          </FormField>
         </div>
 
         <div className="button-row" style={{ marginTop: "12px" }}>
@@ -461,65 +463,80 @@ export default function DesignSystemPreview() {
         description="This previews the shared temporary notification used after saves, deletes, edits, archive actions, errors, and general updates."
       >
         <div className="button-row">
-          <button
-            type="button"
-            className="secondaryButton compactButton"
-            onClick={() =>
-              showToast({
-                variant: "success",
-                title: "Changes saved",
-                message: "Your updates were saved successfully."
-              })
-            }
-          >
+          <button type="button" className="secondaryButton compactButton" onClick={() => showToast({ variant: "success", title: "Changes saved", message: "Your updates were saved successfully." })}>
             Success Toast
           </button>
-
-          <button
-            type="button"
-            className="secondaryButton compactButton"
-            onClick={() =>
-              showToast({
-                variant: "info",
-                title: "Heads up",
-                message: "This is an informational notification."
-              })
-            }
-          >
+          <button type="button" className="secondaryButton compactButton" onClick={() => showToast({ variant: "info", title: "Heads up", message: "This is an informational notification." })}>
             Info Toast
           </button>
-
-          <button
-            type="button"
-            className="secondaryButton compactButton"
-            onClick={() =>
-              showToast({
-                variant: "warning",
-                title: "Check this",
-                message: "This action may need your attention."
-              })
-            }
-          >
+          <button type="button" className="secondaryButton compactButton" onClick={() => showToast({ variant: "warning", title: "Check this", message: "This action may need your attention." })}>
             Warning Toast
           </button>
-
-          <button
-            type="button"
-            className="secondaryButton compactButton"
-            onClick={() =>
-              showToast({
-                variant: "error",
-                title: "Something went wrong",
-                message: "Please try again."
-              })
-            }
-          >
+          <button type="button" className="secondaryButton compactButton" onClick={() => showToast({ variant: "error", title: "Something went wrong", message: "Please try again." })}>
             Error Toast
           </button>
         </div>
       </WorkspacePanel>
 
-      <WorkspacePanel eyebrow="Component" title="Status Pill" description="This previews the shared status label used in tables, cards, record summaries, and module dashboards.">
+      <WorkspacePanel
+        eyebrow="Component"
+        title="Form Field"
+        description="This previews the shared field wrapper for labels, helper text, required marks, errors, disabled fields, and full-width fields."
+      >
+        <div className="formGrid compactFormGrid">
+          <FormField label="Normal Field">
+            <input placeholder="Standard input..." />
+          </FormField>
+
+          <FormField label="Required Field" required>
+            <input placeholder="Required input..." />
+          </FormField>
+
+          <FormField
+            label="Field With Helper"
+            helper="Helper text gives users extra context without crowding the label."
+          >
+            <input placeholder="Input with helper text..." />
+          </FormField>
+
+          <FormField
+            label="Field With Error"
+            error="This field needs attention."
+            required
+          >
+            <input placeholder="Error example..." />
+          </FormField>
+
+          <FormField
+            label="Disabled Field"
+            helper="Disabled fields should still be readable, but not editable."
+            disabled
+          >
+            <input placeholder="Disabled input..." disabled />
+          </FormField>
+
+          <FormField label="Example Select">
+            <select defaultValue="one">
+              <option value="one">Option One</option>
+              <option value="two">Option Two</option>
+            </select>
+          </FormField>
+
+          <FormField
+            label="Full Width Notes"
+            helper="Use fullWidth for longer text fields, descriptions, notes, and instructions."
+            fullWidth
+          >
+            <textarea placeholder="This previews a full-width textarea." />
+          </FormField>
+        </div>
+      </WorkspacePanel>
+
+      <WorkspacePanel
+        eyebrow="Component"
+        title="Status Pill"
+        description="This previews the shared status label used in tables, cards, record summaries, and module dashboards."
+      >
         <div className="designSystemPreviewStack">
           <div className="designSystemPreviewRow">
             <StatusPill label="Success" variant="success" />
@@ -565,7 +582,11 @@ export default function DesignSystemPreview() {
         />
       </WorkspacePanel>
 
-      <WorkspacePanel eyebrow="Selected Record" title="Directory Interaction Preview" description="This panel confirms that clicking a record name or edit icon selects the row and can open a future editor.">
+      <WorkspacePanel
+        eyebrow="Selected Record"
+        title="Directory Interaction Preview"
+        description="This panel confirms that clicking a record name or edit icon selects the row and can open a future editor."
+      >
         {selectedRowId ? (
           <div className="placeholderBox compactPlaceholder">
             Selected record: <strong>{selectedRowId}</strong>
@@ -575,7 +596,11 @@ export default function DesignSystemPreview() {
         )}
       </WorkspacePanel>
 
-      <WorkspacePanel eyebrow="Empty States" title="Shared Empty State Pattern" description="This previews the standard no-records state used when tables, lists, or directories do not have content yet.">
+      <WorkspacePanel
+        eyebrow="Empty States"
+        title="Shared Empty State Pattern"
+        description="This previews the standard no-records state used when tables, lists, or directories do not have content yet."
+      >
         <EmptyState
           icon={Inbox}
           title="No sample records yet"
@@ -587,35 +612,34 @@ export default function DesignSystemPreview() {
         />
       </WorkspacePanel>
 
-      <WorkspacePanel eyebrow="Editor" title="Shared Form Pattern" description="This panel demonstrates the standard editor layout used for creating or updating records.">
+      <WorkspacePanel
+        eyebrow="Editor"
+        title="Shared Form Pattern"
+        description="This panel demonstrates the standard editor layout used for creating or updating records."
+      >
         <div className="formGrid compactFormGrid">
-          <label>
-            Example Input
+          <FormField label="Example Input">
             <input placeholder="Type something..." onChange={markSaveDirty} />
-          </label>
+          </FormField>
 
-          <label>
-            Example Select
+          <FormField label="Example Select">
             <select defaultValue="one" onChange={markSaveDirty}>
               <option value="one">Option One</option>
               <option value="two">Option Two</option>
             </select>
-          </label>
+          </FormField>
 
-          <label>
-            Example Date
+          <FormField label="Example Date">
             <input type="date" onChange={markSaveDirty} />
-          </label>
+          </FormField>
 
-          <label>
-            Example Number
+          <FormField label="Example Number">
             <input type="number" placeholder="0.00" onChange={markSaveDirty} />
-          </label>
+          </FormField>
 
-          <label className="fullSpan">
-            Example Notes
+          <FormField label="Example Notes" fullWidth>
             <textarea placeholder="This previews textarea styling." onChange={markSaveDirty} />
-          </label>
+          </FormField>
         </div>
 
         <div className="button-row" style={{ marginTop: "12px" }}>
@@ -672,6 +696,7 @@ export default function DesignSystemPreview() {
             <article className="guideStepCard"><h3>Action Menu</h3><p>Tests shared overflow menus for edit, duplicate, print, archive, and delete actions.</p></article>
             <article className="guideStepCard"><h3>Save Button</h3><p>Tests the shared save workflow for unchanged, unsaved, saving, saved, and failed states.</p></article>
             <article className="guideStepCard"><h3>Toast</h3><p>Tests temporary notification messages for saved, deleted, warning, info, and error states.</p></article>
+            <article className="guideStepCard"><h3>Form Field</h3><p>Tests shared labels, helper text, required indicators, validation messages, disabled fields, and full-width layouts.</p></article>
             <article className="guideStepCard"><h3>Status Pill</h3><p>Tests shared status labels for records, tables, cards, and module summaries.</p></article>
             <article className="guideStepCard"><h3>Confirm Dialog</h3><p>Tests the shared confirmation pattern for delete, archive, discard, and other important actions.</p></article>
             <article className="guideStepCard"><h3>Empty State</h3><p>Tests reusable no-records messaging and empty directory layouts.</p></article>
