@@ -19656,3 +19656,264 @@ input[type="number"] {
     grid-template-columns: 1fr 1fr !important;
   }
 }
+/* Herd Tracker */
+.herd,
+.herd.active,
+.planModuleButton.herd {
+  --module-accent: #7a5c3e;
+  --module-accent-soft: #f1e7dc;
+  --module-accent-border: #d7c2aa;
+}
+
+.herd-tracker-module .herd-hero,
+.herd-tracker-module .module-hero {
+  border-color: #d7c2aa;
+}
+
+.herd-tracker-module .module-kicker,
+.herd-tracker-module .eyebrow {
+  color: #7a5c3e;
+}
+
+.herd-tracker-module .primary-button,
+.herd-tracker-module .primaryButton {
+  background: #7a5c3e;
+  border-color: #7a5c3e;
+  color: #ffffff;
+}
+
+.herd-tracker-module .primary-button:hover,
+.herd-tracker-module .primaryButton:hover {
+  background: #684d33;
+  border-color: #684d33;
+}
+
+.herd-tracker-module .secondary-button,
+.herd-tracker-module .secondaryButton {
+  border-color: #d7c2aa;
+  color: #5e432b;
+}
+
+.herd-tracker-module .secondary-button:hover,
+.herd-tracker-module .secondaryButton:hover {
+  background: #f1e7dc;
+}
+
+.herd-tracker-module .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.herd-tracker-module .stat-card {
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e5e0d8);
+  border-radius: 18px;
+  padding: 1rem;
+}
+
+.herd-tracker-module .stat-card span {
+  display: block;
+  color: var(--muted-text, #6f6a61);
+  font-size: 0.85rem;
+  margin-bottom: 0.4rem;
+}
+
+.herd-tracker-module .stat-card strong {
+  color: var(--text-color, #25211c);
+  font-size: 1.35rem;
+}
+
+.herd-tracker-module .two-column-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.herd-tracker-module .filter-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 160px 160px;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.herd-tracker-module .form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.herd-tracker-module .stacked-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.herd-tracker-module label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.herd-tracker-module input,
+.herd-tracker-module select,
+.herd-tracker-module textarea {
+  width: 100%;
+  border: 1px solid var(--border-color, #d8d3ca);
+  border-radius: 12px;
+  background: var(--input-bg, #ffffff);
+  color: var(--text-color, #25211c);
+  padding: 0.7rem 0.8rem;
+  font: inherit;
+}
+
+.herd-tracker-module textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.herd-tracker-module .form-actions,
+.herd-tracker-module .table-action-row {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.herd-tracker-module .event-form {
+  display: grid;
+  grid-template-columns: 160px 150px 110px 110px minmax(200px, 1fr) auto;
+  gap: 0.7rem;
+  align-items: end;
+  margin-bottom: 1rem;
+}
+
+.herd-tracker-module .timeline-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.herd-tracker-module .timeline-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid var(--border-color, #e5e0d8);
+  border-radius: 16px;
+  padding: 0.9rem;
+  background: var(--soft-card-bg, #fbfaf7);
+}
+
+.herd-tracker-module .timeline-item strong,
+.herd-tracker-module .timeline-item span,
+.herd-tracker-module .timeline-item small {
+  display: block;
+}
+
+.herd-tracker-module .timeline-item span,
+.herd-tracker-module .timeline-item small {
+  color: var(--muted-text, #6f6a61);
+}
+
+.herd-tracker-module .timeline-item p {
+  margin: 0.35rem 0;
+}
+
+.herd-tracker-module .status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #f1e7dc;
+  color: #5e432b;
+}
+
+.herd-tracker-module .status-active {
+  background: #e7f3e8;
+  color: #2f6b3b;
+}
+
+.herd-tracker-module .status-sold-live {
+  background: #e8f0fb;
+  color: #315f94;
+}
+
+.herd-tracker-module .status-processed {
+  background: #f1e7dc;
+  color: #5e432b;
+}
+
+.herd-tracker-module .status-culled,
+.herd-tracker-module .status-deceased {
+  background: #f7e4e1;
+  color: #9a3f31;
+}
+
+.herd-tracker-module .small-button.danger,
+.herd-tracker-module .danger {
+  color: #9a3f31;
+  border-color: #e1b7ae;
+}
+
+.herd-tracker-module .small-button.danger:hover,
+.herd-tracker-module .danger:hover {
+  background: #f7e4e1;
+}
+
+.herd-tracker-module .guide-modal {
+  max-width: 680px;
+}
+
+.herd-tracker-module .guide-content {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.herd-tracker-module .guide-content h3 {
+  margin: 0;
+  color: #5e432b;
+}
+
+.herd-tracker-module .guide-content p {
+  margin: 0;
+}
+
+@media (max-width: 1100px) {
+  .herd-tracker-module .two-column-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .herd-tracker-module .event-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .herd-tracker-module .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .herd-tracker-module .filter-row,
+  .herd-tracker-module .form-grid,
+  .herd-tracker-module .event-form {
+    grid-template-columns: 1fr;
+  }
+
+  .herd-tracker-module .timeline-item {
+    flex-direction: column;
+  }
+
+  .herd-tracker-module .form-actions,
+  .herd-tracker-module .table-action-row {
+    justify-content: stretch;
+  }
+
+  .herd-tracker-module .form-actions button,
+  .herd-tracker-module .table-action-row button,
+  .herd-tracker-module .event-form button {
+    width: 100%;
+  }
+}
