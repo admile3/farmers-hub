@@ -20,6 +20,7 @@ import FilterBar from "../components/FilterBar.jsx";
 import ModuleHero from "../components/ModuleHero.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import StatCard from "../components/StatCard.jsx";
+import StatusPill from "../components/StatusPill.jsx";
 import WorkspacePanel from "../components/WorkspacePanel.jsx";
 
 const sampleRows = [
@@ -51,6 +52,19 @@ const sampleRows = [
     date: "Jun 28"
   }
 ];
+
+function getStatusVariant(status) {
+  switch (status) {
+    case "Active":
+      return "success";
+    case "Completed":
+      return "primary";
+    case "Archived":
+      return "neutral";
+    default:
+      return "neutral";
+  }
+}
 
 export default function DesignSystemPreview() {
   const [showGuide, setShowGuide] = useState(false);
@@ -205,9 +219,10 @@ export default function DesignSystemPreview() {
               label: "Status",
               width: "140px",
               render: (row) => (
-                <span className={`orderStatusPill ${row.status.toLowerCase()}`}>
-                  {row.status}
-                </span>
+                <StatusPill
+                  label={row.status}
+                  variant={getStatusVariant(row.status)}
+                />
               )
             },
             {
@@ -242,6 +257,31 @@ export default function DesignSystemPreview() {
             }
           ]}
         />
+      </WorkspacePanel>
+
+      <WorkspacePanel
+        eyebrow="Component"
+        title="Status Pill"
+        description="This previews the shared status label used in tables, cards, record summaries, and module dashboards."
+      >
+        <div className="designSystemPreviewStack">
+          <div className="designSystemPreviewRow">
+            <StatusPill label="Success" variant="success" />
+            <StatusPill label="Warning" variant="warning" />
+            <StatusPill label="Danger" variant="danger" />
+            <StatusPill label="Info" variant="info" />
+            <StatusPill label="Neutral" variant="neutral" />
+            <StatusPill label="Primary" variant="primary" />
+          </div>
+
+          <div className="designSystemPreviewRow">
+            <StatusPill label="Open" variant="primary" />
+            <StatusPill label="Paid" variant="success" />
+            <StatusPill label="Low Stock" variant="warning" />
+            <StatusPill label="Expired" variant="danger" />
+            <StatusPill label="Draft" variant="neutral" />
+          </div>
+        </div>
       </WorkspacePanel>
 
       <WorkspacePanel
@@ -405,6 +445,14 @@ export default function DesignSystemPreview() {
               <p>
                 Tests clickable record names, selected rows, reusable desktop tables,
                 and mobile card-style behavior.
+              </p>
+            </article>
+
+            <article className="guideStepCard">
+              <h3>Status Pill</h3>
+              <p>
+                Tests shared status labels for records, tables, cards, and module
+                summaries.
               </p>
             </article>
 
