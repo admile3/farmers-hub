@@ -4972,3 +4972,101 @@ tr:last-child td {
 .farmhubFormField {
   align-items: stretch !important;
 }
+/* ==========================
+   Orders Shared Framework Migration Fixes
+========================== */
+
+.ordersCustomerModeGrid {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  width: fit-content;
+  padding: 0.25rem;
+  margin: 0 0 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--pill);
+  background: #fbfaf6;
+}
+
+.ordersChoiceButton {
+  min-height: 32px;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--pill);
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.ordersChoiceButton.selected {
+  background: var(--orders);
+  color: #ffffff;
+}
+
+.ordersLineList {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.ordersLineProduct {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.ordersLineRow {
+  display: grid;
+  grid-template-columns: minmax(240px, 1.4fr) 90px 110px 110px 100px 44px;
+  gap: 0.6rem;
+  align-items: end;
+}
+
+.ordersLineMode {
+  width: fit-content;
+}
+
+.ordersLineMode button {
+  white-space: nowrap;
+}
+
+.ordersLineTotal {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  font-weight: 900;
+}
+
+.ordersHelperText {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+@media (max-width: 900px) {
+  .ordersCustomerModeGrid {
+    display: grid;
+    width: 100%;
+    border-radius: 16px;
+  }
+
+  .ordersChoiceButton {
+    width: 100%;
+  }
+
+  .ordersLineHeader {
+    display: none;
+  }
+
+  .ordersLineRow {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    background: #ffffff;
+  }
+
+  .ordersLineTotal {
+    min-height: auto;
+  }
+}
