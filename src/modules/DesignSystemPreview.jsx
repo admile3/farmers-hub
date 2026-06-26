@@ -14,6 +14,7 @@ import {
   Trash2
 } from "lucide-react";
 
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import DataTable from "../components/DataTable.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import FilterBar from "../components/FilterBar.jsx";
@@ -68,6 +69,9 @@ function getStatusVariant(status) {
 
 export default function DesignSystemPreview() {
   const [showGuide, setShowGuide] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingDeleteRow, setPendingDeleteRow] = useState(null);
+
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [status, setStatus] = useState("All");
@@ -92,6 +96,21 @@ export default function DesignSystemPreview() {
     setSelectedRowId(row.id);
   }
 
+  function handleDeleteClick(row) {
+    setPendingDeleteRow(row);
+    setShowConfirmDialog(true);
+  }
+
+  function handleCancelDelete() {
+    setShowConfirmDialog(false);
+    setPendingDeleteRow(null);
+  }
+
+  function handleConfirmDelete() {
+    setShowConfirmDialog(false);
+    setPendingDeleteRow(null);
+  }
+
   return (
     <div className="modulePage designSystemPreviewModule">
       <ModuleHero
@@ -99,7 +118,7 @@ export default function DesignSystemPreview() {
         accent="orders"
         icon={Package}
         title="Preview shared Farmers Hub layout components."
-        description="Use this page to test shared heroes, stat cards, panels, filters, tables, empty states, buttons, forms, lists, and guide modals before applying them across every module."
+        description="Use this page to test shared heroes, stat cards, panels, filters, tables, empty states, buttons, forms, lists, guide modals, status pills, and confirmation dialogs before applying them across every module."
         actions={[
           {
             label: "Guide",
@@ -249,7 +268,11 @@ export default function DesignSystemPreview() {
                   >
                     <Edit3 size={14} />
                   </button>
-                  <button type="button" aria-label="Delete">
+                  <button
+                    type="button"
+                    aria-label="Delete"
+                    onClick={() => handleDeleteClick(row)}
+                  >
                     <Trash2 size={14} />
                   </button>
                 </div>
@@ -282,6 +305,43 @@ export default function DesignSystemPreview() {
             <StatusPill label="Draft" variant="neutral" />
           </div>
         </div>
+      </WorkspacePanel>
+
+      <WorkspacePanel
+        eyebrow="Component"
+        title="Confirm Dialog"
+        description="This previews the shared confirmation dialog used for delete, archive, discard, and other confirmation actions."
+        actions={[
+          {
+            label: "Open Dialog",
+            icon: Trash2,
+            variant: "secondary",
+            onClick: () => {
+              setPendingDeleteRow({
+                name: "Example Record"
+              });
+              setShowConfirmDialog(true);
+            }
+          }
+        ]}
+      >
+        <EmptyState
+          icon={Trash2}
+          title="Shared confirmation pattern"
+          message="Use the button above, or the delete icon in the table, to preview the reusable confirmation dialog."
+          actions={[
+            {
+              label: "Preview Delete Dialog",
+              icon: Trash2,
+              onClick: () => {
+                setPendingDeleteRow({
+                  name: "Example Record"
+                });
+                setShowConfirmDialog(true);
+              }
+            }
+          ]}
+        />
       </WorkspacePanel>
 
       <WorkspacePanel
@@ -387,7 +447,15 @@ export default function DesignSystemPreview() {
                 <button type="button">
                   <Edit3 size={14} />
                 </button>
-                <button type="button">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPendingDeleteRow({
+                      name: item
+                    });
+                    setShowConfirmDialog(true);
+                  }}
+                >
                   <Trash2 size={14} />
                 </button>
               </div>
@@ -395,6 +463,19 @@ export default function DesignSystemPreview() {
           ))}
         </div>
       </WorkspacePanel>
+
+      <ConfirmDialog
+        open={showConfirmDialog}
+        title="Delete Record?"
+        message={`Are you sure you want to delete "${
+          pendingDeleteRow?.name || "this record"
+        }"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        confirmVariant="danger"
+        cancelLabel="Cancel"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
 
       <ModuleGuideModal
         isOpen={showGuide}
@@ -453,6 +534,14 @@ export default function DesignSystemPreview() {
               <p>
                 Tests shared status labels for records, tables, cards, and module
                 summaries.
+              </p>
+            </article>
+
+            <article className="guideStepCard">
+              <h3>Confirm Dialog</h3>
+              <p>
+                Tests the shared confirmation pattern for delete, archive, discard,
+                and other important actions.
               </p>
             </article>
 
