@@ -4864,3 +4864,94 @@ tr:last-child td {
     justify-content: flex-start !important;
   }
 }
+/* ==========================
+   Form Field
+========================== */
+
+.farmhubFormField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.farmhubFormFieldLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  color: var(--text);
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.farmhubRequiredMark {
+  color: #b42318;
+  font-weight: 800;
+}
+
+.farmhubFormFieldHelper {
+  margin: -2px 0 2px;
+
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.farmhubFormFieldControl {
+  display: flex;
+  flex-direction: column;
+}
+
+.farmhubFormFieldControl > * {
+  width: 100%;
+}
+
+.farmhubFormField.hasError input,
+.farmhubFormField.hasError select,
+.farmhubFormField.hasError textarea {
+  border-color: #b42318;
+}
+
+.farmhubFormField.hasError input:focus,
+.farmhubFormField.hasError select:focus,
+.farmhubFormField.hasError textarea:focus {
+  border-color: #b42318;
+  box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.12);
+}
+
+.farmhubFormFieldError {
+  margin: 0;
+
+  color: #b42318;
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.farmhubFormField.disabled {
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.farmhubFormField.fullSpan {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 760px) {
+  .farmhubFormField {
+    gap: 5px;
+  }
+
+  .farmhubFormFieldLabel {
+    font-size: 0.84rem;
+  }
+
+  .farmhubFormFieldHelper {
+    font-size: 0.76rem;
+  }
+
+  .farmhubFormFieldError {
+    font-size: 0.74rem;
+  }
+}
