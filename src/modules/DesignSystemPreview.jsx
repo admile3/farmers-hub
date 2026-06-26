@@ -97,34 +97,35 @@ export default function DesignSystemPreview() {
             onClick: () => {}
           }
         ]}
+        toolbar={
+          <FilterBar
+            searchValue={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search example records..."
+            filters={[
+              {
+                label: "Category",
+                value: category,
+                onChange: setCategory,
+                options: ["All", "Orders", "Customers", "Inventory"]
+              },
+              {
+                label: "Status",
+                value: status,
+                onChange: setStatus,
+                options: ["All", "Active", "Completed", "Archived"]
+              }
+            ]}
+            actions={[
+              {
+                label: "New Record",
+                icon: Plus,
+                onClick: () => {}
+              }
+            ]}
+          />
+        }
       >
-        <FilterBar
-          searchValue={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Search example records..."
-          filters={[
-            {
-              label: "Category",
-              value: category,
-              onChange: setCategory,
-              options: ["All", "Orders", "Customers", "Inventory"]
-            },
-            {
-              label: "Status",
-              value: status,
-              onChange: setStatus,
-              options: ["All", "Active", "Completed", "Archived"]
-            }
-          ]}
-          actions={[
-            {
-              label: "New Record",
-              icon: Plus,
-              onClick: () => {}
-            }
-          ]}
-        />
-
         <div className="formGrid compactFormGrid">
           <label>
             Example Input
