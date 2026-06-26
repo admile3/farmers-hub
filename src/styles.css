@@ -4069,3 +4069,81 @@ tr:last-child td {
   background: #fbfaf6 !important;
   box-shadow: inset 4px 0 0 var(--module-color, var(--green)) !important;
 }
+/* ==========================
+   Status Pill
+========================== */
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  max-width: 100%;
+
+  padding: 0.32rem 0.7rem;
+
+  border-radius: 999px;
+  border: 1px solid transparent;
+
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* Sizes */
+
+.statusPill-small {
+  font-size: 0.68rem;
+  padding: 0.22rem 0.55rem;
+}
+
+.statusPill-default {
+  font-size: 0.75rem;
+  padding: 0.32rem 0.70rem;
+}
+
+.statusPill-large {
+  font-size: 0.82rem;
+  padding: 0.42rem 0.82rem;
+}
+
+/* Variants */
+
+.statusPill-success {
+  color: #25633f;
+  background: rgba(67, 126, 83, 0.12);
+  border-color: rgba(67, 126, 83, 0.22);
+}
+
+.statusPill-warning {
+  color: #8a5a14;
+  background: rgba(194, 132, 36, 0.14);
+  border-color: rgba(194, 132, 36, 0.24);
+}
+
+.statusPill-danger {
+  color: #9a3412;
+  background: rgba(194, 65, 12, 0.12);
+  border-color: rgba(194, 65, 12, 0.22);
+}
+
+.statusPill-info {
+  color: #25636f;
+  background: rgba(45, 117, 131, 0.12);
+  border-color: rgba(45, 117, 131, 0.22);
+}
+
+.statusPill-neutral {
+  color: var(--textSecondary);
+  background: rgba(120, 120, 120, 0.10);
+  border-color: rgba(120, 120, 120, 0.18);
+}
+
+.statusPill-primary {
+  color: var(--primary);
+  background: rgba(95, 135, 76, 0.12);
+  border-color: rgba(95, 135, 76, 0.22);
+}
