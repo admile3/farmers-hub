@@ -4165,18 +4165,18 @@ tr:last-child td {
 ========================== */
 
 .confirmDialogOverlay {
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-    padding: 1.25rem;
+  padding: 1.25rem;
 
-    background: rgba(18, 18, 18, 0.58);
-    backdrop-filter: blur(6px);
+  background: rgba(18, 18, 18, 0.58);
+  backdrop-filter: blur(6px);
 }
 
 .confirmDialog {
@@ -4189,8 +4189,9 @@ tr:last-child td {
   border: 1px solid var(--border);
   border-radius: 1.25rem;
 
-  background: var(--card);
+  background: #ffffff;
   opacity: 1;
+  isolation: isolate;
 
   box-shadow:
     0 10px 25px rgba(0, 0, 0, 0.10),
@@ -4212,15 +4213,15 @@ tr:last-child td {
   border: 1px solid var(--border);
   border-radius: 999px;
 
-  color: var(--textSecondary);
-  background: var(--surface);
+  color: var(--muted);
+  background: #ffffff;
 
   cursor: pointer;
 }
 
 .confirmDialogClose:hover {
   color: var(--text);
-  background: var(--surfaceHover);
+  background: #fbfaf6;
 }
 
 .confirmDialogIcon {
@@ -4252,7 +4253,7 @@ tr:last-child td {
 
   font-size: 0.95rem;
   line-height: 1.55;
-  color: var(--textSecondary);
+  color: var(--muted);
 }
 
 .confirmDialogActions {
@@ -4263,32 +4264,12 @@ tr:last-child td {
   margin-top: 1.35rem;
 }
 
-.dangerButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-
-  border: 1px solid #a73718;
-  border-radius: 999px;
-
-  color: #ffffff;
-  background: #a73718;
-
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.dangerButton:hover {
-  background: #8f2f16;
-  border-color: #8f2f16;
-}
-
 [data-theme="dark"] .confirmDialogOverlay {
   background: rgba(0, 0, 0, 0.58);
 }
 
 [data-theme="dark"] .confirmDialog {
+  background: #1f211d;
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
 }
 
