@@ -4798,3 +4798,69 @@ tr:last-child td {
 [data-theme="dark"] .farmhubActionMenuItem.destructive:hover {
   background: rgba(183, 35, 24, 0.20);
 }
+/* ==========================
+   DataTable Mobile Card Refinement
+========================== */
+
+@media (max-width: 760px) {
+  .farmhubDataTableRow {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    min-width: 0 !important;
+    gap: 11px 14px !important;
+    padding: 13px 14px !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 15px !important;
+    background: #ffffff !important;
+  }
+
+  .farmhubDataTableCell {
+    display: grid !important;
+    gap: 4px !important;
+    min-width: 0 !important;
+    font-size: 0.9rem !important;
+  }
+
+  .farmhubDataTableCell.primaryCell {
+    grid-column: 1 / -1 !important;
+    padding-bottom: 3px !important;
+  }
+
+  .farmhubDataTableCell:last-child {
+    grid-column: 1 / -1 !important;
+    padding-top: 2px !important;
+  }
+
+  .farmhubDataTableCell::before {
+    content: attr(data-label);
+    display: block;
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-weight: 950;
+    letter-spacing: 0.07em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .farmhubDataTableCell[data-label=""]::before,
+  .farmhubDataTableCell.primaryCell::before {
+    display: none !important;
+  }
+
+  .farmhubDataTablePrimaryButton {
+    padding-bottom: 0 !important;
+  }
+
+  .farmhubDataTablePrimaryContent strong {
+    font-size: 1rem !important;
+  }
+
+  .farmhubDataTablePrimaryContent span {
+    margin-top: 3px !important;
+    font-size: 0.84rem !important;
+  }
+
+  .farmhubDataTableCell .itemActions {
+    justify-content: flex-start !important;
+  }
+}
