@@ -57,6 +57,7 @@ export default function DesignSystemPreview() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [status, setStatus] = useState("All");
+  const [selectedRowId, setSelectedRowId] = useState("order-1");
 
   const filteredRows = useMemo(() => {
     return sampleRows.filter((row) => {
@@ -72,6 +73,10 @@ export default function DesignSystemPreview() {
       return matchesSearch && matchesCategory && matchesStatus;
     });
   }, [search, category, status]);
+
+  function handleRowOpen(row) {
+    setSelectedRowId(row.id);
+  }
 
   return (
     <div className="modulePage designSystemPreviewModule">
@@ -133,7 +138,7 @@ export default function DesignSystemPreview() {
       <WorkspacePanel
         eyebrow="Directory"
         title="Shared Directory Pattern"
-        description="This panel demonstrates the standard module directory layout: header, optional toolbar, shared filters, and a responsive data table."
+        description="Click a record name or double-click a row to open it. On mobile, the same table automatically becomes stacked cards."
         actions={[
           {
             label: "Refresh",
@@ -173,12 +178,16 @@ export default function DesignSystemPreview() {
       >
         <DataTable
           rows={filteredRows}
+          selectedRowId={selectedRowId}
+          onRowClick={handleRowOpen}
           emptyMessage="No sample records match your filters."
           columns={[
             {
               key: "name",
               label: "Record",
               width: "minmax(210px, 1.3fr)",
+              isPrimary: true,
+              mobileLabel: false,
               render: (row) => (
                 <>
                   <strong>{row.name}</strong>
@@ -215,9 +224,14 @@ export default function DesignSystemPreview() {
               key: "actions",
               label: "Actions",
               width: "100px",
-              render: () => (
+              mobileLabel: false,
+              render: (row) => (
                 <div className="itemActions">
-                  <button type="button" aria-label="Edit">
+                  <button
+                    type="button"
+                    aria-label="Edit"
+                    onClick={() => handleRowOpen(row)}
+                  >
                     <Edit3 size={14} />
                   </button>
                   <button type="button" aria-label="Delete">
@@ -228,6 +242,24 @@ export default function DesignSystemPreview() {
             }
           ]}
         />
+      </WorkspacePanel>
+
+      <WorkspacePanel
+        eyebrow="Selected Record"
+        title="Directory Interaction Preview"
+        description="This panel confirms that clicking a record name or edit icon selects the row and can open a future editor."
+      >
+        {selectedRowId ? (
+          <div className="placeholderBox compactPlaceholder">
+            Selected record: <strong>{selectedRowId}</strong>
+          </div>
+        ) : (
+          <EmptyState
+            icon={Inbox}
+            title="No record selected"
+            message="Click a record name in the shared directory to select it."
+          />
+        )}
       </WorkspacePanel>
 
       <WorkspacePanel
@@ -370,7 +402,10 @@ export default function DesignSystemPreview() {
 
             <article className="guideStepCard">
               <h3>Data Table</h3>
-              <p>Tests reusable desktop table and mobile card-style behavior.</p>
+              <p>
+                Tests clickable record names, selected rows, reusable desktop tables,
+                and mobile card-style behavior.
+              </p>
             </article>
 
             <article className="guideStepCard">
