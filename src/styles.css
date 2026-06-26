@@ -3603,3 +3603,124 @@ tr:last-child td {
     width: 100%;
   }
 }
+/* ==========================================================
+   FARMERS HUB DESIGN SYSTEM
+   WorkspacePanel v2
+   ========================================================== */
+
+.farmhubWorkspacePanel {
+  display: grid;
+  gap: 16px;
+}
+
+.farmhubWorkspaceHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 24px;
+  margin-bottom: 0 !important;
+}
+
+.farmhubWorkspaceTitleBlock {
+  min-width: 0;
+}
+
+.farmhubWorkspaceHeader h3 {
+  margin: 4px 0 0 !important;
+}
+
+.farmhubWorkspaceDescription {
+  margin: 8px 0 0 !important;
+  max-width: 1000px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.farmhubWorkspaceActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.farmhubWorkspaceToolbar {
+  margin-top: -4px;
+}
+
+.farmhubWorkspaceBody {
+  min-width: 0;
+}
+
+.compactFormGrid label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+/* ==========================================================
+   FilterBar v2
+   ========================================================== */
+
+.farmhubFilterBar {
+  display: grid;
+  grid-template-columns:
+    minmax(300px, 1fr)
+    repeat(auto-fit, minmax(150px, auto));
+  gap: 14px;
+  align-items: end;
+}
+
+.farmhubFilterSearch {
+  width: 100%;
+}
+
+.farmhubFilterControl {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 150px;
+}
+
+.farmhubFilterControl label,
+.farmhubFilterControl span {
+  font-size: 0.82rem;
+}
+
+.farmhubFilterActions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ==========================================================
+   Mobile
+   ========================================================== */
+
+@media (max-width: 900px) {
+
+  .farmhubWorkspaceHeader {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .farmhubWorkspaceActions {
+    justify-content: flex-start;
+  }
+
+  .farmhubFilterBar {
+    grid-template-columns: 1fr;
+  }
+
+  .farmhubFilterActions {
+    justify-content: flex-start;
+  }
+
+  .farmhubFilterActions button,
+  .farmhubWorkspaceActions button {
+    width: 100%;
+  }
+}
