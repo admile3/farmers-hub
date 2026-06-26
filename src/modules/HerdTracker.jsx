@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import HerdTrackerGuideContent from "./HerdTrackerGuideContent.jsx";
 import {
   HERD_SOURCE_OPTIONS,
   HERD_SPECIES_OPTIONS,
@@ -580,25 +581,7 @@ export default function HerdTracker() {
               </button>
             </div>
 
-            <div className="guide-content">
-              <h3>What this module does</h3>
-              <p>
-                Herd Tracker follows an animal from birth or purchase through active care, sale,
-                loss, or processing.
-              </p>
-
-              <h3>How it connects later</h3>
-              <p>
-                When an animal is ready for processing, mark it for Butcher Board. Butcher Board
-                will use the animal record and cost basis when creating a processing batch.
-              </p>
-
-              <h3>Recommended workflow</h3>
-              <p>
-                Add the animal, log feed or vet costs as timeline events, update estimated value
-                as needed, then mark the animal as sold live or processed.
-              </p>
-            </div>
+            <HerdTrackerGuideContent />
           </div>
         </div>
       )}
