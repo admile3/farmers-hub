@@ -1,14 +1,17 @@
+import clsx from "clsx";
+
 export default function StatCard({
   icon: Icon,
   label,
   value,
   sub,
-  accent = "green"
+  accent = "green",
+  className = ""
 }) {
   return (
-    <div className={`hubStatCard ${accent}`}>
+    <article className={clsx("hubStatCard", accent, className)}>
       {Icon ? (
-        <div className={`hubStatIcon ${accent}`}>
+        <div className={clsx("hubStatIcon", accent)}>
           <Icon size={22} />
         </div>
       ) : null}
@@ -18,6 +21,6 @@ export default function StatCard({
         <strong>{value}</strong>
         {sub ? <p>{sub}</p> : null}
       </div>
-    </div>
+    </article>
   );
 }
