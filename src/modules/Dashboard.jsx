@@ -82,6 +82,15 @@ const modules = [
     accent: "flowers"
   },
   {
+    key: "herd-tracker",
+    title: "Herd Tracker",
+    description:
+      "Track individual animals, groups, lots, herd events, costs, locations, health notes, and processing readiness.",
+    path: "/herd-tracker",
+    icon: Beef,
+    accent: "herd"
+  },
+  {
     key: "inventory",
     title: "Inventory",
     description:
