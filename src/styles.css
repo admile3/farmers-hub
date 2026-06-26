@@ -3524,3 +3524,46 @@ tr:last-child td {
   color: var(--module-color, var(--green)) !important;
   background: color-mix(in srgb, var(--module-color, var(--green)) 14%, #ffffff) !important;
 }
+/* Shared WorkspacePanel system */
+.farmhubWorkspacePanel {
+  display: grid;
+  gap: 12px;
+}
+
+.farmhubWorkspaceHeader {
+  margin-bottom: 0 !important;
+}
+
+.farmhubWorkspaceHeader h3 {
+  margin: 4px 0 0 !important;
+}
+
+.farmhubWorkspaceDescription {
+  max-width: 920px;
+  margin: 6px 0 0 !important;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.farmhubWorkspaceActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.farmhubWorkspaceBody {
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .farmhubWorkspaceActions {
+    justify-content: flex-start;
+  }
+
+  .farmhubWorkspaceActions button {
+    width: 100%;
+  }
+}
