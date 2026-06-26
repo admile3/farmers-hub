@@ -5,15 +5,44 @@ export default function DataTable({
   rows = [],
   getRowKey,
   emptyMessage = "No records found.",
+  onRowClick,
+  onRowDoubleClick,
   className = ""
 }) {
+  const templateColumns = columns
+    .map((column) => column.width || "1fr")
+    .join(" ");
+
+  const primaryColumn =
+    columns.find((column) => column.isPrimary) || columns[0] || null;
+
+  function getCellContent(column, row) {
+    return column.render ? column.render(row) : row[column.key];
+  }
+
+  function getMobileLabel(column) {
+    if (column.mobileLabel === false) return "";
+    return column.mobileLabel || column.label;
+  }
+
+  function handleRowClick(row) {
+    onRowClick?.(row);
+  }
+
+  function handleRowDoubleClick(row) {
+    if (onRowDoubleClick) {
+      onRowDoubleClick(row);
+      return;
+    }
+
+    onRowClick?.(row);
+  }
+
   return (
     <div className={clsx("farmhubDataTableWrap", className)}>
       <div
         className="farmhubDataTableHeader"
-        style={{
-          gridTemplateColumns: columns.map((column) => column.width || "1fr").join(" ")
-        }}
+        style={{ gridTemplateColumns: templateColumns }}
       >
         {columns.map((column) => (
           <span key={column.key}>{column.label}</span>
@@ -22,21 +51,53 @@ export default function DataTable({
 
       <div className="farmhubDataTableBody">
         {rows.length ? (
-          rows.map((row, rowIndex) => (
-            <div
-              className="farmhubDataTableRow"
-              key={getRowKey ? getRowKey(row) : row.id || rowIndex}
-              style={{
-                gridTemplateColumns: columns.map((column) => column.width || "1fr").join(" ")
-              }}
-            >
-              {columns.map((column) => (
-                <div className="farmhubDataTableCell" key={column.key}>
-                  {column.render ? column.render(row) : row[column.key]}
-                </div>
-              ))}
-            </div>
-          ))
+          rows.map((row, rowIndex) => {
+            const rowKey = getRowKey ? getRowKey(row) : row.id || rowIndex;
+            const isClickable = Boolean(onRowClick || onRowDoubleClick);
+
+            return (
+              <div
+                className={clsx(
+                  "farmhubDataTableRow",
+                  isClickable ? "clickable" : ""
+                )}
+                key={rowKey}
+                style={{ gridTemplateColumns: templateColumns }}
+                onDoubleClick={() => handleRowDoubleClick(row)}
+              >
+                {columns.map((column) => {
+                  const isPrimary = primaryColumn?.key === column.key;
+                  const cellContent = getCellContent(column, row);
+                  const mobileLabel = getMobileLabel(column);
+
+                  return (
+                    <div
+                      className={clsx(
+                        "farmhubDataTableCell",
+                        isPrimary ? "primaryCell" : "",
+                        column.className
+                      )}
+                      key={column.key}
+                      data-label={mobileLabel}
+                    >
+                      {isPrimary && isClickable ? (
+                        <button
+                          className="farmhubDataTablePrimaryButton"
+                          type="button"
+                          onClick={() => handleRowClick(row)}
+                        >
+                          <span>{cellContent}</span>
+                          <span className="farmhubDataTablePrimaryArrow">›</span>
+                        </button>
+                      ) : (
+                        cellContent
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })
         ) : (
           <div className="farmhubDataTableEmpty">{emptyMessage}</div>
         )}
