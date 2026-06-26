@@ -1152,17 +1152,17 @@ export default function Orders() {
               }
             ]}
           >
-            <div className="button-row" style={{ justifyContent: "flex-end", marginBottom: "12px" }}>
-              <SaveButton
-                dirty={saveDirty || !form.id}
-                saving={saving}
-                saved={saveSaved}
-                error={saveError}
-                label="Save Order"
-                dirtyLabel="Save Order"
-                onClick={handleSaveOrder}
-              />
-            </div>
+            <div className="ordersFloatingSaveBar">
+  <SaveButton
+    dirty={saveDirty || !form.id}
+    saving={saving}
+    saved={saveSaved}
+    error={saveError}
+    label="Save Order"
+    dirtyLabel="Save Order"
+    onClick={handleSaveOrder}
+  />
+</div>
 
             <div className="formGrid compactFormGrid">
               <FormField label="Order Number">
