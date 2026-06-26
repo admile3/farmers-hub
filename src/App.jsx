@@ -56,6 +56,7 @@ import FlowerStudio from "./modules/FlowerStudio.jsx";
 import FarmApothecary from "./modules/FarmApothecary.jsx";
 import { useAuth } from "./AuthContext.jsx";
 import { useUnsavedChanges } from "./UnsavedChangesContext.jsx";
+import DesignSystemPreview from "./modules/DesignSystemPreview.jsx";
 
 const modules = [
   {
@@ -1378,6 +1379,7 @@ export default function App() {
         <Route path="/herd-tracker" element={<AccessGate><HerdTracker /></AccessGate>} />
         <Route path="/livestock" element={<AccessGate><Livestock /></AccessGate>} />
         <Route path="/thermal-printer" element={<AccessGate><ThermalPrinter /></AccessGate>} />
+        <Route path="/design-system-preview" element={<AccessGate><DesignSystemPreview /></AccessGate>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
