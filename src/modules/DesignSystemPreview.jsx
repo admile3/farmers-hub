@@ -3,16 +3,19 @@ import {
   Archive,
   CalendarDays,
   CircleHelp,
+  Copy,
   DollarSign,
   Edit3,
   Inbox,
   Package,
   Plus,
+  Printer,
   RefreshCw,
   Sprout,
   Trash2
 } from "lucide-react";
 
+import ActionMenu from "../components/ActionMenu.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import DataTable from "../components/DataTable.jsx";
 import EmptyState from "../components/EmptyState.jsx";
@@ -118,6 +121,14 @@ export default function DesignSystemPreview() {
     setShowConfirmDialog(true);
   }
 
+  function handleActionToast(title, message, variant = "success") {
+    showToast({
+      variant,
+      title,
+      message
+    });
+  }
+
   function handleCancelDelete() {
     setShowConfirmDialog(false);
     setPendingDeleteRow(null);
@@ -190,6 +201,43 @@ export default function DesignSystemPreview() {
     }, 1400);
   }
 
+  function getActionMenuItems(row) {
+    return [
+      {
+        label: "Edit",
+        icon: Edit3,
+        onClick: () => handleRowOpen(row)
+      },
+      {
+        label: "Duplicate",
+        icon: Copy,
+        onClick: () =>
+          handleActionToast("Record duplicated", `${row.name} was duplicated.`)
+      },
+      {
+        label: "Print",
+        icon: Printer,
+        onClick: () =>
+          handleActionToast("Print preview", `${row.name} is ready to print.`, "info")
+      },
+      {
+        divider: true
+      },
+      {
+        label: "Archive",
+        icon: Archive,
+        onClick: () =>
+          handleActionToast("Record archived", `${row.name} was archived.`, "warning")
+      },
+      {
+        label: "Delete",
+        icon: Trash2,
+        destructive: true,
+        onClick: () => handleDeleteClick(row)
+      }
+    ];
+  }
+
   return (
     <div className="modulePage designSystemPreviewModule">
       <ModuleHero
@@ -197,7 +245,7 @@ export default function DesignSystemPreview() {
         accent="orders"
         icon={Package}
         title="Preview shared Farmers Hub layout components."
-        description="Use this page to test shared heroes, stat cards, panels, filters, tables, record lists, empty states, buttons, forms, guide modals, status pills, confirmation dialogs, save states, and toast notifications before applying them across every module."
+        description="Use this page to test shared heroes, stat cards, panels, filters, tables, record lists, empty states, buttons, forms, guide modals, status pills, confirmation dialogs, save states, toast notifications, and action menus before applying them across every module."
         actions={[
           {
             label: "Guide",
@@ -308,6 +356,31 @@ export default function DesignSystemPreview() {
               )
             }
           ]}
+        />
+      </WorkspacePanel>
+
+      <WorkspacePanel
+        eyebrow="Component"
+        title="Action Menu"
+        description="This previews the shared overflow menu for records with three or more available actions."
+      >
+        <RecordList
+          records={sampleRows}
+          selectedRecordId={selectedRowId}
+          onRecordClick={handleRowOpen}
+          getTitle={(record) => record.name}
+          getSubtitle={(record) => record.customer}
+          getMeta={(record) => [
+            { label: "Category", value: record.category },
+            { label: "Value", value: record.value },
+            { label: "Date", value: record.date }
+          ]}
+          renderStatus={(record) => (
+            <StatusPill label={record.status} variant={getStatusVariant(record.status)} />
+          )}
+          renderActions={(record) => (
+            <ActionMenu items={getActionMenuItems(record)} />
+          )}
         />
       </WorkspacePanel>
 
@@ -478,7 +551,7 @@ export default function DesignSystemPreview() {
         <EmptyState
           icon={Trash2}
           title="Shared confirmation pattern"
-          message="Use the button above, or the delete icon in the table or record list, to preview the reusable confirmation dialog."
+          message="Use the button above, or the delete icon in the table, record list, or action menu to preview the reusable confirmation dialog."
           actions={[
             {
               label: "Preview Delete Dialog",
@@ -596,6 +669,7 @@ export default function DesignSystemPreview() {
             <article className="guideStepCard"><h3>Filter Bar</h3><p>Tests shared search, dropdown filters, and toolbar actions.</p></article>
             <article className="guideStepCard"><h3>Data Table</h3><p>Tests clickable record names, selected rows, reusable desktop tables, and mobile card-style behavior.</p></article>
             <article className="guideStepCard"><h3>Record List</h3><p>Tests compact record cards for smaller directories, recent activity, side panels, and mobile-friendly record lists.</p></article>
+            <article className="guideStepCard"><h3>Action Menu</h3><p>Tests shared overflow menus for edit, duplicate, print, archive, and delete actions.</p></article>
             <article className="guideStepCard"><h3>Save Button</h3><p>Tests the shared save workflow for unchanged, unsaved, saving, saved, and failed states.</p></article>
             <article className="guideStepCard"><h3>Toast</h3><p>Tests temporary notification messages for saved, deleted, warning, info, and error states.</p></article>
             <article className="guideStepCard"><h3>Status Pill</h3><p>Tests shared status labels for records, tables, cards, and module summaries.</p></article>
