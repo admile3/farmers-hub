@@ -1588,16 +1588,6 @@ export default function PricingCalculator() {
           <StatCard icon={Calculator} label="Wholesale Margin" value={percent(calculation.wholesaleMargin)} sub={`${money(calculation.wholesaleProfitPerUnit)} profit`} accent="sourdough" />
         </div>
 
-        <div className="placeholderBox compactPlaceholder pricingClarityNotice">
-          <strong>Pricing clarity:</strong> select a package variant, then enter material, packaging, labor, and overhead costs below. Farmers Hub will calculate estimated cost per unit, suggested retail price, suggested wholesale price, and profit margins.
-        </div>
-
-        {form.isGeneratedProduct ? (
-          <div className="placeholderBox compactPlaceholder linkedProductNotice">
-            <strong>Linked product:</strong> this product is generated from {productSourceLabel(form)}. Saving edits here will update the linked source package variant.
-          </div>
-        ) : null}
-
         <div className="productImagePanel">
           <div className="productImagePreview">
             {form.imageUrl ? (
@@ -1738,6 +1728,12 @@ export default function PricingCalculator() {
               placeholder="Packaging notes, seasonal availability, wholesale details, allergens, or production notes"
             />
           </label>
+
+          {form.isGeneratedProduct ? (
+            <div className="placeholderBox compactPlaceholder linkedProductNotice fullSpan">
+              <strong>Linked product:</strong> this product is generated from {productSourceLabel(form)}. Saving edits here will update the linked source package variant.
+            </div>
+          ) : null}
         </div>
       </section>
 
@@ -1795,6 +1791,10 @@ export default function PricingCalculator() {
               {saving ? "Saving..." : hasUnsavedChanges ? "Save Changes" : "Save Product"}
             </button>
           </div>
+        </div>
+
+        <div className="placeholderBox compactPlaceholder pricingClarityNotice">
+          <strong>Pricing clarity:</strong> enter material, packaging, labor, and overhead costs here. Farmers Hub will calculate estimated cost per unit, suggested retail price, suggested wholesale price, and profit margins.
         </div>
 
         <div className="formGrid compactFormGrid">
