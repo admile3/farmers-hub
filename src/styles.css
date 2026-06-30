@@ -6271,3 +6271,119 @@ tr:last-child td {
     grid-template-columns: 1fr !important;
   }
 }
+/* ==========================
+   Products & Pricing, unified Product Details panel
+   Append to src/styles.css
+========================== */
+
+.pricingProductDetailsPanel {
+  display: grid;
+  gap: 1rem;
+}
+
+.pricingProductDetailsHeader {
+  margin-bottom: 0 !important;
+}
+
+.pricingSelectedProductName {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.pricingSelectedProductName span {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border-radius: var(--pill);
+  padding: 0.25rem 0.55rem;
+  background: var(--module-soft, #f6ebd4);
+  color: var(--module-color, var(--pricing));
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.pricingProductStatRow {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(145px, 1fr));
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.pricingProductStatRow .hubStatCard {
+  min-height: 88px;
+  align-items: flex-start;
+  padding: 14px 15px;
+}
+
+.pricingProductStatRow .hubStatIcon {
+  width: 42px;
+  height: 42px;
+}
+
+.pricingProductStatRow .hubStatText {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.pricingProductStatRow .hubStatText span {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.73rem;
+  line-height: 1.08;
+}
+
+.pricingProductStatRow .hubStatText strong {
+  display: block;
+  margin: 0;
+  color: var(--text);
+  font-size: 1.46rem;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.pricingProductStatRow .hubStatText p {
+  display: block;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.25;
+  max-width: 100%;
+}
+
+.pricingClarityNotice {
+  margin-top: 0 !important;
+}
+
+.pricingProductDetailsGrid {
+  margin-top: 0;
+}
+
+@media (max-width: 1500px) {
+  .pricingProductStatRow {
+    grid-template-columns: repeat(4, minmax(145px, 1fr));
+  }
+}
+
+@media (max-width: 1050px) {
+  .pricingProductStatRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .pricingProductStatRow {
+    grid-template-columns: 1fr;
+  }
+
+  .pricingProductDetailsHeader .formActions,
+  .pricingProductDetailsHeader .formActions button {
+    width: 100%;
+  }
+}
