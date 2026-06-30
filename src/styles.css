@@ -5545,3 +5545,32 @@ tr:last-child td {
     width: 100%;
   }
 }
+/* ==========================
+   Butcher Board Editor Compact Layout
+========================== */
+
+.butcherBoardModule .farmhubWorkspaceBody > .formGrid.compactFormGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem 0.7rem;
+}
+
+.butcherBoardModule .farmhubWorkspaceBody > .formGrid.compactFormGrid .fullSpan,
+.butcherBoardModule .farmhubWorkspaceBody > .formGrid.compactFormGrid .farmhubFormField.fullSpan {
+  grid-column: 1 / -1;
+}
+
+.butcherBoardModule .farmhubWorkspaceBody > .formGrid.compactFormGrid textarea {
+  min-height: 70px;
+}
+
+@media (max-width: 1100px) {
+  .butcherBoardModule .farmhubWorkspaceBody > .formGrid.compactFormGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .butcherBoardModule .farmhubWorkspaceBody > .formGrid.compactFormGrid {
+    grid-template-columns: 1fr;
+  }
+}
