@@ -1555,197 +1555,189 @@ export default function PricingCalculator() {
         </WorkspacePanel>
       </div>
 
-      <section className="spiceWorkspace compactWorkspace">
-        <div className="workspacePanel compactPanel scrollAnchor" ref={detailsRef}>
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Product</p>
-              <h3>Product Details</h3>
-            </div>
-            <div className="formActions compactActions">
-              <button
-                className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`}
-                type="button"
-                onClick={saveCurrentProduct}
-                disabled={saving}
-              >
-                <Save size={15} />
-                {saving ? "Saving..." : hasUnsavedChanges ? "Save Changes" : "Save Product"}
-              </button>
-            </div>
+      <section className="workspacePanel compactPanel scrollAnchor pricingProductDetailsPanel" ref={detailsRef}>
+        <div className="workspaceHeader compactPanelHeader pricingProductDetailsHeader">
+          <div>
+            <p className="eyebrow">Product</p>
+            <h3>Product Details</h3>
+            <p className="pricingSelectedProductName">
+              {selectedProduct ? selectedProduct.name : form.name || "Unsaved Product"}
+              {form.selectedVariantName ? <span>{form.selectedVariantName}</span> : null}
+            </p>
           </div>
-
-          {form.isGeneratedProduct ? (
-            <div className="placeholderBox compactPlaceholder linkedProductNotice">
-              <strong>Linked product:</strong> this product is generated from {productSourceLabel(form)}. Saving edits here will update the linked source package variant.
-            </div>
-          ) : null}
-
-          <div className="productImagePanel">
-            <div className="productImagePreview">
-              {form.imageUrl ? (
-                <img src={form.imageUrl} alt={`${form.name || "Product"} preview`} />
-              ) : (
-                <div className="productImageEmptyState">
-                  <Image size={28} />
-                  <span>No product image yet</span>
-                </div>
-              )}
-            </div>
-
-            <div className="productImageActions">
-              <div>
-                <p className="eyebrow">Product Image</p>
-                <p className="importExportText">
-                  Upload a product photo for the directory. Images are stored in Firebase Storage and saved to this product record.
-                </p>
-              </div>
-
-              <div className="formActions compactActions">
-                <input
-                  ref={imageInputRef}
-                  className="hiddenFileInput"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleProductImageUpload}
-                />
-                <button
-                  className="secondaryButton compactButton"
-                  type="button"
-                  onClick={() => imageInputRef.current?.click()}
-                  disabled={uploadingImage}
-                >
-                  <Upload size={15} />
-                  {uploadingImage ? "Uploading..." : form.imageUrl ? "Replace Image" : "Upload Image"}
-                </button>
-                {form.imageUrl ? (
-                  <button
-                    className="secondaryButton compactButton dangerTextButton"
-                    type="button"
-                    onClick={removeProductImage}
-                    disabled={uploadingImage}
-                  >
-                    <X size={15} />
-                    Remove
-                  </button>
-                ) : null}
-              </div>
-            </div>
-          </div>
-
-          <div className="formGrid compactFormGrid">
-            <label>
-              Product Name
-              <input
-                value={form.name}
-                onChange={(event) => updateField("name", event.target.value)}
-                placeholder="e.g., Sourdough Loaf, Soy Candle, Lavender Bouquet"
-              />
-            </label>
-
-            <label>
-              SKU
-              <input
-                value={form.sku}
-                onChange={(event) => updateField("sku", event.target.value)}
-                placeholder="Optional"
-              />
-            </label>
-
-            {selectedProductVariants.length ? (
-              <label>
-                Variant
-                <select value={selectedVariantId} onChange={(event) => changeVariant(event.target.value)}>
-                  {selectedProductVariants.map((variant) => (
-                    <option key={variant.id} value={variant.id}>
-                      {variant.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
-
-            <label>
-              Category
-              <select value={form.category} onChange={(event) => updateField("category", event.target.value)}>
-                {categories.map((category) => <option key={category}>{category}</option>)}
-              </select>
-            </label>
-
-            <label>
-              Status
-              <select value={form.status} onChange={(event) => updateField("status", event.target.value)}>
-                {productStatuses.map((status) => <option key={status}>{status}</option>)}
-              </select>
-            </label>
-
-            <label>
-              Unit Label
-              <input
-                value={form.unitLabel}
-                onChange={(event) => updateField("unitLabel", event.target.value)}
-                placeholder="each, jar, bunch, lb, dozen, tray"
-              />
-            </label>
-
-            <NumberInput
-              label="Target Retail Margin %"
-              value={form.targetRetailMargin}
-              onChange={(value) => updateField("targetRetailMargin", value)}
-              placeholder="70"
-              step="0.1"
-            />
-
-            <NumberInput
-              label="Target Wholesale Margin %"
-              value={form.targetWholesaleMargin}
-              onChange={(value) => updateField("targetWholesaleMargin", value)}
-              placeholder="50"
-              step="0.1"
-            />
-
-            <label className="fullSpan">
-              Description
-              <input
-                value={form.description}
-                onChange={(event) => updateField("description", event.target.value)}
-                placeholder="Short internal product description"
-              />
-            </label>
-
-            <label className="fullSpan">
-              Notes
-              <input
-                value={form.notes}
-                onChange={(event) => updateField("notes", event.target.value)}
-                placeholder="Packaging notes, seasonal availability, wholesale details, allergens, or production notes"
-              />
-            </label>
+          <div className="formActions compactActions">
+            <button
+              className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`}
+              type="button"
+              onClick={saveCurrentProduct}
+              disabled={saving}
+            >
+              <Save size={15} />
+              {saving ? "Saving..." : hasUnsavedChanges ? "Save Changes" : "Save Product"}
+            </button>
           </div>
         </div>
 
-        <div className="workspacePanel compactPanel">
-          <div className="workspaceHeader compactPanelHeader">
+        <div className="pricingProductStatRow">
+          <StatCard icon={DollarSign} label="Retail" value={money(form.retailPrice)} sub={`per ${form.unitLabel || "unit"}`} accent="pricing" />
+          <StatCard icon={DollarSign} label="Wholesale" value={money(form.wholesalePrice)} sub={`per ${form.unitLabel || "unit"}`} accent="sourdough" />
+          <StatCard icon={Target} label="Cost" value={money(calculation.costPerUnit)} sub="estimated per unit" accent="market" />
+          <StatCard icon={Package} label="Suggested Retail" value={money(calculation.suggestedRetailPrice)} sub={`${form.targetRetailMargin || 0}% target`} accent="spice" />
+          <StatCard icon={Package} label="Suggested Wholesale" value={money(calculation.suggestedWholesalePrice)} sub={`${form.targetWholesaleMargin || 0}% target`} accent="pricing" />
+          <StatCard icon={Calculator} label="Retail Margin" value={percent(calculation.retailMargin)} sub={`${money(calculation.retailProfitPerUnit)} profit`} accent="market" />
+          <StatCard icon={Calculator} label="Wholesale Margin" value={percent(calculation.wholesaleMargin)} sub={`${money(calculation.wholesaleProfitPerUnit)} profit`} accent="sourdough" />
+        </div>
+
+        <div className="placeholderBox compactPlaceholder pricingClarityNotice">
+          <strong>Pricing clarity:</strong> select a package variant, then enter material, packaging, labor, and overhead costs below. Farmers Hub will calculate estimated cost per unit, suggested retail price, suggested wholesale price, and profit margins.
+        </div>
+
+        {form.isGeneratedProduct ? (
+          <div className="placeholderBox compactPlaceholder linkedProductNotice">
+            <strong>Linked product:</strong> this product is generated from {productSourceLabel(form)}. Saving edits here will update the linked source package variant.
+          </div>
+        ) : null}
+
+        <div className="productImagePanel">
+          <div className="productImagePreview">
+            {form.imageUrl ? (
+              <img src={form.imageUrl} alt={`${form.name || "Product"} preview`} />
+            ) : (
+              <div className="productImageEmptyState">
+                <Image size={28} />
+                <span>No product image yet</span>
+              </div>
+            )}
+          </div>
+
+          <div className="productImageActions">
             <div>
-              <p className="eyebrow">Selected</p>
-              <h3>{selectedProduct ? selectedProduct.name : form.name || "Unsaved Product"}</h3>
-              {form.selectedVariantName ? <p className="importExportText">{form.selectedVariantName}</p> : null}
+              <p className="eyebrow">Product Image</p>
+              <p className="importExportText">
+                Upload a product photo for the directory. Images are stored in Firebase Storage and saved to this product record.
+              </p>
+            </div>
+
+            <div className="formActions compactActions">
+              <input
+                ref={imageInputRef}
+                className="hiddenFileInput"
+                type="file"
+                accept="image/*"
+                onChange={handleProductImageUpload}
+              />
+              <button
+                className="secondaryButton compactButton"
+                type="button"
+                onClick={() => imageInputRef.current?.click()}
+                disabled={uploadingImage}
+              >
+                <Upload size={15} />
+                {uploadingImage ? "Uploading..." : form.imageUrl ? "Replace Image" : "Upload Image"}
+              </button>
+              {form.imageUrl ? (
+                <button
+                  className="secondaryButton compactButton dangerTextButton"
+                  type="button"
+                  onClick={removeProductImage}
+                  disabled={uploadingImage}
+                >
+                  <X size={15} />
+                  Remove
+                </button>
+              ) : null}
             </div>
           </div>
+        </div>
 
-          <div className="hubStatGrid pricingStatGrid">
-            <StatCard icon={DollarSign} label="Retail" value={money(form.retailPrice)} sub={`per ${form.unitLabel || "unit"}`} accent="pricing" />
-            <StatCard icon={DollarSign} label="Wholesale" value={money(form.wholesalePrice)} sub={`per ${form.unitLabel || "unit"}`} accent="sourdough" />
-            <StatCard icon={Target} label="Cost" value={money(calculation.costPerUnit)} sub="estimated per unit" accent="market" />
-            <StatCard icon={Package} label="Suggested Retail" value={money(calculation.suggestedRetailPrice)} sub={`${form.targetRetailMargin || 0}% target`} accent="spice" />
-            <StatCard icon={Package} label="Suggested Wholesale" value={money(calculation.suggestedWholesalePrice)} sub={`${form.targetWholesaleMargin || 0}% target`} accent="pricing" />
-            <StatCard icon={Calculator} label="Retail Margin" value={percent(calculation.retailMargin)} sub={`${money(calculation.retailProfitPerUnit)} profit`} accent="market" />
-            <StatCard icon={Calculator} label="Wholesale Margin" value={percent(calculation.wholesaleMargin)} sub={`${money(calculation.wholesaleProfitPerUnit)} profit`} accent="sourdough" />
-          </div>
+        <div className="formGrid compactFormGrid pricingProductDetailsGrid">
+          <label>
+            Product Name
+            <input
+              value={form.name}
+              onChange={(event) => updateField("name", event.target.value)}
+              placeholder="e.g., Sourdough Loaf, Soy Candle, Lavender Bouquet"
+            />
+          </label>
 
-          <div className="placeholderBox compactPlaceholder">
-            <strong>Pricing clarity:</strong> select a package variant, then enter material, packaging, labor, and overhead costs below. Farmers Hub will calculate estimated cost per unit, suggested retail price, suggested wholesale price, and profit margins.
-          </div>
+          <label>
+            SKU
+            <input
+              value={form.sku}
+              onChange={(event) => updateField("sku", event.target.value)}
+              placeholder="Optional"
+            />
+          </label>
+
+          {selectedProductVariants.length ? (
+            <label>
+              Variant
+              <select value={selectedVariantId} onChange={(event) => changeVariant(event.target.value)}>
+                {selectedProductVariants.map((variant) => (
+                  <option key={variant.id} value={variant.id}>
+                    {variant.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+
+          <label>
+            Category
+            <select value={form.category} onChange={(event) => updateField("category", event.target.value)}>
+              {categories.map((category) => <option key={category}>{category}</option>)}
+            </select>
+          </label>
+
+          <label>
+            Status
+            <select value={form.status} onChange={(event) => updateField("status", event.target.value)}>
+              {productStatuses.map((status) => <option key={status}>{status}</option>)}
+            </select>
+          </label>
+
+          <label>
+            Unit Label
+            <input
+              value={form.unitLabel}
+              onChange={(event) => updateField("unitLabel", event.target.value)}
+              placeholder="each, jar, bunch, lb, dozen, tray"
+            />
+          </label>
+
+          <NumberInput
+            label="Target Retail Margin %"
+            value={form.targetRetailMargin}
+            onChange={(value) => updateField("targetRetailMargin", value)}
+            placeholder="70"
+            step="0.1"
+          />
+
+          <NumberInput
+            label="Target Wholesale Margin %"
+            value={form.targetWholesaleMargin}
+            onChange={(value) => updateField("targetWholesaleMargin", value)}
+            placeholder="50"
+            step="0.1"
+          />
+
+          <label className="fullSpan">
+            Description
+            <input
+              value={form.description}
+              onChange={(event) => updateField("description", event.target.value)}
+              placeholder="Short internal product description"
+            />
+          </label>
+
+          <label className="fullSpan">
+            Notes
+            <input
+              value={form.notes}
+              onChange={(event) => updateField("notes", event.target.value)}
+              placeholder="Packaging notes, seasonal availability, wholesale details, allergens, or production notes"
+            />
+          </label>
         </div>
       </section>
 
