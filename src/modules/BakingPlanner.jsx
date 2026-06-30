@@ -23,12 +23,12 @@ import {
   Cloud,
   Package
 } from "lucide-react";
-import "./bakingPlanner.css";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../AuthContext.jsx";
 import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import StatCard from "../components/StatCard.jsx";
+import ModuleHero from "../components/ModuleHero.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import BakingPlannerGuideContent from "../components/BakingPlannerGuideContent.jsx";
 import { addQuantityToMatchedInventoryItem } from "../services/inventoryService.js";
@@ -2807,7 +2807,7 @@ export default function BakingPlanner() {
   );
 
   return (
-    <div className="bakingPlanner">
+    <div className="modulePage bakingPlanner bakingPlannerShared">
       {hasLoadedCloudData && !cloudLoading && !settings.bakingPlannerMode ? (
         <ModuleGuideModal
           isOpen={!settings.bakingPlannerMode}
@@ -3124,47 +3124,40 @@ export default function BakingPlanner() {
       ) : null}
 
       <div className="page">
-        <header className="hero">
-          <div className="hero-inner">
-            <div className="hero-copy">
-              <div className="eyebrow">
-                <Wheat size={16} /> Baking Planner
-              </div>
-              <h1>Plan consistent baking days with fewer surprises.</h1>
-              <p>
-                Scale baking recipes by pre-baked dough weight, adjust for temperature,
-                humidity, and altitude, then generate a practical production
-                sheet for your bake day.
-              </p>
-              <div className="button-row heroButtonRow" style={{ marginTop: "14px" }}>
-                <Button
-                  variant="outline"
-                  className={hasUnsavedChanges ? "dirtySaveButton" : ""}
-                  onClick={savePlannerData}
-                  disabled={cloudLoading}
-                >
-                  <Cloud size={16} /> {cloudLoading ? "Syncing..." : hasUnsavedChanges ? "Save Changes" : "Save / Sync"}
-                </Button>
-                <Button
-                  variant="outline"
-                  className={activeTab === "settings" ? "activeHeroSettingsButton" : ""}
-                  onClick={() => setActiveTab("settings")}
-                >
-                  <Settings size={16} /> Settings
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowGuide(true)}
-                >
-                  <CircleHelp size={16} /> Guide
-                </Button>
-                <span className="pill heroCloudStatus">
-                  {user?.displayName || user?.email || "Local user"} • {cloudStatus}
-                </span>
-              </div>
-            </div>
-          </div>
-        </header>
+        <ModuleHero
+          eyebrow="Baking Planner"
+          accent="sourdough"
+          icon={Wheat}
+          title="Plan consistent baking days with fewer surprises."
+          description="Scale baking recipes by pre-baked dough weight, adjust for temperature, humidity, and altitude, then generate a practical production sheet for your bake day."
+          actions={[
+            {
+              label: cloudLoading ? "Syncing..." : hasUnsavedChanges ? "Save Changes" : "Save / Sync",
+              icon: Cloud,
+              variant: hasUnsavedChanges ? "primary" : "secondary",
+              onClick: savePlannerData,
+              disabled: cloudLoading
+            },
+            {
+              label: "Settings",
+              icon: Settings,
+              variant: activeTab === "settings" ? "primary" : "secondary",
+              onClick: () => setActiveTab("settings")
+            },
+            {
+              label: "Guide",
+              icon: CircleHelp,
+              variant: "secondary",
+              onClick: () => setShowGuide(true)
+            }
+          ]}
+        />
+
+        <div className="bakingPlannerCloudStatus">
+          <Cloud size={15} />
+          <span>{user?.displayName || user?.email || "Local user"}</span>
+          <strong>{cloudStatus}</strong>
+        </div>
 
         <div className="mobileTabShell">
           <span className="mobileTabArrow" aria-hidden="true">
