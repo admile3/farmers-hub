@@ -1139,16 +1139,8 @@ onSelectionChange={setSelectedSourceIds}
             ]}
             renderStatus={(source) => (
               <StatusPill
-                label={
-                  selectedSourceIds.includes(`${source.sourceType}:${source.id}`)
-                    ? "Selected"
-                    : "Ready"
-                }
-                variant={
-                  selectedSourceIds.includes(`${source.sourceType}:${source.id}`)
-                    ? "primary"
-                    : "success"
-                }
+                label="Ready"
+variant="success"
               />
             )}
           />
