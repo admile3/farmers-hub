@@ -46,7 +46,7 @@ import Customers from "./modules/Customers.jsx";
 import Orders from "./modules/Orders.jsx";
 import Sales from "./modules/Sales.jsx";
 import Inventory from "./modules/Inventory.jsx";
-import ButcherBoard from "./modules/butcherboard.jsx";
+import ButcherBoard from "./modules/ButcherBoard.jsx";
 import HerdTracker from "./modules/HerdTracker.jsx";
 import PlantingScheduler from "./modules/PlantingScheduler.jsx";
 import ThermalPrinter from "./modules/ThermalPrinter.jsx";
@@ -70,10 +70,10 @@ const modules = [
     accent: "sourdough"
   },
    {
-    key: "livestock",
+    key: "butcherboard",
     title: "Butcher Board",
     description:
-      "Track animal batches, feed costs, processing yields, finished cuts, and meat inventory.",
+      "Move processing-ready animals or manual batches into finished cuts, inventory, and product pricing.",
     path: "/butcherboard",
     icon: Beef,
     accent: "livestock"
@@ -1378,6 +1378,7 @@ export default function App() {
         <Route path="/sales" element={<AccessGate><Sales /></AccessGate>} />
         <Route path="/inventory" element={<AccessGate><Inventory /></AccessGate>} />
         <Route path="/herd-tracker" element={<AccessGate><HerdTracker /></AccessGate>} />
+        <Route path="/livestock" element={<Navigate to="/butcherboard" replace />} />
         <Route path="/butcherboard" element={<AccessGate><ButcherBoard /></AccessGate>} />
         <Route path="/thermal-printer" element={<AccessGate><ThermalPrinter /></AccessGate>} />
         <Route path="/design-system-preview" element={<AccessGate><DesignSystemPreview /></AccessGate>} />
