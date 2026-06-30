@@ -5347,3 +5347,26 @@ tr:last-child td {
   font-weight: 900;
   line-height: 1;
 }
+/* ==========================
+   Butcher Board Layout Polish
+========================== */
+
+.butcherBoardEditorSaveRow {
+  display: flex;
+  justify-content: flex-end;
+  margin: -0.35rem 0 0.75rem;
+}
+
+.butcherBoardModule .farmhubWorkspaceBody > .formGrid {
+  margin-top: 0;
+}
+
+@media (max-width: 700px) {
+  .butcherBoardEditorSaveRow {
+    justify-content: stretch;
+  }
+
+  .butcherBoardEditorSaveRow .farmhubSaveButton {
+    width: 100%;
+  }
+}
