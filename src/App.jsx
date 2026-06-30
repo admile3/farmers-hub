@@ -46,7 +46,7 @@ import Customers from "./modules/Customers.jsx";
 import Orders from "./modules/Orders.jsx";
 import Sales from "./modules/Sales.jsx";
 import Inventory from "./modules/Inventory.jsx";
-import Livestock from "./modules/butcherboard.jsx";
+import ButcherBoard from "./modules/butcherboard.jsx";
 import HerdTracker from "./modules/HerdTracker.jsx";
 import PlantingScheduler from "./modules/PlantingScheduler.jsx";
 import ThermalPrinter from "./modules/ThermalPrinter.jsx";
