@@ -106,7 +106,7 @@ export default function RecordList({
           >
             {multiSelect ? (
               <div className="farmhubRecordSelectCell" aria-hidden="true">
-                <span className={clsx("farmhubRecordCheckbox", selected ? "checked" : "")}>{selected ? "✓" : ""}</span>
+                <span className={clsx("farmhubRecordCheckbox", selected ? "checked" : "")} />
               </div>
             ) : null}
 
