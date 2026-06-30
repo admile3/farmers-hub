@@ -1,7 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  AlertCircle,
-  ArrowUp,
   Beef,
   CalendarDays,
   CircleHelp,
@@ -10,20 +8,27 @@ import {
   Edit3,
   PackageCheck,
   Plus,
-  Save,
-  Search,
+  RefreshCw,
   Scale,
   ShoppingBag,
-  Trash2,
-  X
+  Trash2
 } from "lucide-react";
 
 import { useAuth } from "../AuthContext.jsx";
-import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
-import ModuleHero from "../components/ModuleHero.jsx";
-import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
+import ActionMenu from "../components/ActionMenu.jsx";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import EmptyState from "../components/EmptyState.jsx";
+import FilterBar from "../components/FilterBar.jsx";
+import FormField from "../components/FormField.jsx";
 import LivestockGuideContent from "../components/LivestockGuideContent.jsx";
+import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
+import ModuleHero from "../components/ModuleHero.jsx";
+import RecordList from "../components/RecordList.jsx";
+import SaveButton from "../components/SaveButton.jsx";
 import StatCard from "../components/StatCard.jsx";
+import StatusPill from "../components/StatusPill.jsx";
+import Toast from "../components/Toast.jsx";
+import WorkspacePanel from "../components/WorkspacePanel.jsx";
 import { addQuantityToMatchedInventoryItem } from "../services/inventoryService.js";
 import { saveProduct } from "../services/productService.js";
 import {
@@ -32,6 +37,14 @@ import {
   getLivestockBatches,
   updateLivestockBatch
 } from "../services/livestockService.js";
+import {
+  calculateAnimalCostBasis,
+  calculateGroupCostBasis,
+  getHerdAnimals,
+  getHerdGroups,
+  saveHerdAnimal,
+  saveHerdGroup
+} from "../services/herdService.js";
 import {
   deleteModuleCalendarEventsForRecord,
   syncModuleCalendarEvents
@@ -49,28 +62,14 @@ const speciesOptions = [
   "Other"
 ];
 
-const batchStatusOptions = [
-  "Planning",
-  "Growing",
-  "Processing Scheduled",
-  "Partially Processed",
-  "Processed",
-  "Selling",
-  "Sold Out",
-  "Archived"
-];
-
-const inputCategories = [
-  "Animal Purchase",
-  "Feed",
-  "Hay",
-  "Minerals",
-  "Bedding",
-  "Vet / Health",
+const processingStatusOptions = [
+  "Draft",
+  "Scheduled",
   "Processing",
-  "Transportation",
-  "Packaging",
-  "Other"
+  "Processed",
+  "Products Built",
+  "Inventory Added",
+  "Archived"
 ];
 
 const productUnits = ["lb", "packages", "each"];
@@ -89,54 +88,30 @@ const speciesProductCategory = {
 
 const blankBatch = {
   name: "",
+  sourceMode: "manual",
+  sourceRecords: [],
   species: "Beef",
-  breed: "",
-  status: "Planning",
-  startDate: "",
+  status: "Draft",
+  processor: "",
   processingDate: "",
   pickupDate: "",
-  startingHeadCount: "",
-  currentHeadCount: "",
-  startingWeight: "",
-  purchasePricePerHead: "",
-  purchaseCost: "",
-  costPoolMode: "processed",
-  notes: "",
-  inputs: [],
-  processingEvents: [],
-  cuts: []
-};
-
-const blankInput = {
-  id: "",
-  date: "",
-  category: "Feed",
-  description: "",
-  quantity: "",
-  unit: "",
-  cost: ""
-};
-
-const blankProcessingEvent = {
-  id: "",
-  date: "",
-  processor: "",
   headCountProcessed: "",
   liveWeight: "",
   hangingWeight: "",
   packagedWeight: "",
   processingFee: "",
-  notes: ""
+  additionalCost: "",
+  costPoolMode: "processed",
+  notes: "",
+  cuts: []
 };
 
 function createBlankCut() {
   return {
-    id: "",
+    id: uniqueId("cut"),
     name: "",
     quantity: "",
     unit: "lb",
-    yieldPercent: "",
-    processingEventId: "",
     costMode: "allocated",
     manualCostPerUnit: "",
     retailPrice: "",
@@ -158,6 +133,10 @@ function round(value, places = 2) {
   return Number(value || 0).toFixed(places);
 }
 
+function money(value) {
+  return `$${round(value, 2)}`;
+}
+
 function cleanCurrency(value) {
   if (value === "" || value === null || value === undefined) return "";
   const parsed = Number(value);
@@ -176,524 +155,118 @@ function cleanWholeNumber(value) {
   return Number.isFinite(parsed) ? Math.max(0, Math.round(parsed)).toString() : "";
 }
 
-function money(value) {
-  return `$${round(value, 2)}`;
-}
+function formatDate(value) {
+  if (!value) return "";
+  const parsed = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return value;
 
-function dateValue(value) {
-  if (!value) return Number.POSITIVE_INFINITY;
-  const parsed = new Date(`${value}T00:00:00`).getTime();
-  return Number.isFinite(parsed) ? parsed : Number.POSITIVE_INFINITY;
-}
-
-function getAnimalPurchaseTotal(batch) {
-  const pricePerHead = toNumber(batch.purchasePricePerHead);
-  const headCount = toNumber(batch.startingHeadCount || batch.currentHeadCount);
-
-  if (pricePerHead && headCount) return pricePerHead * headCount;
-
-  return toNumber(batch.purchaseCost);
-}
-
-function getInputTotal(batch) {
-  return (batch.inputs || []).reduce((sum, input) => sum + toNumber(input.cost), 0);
-}
-
-function getProcessingTotal(batch) {
-  return (batch.processingEvents || []).reduce(
-    (sum, event) => sum + toNumber(event.processingFee),
-    0
-  );
-}
-
-function getTotalBatchCost(batch) {
-  return getAnimalPurchaseTotal(batch) + getInputTotal(batch) + getProcessingTotal(batch);
-}
-
-function getProcessedHeadCount(batch) {
-  return (batch.processingEvents || []).reduce(
-    (sum, event) => sum + toNumber(event.headCountProcessed),
-    0
-  );
-}
-
-function getUnprocessedHeadCount(batch) {
-  const startingHeadCount = toNumber(batch.startingHeadCount || batch.currentHeadCount);
-  return Math.max(0, startingHeadCount - getProcessedHeadCount(batch));
-}
-
-function getTotalLiveWeight(batch) {
-  return (batch.processingEvents || []).reduce(
-    (sum, event) => sum + toNumber(event.liveWeight),
-    0
-  );
-}
-
-function getTotalHangingWeight(batch) {
-  return (batch.processingEvents || []).reduce(
-    (sum, event) => sum + toNumber(event.hangingWeight),
-    0
-  );
-}
-
-function getTotalPackagedWeight(batch) {
-  return (batch.processingEvents || []).reduce(
-    (sum, event) => sum + toNumber(event.packagedWeight),
-    0
-  );
-}
-
-function getYieldPercent(numerator, denominator) {
-  const top = toNumber(numerator);
-  const bottom = toNumber(denominator);
-
-  if (!top || !bottom) return 0;
-
-  return (top / bottom) * 100;
-}
-
-function getCostPerPackagedPound(batch) {
-  const packagedWeight = getTotalPackagedWeight(batch);
-  if (!packagedWeight) return 0;
-  return getTotalBatchCost(batch) / packagedWeight;
-}
-
-function getSortedProcessingEvents(batch) {
-  return [...(batch.processingEvents || [])].sort((a, b) => {
-    const dateDiff = dateValue(a.date) - dateValue(b.date);
-    if (dateDiff !== 0) return dateDiff;
-    return String(a.id || "").localeCompare(String(b.id || ""));
+  return parsed.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric"
   });
 }
 
-function getInputEligibleHeadCount(batch, inputDate) {
-  const sortedEvents = getSortedProcessingEvents(batch);
-  const inputTime = dateValue(inputDate);
-  const processedBeforeInput = sortedEvents.reduce((sum, event) => {
-    if (dateValue(event.date) < inputTime) {
-      return sum + toNumber(event.headCountProcessed);
-    }
-
-    return sum;
-  }, 0);
-
-  const startingHeadCount = toNumber(batch.startingHeadCount || batch.currentHeadCount);
-  return Math.max(0, startingHeadCount - processedBeforeInput);
-}
-
-function getProcessingEventCostMap(batch) {
-  const sortedEvents = getSortedProcessingEvents(batch);
-  const startingHeadCount = toNumber(batch.startingHeadCount || batch.currentHeadCount);
-  const animalCost = getAnimalPurchaseTotal(batch);
-  const animalCostPerHead = startingHeadCount ? animalCost / startingHeadCount : 0;
-
-  const costMap = {};
-
-  sortedEvents.forEach((event) => {
-    const processedHeads = toNumber(event.headCountProcessed);
-    costMap[event.id] = {
-      eventId: event.id,
-      date: event.date || "",
-      processedHeads,
-      animalCost: animalCostPerHead * processedHeads,
-      inputCost: 0,
-      processingCost: toNumber(event.processingFee),
-      packagedWeight: toNumber(event.packagedWeight)
-    };
-  });
-
-  (batch.inputs || []).forEach((input) => {
-    const inputCost = toNumber(input.cost);
-    if (!inputCost) return;
-
-    const eligibleHeadCount = getInputEligibleHeadCount(batch, input.date);
-    if (!eligibleHeadCount) return;
-
-    sortedEvents.forEach((event) => {
-      if (dateValue(event.date) < dateValue(input.date)) return;
-
-      const processedHeads = toNumber(event.headCountProcessed);
-      if (!processedHeads) return;
-
-      const eventShare = processedHeads / eligibleHeadCount;
-      costMap[event.id].inputCost += inputCost * eventShare;
-    });
-  });
-
-  return costMap;
-}
-
-function getProcessingEventAllocatedCost(batch, processingEventId) {
-  const costMap = getProcessingEventCostMap(batch);
-  const eventCost = costMap[processingEventId];
-
-  if (!eventCost) return 0;
-
-  return eventCost.animalCost + eventCost.inputCost + eventCost.processingCost;
-}
-
-function getProcessedOnlyCostPool(batch) {
-  const costMap = getProcessingEventCostMap(batch);
-
-  return Object.values(costMap).reduce((sum, eventCost) => {
-    return sum + eventCost.animalCost + eventCost.inputCost + eventCost.processingCost;
+function getSourceCost(batch) {
+  return (batch.sourceRecords || []).reduce((sum, record) => {
+    return sum + toNumber(record.costBasis);
   }, 0);
 }
 
-function getFullBatchCostPool(batch) {
-  return getTotalBatchCost(batch);
-}
-
-function getSelectedCostPool(batch) {
-  return (batch.costPoolMode || "processed") === "full"
-    ? getFullBatchCostPool(batch)
-    : getProcessedOnlyCostPool(batch);
-}
-
-function getProcessedOnlyPackagedWeight(batch) {
-  return getTotalPackagedWeight(batch);
-}
-
-function getProjectedFullBatchPackagedWeight(batch) {
-  const processedHeads = getProcessedHeadCount(batch);
-  const startingHeadCount = toNumber(batch.startingHeadCount || batch.currentHeadCount);
-  const packagedWeight = getTotalPackagedWeight(batch);
-
-  if (processedHeads && startingHeadCount && packagedWeight) {
-    return (packagedWeight / processedHeads) * startingHeadCount;
-  }
-
-  return packagedWeight;
-}
-
-function getProcessedOnlyCostPerLb(batch) {
-  const weight = getProcessedOnlyPackagedWeight(batch);
-  if (!weight) return 0;
-  return getProcessedOnlyCostPool(batch) / weight;
-}
-
-function getFullBatchCostPerLb(batch) {
-  const weight = getProjectedFullBatchPackagedWeight(batch);
-  if (!weight) return 0;
-  return getFullBatchCostPool(batch) / weight;
-}
-
-function getCutQuantity(cut, batch) {
-  const directQuantity = toNumber(cut.quantity);
-
-  if (directQuantity) return directQuantity;
-
-  if (cut.unit === "lb" && toNumber(cut.yieldPercent) > 0) {
-    return getTotalPackagedWeight(batch) * (toNumber(cut.yieldPercent) / 100);
-  }
-
-  return 0;
-}
-
-function getCutCostScopeKey(cut) {
-  if (cut.processingEventId) return `event:${cut.processingEventId}`;
-  return "batch";
-}
-
-function getEventCostPoolForMode(batch, processingEventId) {
-  const eventCost = getProcessingEventAllocatedCost(batch, processingEventId);
-
-  if ((batch.costPoolMode || "processed") === "processed") {
-    return eventCost;
-  }
-
-  return eventCost;
-}
-
-function getCostScopeSummaries(batch) {
-  const cuts = batch.cuts || [];
-  const selectedPool = getSelectedCostPool(batch);
-  const eventIdsUsedByProducts = Array.from(
-    new Set(cuts.map((cut) => cut.processingEventId).filter(Boolean))
+function getTotalProcessingCost(batch) {
+  return (
+    getSourceCost(batch) +
+    toNumber(batch.processingFee) +
+    toNumber(batch.additionalCost)
   );
-
-  const eventPools = eventIdsUsedByProducts.reduce((map, eventId) => {
-    return {
-      ...map,
-      [`event:${eventId}`]: getEventCostPoolForMode(batch, eventId)
-    };
-  }, {});
-
-  const eventPoolTotal = Object.values(eventPools).reduce((sum, value) => sum + value, 0);
-
-  const scopes = {
-    batch: {
-      key: "batch",
-      label: (batch.costPoolMode || "processed") === "processed" ? "Processed Only" : "Full Batch",
-      pool: Math.max(0, selectedPool - eventPoolTotal),
-      cuts: cuts.filter((cut) => !cut.processingEventId)
-    }
-  };
-
-  eventIdsUsedByProducts.forEach((eventId) => {
-    const eventIndex = (batch.processingEvents || []).findIndex((event) => event.id === eventId);
-
-    scopes[`event:${eventId}`] = {
-      key: `event:${eventId}`,
-      label: eventIndex >= 0 ? `Processing #${eventIndex + 1}` : "Processing event",
-      pool: eventPools[`event:${eventId}`] || 0,
-      cuts: cuts.filter((cut) => cut.processingEventId === eventId)
-    };
-  });
-
-  return Object.values(scopes).map((scope) => {
-    const manualAllocatedCost = scope.cuts.reduce((sum, cut) => {
-      if ((cut.costMode || "allocated") !== "manual") return sum;
-      return sum + toNumber(cut.manualCostPerUnit) * getCutQuantity(cut, batch);
-    }, 0);
-
-    const averageQuantity = scope.cuts.reduce((sum, cut) => {
-      if ((cut.costMode || "allocated") === "manual") return sum;
-      return sum + getCutQuantity(cut, batch);
-    }, 0);
-
-    const averagePool = Math.max(0, scope.pool - manualAllocatedCost);
-    const averageCostPerUnit = averageQuantity ? averagePool / averageQuantity : 0;
-    const averageAllocatedCost = averageQuantity ? averagePool : 0;
-    const totalAllocatedCost = manualAllocatedCost + averageAllocatedCost;
-    const remainingUnallocated = Math.max(0, scope.pool - totalAllocatedCost);
-
-    return {
-      ...scope,
-      manualAllocatedCost,
-      averageQuantity,
-      averagePool,
-      averageCostPerUnit,
-      averageAllocatedCost,
-      totalAllocatedCost,
-      remainingUnallocated
-    };
-  });
 }
 
-function getCostScopeSummaryForCut(batch, cut) {
-  const scopeKey = getCutCostScopeKey(cut);
-  const summaries = getCostScopeSummaries(batch);
-  return summaries.find((summary) => summary.key === scopeKey) || null;
+function getCutQuantity(cut) {
+  return toNumber(cut.quantity);
 }
 
-function getFinishedProductCostSummary(batch) {
-  const selectedPool = getSelectedCostPool(batch);
-  const scopeSummaries = getCostScopeSummaries(batch);
-
-  const manualAllocatedCost = scopeSummaries.reduce(
-    (sum, scope) => sum + scope.manualAllocatedCost,
-    0
-  );
-
-  const averageQuantity = scopeSummaries.reduce(
-    (sum, scope) => sum + scope.averageQuantity,
-    0
-  );
-
-  const averagePool = scopeSummaries.reduce(
-    (sum, scope) => sum + scope.averagePool,
-    0
-  );
-
-  const averageAllocatedCost = scopeSummaries.reduce(
-    (sum, scope) => sum + scope.averageAllocatedCost,
-    0
-  );
-
-  const totalAllocatedCost = scopeSummaries.reduce(
-    (sum, scope) => sum + scope.totalAllocatedCost,
-    0
-  );
-
-  const remainingUnallocated = Math.max(0, selectedPool - totalAllocatedCost);
-  const averageCostPerUnit = averageQuantity ? averagePool / averageQuantity : 0;
-
-  return {
-    selectedPool,
-    scopeSummaries,
-    manualAllocatedCost,
-    averageQuantity,
-    averagePool,
-    averageCostPerUnit,
-    averageAllocatedCost,
-    totalAllocatedCost,
-    remainingUnallocated
-  };
+function getTotalCutQuantity(batch) {
+  return (batch.cuts || []).reduce((sum, cut) => {
+    return sum + getCutQuantity(cut);
+  }, 0);
 }
 
-function getProductCostModeLabel(cut) {
-  if ((cut.costMode || "allocated") === "manual") return "Manual";
-  return "Processing avg";
+function getAverageCostPerUnit(batch) {
+  const quantity = getTotalCutQuantity(batch);
+  if (!quantity) return 0;
+
+  return getTotalProcessingCost(batch) / quantity;
 }
 
 function getProductUnitCost(batch, cut) {
-  const quantity = getCutQuantity(cut, batch);
-  if (!quantity) return 0;
-
   if ((cut.costMode || "allocated") === "manual") {
     return toNumber(cut.manualCostPerUnit);
   }
 
-  const scopeSummary = getCostScopeSummaryForCut(batch, cut);
-  return scopeSummary?.averageCostPerUnit || 0;
+  return getAverageCostPerUnit(batch);
 }
 
 function getProductAllocatedCost(batch, cut) {
-  return getProductUnitCost(batch, cut) * getCutQuantity(cut, batch);
+  return getProductUnitCost(batch, cut) * getCutQuantity(cut);
 }
 
+function getPackagedYield(batch) {
+  const hanging = toNumber(batch.hangingWeight);
+  const packaged = toNumber(batch.packagedWeight);
+  if (!hanging || !packaged) return 0;
 
-function getCutsForProcessingEvent(batch, processingEventId) {
-  return (batch.cuts || []).filter((cut) => cut.processingEventId === processingEventId);
+  return (packaged / hanging) * 100;
 }
 
-function getProcessingEventProductQuantityTotal(batch, processingEventId) {
-  return getCutsForProcessingEvent(batch, processingEventId).reduce(
-    (sum, cut) => sum + getCutQuantity(cut, batch),
-    0
-  );
+function getHangingYield(batch) {
+  const live = toNumber(batch.liveWeight);
+  const hanging = toNumber(batch.hangingWeight);
+  if (!live || !hanging) return 0;
+
+  return (hanging / live) * 100;
 }
 
-function makeProductId(batchId, cutName) {
-  return `livestock-${batchId}-${String(cutName || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "")}`;
+function getSourceName(record) {
+  return record.name || record.tagId || record.groupName || "Unnamed Source";
 }
 
-function defaultBatchName(species) {
-  return `${species || "Livestock"} Batch - ${new Date().getFullYear()}`;
-}
+function getReadyHerdSources() {
+  const readyAnimals = getHerdAnimals()
+    .filter((animal) => animal.status === "Ready for Processing")
+    .map((animal) => ({
+      sourceType: "animal",
+      id: animal.id,
+      name: animal.tagId || animal.name || "Unnamed Animal",
+      species: animal.species || "Other",
+      count: 1,
+      status: animal.status,
+      costBasis: calculateAnimalCostBasis(animal),
+      originalRecord: animal
+    }));
 
-function getLivestockCalendarEvents(batch) {
-  if (!batch?.id) return [];
+  const readyGroups = getHerdGroups()
+    .filter((group) => group.status === "Ready for Processing")
+    .map((group) => ({
+      sourceType: "group",
+      id: group.id,
+      name: group.name || "Unnamed Group",
+      species: group.species || "Other",
+      count: toNumber(group.currentCount || group.startingCount) || 1,
+      status: group.status,
+      costBasis: calculateGroupCostBasis(group),
+      originalRecord: group
+    }));
 
-  const batchName = batch.name || defaultBatchName(batch.species);
-  const speciesLabel = batch.species || "Livestock";
-  const events = [];
-
-  if (batch.processingDate) {
-    events.push({
-      sourceModuleKey: "livestock",
-      sourceModule: "Livestock",
-      sourceRecordId: batch.id,
-      sourceEventType: "target-processing-date",
-      title: `Target processing: ${batchName}`,
-      type: "Production",
-      date: batch.processingDate,
-      sourcePath: "/livestock",
-      accent: "livestock",
-      notes: batch.notes || "",
-      details: {
-        batchName,
-        species: speciesLabel,
-        breed: batch.breed || "",
-        status: batch.status || "",
-        startingHeadCount: batch.startingHeadCount || "",
-        currentHeadCount: batch.currentHeadCount || "",
-        eventLabel: "Target Processing Date"
-      }
-    });
-  }
-
-  if (batch.pickupDate) {
-    events.push({
-      sourceModuleKey: "livestock",
-      sourceModule: "Livestock",
-      sourceRecordId: batch.id,
-      sourceEventType: "pickup-date",
-      title: `Pickup: ${batchName}`,
-      type: "Production",
-      date: batch.pickupDate,
-      sourcePath: "/livestock",
-      accent: "livestock",
-      notes: batch.notes || "",
-      details: {
-        batchName,
-        species: speciesLabel,
-        breed: batch.breed || "",
-        status: batch.status || "",
-        eventLabel: "Pickup Date"
-      }
-    });
-  }
-
-  (batch.processingEvents || []).forEach((processingEvent, index) => {
-    if (!processingEvent.date) return;
-
-    events.push({
-      sourceModuleKey: "livestock",
-      sourceModule: "Livestock",
-      sourceRecordId: batch.id,
-      sourceEventType: `processing-event-${processingEvent.id || index}`,
-      title: `Processing #${index + 1}: ${batchName}`,
-      type: "Production",
-      date: processingEvent.date,
-      location: processingEvent.processor || "",
-      sourcePath: "/livestock",
-      accent: "livestock",
-      notes: processingEvent.notes || batch.notes || "",
-      details: {
-        batchName,
-        species: speciesLabel,
-        breed: batch.breed || "",
-        status: batch.status || "",
-        processor: processingEvent.processor || "",
-        headCountProcessed: processingEvent.headCountProcessed || "",
-        liveWeight: processingEvent.liveWeight || "",
-        hangingWeight: processingEvent.hangingWeight || "",
-        packagedWeight: processingEvent.packagedWeight || "",
-        processingFee: processingEvent.processingFee || "",
-        eventLabel: `Processing #${index + 1}`
-      }
-    });
-  });
-
-  return events;
+  return [...readyAnimals, ...readyGroups];
 }
 
 function normalizeBatch(batch) {
-  const legacyProcessing = batch.processing
-    ? [
-        {
-          id: uniqueId("processing"),
-          date: batch.pickupDate || batch.processingDate || "",
-          processor: batch.processing.processor || "",
-          headCountProcessed: "",
-          liveWeight: batch.processing.liveWeight || "",
-          hangingWeight: batch.processing.hangingWeight || "",
-          packagedWeight: batch.processing.packagedWeight || "",
-          processingFee: batch.processing.processingFee || "",
-          notes: batch.processing.notes || ""
-        }
-      ].filter((event) => {
-        return (
-          event.processor ||
-          event.liveWeight ||
-          event.hangingWeight ||
-          event.packagedWeight ||
-          event.processingFee ||
-          event.notes
-        );
-      })
-    : [];
-
   return {
     ...blankBatch,
     ...batch,
-    costPoolMode: batch.costPoolMode || "processed",
-    inputs: (batch.inputs || []).map((input) => ({
-      ...blankInput,
-      ...input,
-      id: input.id || uniqueId("input")
-    })),
-    processingEvents: (batch.processingEvents || legacyProcessing).map((event) => ({
-      ...blankProcessingEvent,
-      ...event,
-      id: event.id || uniqueId("processing")
-    })),
-    cuts: (batch.cuts || batch.processing?.products || []).map((cut) => ({
+    sourceMode: batch.sourceMode || (batch.sourceRecords?.length ? "herd" : "manual"),
+    sourceRecords: batch.sourceRecords || [],
+    cuts: (batch.cuts || []).map((cut) => ({
       ...createBlankCut(),
       ...cut,
       id: cut.id || uniqueId("cut"),
@@ -702,75 +275,135 @@ function normalizeBatch(batch) {
   };
 }
 
-export default function Livestock() {
-  const { user, loginWithGoogle } = useAuth();
-  const { isDirty: hasUnsavedChanges, markUnsaved, markSaved } = useUnsavedChanges();
+function makeProductId(batchId, cutName) {
+  return `butcher-board-${batchId}-${String(cutName || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")}`;
+}
 
-  const editorRef = useRef(null);
+function defaultBatchName(species) {
+  return `${species || "Processing"} Batch - ${new Date().getFullYear()}`;
+}
+
+function getButcherBoardCalendarEvents(batch) {
+  if (!batch?.id) return [];
+
+  const batchName = batch.name || defaultBatchName(batch.species);
+  const events = [];
+
+  if (batch.processingDate) {
+    events.push({
+      sourceModuleKey: "livestock",
+      sourceModule: "Butcher Board",
+      sourceRecordId: batch.id,
+      sourceEventType: "processing-date",
+      title: `Processing: ${batchName}`,
+      type: "Production",
+      date: batch.processingDate,
+      location: batch.processor || "",
+      sourcePath: "/livestock",
+      accent: "livestock",
+      notes: batch.notes || "",
+      details: {
+        batchName,
+        species: batch.species || "",
+        processor: batch.processor || "",
+        status: batch.status || "",
+        eventLabel: "Processing Date"
+      }
+    });
+  }
+
+  if (batch.pickupDate) {
+    events.push({
+      sourceModuleKey: "livestock",
+      sourceModule: "Butcher Board",
+      sourceRecordId: batch.id,
+      sourceEventType: "pickup-date",
+      title: `Pickup: ${batchName}`,
+      type: "Production",
+      date: batch.pickupDate,
+      location: batch.processor || "",
+      sourcePath: "/livestock",
+      accent: "livestock",
+      notes: batch.notes || "",
+      details: {
+        batchName,
+        species: batch.species || "",
+        processor: batch.processor || "",
+        status: batch.status || "",
+        eventLabel: "Pickup Date"
+      }
+    });
+  }
+
+  return events;
+}
+
+function getStatusVariant(status) {
+  switch (status) {
+    case "Scheduled":
+    case "Products Built":
+    case "Inventory Added":
+      return "success";
+    case "Processing":
+      return "warning";
+    case "Processed":
+      return "primary";
+    case "Archived":
+      return "neutral";
+    default:
+      return "neutral";
+  }
+}
+
+export default function ButcherBoard() {
+  const { user, loginWithGoogle } = useAuth();
+
   const [batches, setBatches] = useState([]);
-  const [mode, setMode] = useState("idle");
+  const [readySources, setReadySources] = useState([]);
+  const [selectedSourceIds, setSelectedSourceIds] = useState([]);
   const [selectedBatchId, setSelectedBatchId] = useState("");
   const [batchForm, setBatchForm] = useState(blankBatch);
   const [batchSearch, setBatchSearch] = useState("");
-  const [statusMessage, setStatusMessage] = useState("");
-  const [statusType, setStatusType] = useState("info");
+  const [statusFilter, setStatusFilter] = useState("All");
   const [loading, setLoading] = useState(false);
+  const [savingBatch, setSavingBatch] = useState(false);
   const [savingInventory, setSavingInventory] = useState(false);
   const [savingProducts, setSavingProducts] = useState(false);
-  const [showBackToTop, setShowBackToTop] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [showGuide, setShowGuide] = useState(false);
-
-  function showStatus(message, type = "info") {
-    setStatusMessage(message);
-    setStatusType(type);
-  }
-
-  function markLivestockDirty() {
-    markUnsaved({
-      source: "Livestock",
-      onSave: saveBatch
-    });
-  }
-
-  function scrollToEditor() {
-    editorRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
-  }
-
-  function scrollToTop() {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
-  }
-
-  useEffect(() => {
-    function handleScroll() {
-      setShowBackToTop(window.scrollY > 50);
-    }
-
-    window.addEventListener("scroll", handleScroll);
-    handleScroll();
-
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    if (!statusMessage) return undefined;
-
-    const timer = window.setTimeout(() => {
-      setStatusMessage("");
-    }, 3000);
-
-    return () => window.clearTimeout(timer);
-  }, [statusMessage]);
 
   useEffect(() => {
     const guideHidden = localStorage.getItem("hideModuleGuide_livestock") === "true";
     if (!guideHidden) setShowGuide(true);
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      loadData();
+    } else {
+      setBatches([]);
+      setReadySources([]);
+      setSelectedSourceIds([]);
+      setSelectedBatchId("");
+      setBatchForm(blankBatch);
+      setDirty(false);
+    }
+  }, [user]);
+
+  function showToast(nextToast) {
+    setToast(nextToast);
+
+    window.setTimeout(() => {
+      setToast(null);
+    }, 3000);
+  }
 
   async function loadData() {
     if (!user) return;
@@ -779,251 +412,119 @@ export default function Livestock() {
 
     try {
       const loaded = await getLivestockBatches(user.uid);
-      setBatches(loaded.map(normalizeBatch));
+      setBatches((loaded || []).map(normalizeBatch));
+      setReadySources(getReadyHerdSources());
     } catch (error) {
       console.error(error);
-      showStatus("Could not load Livestock data.", "error");
+      showToast({
+        variant: "error",
+        title: "Butcher Board could not load",
+        message: "Please refresh and try again."
+      });
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(() => {
-    if (user) {
-      loadData();
-    } else {
-      setBatches([]);
-      setSelectedBatchId("");
-      setBatchForm(blankBatch);
-      setMode("idle");
-    }
-  }, [user]);
-
-  const filteredBatches = useMemo(() => {
-    const search = batchSearch.trim().toLowerCase();
-
-    if (!search) return batches;
-
-    return batches.filter((batch) => {
-      return (
-        batch.name?.toLowerCase().includes(search) ||
-        batch.species?.toLowerCase().includes(search) ||
-        batch.breed?.toLowerCase().includes(search) ||
-        batch.status?.toLowerCase().includes(search)
-      );
-    });
-  }, [batches, batchSearch]);
-
-  const batchSummary = useMemo(() => {
-    const finishedProductCostSummary = getFinishedProductCostSummary(batchForm);
-
-    return {
-      animalCost: getAnimalPurchaseTotal(batchForm),
-      inputTotal: getInputTotal(batchForm),
-      processingTotal: getProcessingTotal(batchForm),
-      totalCost: getTotalBatchCost(batchForm),
-      processedHeadCount: getProcessedHeadCount(batchForm),
-      unprocessedHeadCount: getUnprocessedHeadCount(batchForm),
-      liveWeight: getTotalLiveWeight(batchForm),
-      hangingWeight: getTotalHangingWeight(batchForm),
-      packagedWeight: getTotalPackagedWeight(batchForm),
-      projectedFullBatchPackagedWeight: getProjectedFullBatchPackagedWeight(batchForm),
-      hangingYield: getYieldPercent(getTotalHangingWeight(batchForm), getTotalLiveWeight(batchForm)),
-      packagedYield: getYieldPercent(
-        getTotalPackagedWeight(batchForm),
-        getTotalHangingWeight(batchForm)
-      ),
-      costPerPackagedPound: getCostPerPackagedPound(batchForm),
-      processedOnlyCostPool: getProcessedOnlyCostPool(batchForm),
-      fullBatchCostPool: getFullBatchCostPool(batchForm),
-      selectedCostPool: getSelectedCostPool(batchForm),
-      processedOnlyCostPerLb: getProcessedOnlyCostPerLb(batchForm),
-      fullBatchCostPerLb: getFullBatchCostPerLb(batchForm),
-      ...finishedProductCostSummary
-    };
-  }, [batchForm]);
-
-  const livestockSummary = useMemo(() => {
-    const activeBatches = batches.filter(
-      (batch) => !["Sold Out", "Archived"].includes(batch.status)
-    );
-
-    const headCount = activeBatches.reduce(
-      (sum, batch) => sum + toNumber(batch.currentHeadCount || batch.startingHeadCount),
-      0
-    );
-
-    const totalCost = batches.reduce((sum, batch) => sum + getTotalBatchCost(batch), 0);
-
-    const readyProducts = batches.reduce((sum, batch) => {
-      return (
-        sum +
-        (batch.cuts || []).filter((cut) => cut.name && getCutQuantity(cut, batch) > 0).length
-      );
-    }, 0);
-
-    return {
-      activeBatches: activeBatches.length,
-      headCount,
-      totalCost,
-      readyProducts
-    };
-  }, [batches]);
-
-  const hasSavedBatchContext = Boolean(mode !== "idle");
-  const canPushProducts = Boolean(
-    batchForm.id &&
-      (batchForm.cuts || []).some((cut) => cut.name && getCutQuantity(cut, batchForm) > 0)
-  );
-
-  function startNewBatch() {
-    setMode("create");
-    setSelectedBatchId("");
-    setBatchForm({
-      ...blankBatch,
-      inputs: [],
-      processingEvents: [],
-      cuts: []
-    });
-    markSaved();
-    window.setTimeout(scrollToEditor, 50);
-  }
-
-  function chooseExistingBatch(batchId) {
-    setSelectedBatchId(batchId);
-
-    const batch = batches.find((item) => item.id === batchId);
-
-    if (!batch) {
-      setMode("idle");
-      setBatchForm(blankBatch);
-      markSaved();
-      return;
-    }
-
-    setMode("edit");
-    setBatchForm(normalizeBatch(batch));
-    markSaved();
-    window.setTimeout(scrollToEditor, 50);
+  function markDirty() {
+    setDirty(true);
+    setSaved(false);
+    setSaveError(false);
   }
 
   function updateBatchField(field, value) {
-    setBatchForm((current) => {
-      const next = {
-        ...current,
-        [field]: value
-      };
+    markDirty();
 
-      if (field === "startingHeadCount" && !current.currentHeadCount) {
-        next.currentHeadCount = value;
+    setBatchForm((current) => ({
+      ...current,
+      [field]: value
+    }));
+  }
+
+  function toggleReadySource(source) {
+    setSelectedSourceIds((current) => {
+      const key = `${source.sourceType}:${source.id}`;
+      if (current.includes(key)) {
+        return current.filter((id) => id !== key);
       }
 
-      return next;
+      return [...current, key];
     });
-
-    markLivestockDirty();
   }
 
-  function addInputEntry() {
-    setBatchForm((current) => ({
-      ...current,
-      inputs: [
-        ...(current.inputs || []),
-        {
-          ...blankInput,
-          id: uniqueId("input")
-        }
-      ]
-    }));
-
-    markLivestockDirty();
-  }
-
-  function updateInputEntry(index, field, value) {
-    setBatchForm((current) => {
-      const inputs = [...(current.inputs || [])];
-      inputs[index] = {
-        ...inputs[index],
-        [field]: value
-      };
-
-      return {
-        ...current,
-        inputs
-      };
+  function startManualBatch() {
+    setSelectedBatchId("");
+    setSelectedSourceIds([]);
+    setBatchForm({
+      ...blankBatch,
+      sourceMode: "manual",
+      name: defaultBatchName("Beef")
     });
-
-    markLivestockDirty();
+    setDirty(true);
+    setSaved(false);
+    setSaveError(false);
   }
 
-  function removeInputEntry(index) {
-    setBatchForm((current) => ({
-      ...current,
-      inputs: (current.inputs || []).filter((_, itemIndex) => itemIndex !== index)
-    }));
+  function startHerdBatch() {
+    const selectedSources = readySources.filter((source) =>
+      selectedSourceIds.includes(`${source.sourceType}:${source.id}`)
+    );
 
-    markLivestockDirty();
-  }
+    if (!selectedSources.length) {
+      showToast({
+        variant: "warning",
+        title: "Select ready animals first",
+        message: "Choose one or more ready Herd Tracker records before creating a batch."
+      });
+      return;
+    }
 
-  function addProcessingEvent() {
-    setBatchForm((current) => ({
-      ...current,
-      processingEvents: [
-        ...(current.processingEvents || []),
-        {
-          ...blankProcessingEvent,
-          id: uniqueId("processing")
-        }
-      ]
-    }));
+    const firstSpecies = selectedSources[0]?.species || "Beef";
+    const totalCount = selectedSources.reduce((sum, source) => sum + toNumber(source.count), 0);
 
-    markLivestockDirty();
-  }
-
-  function updateProcessingEvent(index, field, value) {
-    setBatchForm((current) => {
-      const processingEvents = [...(current.processingEvents || [])];
-      processingEvents[index] = {
-        ...processingEvents[index],
-        [field]: value
-      };
-
-      return {
-        ...current,
-        processingEvents
-      };
+    setSelectedBatchId("");
+    setBatchForm({
+      ...blankBatch,
+      sourceMode: "herd",
+      sourceRecords: selectedSources.map((source) => ({
+        sourceType: source.sourceType,
+        sourceId: source.id,
+        name: source.name,
+        species: source.species,
+        count: source.count,
+        costBasis: cleanCurrency(source.costBasis)
+      })),
+      species: firstSpecies,
+      headCountProcessed: cleanWholeNumber(totalCount),
+      name: `${firstSpecies} Processing Batch - ${new Date().getFullYear()}`
     });
-
-    markLivestockDirty();
+    setDirty(true);
+    setSaved(false);
+    setSaveError(false);
   }
 
-  function removeProcessingEvent(index) {
-    setBatchForm((current) => ({
-      ...current,
-      processingEvents: (current.processingEvents || []).filter(
-        (_, itemIndex) => itemIndex !== index
-      )
-    }));
-
-    markLivestockDirty();
+  function loadBatch(batch) {
+    const normalized = normalizeBatch(batch);
+    setSelectedBatchId(normalized.id);
+    setBatchForm(normalized);
+    setSelectedSourceIds([]);
+    setDirty(false);
+    setSaved(false);
+    setSaveError(false);
   }
 
   function addCutEntry() {
+    markDirty();
+
     setBatchForm((current) => ({
       ...current,
-      cuts: [
-        ...(current.cuts || []),
-        {
-          ...createBlankCut(),
-          id: uniqueId("cut")
-        }
-      ]
+      cuts: [...(current.cuts || []), createBlankCut()]
     }));
-
-    markLivestockDirty();
   }
 
   function updateCutEntry(index, field, value) {
+    markDirty();
+
     setBatchForm((current) => {
       const cuts = [...(current.cuts || [])];
       cuts[index] = {
@@ -1036,77 +537,79 @@ export default function Livestock() {
         cuts
       };
     });
-
-    markLivestockDirty();
   }
 
   function removeCutEntry(index) {
+    markDirty();
+
     setBatchForm((current) => ({
       ...current,
       cuts: (current.cuts || []).filter((_, itemIndex) => itemIndex !== index)
     }));
+  }
 
-    markLivestockDirty();
+  async function updateHerdStatuses(batch, status) {
+    if (!batch.sourceRecords?.length) return;
+
+    batch.sourceRecords.forEach((source) => {
+      if (source.sourceType === "animal") {
+        const animal = getHerdAnimals().find((item) => item.id === source.sourceId);
+        if (animal) {
+          saveHerdAnimal({
+            ...animal,
+            status,
+            notes: [
+              animal.notes || "",
+              status === "Processing"
+                ? `Moved to Butcher Board batch ${batch.name}.`
+                : `Processed through Butcher Board batch ${batch.name}.`
+            ]
+              .filter(Boolean)
+              .join("\n")
+          });
+        }
+      }
+
+      if (source.sourceType === "group") {
+        const group = getHerdGroups().find((item) => item.id === source.sourceId);
+        if (group) {
+          saveHerdGroup({
+            ...group,
+            status,
+            notes: [
+              group.notes || "",
+              status === "Processing"
+                ? `Moved to Butcher Board batch ${batch.name}.`
+                : `Processed through Butcher Board batch ${batch.name}.`
+            ]
+              .filter(Boolean)
+              .join("\n")
+          });
+        }
+      }
+    });
   }
 
   function cleanBatchForSave() {
-    const startingHeadCount = cleanWholeNumber(batchForm.startingHeadCount);
-    const currentHeadCount = cleanWholeNumber(batchForm.currentHeadCount || startingHeadCount);
-    const purchasePricePerHead = cleanCurrency(batchForm.purchasePricePerHead);
-    const purchaseCost = cleanCurrency(toNumber(purchasePricePerHead) * toNumber(startingHeadCount));
-
     return {
       ...batchForm,
       name: batchForm.name.trim() || defaultBatchName(batchForm.species),
-      breed: batchForm.breed.trim(),
-      costPoolMode: batchForm.costPoolMode || "processed",
-      startingHeadCount,
-      currentHeadCount,
-      startingWeight: cleanNumber(batchForm.startingWeight, 2),
-      purchasePricePerHead,
-      purchaseCost,
+      processor: batchForm.processor.trim(),
+      status: batchForm.status || "Draft",
+      headCountProcessed: cleanWholeNumber(batchForm.headCountProcessed),
+      liveWeight: cleanNumber(batchForm.liveWeight, 2),
+      hangingWeight: cleanNumber(batchForm.hangingWeight, 2),
+      packagedWeight: cleanNumber(batchForm.packagedWeight, 2),
+      processingFee: cleanCurrency(batchForm.processingFee),
+      additionalCost: cleanCurrency(batchForm.additionalCost),
       notes: batchForm.notes.trim(),
-      inputs: (batchForm.inputs || [])
-        .filter((input) => input.description || input.cost || input.category)
-        .map((input) => ({
-          ...input,
-          id: input.id || uniqueId("input"),
-          description: input.description?.trim() || "",
-          quantity: cleanNumber(input.quantity, 2),
-          cost: cleanCurrency(input.cost)
-        })),
-      processingEvents: (batchForm.processingEvents || [])
-        .filter((event) => {
-          return (
-            event.date ||
-            event.processor ||
-            event.headCountProcessed ||
-            event.liveWeight ||
-            event.hangingWeight ||
-            event.packagedWeight ||
-            event.processingFee ||
-            event.notes
-          );
-        })
-        .map((event) => ({
-          ...event,
-          id: event.id || uniqueId("processing"),
-          processor: event.processor?.trim() || "",
-          headCountProcessed: cleanWholeNumber(event.headCountProcessed),
-          liveWeight: cleanNumber(event.liveWeight, 2),
-          hangingWeight: cleanNumber(event.hangingWeight, 2),
-          packagedWeight: cleanNumber(event.packagedWeight, 2),
-          processingFee: cleanCurrency(event.processingFee),
-          notes: event.notes?.trim() || ""
-        })),
       cuts: (batchForm.cuts || [])
-        .filter((cut) => cut.name || cut.quantity || cut.yieldPercent)
+        .filter((cut) => cut.name || cut.quantity)
         .map((cut) => ({
           ...cut,
           id: cut.id || uniqueId("cut"),
           name: cut.name?.trim() || "",
           quantity: cleanNumber(cut.quantity, 2),
-          yieldPercent: cleanNumber(cut.yieldPercent, 2),
           costMode: cut.costMode || "allocated",
           manualCostPerUnit: cleanCurrency(cut.manualCostPerUnit),
           retailPrice: cleanCurrency(cut.retailPrice),
@@ -1124,19 +627,25 @@ export default function Livestock() {
     const cleanBatch = cleanBatchForSave();
 
     if (!cleanBatch.name.trim()) {
-      showStatus("Batch name is required.", "error");
+      setSaveError(true);
+      showToast({
+        variant: "error",
+        title: "Batch name required",
+        message: "Add a processing batch name before saving."
+      });
       return;
     }
+
+    setSavingBatch(true);
+    setSaveError(false);
 
     try {
       let savedId = cleanBatch.id || selectedBatchId;
 
-      if (mode === "edit" && savedId) {
+      if (savedId) {
         await updateLivestockBatch(user.uid, savedId, cleanBatch);
-        showStatus("Batch changes saved.", "success");
       } else {
         savedId = await createLivestockBatch(user.uid, cleanBatch);
-        showStatus("New livestock batch saved.", "success");
       }
 
       const nextBatch = {
@@ -1149,64 +658,112 @@ export default function Livestock() {
         sourceRecordId: savedId
       });
 
-      await syncModuleCalendarEvents(user.uid, getLivestockCalendarEvents(nextBatch));
+      await syncModuleCalendarEvents(user.uid, getButcherBoardCalendarEvents(nextBatch));
 
-      setMode("edit");
+      if (nextBatch.sourceMode === "herd") {
+        await updateHerdStatuses(
+          nextBatch,
+          nextBatch.status === "Processed" ||
+            nextBatch.status === "Products Built" ||
+            nextBatch.status === "Inventory Added"
+            ? "Processed"
+            : "Processing"
+        );
+      }
+
       setSelectedBatchId(savedId);
       setBatchForm(nextBatch);
-      markSaved();
+      setDirty(false);
+      setSaved(true);
+
+      showToast({
+        variant: "success",
+        title: "Batch saved",
+        message: "Butcher Board batch saved successfully."
+      });
+
+      window.setTimeout(() => setSaved(false), 1200);
       await loadData();
     } catch (error) {
       console.error(error);
-      showStatus("Could not save livestock batch.", "error");
+      setSaveError(true);
+      showToast({
+        variant: "error",
+        title: "Batch could not be saved",
+        message: "Please check the batch and try again."
+      });
+    } finally {
+      setSavingBatch(false);
     }
   }
 
-  async function removeBatch(batchId) {
-    if (!user) return;
+  function requestDeleteBatch(batch) {
+    setDeleteTarget(batch);
+  }
 
-    const confirmed = window.confirm("Delete this livestock batch? This cannot be undone.");
-    if (!confirmed) return;
+  async function confirmDeleteBatch() {
+    if (!user || !deleteTarget?.id) return;
 
     try {
-      await deleteLivestockBatch(user.uid, batchId);
+      await deleteLivestockBatch(user.uid, deleteTarget.id);
       await deleteModuleCalendarEventsForRecord(user.uid, {
         sourceModuleKey: "livestock",
-        sourceRecordId: batchId
+        sourceRecordId: deleteTarget.id
       });
-      showStatus("Livestock batch deleted.", "success");
 
-      if (selectedBatchId === batchId) {
+      if (selectedBatchId === deleteTarget.id) {
         setSelectedBatchId("");
-        setMode("idle");
         setBatchForm(blankBatch);
-        markSaved();
+        setDirty(false);
       }
 
+      showToast({
+        variant: "success",
+        title: "Batch deleted",
+        message: "Processing batch deleted."
+      });
+
+      setDeleteTarget(null);
       await loadData();
     } catch (error) {
       console.error(error);
-      showStatus("Could not delete livestock batch.", "error");
+      showToast({
+        variant: "error",
+        title: "Batch could not be deleted",
+        message: "Please try again."
+      });
     }
   }
 
   async function addCutsToInventory() {
     if (!user || !batchForm.id) {
-      showStatus("Save the batch before adding products to Inventory.", "error");
+      showToast({
+        variant: "warning",
+        title: "Save batch first",
+        message: "Save the batch before adding products to Inventory."
+      });
       return;
     }
 
     const validCuts = (batchForm.cuts || []).filter(
-      (cut) => cut.name && getCutQuantity(cut, batchForm) > 0
+      (cut) => cut.name && getCutQuantity(cut) > 0
     );
 
     if (!validCuts.length) {
-      showStatus("Add finished products before sending them to Inventory.", "error");
+      showToast({
+        variant: "warning",
+        title: "No products yet",
+        message: "Add finished products before sending them to Inventory."
+      });
       return;
     }
 
-    if (hasUnsavedChanges) {
-      showStatus("Save batch changes before adding products to Inventory.", "error");
+    if (dirty) {
+      showToast({
+        variant: "warning",
+        title: "Save changes first",
+        message: "Save batch changes before adding products to Inventory."
+      });
       return;
     }
 
@@ -1215,7 +772,7 @@ export default function Livestock() {
     try {
       await Promise.all(
         validCuts.map((cut) => {
-          const quantity = getCutQuantity(cut, batchForm);
+          const quantity = getCutQuantity(cut);
           const unit = cut.unit || "lb";
           const productId = makeProductId(batchForm.id, cut.name);
 
@@ -1224,12 +781,12 @@ export default function Livestock() {
             match: {
               productId,
               variantName: unit,
-              sourceModule: "Livestock"
+              sourceModule: "Butcher Board"
             },
             itemDefaults: {
               name: `${batchForm.name} - ${cut.name}`,
               category: "Meat & Livestock",
-              sourceModule: "Livestock",
+              sourceModule: "Butcher Board",
               productId,
               productName: cut.name,
               recipeId: batchForm.id,
@@ -1244,17 +801,37 @@ export default function Livestock() {
               status: "In Stock",
               notes:
                 cut.notes ||
-                `Added from Livestock batch ${batchForm.name}. Species: ${batchForm.species}.`
+                `Added from Butcher Board batch ${batchForm.name}. Species: ${batchForm.species}.`
             },
             quantityToAdd: quantity
           });
         })
       );
 
-      showStatus("Finished products added to Inventory.", "success");
+      await updateLivestockBatch(user.uid, batchForm.id, {
+        ...batchForm,
+        status: "Inventory Added"
+      });
+
+      setBatchForm((current) => ({
+        ...current,
+        status: "Inventory Added"
+      }));
+
+      showToast({
+        variant: "success",
+        title: "Inventory updated",
+        message: "Finished products added to Inventory."
+      });
+
+      await loadData();
     } catch (error) {
       console.error(error);
-      showStatus("Could not add products to Inventory.", "error");
+      showToast({
+        variant: "error",
+        title: "Inventory could not update",
+        message: "Please try again."
+      });
     } finally {
       setSavingInventory(false);
     }
@@ -1262,21 +839,33 @@ export default function Livestock() {
 
   async function addCutsToProductDirectory() {
     if (!user || !batchForm.id) {
-      showStatus("Save the batch before adding products to Products & Pricing.", "error");
+      showToast({
+        variant: "warning",
+        title: "Save batch first",
+        message: "Save the batch before adding products to Products & Pricing."
+      });
       return;
     }
 
     const validCuts = (batchForm.cuts || []).filter(
-      (cut) => cut.name && getCutQuantity(cut, batchForm) > 0
+      (cut) => cut.name && getCutQuantity(cut) > 0
     );
 
     if (!validCuts.length) {
-      showStatus("Add finished products before creating Product Directory items.", "error");
+      showToast({
+        variant: "warning",
+        title: "No products yet",
+        message: "Add finished products before creating Product Directory items."
+      });
       return;
     }
 
-    if (hasUnsavedChanges) {
-      showStatus("Save batch changes before adding products to Products & Pricing.", "error");
+    if (dirty) {
+      showToast({
+        variant: "warning",
+        title: "Save changes first",
+        message: "Save batch changes before adding products to Products & Pricing."
+      });
       return;
     }
 
@@ -1284,9 +873,10 @@ export default function Livestock() {
 
     try {
       const category = speciesProductCategory[batchForm.species] || "Protein";
+
       await Promise.all(
         validCuts.map((cut) => {
-          const quantity = getCutQuantity(cut, batchForm);
+          const quantity = getCutQuantity(cut);
           const unit = cut.unit || "lb";
           const productId = makeProductId(batchForm.id, cut.name);
 
@@ -1310,9 +900,9 @@ export default function Livestock() {
             overheadCost: "",
             notes:
               cut.notes ||
-              `Created from Livestock. Batch: ${batchForm.name}. Estimated quantity: ${round(quantity, 2)} ${unit}.`,
-            sourceType: "livestock",
-            sourceLabel: "Livestock",
+              `Created from Butcher Board. Batch: ${batchForm.name}. Estimated quantity: ${round(quantity, 2)} ${unit}.`,
+            sourceType: "butcher-board",
+            sourceLabel: "Butcher Board",
             sourceBatchId: batchForm.id,
             sourceCutName: cut.name,
             generatedVariants: [],
@@ -1324,44 +914,129 @@ export default function Livestock() {
         })
       );
 
-      showStatus("Finished products added to Products & Pricing.", "success");
+      await updateLivestockBatch(user.uid, batchForm.id, {
+        ...batchForm,
+        status: "Products Built"
+      });
+
+      setBatchForm((current) => ({
+        ...current,
+        status: "Products Built"
+      }));
+
+      showToast({
+        variant: "success",
+        title: "Products created",
+        message: "Finished products added to Products & Pricing."
+      });
+
+      await loadData();
     } catch (error) {
       console.error(error);
-      showStatus("Could not add products to Products & Pricing.", "error");
+      showToast({
+        variant: "error",
+        title: "Products could not be created",
+        message: "Please try again."
+      });
     } finally {
       setSavingProducts(false);
     }
   }
 
-  const sectionCards = [
-    {
-      title: "Create New Batch",
-      description: "Start a clean livestock batch with blank details, costs, processing, and products.",
-      icon: Plus,
-      action: startNewBatch
-    },
-    {
-      title: "Edit Existing Batch",
-      description: "Pick one saved batch and edit all details from one central workspace.",
-      icon: Edit3,
-      action: () => {
-        setMode("select");
-        setBatchForm(blankBatch);
-        setSelectedBatchId("");
-        markSaved();
-        window.setTimeout(scrollToEditor, 50);
+  const filteredBatches = useMemo(() => {
+    const search = batchSearch.trim().toLowerCase();
+
+    return batches.filter((batch) => {
+      const matchesSearch = search
+        ? [
+            batch.name,
+            batch.species,
+            batch.status,
+            batch.processor,
+            ...(batch.sourceRecords || []).map((source) => source.name)
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(search)
+        : true;
+
+      const matchesStatus = statusFilter === "All" || batch.status === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [batches, batchSearch, statusFilter]);
+
+  const summary = useMemo(() => {
+    const activeBatches = batches.filter(
+      (batch) => !["Inventory Added", "Archived"].includes(batch.status)
+    );
+
+    const readyProducts = batches.reduce((sum, batch) => {
+      return (
+        sum +
+        (batch.cuts || []).filter((cut) => cut.name && getCutQuantity(cut) > 0).length
+      );
+    }, 0);
+
+    const totalCost = batches.reduce((sum, batch) => {
+      return sum + getTotalProcessingCost(batch);
+    }, 0);
+
+    return {
+      activeBatches: activeBatches.length,
+      readyQueue: readySources.length,
+      readyProducts,
+      totalCost
+    };
+  }, [batches, readySources]);
+
+  const batchTotals = useMemo(() => {
+    const totalCost = getTotalProcessingCost(batchForm);
+    const totalQuantity = getTotalCutQuantity(batchForm);
+
+    return {
+      sourceCost: getSourceCost(batchForm),
+      totalCost,
+      totalQuantity,
+      averageCostPerUnit: totalQuantity ? totalCost / totalQuantity : 0,
+      hangingYield: getHangingYield(batchForm),
+      packagedYield: getPackagedYield(batchForm)
+    };
+  }, [batchForm]);
+
+  const canPushProducts = Boolean(
+    batchForm.id &&
+      (batchForm.cuts || []).some((cut) => cut.name && getCutQuantity(cut) > 0)
+  );
+
+  function getBatchActions(batch) {
+    return [
+      {
+        label: "Edit",
+        icon: Edit3,
+        onClick: () => loadBatch(batch)
+      },
+      {
+        divider: true
+      },
+      {
+        label: "Delete",
+        icon: Trash2,
+        destructive: true,
+        onClick: () => requestDeleteBatch(batch)
       }
-    }
-  ];
+    ];
+  }
 
   if (!user) {
     return (
-      <div className="modulePage livestockModule">
+      <div className="modulePage livestockModule butcherBoardModule">
         <ModuleHero
-          eyebrow="Livestock"
-          title="Sign in to manage livestock batches."
-          description="Track animal groups, input costs, processing events, finished products, and inventory from your Market Vendor Toolkit account."
-          className="livestockHero"
+          eyebrow="Butcher Board"
+          accent="livestock"
+          icon={Beef}
+          title="Sign in to manage processing batches."
+          description="Turn ready animals, groups, or manual processing batches into finished products, inventory, and pricing records."
           actions={[
             {
               label: "Sign in with Google",
@@ -1374,1015 +1049,613 @@ export default function Livestock() {
   }
 
   return (
-    <div className="modulePage livestockModule">
-      {statusMessage ? (
-        <div className={`floatingStatus ${statusType}`}>
-          <AlertCircle size={18} />
-          <span>{statusMessage}</span>
-          <button type="button" onClick={() => setStatusMessage("")}>
-            <X size={16} />
-          </button>
-        </div>
-      ) : null}
-
-      {loading ? <div className="floatingStatus info">Loading Livestock...</div> : null}
-
+    <div className="modulePage livestockModule butcherBoardModule">
       <ModuleHero
-        eyebrow="Livestock"
-        title="Track batches, processing events, finished products, and meat inventory."
-        description="Create or edit one working batch at a time, then manage details, input costs, processing logs, product yields, and inventory from one central workspace."
-        className="livestockHero"
+        eyebrow="Butcher Board"
+        accent="livestock"
+        icon={Beef}
+        title="Move animals from processing-ready to finished products."
+        description="Select ready Herd Tracker records or create a manual processing batch, then manage weights, processor details, cut yields, costs, inventory, and product pricing."
         actions={[
           {
             label: "Guide",
             icon: CircleHelp,
             variant: "secondary",
             onClick: () => setShowGuide(true)
+          },
+          {
+            label: "Manual Batch",
+            icon: Plus,
+            onClick: startManualBatch
           }
         ]}
       />
 
       <section className="hubStatGrid livestockStatGrid">
         <StatCard
-          icon={Beef}
+          icon={ClipboardList}
           label="Active Batches"
-          value={livestockSummary.activeBatches}
-          sub="groups tracked"
+          value={loading ? "..." : summary.activeBatches}
+          sub="processing batches"
           accent="livestock"
         />
-
         <StatCard
-          icon={ClipboardList}
-          label="Head Count"
-          value={livestockSummary.headCount}
-          sub="active animals"
-          accent="market"
+          icon={Beef}
+          label="Ready Queue"
+          value={loading ? "..." : summary.readyQueue}
+          sub="from Herd Tracker"
+          accent="orders"
         />
-
-        <StatCard
-          icon={DollarSign}
-          label="Total Cost"
-          value={money(livestockSummary.totalCost)}
-          sub="batch costs"
-          accent="pricing"
-        />
-
         <StatCard
           icon={PackageCheck}
           label="Ready Products"
-          value={livestockSummary.readyProducts}
-          sub="saved products"
+          value={loading ? "..." : summary.readyProducts}
+          sub="finished products"
           accent="inventory"
+        />
+        <StatCard
+          icon={DollarSign}
+          label="Total Cost"
+          value={loading ? "..." : money(summary.totalCost)}
+          sub="source + processing"
+          accent="pricing"
         />
       </section>
 
-      <section className="toolGrid compactToolGrid livestockModeGrid">
-        {sectionCards.map((card) => {
-          const Icon = card.icon;
+      <WorkspacePanel
+        eyebrow="Herd Tracker"
+        title="Ready for Processing Queue"
+        description="Select one or more animals or groups from Herd Tracker to create a processing batch."
+        actions={[
+          {
+            label: "Create From Selected",
+            icon: Plus,
+            onClick: startHerdBatch
+          },
+          {
+            label: "Refresh",
+            icon: RefreshCw,
+            variant: "secondary",
+            onClick: loadData
+          }
+        ]}
+      >
+        {readySources.length ? (
+          <RecordList
+            records={readySources}
+            getRecordId={(source) => `${source.sourceType}:${source.id}`}
+            selectedRecordId=""
+            onRecordClick={toggleReadySource}
+            getTitle={getSourceName}
+            getSubtitle={(source) =>
+              `${source.species || "Animal"} • ${source.count || 1} ${
+                source.count === 1 ? "head" : "head"
+              }`
+            }
+            getMeta={(source) => [
+              { label: "Type", value: source.sourceType === "animal" ? "Animal" : "Group" },
+              { label: "Cost Basis", value: money(source.costBasis) }
+            ]}
+            renderStatus={(source) => (
+              <StatusPill
+                label={
+                  selectedSourceIds.includes(`${source.sourceType}:${source.id}`)
+                    ? "Selected"
+                    : "Ready"
+                }
+                variant={
+                  selectedSourceIds.includes(`${source.sourceType}:${source.id}`)
+                    ? "primary"
+                    : "success"
+                }
+              />
+            )}
+          />
+        ) : (
+          <EmptyState
+            icon={Beef}
+            title="No ready records"
+            message="Animals or groups marked Ready for Processing in Herd Tracker will appear here. You can still use Manual Batch."
+            actions={[
+              {
+                label: "Create Manual Batch",
+                icon: Plus,
+                onClick: startManualBatch
+              }
+            ]}
+          />
+        )}
+      </WorkspacePanel>
 
-          return (
-            <button
-              className="toolCard compactToolCard clickableToolCard livestockModeCard"
-              key={card.title}
-              type="button"
-              onClick={card.action}
-            >
-              <Icon size={22} />
-              <h3>{card.title}</h3>
-              <p>{card.description}</p>
-            </button>
-          );
-        })}
-      </section>
+      <WorkspacePanel
+        eyebrow="Directory"
+        title="Processing Batches"
+        toolbar={
+          <FilterBar
+            searchValue={batchSearch}
+            onSearchChange={setBatchSearch}
+            searchPlaceholder="Search batches..."
+            filters={[
+              {
+                label: "Status",
+                value: statusFilter,
+                onChange: setStatusFilter,
+                options: ["All", ...processingStatusOptions]
+              }
+            ]}
+            actions={[
+              {
+                label: "Manual Batch",
+                icon: Plus,
+                onClick: startManualBatch
+              }
+            ]}
+          />
+        }
+      >
+        <RecordList
+          records={filteredBatches}
+          selectedRecordId={selectedBatchId}
+          onRecordClick={loadBatch}
+          emptyMessage={loading ? "Loading batches..." : "No processing batches found."}
+          getTitle={(batch) => batch.name || "Unnamed Batch"}
+          getSubtitle={(batch) =>
+            [
+              batch.species,
+              batch.processor,
+              batch.processingDate ? formatDate(batch.processingDate) : ""
+            ]
+              .filter(Boolean)
+              .join(" • ")
+          }
+          getMeta={(batch) => [
+            { label: "Source", value: batch.sourceMode === "herd" ? "Herd Tracker" : "Manual" },
+            { label: "Total Cost", value: money(getTotalProcessingCost(batch)) },
+            { label: "Products", value: `${(batch.cuts || []).length}` }
+          ]}
+          renderStatus={(batch) => (
+            <StatusPill
+              label={batch.status || "Draft"}
+              variant={getStatusVariant(batch.status)}
+            />
+          )}
+          renderActions={(batch) => <ActionMenu items={getBatchActions(batch)} />}
+        />
+      </WorkspacePanel>
 
-      <section className="workspacePanel compactPanel livestockEditorPanel" ref={editorRef}>
-        <div className="workspaceHeader compactPanelHeader">
-          <div>
-            <p className="eyebrow">Working Batch</p>
-            <h3>
-              {mode === "create"
-                ? "Create New Batch"
-                : mode === "edit"
-                  ? `Editing ${batchForm.name || "Saved Batch"}`
-                  : "Select or create a batch"}
-            </h3>
-          </div>
-
-          {mode === "edit" || mode === "create" ? (
-            <div className="livestockEditorActions">
-              <button
-                className={`primaryButton compactPrimary ${
-                  hasUnsavedChanges ? "dirtySaveButton" : ""
-                }`}
-                type="button"
-                onClick={saveBatch}
-              >
-                <Save size={15} />
-                {mode === "create" ? "Save Batch" : "Save Changes"}
-              </button>
-
-              <button
-                className="secondaryButton compactButton"
-                type="button"
-                onClick={() => {
-                  setMode("idle");
-                  setSelectedBatchId("");
-                  setBatchForm(blankBatch);
-                  markSaved();
-                }}
-              >
-                Clear
-              </button>
-            </div>
-          ) : null}
+      <WorkspacePanel
+        eyebrow="Editor"
+        title={batchForm.id || selectedBatchId ? "Edit Processing Batch" : "Processing Batch"}
+        description="Manage processor details, weights, costs, cuts, inventory, and pricing."
+        actions={[
+          {
+            label: "Clear",
+            variant: "secondary",
+            onClick: () => {
+              setBatchForm(blankBatch);
+              setSelectedBatchId("");
+              setDirty(false);
+              setSaved(false);
+              setSaveError(false);
+            }
+          }
+        ]}
+      >
+        <div className="button-row" style={{ justifyContent: "flex-end", marginBottom: "12px" }}>
+          <SaveButton
+            dirty={dirty || (!batchForm.id && Boolean(batchForm.name))}
+            saving={savingBatch}
+            saved={saved}
+            error={saveError}
+            label="Save Batch"
+            dirtyLabel="Save Batch"
+            onClick={saveBatch}
+          />
         </div>
 
-        {mode === "select" || mode === "idle" ? (
-          <div className="livestockSelectPanel">
-            <div className="searchBox compactSearch">
-              <Search size={17} />
-              <input
-                value={batchSearch}
-                onChange={(event) => setBatchSearch(event.target.value)}
-                placeholder="Search saved batches..."
-              />
-            </div>
+        <div className="formGrid compactFormGrid">
+          <FormField label="Batch Name" required>
+            <input
+              value={batchForm.name}
+              onChange={(event) => updateBatchField("name", event.target.value)}
+              placeholder="e.g., Beef Processing Batch 2026"
+            />
+          </FormField>
 
-            <div className="savedList compactSavedList livestockSavedList">
-              {filteredBatches.length ? (
-                filteredBatches.map((batch) => (
-                  <div
-                    className="savedItem compactSavedItem livestockSavedItem clickableLivestockBatch"
-                    key={batch.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => chooseExistingBatch(batch.id)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        chooseExistingBatch(batch.id);
-                      }
-                    }}
-                  >
-                    <div>
-                      <h4>{batch.name}</h4>
-                      <p>
-                        {batch.species}
-                        {batch.breed ? ` • ${batch.breed}` : ""}
-                        {batch.status ? ` • ${batch.status}` : ""}
-                        {batch.currentHeadCount || batch.startingHeadCount
-                          ? ` • ${batch.currentHeadCount || batch.startingHeadCount} head`
-                          : ""}
-                      </p>
-                    </div>
+          <FormField label="Source">
+            <select
+              value={batchForm.sourceMode}
+              onChange={(event) => updateBatchField("sourceMode", event.target.value)}
+            >
+              <option value="manual">Manual batch</option>
+              <option value="herd">Herd Tracker</option>
+            </select>
+          </FormField>
 
-                    <div className="itemActions">
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          chooseExistingBatch(batch.id);
-                        }}
-                      >
-                        <Edit3 size={14} />
-                      </button>
+          <FormField label="Species">
+            <select
+              value={batchForm.species}
+              onChange={(event) => updateBatchField("species", event.target.value)}
+            >
+              {speciesOptions.map((species) => (
+                <option key={species}>{species}</option>
+              ))}
+            </select>
+          </FormField>
 
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          removeBatch(batch.id);
-                        }}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="placeholderBox compactPlaceholder">
-                  No saved livestock batches yet. Use Create New Batch to get started.
-                </div>
-              )}
-            </div>
+          <FormField label="Status">
+            <select
+              value={batchForm.status}
+              onChange={(event) => updateBatchField("status", event.target.value)}
+            >
+              {processingStatusOptions.map((status) => (
+                <option key={status}>{status}</option>
+              ))}
+            </select>
+          </FormField>
+
+          <FormField label="Processor">
+            <input
+              value={batchForm.processor}
+              onChange={(event) => updateBatchField("processor", event.target.value)}
+              placeholder="USDA processor, butcher, or facility"
+            />
+          </FormField>
+
+          <FormField label="Processing Date">
+            <input
+              type="date"
+              value={batchForm.processingDate}
+              onChange={(event) => updateBatchField("processingDate", event.target.value)}
+            />
+          </FormField>
+
+          <FormField label="Pickup Date">
+            <input
+              type="date"
+              value={batchForm.pickupDate}
+              onChange={(event) => updateBatchField("pickupDate", event.target.value)}
+            />
+          </FormField>
+
+          <FormField label="Head Count Processed">
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={batchForm.headCountProcessed}
+              onChange={(event) =>
+                updateBatchField("headCountProcessed", event.target.value)
+              }
+              onBlur={(event) =>
+                updateBatchField("headCountProcessed", cleanWholeNumber(event.target.value))
+              }
+            />
+          </FormField>
+
+          <FormField label="Live Weight">
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={batchForm.liveWeight}
+              onChange={(event) => updateBatchField("liveWeight", event.target.value)}
+              onBlur={(event) => updateBatchField("liveWeight", cleanNumber(event.target.value, 2))}
+              placeholder="lb"
+            />
+          </FormField>
+
+          <FormField label="Hanging Weight">
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={batchForm.hangingWeight}
+              onChange={(event) => updateBatchField("hangingWeight", event.target.value)}
+              onBlur={(event) =>
+                updateBatchField("hangingWeight", cleanNumber(event.target.value, 2))
+              }
+              placeholder="lb"
+            />
+          </FormField>
+
+          <FormField label="Packaged Weight">
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={batchForm.packagedWeight}
+              onChange={(event) => updateBatchField("packagedWeight", event.target.value)}
+              onBlur={(event) =>
+                updateBatchField("packagedWeight", cleanNumber(event.target.value, 2))
+              }
+              placeholder="lb"
+            />
+          </FormField>
+
+          <FormField label="Processing Fee">
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={batchForm.processingFee}
+              onChange={(event) => updateBatchField("processingFee", event.target.value)}
+              onBlur={(event) =>
+                updateBatchField("processingFee", cleanCurrency(event.target.value))
+              }
+              placeholder="0.00"
+            />
+          </FormField>
+
+          <FormField label="Additional Cost">
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={batchForm.additionalCost}
+              onChange={(event) => updateBatchField("additionalCost", event.target.value)}
+              onBlur={(event) =>
+                updateBatchField("additionalCost", cleanCurrency(event.target.value))
+              }
+              placeholder="packaging, transport, etc."
+            />
+          </FormField>
+
+          <FormField label="Notes" fullWidth>
+            <textarea
+              value={batchForm.notes}
+              onChange={(event) => updateBatchField("notes", event.target.value)}
+              placeholder="Cut sheet notes, processor notes, pickup notes, or internal reminders..."
+            />
+          </FormField>
+        </div>
+
+        {batchForm.sourceRecords?.length ? (
+          <div className="placeholderBox compactPlaceholder" style={{ marginTop: "12px" }}>
+            Source records:{" "}
+            <strong>
+              {batchForm.sourceRecords.map((source) => source.name).join(", ")}
+            </strong>
           </div>
         ) : null}
 
-        {hasSavedBatchContext ? (
-          <>
-            <section className="livestockWorkingSummary">
-              <StatCard
-                icon={Beef}
-                label="Animal Cost"
-                value={money(batchSummary.animalCost)}
-                sub="price/head × starting head"
-                accent="livestock"
-              />
+        <section className="hubStatGrid livestockYieldGrid" style={{ marginTop: "14px" }}>
+          <StatCard
+            icon={DollarSign}
+            label="Source Cost"
+            value={money(batchTotals.sourceCost)}
+            sub="from Herd Tracker"
+            accent="livestock"
+          />
+          <StatCard
+            icon={DollarSign}
+            label="Total Cost"
+            value={money(batchTotals.totalCost)}
+            sub="source + processing"
+            accent="pricing"
+          />
+          <StatCard
+            icon={Scale}
+            label="Hanging Yield"
+            value={`${round(batchTotals.hangingYield, 1)}%`}
+            sub="hanging ÷ live"
+            accent="orders"
+          />
+          <StatCard
+            icon={PackageCheck}
+            label="Packaged Yield"
+            value={`${round(batchTotals.packagedYield, 1)}%`}
+            sub="packaged ÷ hanging"
+            accent="inventory"
+          />
+        </section>
+      </WorkspacePanel>
 
-              <StatCard
-                icon={ClipboardList}
-                label="Inputs"
-                value={money(batchSummary.inputTotal)}
-                sub="feed, vet, packaging, other"
-                accent="market"
-              />
+      <WorkspacePanel
+        eyebrow="Finished Products"
+        title="Cuts, Yields, and Product Costs"
+        actions={[
+          {
+            label: "Add Product",
+            icon: Plus,
+            onClick: addCutEntry
+          },
+          {
+            label: savingProducts ? "Adding..." : "Add to Products",
+            icon: ShoppingBag,
+            variant: "secondary",
+            disabled: !canPushProducts || savingProducts,
+            onClick: addCutsToProductDirectory
+          },
+          {
+            label: savingInventory ? "Adding..." : "Add to Inventory",
+            icon: PackageCheck,
+            disabled: !canPushProducts || savingInventory,
+            onClick: addCutsToInventory
+          }
+        ]}
+      >
+        {(batchForm.cuts || []).length ? (
+          <div className="livestockEditableList">
+            {batchForm.cuts.map((cut, index) => {
+              const unitCost = getProductUnitCost(batchForm, cut);
+              const allocatedCost = getProductAllocatedCost(batchForm, cut);
 
-              <StatCard
-                icon={Scale}
-                label="Processed Head"
-                value={`${batchSummary.processedHeadCount}`}
-                sub={`${batchSummary.unprocessedHeadCount} unprocessed`}
-                accent="orders"
-              />
-
-              <StatCard
-                icon={DollarSign}
-                label="Cost / Packaged lb"
-                value={money(batchSummary.costPerPackagedPound)}
-                sub="total cost ÷ packaged weight"
-                accent="pricing"
-              />
-            </section>
-
-            <section className="livestockFlowGrid compactWorkspace">
-              <div className="workspacePanel compactPanel livestockSubPanel">
-                <div className="workspaceHeader compactPanelHeader">
-                  <div>
-                    <p className="eyebrow">Batch Details</p>
-                    <h3>Animal Batch</h3>
-                  </div>
-                </div>
-
-                <div className="formGrid compactFormGrid">
-                  <label>
-                    Batch Name
-                    <input
-                      value={batchForm.name}
-                      onChange={(event) => updateBatchField("name", event.target.value)}
-                      placeholder="e.g., Spring 2026 Broilers"
-                    />
-                  </label>
-
-                  <label>
-                    Species
-                    <select
-                      value={batchForm.species}
-                      onChange={(event) => updateBatchField("species", event.target.value)}
-                    >
-                      {speciesOptions.map((species) => (
-                        <option key={species}>{species}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label>
-                    Breed / Type
-                    <input
-                      value={batchForm.breed}
-                      onChange={(event) => updateBatchField("breed", event.target.value)}
-                      placeholder="e.g., Cornish Cross, Berkshire, Angus"
-                    />
-                  </label>
-
-                  <label>
-                    Status
-                    <select
-                      value={batchForm.status}
-                      onChange={(event) => updateBatchField("status", event.target.value)}
-                    >
-                      {batchStatusOptions.map((status) => (
-                        <option key={status}>{status}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label>
-                    Start Date
-                    <input
-                      type="date"
-                      value={batchForm.startDate}
-                      onChange={(event) => updateBatchField("startDate", event.target.value)}
-                    />
-                  </label>
-
-                  <label>
-                    Target Processing Date
-                    <input
-                      type="date"
-                      value={batchForm.processingDate}
-                      onChange={(event) => updateBatchField("processingDate", event.target.value)}
-                    />
-                  </label>
-
-                  <label>
-                    Starting Head Count
-                    <input
-                      type="number"
-                      step="1"
-                      min="0"
-                      value={batchForm.startingHeadCount}
-                      onChange={(event) =>
-                        updateBatchField("startingHeadCount", event.target.value)
-                      }
-                      placeholder="e.g., 25"
-                    />
-                  </label>
-
-                  <label>
-                    Current Head Count
-                    <input
-                      type="number"
-                      step="1"
-                      min="0"
-                      value={batchForm.currentHeadCount}
-                      onChange={(event) =>
-                        updateBatchField("currentHeadCount", event.target.value)
-                      }
-                      placeholder="e.g., 25"
-                    />
-                  </label>
-
-                  <label>
-                    Starting Weight
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={batchForm.startingWeight}
-                      onChange={(event) => updateBatchField("startingWeight", event.target.value)}
-                      placeholder="Optional total weight"
-                    />
-                  </label>
-
-                  <label>
-                    Purchase Price Per Head
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={batchForm.purchasePricePerHead}
-                      onChange={(event) =>
-                        updateBatchField("purchasePricePerHead", event.target.value)
-                      }
-                      onBlur={(event) =>
-                        updateBatchField("purchasePricePerHead", cleanCurrency(event.target.value))
-                      }
-                      placeholder="e.g., 75.00"
-                    />
-                  </label>
-
-                  <div className="livestockCalculatedField">
-                    <span>Total Animal Cost</span>
-                    <strong>{money(batchSummary.animalCost)}</strong>
-                  </div>
-
-                  <label className="fullSpan">
-                    Notes
-                    <textarea
-                      value={batchForm.notes}
-                      onChange={(event) => updateBatchField("notes", event.target.value)}
-                      placeholder="Pasture group, feed plan, processing notes, customer notes..."
-                    />
-                  </label>
-                </div>
-              </div>
-
-              <div className="workspacePanel compactPanel livestockSubPanel">
-                <div className="workspaceHeader compactPanelHeader">
-                  <div>
-                    <p className="eyebrow">Input Cost Log</p>
-                    <h3>Costs</h3>
-                  </div>
-
-                  <button className="secondaryButton compactButton" type="button" onClick={addInputEntry}>
-                    <Plus size={15} />
-                    Add Input
-                  </button>
-                </div>
-
-                {(batchForm.inputs || []).length ? (
-                  <div className="livestockTableWrap">
-                    <div className="livestockInputTable livestockEditableTable">
-                      <div className="livestockTableHeader">
-                        <span>Date</span>
-                        <span>Category</span>
-                        <span>Description</span>
-                        <span>Qty</span>
-                        <span>Unit</span>
-                        <span>Cost</span>
-                        <span></span>
-                      </div>
-
-                      {batchForm.inputs.map((input, index) => (
-                        <div className="livestockTableRow" key={input.id || index}>
-                          <input
-                            type="date"
-                            value={input.date}
-                            onChange={(event) => updateInputEntry(index, "date", event.target.value)}
-                          />
-
-                          <select
-                            value={input.category}
-                            onChange={(event) =>
-                              updateInputEntry(index, "category", event.target.value)
-                            }
-                          >
-                            {inputCategories.map((category) => (
-                              <option key={category}>{category}</option>
-                            ))}
-                          </select>
-
-                          <input
-                            value={input.description}
-                            onChange={(event) =>
-                              updateInputEntry(index, "description", event.target.value)
-                            }
-                            placeholder="e.g., feed, processing deposit, hay"
-                          />
-
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={input.quantity}
-                            onChange={(event) =>
-                              updateInputEntry(index, "quantity", event.target.value)
-                            }
-                            placeholder="3"
-                          />
-
-                          <input
-                            value={input.unit}
-                            onChange={(event) => updateInputEntry(index, "unit", event.target.value)}
-                            placeholder="bags"
-                          />
-
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={input.cost}
-                            onChange={(event) => updateInputEntry(index, "cost", event.target.value)}
-                            onBlur={(event) =>
-                              updateInputEntry(index, "cost", cleanCurrency(event.target.value))
-                            }
-                            placeholder="84.50"
-                          />
-
-                          <button
-                            className="iconButton danger"
-                            type="button"
-                            onClick={() => removeInputEntry(index)}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="placeholderBox compactPlaceholder">
-                    Add feed, hay, bedding, vet, processing, transportation, packaging, or other costs.
-                  </div>
-                )}
-              </div>
-
-              <div className="workspacePanel compactPanel livestockSubPanel">
-                <div className="workspaceHeader compactPanelHeader">
-                  <div>
-                    <p className="eyebrow">Processing Events</p>
-                    <h3>Processing & Yield</h3>
-                  </div>
-
-                  <button
-                    className="secondaryButton compactButton"
-                    type="button"
-                    onClick={addProcessingEvent}
-                  >
-                    <Plus size={15} />
-                    Add Processing
-                  </button>
-                </div>
-
-                <div className="hubStatGrid livestockYieldGrid">
-                  <StatCard
-                    icon={Scale}
-                    label="Hanging Yield"
-                    value={`${round(batchSummary.hangingYield, 1)}%`}
-                    sub="hanging ÷ live"
-                    accent="livestock"
-                  />
-
-                  <StatCard
-                    icon={PackageCheck}
-                    label="Packaged Yield"
-                    value={`${round(batchSummary.packagedYield, 1)}%`}
-                    sub="packaged ÷ hanging"
-                    accent="inventory"
-                  />
-
-                  <StatCard
-                    icon={DollarSign}
-                    label="Processing Fees"
-                    value={money(batchSummary.processingTotal)}
-                    sub="all processing events"
-                    accent="pricing"
-                  />
-                </div>
-
-                {(batchForm.processingEvents || []).length ? (
-                  <div className="livestockEditableList">
-                    {batchForm.processingEvents.map((processingEvent, index) => (
-                      <div className="livestockEditableCard" key={processingEvent.id || index}>
-                        <div className="livestockCardHeader">
-                          <strong>Processing #{index + 1}</strong>
-                          <button type="button" onClick={() => removeProcessingEvent(index)}>
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-
-                        <div className="formGrid compactFormGrid">
-                          <label>
-                            Date
-                            <input
-                              type="date"
-                              value={processingEvent.date}
-                              onChange={(event) =>
-                                updateProcessingEvent(index, "date", event.target.value)
-                              }
-                            />
-                          </label>
-
-                          <label>
-                            Processor
-                            <input
-                              value={processingEvent.processor}
-                              onChange={(event) =>
-                                updateProcessingEvent(index, "processor", event.target.value)
-                              }
-                              placeholder="e.g., USDA processor"
-                            />
-                          </label>
-
-                          <label>
-                            Head Count Processed
-                            <input
-                              type="number"
-                              step="1"
-                              min="0"
-                              value={processingEvent.headCountProcessed}
-                              onChange={(event) =>
-                                updateProcessingEvent(
-                                  index,
-                                  "headCountProcessed",
-                                  event.target.value
-                                )
-                              }
-                              placeholder="e.g., 150"
-                            />
-                          </label>
-
-                          <label>
-                            Live Weight
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={processingEvent.liveWeight}
-                              onChange={(event) =>
-                                updateProcessingEvent(index, "liveWeight", event.target.value)
-                              }
-                              placeholder="Optional lbs"
-                            />
-                          </label>
-
-                          <label>
-                            Hanging Weight
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={processingEvent.hangingWeight}
-                              onChange={(event) =>
-                                updateProcessingEvent(index, "hangingWeight", event.target.value)
-                              }
-                              placeholder="Optional lbs"
-                            />
-                          </label>
-
-                          <label>
-                            Packaged Weight
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={processingEvent.packagedWeight}
-                              onChange={(event) =>
-                                updateProcessingEvent(index, "packagedWeight", event.target.value)
-                              }
-                              placeholder="Optional lbs"
-                            />
-                          </label>
-
-                          <label>
-                            Processing Fee
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={processingEvent.processingFee}
-                              onChange={(event) =>
-                                updateProcessingEvent(index, "processingFee", event.target.value)
-                              }
-                              onBlur={(event) =>
-                                updateProcessingEvent(
-                                  index,
-                                  "processingFee",
-                                  cleanCurrency(event.target.value)
-                                )
-                              }
-                              placeholder="e.g., 325.00"
-                            />
-                          </label>
-
-                          <label className="fullSpan">
-                            Notes
-                            <textarea
-                              value={processingEvent.notes}
-                              onChange={(event) =>
-                                updateProcessingEvent(index, "notes", event.target.value)
-                              }
-                              placeholder="Cut sheet notes, pickup notes, packaging notes..."
-                            />
-                          </label>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="placeholderBox compactPlaceholder">
-                    Add one or more processing events. This supports partial processing, like two 150-bird appointments from one 300-bird batch.
-                  </div>
-                )}
-              </div>
-
-              <div className="workspacePanel compactPanel livestockSubPanel">
-                <div className="workspaceHeader compactPanelHeader">
-                  <div>
-                    <p className="eyebrow">Finished Products</p>
-                    <h3>Product Yield</h3>
-                  </div>
-
-                  <div className="livestockHeaderActions">
-                    <button className="secondaryButton compactButton" type="button" onClick={addCutEntry}>
-                      <Plus size={15} />
-                      Add Product
-                    </button>
-
-                    <button
-                      className="secondaryButton compactButton"
-                      type="button"
-                      onClick={addCutsToProductDirectory}
-                      disabled={!canPushProducts || savingProducts}
-                    >
-                      <ShoppingBag size={15} />
-                      {savingProducts ? "Adding..." : "Add to Products"}
-                    </button>
-
-                    <button
-                      className={`primaryButton compactPrimary ${
-                        hasUnsavedChanges ? "dirtySaveButton" : ""
-                      }`}
-                      type="button"
-                      onClick={addCutsToInventory}
-                      disabled={!canPushProducts || savingInventory}
-                    >
-                      <PackageCheck size={15} />
-                      {savingInventory ? "Adding..." : "Add to Inventory"}
+              return (
+                <div className="livestockEditableCard" key={cut.id || index}>
+                  <div className="livestockCardHeader">
+                    <strong>{cut.name || `Product ${index + 1}`}</strong>
+                    <button type="button" onClick={() => removeCutEntry(index)}>
+                      <Trash2 size={14} />
                     </button>
                   </div>
-                </div>
 
-                <div className="livestockCostModePanel">
-                  <div>
-                    <span className="eyebrow">Cost Pool Mode</span>
-                    <div className="livestockCostModeToggle">
-                      <button
-                        type="button"
-                        className={(batchForm.costPoolMode || "processed") === "processed" ? "selected" : ""}
-                        onClick={() => updateBatchField("costPoolMode", "processed")}
+                  <div className="formGrid compactFormGrid">
+                    <FormField label="Product Name">
+                      <input
+                        value={cut.name}
+                        onChange={(event) => updateCutEntry(index, "name", event.target.value)}
+                        placeholder="Ground Beef"
+                      />
+                    </FormField>
+
+                    <FormField label="Quantity">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={cut.quantity}
+                        onChange={(event) =>
+                          updateCutEntry(index, "quantity", event.target.value)
+                        }
+                        onBlur={(event) =>
+                          updateCutEntry(index, "quantity", cleanNumber(event.target.value, 2))
+                        }
+                        placeholder="120"
+                      />
+                    </FormField>
+
+                    <FormField label="Unit">
+                      <select
+                        value={cut.unit}
+                        onChange={(event) => updateCutEntry(index, "unit", event.target.value)}
                       >
-                        Processed Only
-                      </button>
-                      <button
-                        type="button"
-                        className={(batchForm.costPoolMode || "processed") === "full" ? "selected" : ""}
-                        onClick={() => updateBatchField("costPoolMode", "full")}
+                        {productUnits.map((unit) => (
+                          <option key={unit}>{unit}</option>
+                        ))}
+                      </select>
+                    </FormField>
+
+                    <FormField label="Cost Mode">
+                      <select
+                        value={cut.costMode || "allocated"}
+                        onChange={(event) =>
+                          updateCutEntry(index, "costMode", event.target.value)
+                        }
                       >
-                        Full Batch
-                      </button>
+                        <option value="allocated">Average allocated</option>
+                        <option value="manual">Manual per unit</option>
+                      </select>
+                    </FormField>
+
+                    <FormField label="Manual Cost">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={cut.manualCostPerUnit}
+                        disabled={(cut.costMode || "allocated") !== "manual"}
+                        onChange={(event) =>
+                          updateCutEntry(index, "manualCostPerUnit", event.target.value)
+                        }
+                        onBlur={(event) =>
+                          updateCutEntry(
+                            index,
+                            "manualCostPerUnit",
+                            cleanCurrency(event.target.value)
+                          )
+                        }
+                        placeholder="0.00"
+                      />
+                    </FormField>
+
+                    <FormField label="Retail Price">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={cut.retailPrice}
+                        onChange={(event) =>
+                          updateCutEntry(index, "retailPrice", event.target.value)
+                        }
+                        onBlur={(event) =>
+                          updateCutEntry(index, "retailPrice", cleanCurrency(event.target.value))
+                        }
+                        placeholder="0.00"
+                      />
+                    </FormField>
+
+                    <FormField label="Wholesale Price">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={cut.wholesalePrice}
+                        onChange={(event) =>
+                          updateCutEntry(index, "wholesalePrice", event.target.value)
+                        }
+                        onBlur={(event) =>
+                          updateCutEntry(
+                            index,
+                            "wholesalePrice",
+                            cleanCurrency(event.target.value)
+                          )
+                        }
+                        placeholder="0.00"
+                      />
+                    </FormField>
+
+                    <div className="livestockCalculatedField">
+                      <span>Estimated Cost</span>
+                      <strong>{money(unitCost)}</strong>
+                      <small>{money(allocatedCost)} total</small>
                     </div>
-                  </div>
 
-                  <p>
-                    {(batchForm.costPoolMode || "processed") === "processed"
-                      ? "Uses costs tied to heads already processed. Input costs dated after a processing event stay with the remaining unprocessed heads."
-                      : "Uses the full batch cost pool and projects full-batch cost per pound from the processed packaged-weight average."}
-                  </p>
-                </div>
-
-                <div className="hubStatGrid livestockFinishedStatGrid">
-                  <StatCard
-                    icon={Scale}
-                    label="Processed Heads"
-                    value={`${batchSummary.processedHeadCount}`}
-                    sub={`${batchSummary.unprocessedHeadCount} unprocessed`}
-                    accent="livestock"
-                  />
-
-                  <StatCard
-                    icon={DollarSign}
-                    label="Working Batch Cost"
-                    value={money(batchSummary.totalCost)}
-                    sub="animal + inputs + processing"
-                    accent="pricing"
-                  />
-
-                  <StatCard
-                    icon={ClipboardList}
-                    label="Selected Cost Pool"
-                    value={money(batchSummary.selectedPool)}
-                    sub={(batchForm.costPoolMode || "processed") === "processed" ? "processed only" : "full batch"}
-                    accent="market"
-                  />
-
-                  <StatCard
-                    icon={PackageCheck}
-                    label="Allocated Product Cost"
-                    value={money(batchSummary.totalAllocatedCost)}
-                    sub={`${money(batchSummary.remainingUnallocated)} unallocated`}
-                    accent="inventory"
-                  />
-
-                  <StatCard
-                    icon={DollarSign}
-                    label="Processed Est Cost/Lb"
-                    value={money(batchSummary.processedOnlyCostPerLb)}
-                    sub={`${round(batchSummary.packagedWeight, 2)} processed lb`}
-                    accent="pricing"
-                  />
-
-                  <StatCard
-                    icon={DollarSign}
-                    label="Full Batch Est Cost/Lb"
-                    value={money(batchSummary.fullBatchCostPerLb)}
-                    sub={`${round(batchSummary.projectedFullBatchPackagedWeight, 2)} projected lb`}
-                    accent="orders"
-                  />
-                </div>
-
-                <div className="livestockCostBreakdown">
-                  <div>
-                    <span>Manual Per Unit</span>
-                    <strong>{money(batchSummary.manualAllocatedCost)}</strong>
-                  </div>
-                  <div>
-                    <span>Processing Avg Pool</span>
-                    <strong>{money(batchSummary.averagePool)}</strong>
-                  </div>
-                  <div>
-                    <span>Avg Quantity</span>
-                    <strong>{round(batchSummary.averageQuantity, 2)}</strong>
-                  </div>
-                  <div>
-                    <span>Avg Cost / Unit</span>
-                    <strong>{money(batchSummary.averageCostPerUnit)}</strong>
+                    <FormField label="Notes" fullWidth>
+                      <textarea
+                        value={cut.notes}
+                        onChange={(event) =>
+                          updateCutEntry(index, "notes", event.target.value)
+                        }
+                        placeholder="Packaging, cut notes, product details..."
+                      />
+                    </FormField>
                   </div>
                 </div>
+              );
+            })}
+          </div>
+        ) : (
+          <EmptyState
+            icon={PackageCheck}
+            title="No finished products yet"
+            message="Add cuts like Ground Beef, Ribeye, Roast, Pork Chops, Sausage, Whole Chicken, Thighs, Bones, Fat, or Organ Meat."
+            actions={[
+              {
+                label: "Add Product",
+                icon: Plus,
+                onClick: addCutEntry
+              }
+            ]}
+          />
+        )}
+      </WorkspacePanel>
 
-                {(batchForm.cuts || []).length ? (
-                  <div className="livestockTableWrap">
-                    <div className="livestockProductTable livestockEditableTable">
-                      <div className="livestockTableHeader">
-                        <span>Product</span>
-                        <span>Qty</span>
-                        <span>Unit</span>
-                        <span>Source</span>
-                        <span>Cost Mode</span>
-                        <span>Manual Cost</span>
-                        <span>Retail</span>
-                        <span>Wholesale</span>
-                        <span>Est. Cost</span>
-                        <span></span>
-                      </div>
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Delete Processing Batch?"
+        message={`Are you sure you want to delete "${
+          deleteTarget?.name || "this batch"
+        }"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        confirmVariant="danger"
+        cancelLabel="Cancel"
+        onConfirm={confirmDeleteBatch}
+        onCancel={() => setDeleteTarget(null)}
+      />
 
-                      {batchForm.cuts.map((cut, index) => {
-                        const quantity = getCutQuantity(cut, batchForm);
-                        const unitCost = getProductUnitCost(batchForm, cut);
-                        const allocatedCost = getProductAllocatedCost(batchForm, cut);
-
-                        return (
-                          <div className="livestockTableRow" key={cut.id || index}>
-                            <input
-                              value={cut.name}
-                              onChange={(event) => updateCutEntry(index, "name", event.target.value)}
-                              placeholder="Ground Beef"
-                            />
-
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={cut.quantity}
-                              onChange={(event) =>
-                                updateCutEntry(index, "quantity", event.target.value)
-                              }
-                              placeholder="120"
-                            />
-
-                            <select
-                              value={cut.unit}
-                              onChange={(event) => updateCutEntry(index, "unit", event.target.value)}
-                            >
-                              {productUnits.map((unit) => (
-                                <option key={unit}>{unit}</option>
-                              ))}
-                            </select>
-
-                            <select
-                              value={cut.processingEventId || ""}
-                              onChange={(event) =>
-                                updateCutEntry(index, "processingEventId", event.target.value)
-                              }
-                            >
-                              <option value="">Whole batch</option>
-                              {(batchForm.processingEvents || []).map((event, eventIndex) => (
-                                <option key={event.id} value={event.id}>
-                                  Processing #{eventIndex + 1}
-                                  {event.headCountProcessed
-                                    ? `, ${event.headCountProcessed} head`
-                                    : ""}
-                                </option>
-                              ))}
-                            </select>
-
-                            <select
-                              value={cut.costMode || "allocated"}
-                              onChange={(event) =>
-                                updateCutEntry(index, "costMode", event.target.value)
-                              }
-                            >
-                              <option value="allocated">Processing avg</option>
-                              <option value="manual">Manual per unit</option>
-                            </select>
-
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={cut.manualCostPerUnit || ""}
-                              onChange={(event) =>
-                                updateCutEntry(index, "manualCostPerUnit", event.target.value)
-                              }
-                              onBlur={(event) =>
-                                updateCutEntry(
-                                  index,
-                                  "manualCostPerUnit",
-                                  cleanCurrency(event.target.value)
-                                )
-                              }
-                              placeholder="0.00"
-                              disabled={(cut.costMode || "allocated") !== "manual"}
-                            />
-
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={cut.retailPrice}
-                              onChange={(event) =>
-                                updateCutEntry(index, "retailPrice", event.target.value)
-                              }
-                              onBlur={(event) =>
-                                updateCutEntry(index, "retailPrice", cleanCurrency(event.target.value))
-                              }
-                              placeholder="0.00"
-                            />
-
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={cut.wholesalePrice}
-                              onChange={(event) =>
-                                updateCutEntry(index, "wholesalePrice", event.target.value)
-                              }
-                              onBlur={(event) =>
-                                updateCutEntry(
-                                  index,
-                                  "wholesalePrice",
-                                  cleanCurrency(event.target.value)
-                                )
-                              }
-                              placeholder="0.00"
-                            />
-
-                            <div className="livestockTableCost">
-                              <strong>{money(unitCost)}</strong>
-                              <span>
-                                {money(allocatedCost)} total
-                                <br />
-                                {round(quantity, 2)} {cut.unit}
-                              </span>
-                            </div>
-
-                            <button
-                              className="iconButton danger"
-                              type="button"
-                              onClick={() => removeCutEntry(index)}
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="placeholderBox compactPlaceholder">
-                    Add finished products like Ground Beef, Ribeye, Pork Chops, Sausage, Whole Chicken, Chicken Thighs, or Stew Meat.
-                  </div>
-                )}
-              </div>
-            </section>
-
-            <section className="workspacePanel compactPanel livestockBatchLog">
-              <div className="workspaceHeader compactPanelHeader">
-                <div>
-                  <p className="eyebrow">Batch Log</p>
-                  <h3>{batchForm.name || "Current Batch"} Summary</h3>
-                </div>
-              </div>
-
-              <div className="livestockLogGrid">
-                <div>
-                  <h4>Inputs</h4>
-                  {(batchForm.inputs || []).length ? (
-                    batchForm.inputs.map((input) => (
-                      <p key={input.id}>
-                        {input.date || "No date"} • {input.category} •{" "}
-                        {input.description || "No description"} • {money(input.cost)}
-                      </p>
-                    ))
-                  ) : (
-                    <p>No inputs logged.</p>
-                  )}
-                </div>
-
-                <div>
-                  <h4>Processing</h4>
-                  {(batchForm.processingEvents || []).length ? (
-                    batchForm.processingEvents.map((event) => (
-                      <p key={event.id}>
-                        {event.date || "No date"} • {event.processor || "No processor"} •{" "}
-                        {event.headCountProcessed || 0} head • {money(event.processingFee)}
-                      </p>
-                    ))
-                  ) : (
-                    <p>No processing events logged.</p>
-                  )}
-                </div>
-
-                <div>
-                  <h4>Products</h4>
-                  {(batchForm.cuts || []).length ? (
-                    batchForm.cuts.map((cut) => (
-                      <p key={cut.id}>
-                        {cut.name || "Unnamed product"} • {round(getCutQuantity(cut, batchForm), 2)}{" "}
-                        {cut.unit} • {getProductCostModeLabel(cut)}
-                      </p>
-                    ))
-                  ) : (
-                    <p>No products logged.</p>
-                  )}
-                </div>
-              </div>
-            </section>
-          </>
-        ) : null}
-      </section>
-
-      {showBackToTop ? (
-        <button className="backToTopButton" type="button" onClick={scrollToTop}>
-          <ArrowUp size={18} />
-          Top
-        </button>
-      ) : null}
+      <Toast
+        open={Boolean(toast)}
+        variant={toast?.variant}
+        title={toast?.title}
+        message={toast?.message}
+        onClose={() => setToast(null)}
+      />
 
       <ModuleGuideModal
         isOpen={showGuide}
         moduleKey="livestock"
-        title="How to Use Livestock"
+        title="How to Use Butcher Board"
         onClose={() => setShowGuide(false)}
       >
         <LivestockGuideContent />
