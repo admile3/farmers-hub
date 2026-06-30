@@ -5327,19 +5327,23 @@ tr:last-child td {
   line-height: 1;
 }
 /* ==========================
-   RecordList Checkbox Polish
+   RecordList Selection Final Polish
 ========================== */
 
+.farmhubRecordItem.selected {
+  background: rgba(62, 108, 47, 0.16) !important;
+}
+
 .farmhubRecordCheckbox.checked {
-  background: #dff5df;
-  border-color: var(--farm-green);
-  color: var(--farm-green);
+  background: #dff5df !important;
+  border-color: var(--farm-green) !important;
+  color: var(--farm-green) !important;
 }
 
 .farmhubRecordCheckbox.checked::before {
   content: "✓";
   color: var(--farm-green);
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 900;
   line-height: 1;
 }
