@@ -40,9 +40,19 @@ import {
   getFlowerArrangements,
   updateFlowerArrangement
 } from "../services/flowerStudioService.js";
-import StatCard from "../components/StatCard.jsx";
+import ActionMenu from "../components/ActionMenu.jsx";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import EmptyState from "../components/EmptyState.jsx";
+import FilterBar from "../components/FilterBar.jsx";
+import FormField from "../components/FormField.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
+import ModuleHero from "../components/ModuleHero.jsx";
 import PricingGuideContent from "../components/PricingGuideContent.jsx";
+import RecordList from "../components/RecordList.jsx";
+import StatCard from "../components/StatCard.jsx";
+import StatusPill from "../components/StatusPill.jsx";
+import Toast from "../components/Toast.jsx";
+import WorkspacePanel from "../components/WorkspacePanel.jsx";
 
 const categories = [
   "Produce",
@@ -525,8 +535,7 @@ function calculateProduct(product) {
 
 function MoneyInput({ label, value, onChange, placeholder = "0.00" }) {
   return (
-    <label>
-      {label}
+    <FormField label={label}>
       <div className="moneyInputWrap">
         <span className="moneyPrefix" aria-hidden="true">$</span>
         <input
@@ -539,14 +548,13 @@ function MoneyInput({ label, value, onChange, placeholder = "0.00" }) {
           placeholder={placeholder}
         />
       </div>
-    </label>
+    </FormField>
   );
 }
 
 function NumberInput({ label, value, onChange, placeholder = "0", step = "1" }) {
   return (
-    <label>
-      {label}
+    <FormField label={label}>
       <input
         type="number"
         step={step}
@@ -555,7 +563,38 @@ function NumberInput({ label, value, onChange, placeholder = "0", step = "1" }) 
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
       />
-    </label>
+    </FormField>
+  );
+}
+
+function getProductStatusVariant(status) {
+  switch (status) {
+    case "Active":
+      return "success";
+    case "Seasonal":
+      return "warning";
+    case "Draft":
+      return "neutral";
+    case "Retired":
+      return "danger";
+    default:
+      return "primary";
+  }
+}
+
+function getMarginVariant(value) {
+  const margin = Number(value) || 0;
+  if (margin >= 60) return "success";
+  if (margin >= 35) return "warning";
+  return "danger";
+}
+
+function getDirectoryVariantId(product, selections) {
+  return (
+    selections[product.id] ||
+    product.selectedVariantId ||
+    product.generatedVariants?.[0]?.id ||
+    ""
   );
 }
 
@@ -593,6 +632,7 @@ export default function PricingCalculator() {
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [zoomedProductImage, setZoomedProductImage] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const productDirectoryGridColumns =
     "64px minmax(180px, 1.6fr) minmax(120px, 0.8fr) 90px 80px 90px 80px 100px 70px";
@@ -1226,12 +1266,6 @@ export default function PricingCalculator() {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Delete ${product?.name || "this product"}? This cannot be undone.`
-    );
-
-    if (!confirmed) return;
-
     try {
       if (product.imagePath) {
         await deleteStorageFile(product.imagePath);
@@ -1261,6 +1295,112 @@ export default function PricingCalculator() {
     }));
   }
 
+  function requestRemoveProduct(product) {
+    if (!product?.id) return;
+
+    if (product.isGeneratedProduct) {
+      setStatusMessage("Generated products are managed in their source module.");
+      return;
+    }
+
+    setDeleteTarget(product);
+  }
+
+  async function confirmRemoveProduct() {
+    const productId = deleteTarget?.id;
+    setDeleteTarget(null);
+    await removeProduct(productId);
+  }
+
+  function getProductActions(product) {
+    const variantId = getDirectoryVariantId(product, directoryVariantSelections);
+    const actions = [
+      {
+        label: "Load Product",
+        icon: Tag,
+        onClick: () => loadProduct(product, { variantId })
+      },
+      {
+        label: expandedProductIds[product.id] ? "Hide Details" : "Show Details",
+        icon: expandedProductIds[product.id] ? ChevronUp : ChevronDown,
+        onClick: () => toggleProductExpanded(product.id)
+      }
+    ];
+
+    if (product.imageUrl) {
+      actions.push({
+        label: "View Image",
+        icon: Image,
+        onClick: () =>
+          setZoomedProductImage({
+            url: product.imageUrl,
+            name: product.name || "Product image"
+          })
+      });
+    }
+
+    actions.push({ divider: true });
+    actions.push({
+      label: product.isGeneratedProduct ? "Managed in Source" : "Delete",
+      icon: Trash2,
+      destructive: !product.isGeneratedProduct,
+      disabled: product.isGeneratedProduct,
+      onClick: () => requestRemoveProduct(product)
+    });
+
+    return actions;
+  }
+
+  function getProductRecordMeta(product) {
+    const variantId = getDirectoryVariantId(product, directoryVariantSelections);
+    const productForCalc = applyVariantToProduct(product, variantId);
+    const calc = calculateProduct(productForCalc);
+    const variants = Array.isArray(product.generatedVariants) ? product.generatedVariants : [];
+
+    return [
+      {
+        label: "Variant",
+        value: variants.length ? (
+          <select
+            className="pricingDirectoryVariantSelect"
+            value={variantId}
+            onClick={(event) => event.stopPropagation()}
+            onChange={(event) => changeDirectoryVariant(product.id, event.target.value)}
+          >
+            {variants.map((variant) => (
+              <option key={variant.id} value={variant.id}>
+                {variant.name}
+              </option>
+            ))}
+          </select>
+        ) : productForCalc.unitLabel || "Single unit"
+      },
+      { label: "Retail", value: money(productForCalc.retailPrice) },
+      { label: "Wholesale", value: money(productForCalc.wholesalePrice) },
+      { label: "Cost", value: money(calc.costPerUnit) },
+      { label: "Margin", value: percent(calc.retailMargin) }
+    ];
+  }
+
+  function renderProductStatus(product) {
+    const variantId = getDirectoryVariantId(product, directoryVariantSelections);
+    const productForCalc = applyVariantToProduct(product, variantId);
+    const calc = calculateProduct(productForCalc);
+
+    return (
+      <div className="pricingRecordStatusStack">
+        <StatusPill
+          label={product.status || "Active"}
+          variant={getProductStatusVariant(product.status)}
+        />
+        <StatusPill
+          label={`${percent(calc.retailMargin)} margin`}
+          variant={getMarginVariant(calc.retailMargin)}
+        />
+      </div>
+    );
+  }
+
   const sectionCards = [
     {
       title: "Product Directory",
@@ -1285,58 +1425,45 @@ export default function PricingCalculator() {
   if (!user) {
     return (
       <div className="modulePage pricingPage compactSpicePage">
-        <section className="farmModuleHero pricingHero">
-          <div className="farmModuleHeroText">
-            <p className="eyebrow">Products & Pricing</p>
-            <h2>Sign in to save your product list.</h2>
-            <p>
-              Build a product directory, calculate costs, set prices, and save your
-              product records to your Farmers Hub account.
-            </p>
-          </div>
-
-          <div className="farmModuleHeroActions">
-            <button className="primaryButton farmHeroAction" type="button" onClick={loginWithGoogle}>
-              Sign in with Google
-            </button>
-          </div>
-        </section>
+        <ModuleHero
+          eyebrow="Products & Pricing"
+          accent="pricing"
+          icon={Calculator}
+          title="Sign in to save your product list."
+          description="Build a product directory, calculate costs, set prices, and save your product records to your Farmers Hub account."
+          actions={[
+            {
+              label: "Sign in with Google",
+              onClick: loginWithGoogle
+            }
+          ]}
+        />
       </div>
     );
   }
 
   return (
     <div className="modulePage pricingPage compactSpicePage">
-      {statusMessage ? (
-        <div className="floatingStatus success">
-          <span>ⓘ</span>
-          <span>{statusMessage}</span>
-          <button type="button" onClick={() => setStatusMessage("")}>×</button>
-        </div>
-      ) : null}
-
-      <section className="farmModuleHero pricingHero">
-        <div className="farmModuleHeroText">
-          <p className="eyebrow">Products & Pricing</p>
-          <h2>Build your product list and price each item with confidence.</h2>
-          <p>
-            Keep a central product directory for anything you sell, then select a
-            product and package variant to edit its cost breakdown, retail price,
-            wholesale price, and margins.
-          </p>
-        </div>
-
-        <div className="farmModuleHeroActions">
-          <button className="primaryButton compactPrimary farmHeroAction" type="button" onClick={startNewProduct}>
-            <Plus size={18} />
-            Add Product
-          </button>
-          <button className="secondaryButton compactButton farmHeroAction" type="button" onClick={() => setShowGuide(true)}>
-            <CircleHelp size={16} />
-            Guide
-          </button>
-        </div>
-      </section>
+      <ModuleHero
+        eyebrow="Products & Pricing"
+        accent="pricing"
+        icon={Calculator}
+        title="Build your product list and price each item with confidence."
+        description="Keep a central product directory for anything you sell, then select a product and package variant to edit its cost breakdown, retail price, wholesale price, and margins."
+        actions={[
+          {
+            label: "Guide",
+            icon: CircleHelp,
+            variant: "secondary",
+            onClick: () => setShowGuide(true)
+          },
+          {
+            label: "Add Product",
+            icon: Plus,
+            onClick: startNewProduct
+          }
+        ]}
+      />
 
       <section className="hubStatGrid pricingStatGrid">
         <StatCard icon={Package} label="Products" value={loadingProducts ? "..." : allDirectoryProducts.length} sub="manual + module products" accent="pricing" />
@@ -1345,313 +1472,88 @@ export default function PricingCalculator() {
         <StatCard icon={Calculator} label="Priced" value={loadingProducts ? "..." : stats.productsWithPricing} sub="cost + retail price" accent="sourdough" />
       </section>
 
-      <section className="toolGrid compactToolGrid">
-        {sectionCards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <button
-              className="toolCard compactToolCard clickableToolCard"
-              key={card.title}
-              type="button"
-              onClick={() => scrollToSection(card.ref)}
-            >
-              <Icon size={22} />
-              <h3>{card.title}</h3>
-              <p>{card.description}</p>
-            </button>
-          );
-        })}
-      </section>
-
-      <section className="workspacePanel compactPanel scrollAnchor" ref={directoryRef}>
-        <div className="workspaceHeader compactPanelHeader">
-          <div>
-            <p className="eyebrow">Directory</p>
-            <h3>Product Directory</h3>
-          </div>
-
-          <div className="formActions compactActions">
-            <button className="secondaryButton compactButton" type="button" onClick={loadProducts}>Refresh</button>
-            <button className="secondaryButton compactButton" type="button" onClick={loadSampleProduct}><Package size={15} />Load Sample</button>
-            <button className="primaryButton compactPrimary" type="button" onClick={startNewProduct}><Plus size={15} />New Product</button>
-          </div>
-        </div>
-
-        <div className="customersFilterPanel">
-          <div className="searchBox compactSearch customersSearchBox">
-            <Search size={17} />
-            <input
-              type="search"
-              placeholder="Search products, variants, SKU, category, notes, or description"
-              value={queryText}
-              onChange={(event) => setQueryText(event.target.value)}
+      <div ref={directoryRef} className="scrollAnchor">
+        <WorkspacePanel
+          eyebrow="Directory"
+          title="Product Directory"
+          description={`${filteredProducts.length} visible products`}
+          className="pricingDirectoryPanel"
+          actions={[
+            {
+              label: "Refresh",
+              variant: "secondary",
+              onClick: loadProducts
+            },
+            {
+              label: "Load Sample",
+              icon: Package,
+              variant: "secondary",
+              onClick: loadSampleProduct
+            },
+            {
+              label: "New Product",
+              icon: Plus,
+              onClick: startNewProduct
+            }
+          ]}
+          toolbar={
+            <FilterBar
+              searchValue={queryText}
+              onSearchChange={setQueryText}
+              searchPlaceholder="Search products, variants, SKU, category, notes, or description"
+              filters={[
+                {
+                  label: "Category",
+                  value: categoryFilter,
+                  onChange: setCategoryFilter,
+                  options: ["All categories", ...categories]
+                },
+                {
+                  label: "Status",
+                  value: statusFilter,
+                  onChange: setStatusFilter,
+                  options: ["All statuses", ...productStatuses]
+                }
+              ]}
             />
-          </div>
-
-          <label>
-            Category
-            <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
-              <option>All categories</option>
-              {categories.map((category) => <option key={category}>{category}</option>)}
-            </select>
-          </label>
-
-          <label>
-            Status
-            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-              <option>All statuses</option>
-              {productStatuses.map((status) => <option key={status}>{status}</option>)}
-            </select>
-          </label>
-        </div>
-
-        <div
-          className="productDirectoryInlineTable"
-          style={{
-            overflowX: "auto",
-            border: "1px solid var(--border)",
-            borderRadius: "14px",
-            background: "#ffffff"
-          }}
+          }
         >
-          <div
-            className="productDirectoryInlineHeader"
-            style={{
-              display: "grid",
-              gridTemplateColumns: productDirectoryGridColumns,
-              minWidth: "1180px",
-              alignItems: "center",
-              columnGap: "14px",
-              padding: "12px 14px",
-              background: "#fbfaf6",
-              borderBottom: "1px solid var(--border)",
-              color: "var(--muted)",
-              fontSize: "0.72rem",
-              fontWeight: 900,
-              letterSpacing: "0.075em",
-              textTransform: "uppercase"
-            }}
-          >
-            <span>Photo</span>
-            <span>Product</span>
-            <span>Variant</span>
-            <span>Category</span>
-            <span>Retail</span>
-            <span>Wholesale</span>
-            <span>Cost</span>
-            <span>Margin</span>
-            <span style={{ textAlign: "right" }}>Actions</span>
-          </div>
-
           {filteredProducts.length ? (
-            filteredProducts.map((product) => {
-              const directoryVariantId =
-                directoryVariantSelections[product.id] ||
-                product.selectedVariantId ||
-                product.generatedVariants?.[0]?.id ||
-                "";
-              const productForCalc = applyVariantToProduct(product, directoryVariantId);
-              const calc = calculateProduct(productForCalc);
-
-              return (
-                <div
-                  className="productDirectoryInlineRow"
-                  key={product.id}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: productDirectoryGridColumns,
-                    minWidth: "1180px",
-                    minHeight: "78px",
-                    alignItems: "center",
-                    columnGap: "14px",
-                    padding: "10px 14px",
-                    borderBottom: "1px solid var(--border)"
-                  }}
-                >
-                  <span
-                    className="pricingImageCell"
-                    style={{ display: "flex", alignItems: "center", justifyContent: "flex-start" }}
-                  >
-                    {product.imageUrl ? (
-                      <button
-                        className="productDirectoryImageButton"
-                        type="button"
-                        onClick={() =>
-                          setZoomedProductImage({
-                            url: product.imageUrl,
-                            name: product.name || "Product image"
-                          })
-                        }
-                        aria-label={`View ${product.name || "product"} image`}
-                        style={{
-                          width: "58px",
-                          height: "58px",
-                          padding: 0,
-                          borderRadius: "14px",
-                          overflow: "hidden",
-                          border: "1px solid var(--border)",
-                          background: "#fbfaf6",
-                          cursor: "zoom-in"
-                        }}
-                      >
-                        <img
-                          src={product.imageUrl}
-                          alt={`${product.name || "Product"} product`}
-                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                        />
-                      </button>
-                    ) : (
-                      <span
-                        className="pricingImagePlaceholder"
-                        style={{
-                          width: "58px",
-                          height: "58px",
-                          borderRadius: "14px",
-                          border: "1px solid var(--border)",
-                          background: "#fbfaf6",
-                          display: "grid",
-                          placeItems: "center"
-                        }}
-                      >
-                        <Image size={20} />
-                      </span>
-                    )}
-                  </span>
-
-                  <span className="pricingProductCell" style={{ display: "grid", gap: "3px", minWidth: 0 }}>
-                    <button
-                      className="savedItemLink"
-                      type="button"
-                      onClick={() => loadProduct(product, { variantId: directoryVariantId })}
-                      style={{
-                        maxWidth: "100%",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap"
-                      }}
-                    >
-                      {product.name || "Untitled Product"}
-                    </button>
-                    <small>
-                      {productSourceLabel(product)}
-                      {product.sku ? ` • ${product.sku}` : ""}
-                    </small>
-                  </span>
-
-                  <span className="pricingDirectoryVariantCell" style={{ minWidth: 0 }}>
-                    {product.generatedVariants?.length ? (
-                      <select
-                        className="pricingDirectoryVariantSelect"
-                        value={directoryVariantId}
-                        onChange={(event) => changeDirectoryVariant(product.id, event.target.value)}
-                      >
-                        {product.generatedVariants.map((variant) => (
-                          <option key={variant.id} value={variant.id}>
-                            {variant.name}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <span className="mutedText">Single unit</span>
-                    )}
-                  </span>
-
-                  <span>{product.category || "Other"}</span>
-                  <span className="pricingMetric" style={{ whiteSpace: "nowrap" }}>{money(productForCalc.retailPrice)}</span>
-                  <span className="pricingMetric" style={{ whiteSpace: "nowrap" }}>{money(productForCalc.wholesalePrice)}</span>
-                  <span className="pricingMetric" style={{ whiteSpace: "nowrap" }}>{money(calc.costPerUnit)}</span>
-
-                  <span className="pricingMetric pricingPositive" style={{ whiteSpace: "nowrap" }}>
-                    {percent(calc.retailMargin)}
-                    <small style={{ display: "block", marginTop: "2px" }}>{money(calc.retailProfitPerUnit)} / unit</small>
-                  </span>
-
-                  <span
-                    className="pricingDirectoryActions"
-                    style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "8px" }}
-                  >
-                    {!product.isGeneratedProduct ? (
-                      <button
-                        className="iconButton danger"
-                        type="button"
-                        onClick={() => removeProduct(product.id)}
-                        aria-label="Delete product"
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    ) : null}
-                    <button
-                      className="iconButton"
-                      type="button"
-                      onClick={() => toggleProductExpanded(product.id)}
-                      aria-label="Toggle product details"
-                    >
-                      {expandedProductIds[product.id] ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-                    </button>
-                  </span>
-
-                  {expandedProductIds[product.id] ? (
-                    <div
-                      className="pricingExpandedDetails"
-                      style={{ gridColumn: "1 / -1", marginTop: "10px" }}
-                    >
-                      <div>
-                        <strong>Source</strong>
-                        <span>{productSourceLabel(product)}</span>
-                      </div>
-                      <div>
-                        <strong>Status</strong>
-                        <span>{product.status || "Active"}</span>
-                      </div>
-                      <div>
-                        <strong>Updated</strong>
-                        <span>{formatShortDate(product.updatedAt)}</span>
-                      </div>
-                      <div>
-                        <strong>Unit</strong>
-                        <span>{productForCalc.unitLabel || "unit"}</span>
-                      </div>
-                      <div className="pricingExpandedWide">
-                        <strong>Notes</strong>
-                        <span>{product.notes || product.description || "No notes saved."}</span>
-                      </div>
-                      {product.isGeneratedProduct ? (
-                        <div className="pricingExpandedWide">
-                          <strong>Linked Item</strong>
-                          <span>
-                            This product is managed in {productSourceLabel(product)}. Saving edits here updates the linked package variant.
-                          </span>
-                        </div>
-                      ) : null}
-                      {product.generatedVariants?.length ? (
-                        <div className="pricingExpandedWide pricingVariantList">
-                          <strong>Variant Sizes</strong>
-                          {product.generatedVariants.map((variant) => (
-                            <button
-                              className="pricingVariantRow savedItemLink"
-                              type="button"
-                              key={variant.id}
-                              onClick={() => loadProduct(product, { variantId: variant.id })}
-                            >
-                              <span>{variant.name}</span>
-                              <span>{formatPackageSize(variant.size, variant.unit)}</span>
-                              <span>{money(variant.ingredientCost)}</span>
-                            </button>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </div>
-              );
-            })
+            <RecordList
+              records={filteredProducts}
+              selectedRecordId={selectedProductId}
+              onRecordClick={(product) =>
+                loadProduct(product, {
+                  variantId: getDirectoryVariantId(product, directoryVariantSelections)
+                })
+              }
+              getTitle={(product) => product.name || "Untitled Product"}
+              getSubtitle={(product) =>
+                [
+                  productSourceLabel(product),
+                  product.category || "Other",
+                  product.sku ? `SKU: ${product.sku}` : "No SKU"
+                ]
+                  .filter(Boolean)
+                  .join(" • ")
+              }
+              getMeta={getProductRecordMeta}
+              renderStatus={renderProductStatus}
+              renderActions={(product) => <ActionMenu items={getProductActions(product)} />}
+            />
           ) : (
-            <div className="placeholderBox compactPlaceholder">
-              {loadingProducts ? "Loading products..." : "No products found. Add a product or load the sample to get started."}
-            </div>
+            <EmptyState
+              icon={Package}
+              title={loadingProducts ? "Loading products" : "No products found"}
+              message={
+                loadingProducts
+                  ? "Product records are loading."
+                  : "Add a product or load the sample to get started."
+              }
+            />
           )}
-        </div>
-      </section>
+        </WorkspacePanel>
+      </div>
 
       <section className="spiceWorkspace compactWorkspace">
         <div className="workspacePanel compactPanel scrollAnchor" ref={detailsRef}>
@@ -1947,6 +1849,25 @@ export default function PricingCalculator() {
           </div>
         </div>
       ) : null}
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Delete Product?"
+        message={`Delete ${deleteTarget?.name || "this product"}? This cannot be undone.`}
+        confirmLabel="Delete"
+        confirmVariant="danger"
+        cancelLabel="Cancel"
+        onConfirm={confirmRemoveProduct}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      <Toast
+        open={Boolean(statusMessage)}
+        variant="success"
+        title="Products & Pricing"
+        message={statusMessage}
+        onClose={() => setStatusMessage("")}
+      />
 
       <ModuleGuideModal
         isOpen={showGuide}
