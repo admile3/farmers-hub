@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Cow,
+  Beef,
   CalendarDays,
   CircleHelp,
   DollarSign,
