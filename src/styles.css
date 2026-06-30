@@ -5298,3 +5298,31 @@ tr:last-child td {
     gap: 0.35rem;
   }
 }
+/* ==========================
+   RecordList Selection Polish
+========================== */
+
+.farmhubRecordList.multiSelect .farmhubRecordItem {
+  grid-template-columns: 28px 1fr;
+  column-gap: 0.65rem;
+}
+
+.farmhubRecordItem.selected {
+  border: 2px solid var(--farm-green);
+  border-left-width: 6px;
+  background: rgba(62, 108, 47, 0.1);
+  box-shadow: 0 0 0 1px rgba(62, 108, 47, 0.08);
+}
+
+.farmhubRecordCheckbox.checked {
+  border-color: var(--farm-green);
+  background: var(--farm-green);
+  color: #ffffff;
+}
+
+.farmhubRecordCheckbox.checked::before {
+  content: "✓";
+  font-size: 0.82rem;
+  font-weight: 900;
+  line-height: 1;
+}
