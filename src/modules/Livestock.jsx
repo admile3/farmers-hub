@@ -1125,8 +1125,8 @@ export default function ButcherBoard() {
             records={readySources}
             getRecordId={(source) => `${source.sourceType}:${source.id}`}
             multiSelect
-selectedRecordIds={selectedSourceIds}
-onSelectionChange={setSelectedSourceIds}
+            selectedRecordIds={selectedSourceIds}
+            onSelectionChange={setSelectedSourceIds}
             getTitle={getSourceName}
             getSubtitle={(source) =>
               `${source.species || "Animal"} • ${source.count || 1} ${
@@ -1140,7 +1140,7 @@ onSelectionChange={setSelectedSourceIds}
             renderStatus={(source) => (
               <StatusPill
                 label="Ready"
-variant="success"
+                variant="success"
               />
             )}
           />
@@ -1163,6 +1163,13 @@ variant="success"
       <WorkspacePanel
         eyebrow="Directory"
         title="Processing Batches"
+        actions={[
+          {
+            label: "Manual Batch",
+            icon: Plus,
+            onClick: startManualBatch
+          }
+        ]}
         toolbar={
           <FilterBar
             searchValue={batchSearch}
@@ -1174,13 +1181,6 @@ variant="success"
                 value: statusFilter,
                 onChange: setStatusFilter,
                 options: ["All", ...processingStatusOptions]
-              }
-            ]}
-            actions={[
-              {
-                label: "Manual Batch",
-                icon: Plus,
-                onClick: startManualBatch
               }
             ]}
           />
@@ -1234,7 +1234,7 @@ variant="success"
           }
         ]}
       >
-        <div className="button-row" style={{ justifyContent: "flex-end", marginBottom: "12px" }}>
+        <div className="butcherBoardEditorSaveRow">
           <SaveButton
             dirty={dirty || (!batchForm.id && Boolean(batchForm.name))}
             saving={savingBatch}
