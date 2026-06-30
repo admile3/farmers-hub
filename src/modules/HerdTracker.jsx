@@ -1451,7 +1451,7 @@ export default function HerdTracker() {
                 </button>
 
                 <SaveButton
-                  dirty={animalDirty || !selectedAnimalId}
+                  dirty={animalDirty}
                   saving={animalSaving}
                   saved={animalSaved}
                   error={animalSaveError}
@@ -1647,7 +1647,7 @@ export default function HerdTracker() {
                 </button>
 
                 <SaveButton
-                  dirty={groupDirty || !selectedGroupId}
+                  dirty={groupDirty}
                   saving={groupSaving}
                   saved={groupSaved}
                   error={groupSaveError}
