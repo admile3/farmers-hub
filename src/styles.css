@@ -6645,3 +6645,174 @@ tr:last-child td {
     grid-template-columns: 1fr;
   }
 }
+/* Spice Kitchen Recipe Builder polish */
+.spiceKitchenPanel {
+  min-width: 0;
+}
+
+.spiceKitchenPanel .farmhubWorkspaceHeader {
+  margin-bottom: 0.35rem !important;
+}
+
+.spiceBuilderPanel form {
+  display: grid;
+  gap: 1rem;
+}
+
+.spiceBuilderPanel .compactFormGrid {
+  grid-template-columns: minmax(0, 1.15fr) minmax(220px, 0.85fr);
+  gap: 0.85rem 1rem;
+  align-items: end;
+}
+
+.spiceBuilderPanel .compactFormGrid textarea {
+  min-height: 74px;
+}
+
+.spiceBuilderPanel .recipeLines.compactRecipeLines {
+  display: grid;
+  gap: 0.55rem;
+  padding-top: 0.1rem;
+}
+
+.spiceBuilderPanel .recipeLineHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0.1rem 0 0.15rem;
+}
+
+.spiceBuilderPanel .recipeLineHeader h4 {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
+.spiceBuilderPanel .recipeLine.compactRecipeLine {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(90px, 170px) 54px;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.spiceBuilderPanel .recipeLineColumnHeader {
+  padding: 0 0.15rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.spiceBuilderPanel .recipeLine.compactRecipeLine input,
+.spiceBuilderPanel .recipeLine.compactRecipeLine select {
+  min-height: 42px;
+}
+
+.spiceBuilderPanel .recipeLine.compactRecipeLine .iconButton {
+  width: 42px;
+  height: 42px;
+  justify-self: end;
+}
+
+.spiceBuilderPanel .productDirectoryPanel {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.15rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fffdf8;
+}
+
+.spiceBuilderPanel .checkboxLine {
+  display: flex !important;
+  grid-template-columns: none !important;
+  align-items: center;
+  gap: 0.55rem;
+  width: fit-content;
+  font-size: 0.9rem;
+  font-weight: 950;
+}
+
+.spiceBuilderPanel .checkboxLine input[type="checkbox"] {
+  width: 18px !important;
+  min-width: 18px !important;
+  height: 18px !important;
+  min-height: 18px !important;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--spice);
+}
+
+.spiceBuilderPanel .productDirectoryPanel .helperText {
+  max-width: 860px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.spiceBuilderPanel .productPackageBuilder {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.35rem;
+}
+
+.spiceBuilderPanel .productPackageRow {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 110px 110px 130px 48px;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.spiceBuilderPanel .productPackageHeader {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.spiceBuilderPanel .formActions.compactActions {
+  margin-top: -0.1rem;
+  justify-content: flex-start;
+  gap: 0.65rem;
+}
+
+.spiceBuilderPanel .formActions.compactActions .primaryButton,
+.spiceBuilderPanel .formActions.compactActions .secondaryButton {
+  min-height: 40px;
+}
+
+@media (max-width: 900px) {
+  .spiceBuilderPanel .compactFormGrid,
+  .spiceBuilderPanel .recipeLine.compactRecipeLine,
+  .spiceBuilderPanel .productPackageRow {
+    grid-template-columns: 1fr;
+  }
+
+  .spiceBuilderPanel .recipeLineColumnHeader,
+  .spiceBuilderPanel .productPackageHeader {
+    display: none !important;
+  }
+
+  .spiceBuilderPanel .recipeLine.compactRecipeLine,
+  .spiceBuilderPanel .productPackageRow {
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: #ffffff;
+  }
+
+  .spiceBuilderPanel .recipeLine.compactRecipeLine .iconButton {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .spiceBuilderPanel .formActions.compactActions,
+  .spiceBuilderPanel .formActions.compactActions button {
+    width: 100%;
+  }
+}
