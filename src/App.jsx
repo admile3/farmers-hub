@@ -46,7 +46,7 @@ import Customers from "./modules/Customers.jsx";
 import Orders from "./modules/Orders.jsx";
 import Sales from "./modules/Sales.jsx";
 import Inventory from "./modules/Inventory.jsx";
-import Livestock from "./modules/Livestock.jsx";
+import Livestock from "./modules/butcherboard.jsx";
 import HerdTracker from "./modules/HerdTracker.jsx";
 import PlantingScheduler from "./modules/PlantingScheduler.jsx";
 import ThermalPrinter from "./modules/ThermalPrinter.jsx";
@@ -74,7 +74,7 @@ const modules = [
     title: "Butcher Board",
     description:
       "Track animal batches, feed costs, processing yields, finished cuts, and meat inventory.",
-    path: "/livestock",
+    path: "/butcherboard",
     icon: Beef,
     accent: "livestock"
   },
@@ -1378,7 +1378,7 @@ export default function App() {
         <Route path="/sales" element={<AccessGate><Sales /></AccessGate>} />
         <Route path="/inventory" element={<AccessGate><Inventory /></AccessGate>} />
         <Route path="/herd-tracker" element={<AccessGate><HerdTracker /></AccessGate>} />
-        <Route path="/livestock" element={<AccessGate><Livestock /></AccessGate>} />
+        <Route path="/butcherboard" element={<AccessGate><Livestock /></AccessGate>} />
         <Route path="/thermal-printer" element={<AccessGate><ThermalPrinter /></AccessGate>} />
         <Route path="/design-system-preview" element={<AccessGate><DesignSystemPreview /></AccessGate>} />
         <Route path="*" element={<NotFound />} />
