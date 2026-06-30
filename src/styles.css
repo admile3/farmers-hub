@@ -5574,3 +5574,66 @@ tr:last-child td {
     grid-template-columns: 1fr;
   }
 }
+/* ==========================
+   Butcher Board Editor Compact Grid
+========================== */
+
+.butcherBoardModule .butcherBoardEditorPanel .butcherBoardEditorGrid {
+  display: grid !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  gap: 0.55rem 0.65rem !important;
+  align-items: end;
+}
+
+.butcherBoardModule .butcherBoardEditorPanel .butcherBoardEditorGrid > * {
+  min-width: 0;
+}
+
+.butcherBoardModule .butcherBoardEditorPanel .butcherBoardEditorGrid > :nth-child(1),
+.butcherBoardModule .butcherBoardEditorPanel .butcherBoardEditorGrid > :nth-child(2) {
+  grid-column: span 2;
+}
+
+.butcherBoardModule .butcherBoardEditorPanel .butcherBoardEditorGrid > :nth-child(5),
+.butcherBoardModule .butcherBoardEditorPanel .butcherBoardEditorGrid > :nth-child(13) {
+  grid-column: span 2;
+}
+
+.butcherBoardModule .butcherBoardEditorPanel .butcherBoardEditorGrid > :nth-child(14) {
+  grid-column: 1 / -1;
+}
+
+.butcherBoardModule .butcherBoardEditorPanel .butcherBoardEditorGrid textarea {
+  min-height: 64px;
+}
+
+.butcherBoardModule .butcherBoardEditorPanel .placeholderBox.compactPlaceholder {
+  margin-top: 0.65rem !important;
+}
+
+.butcherBoardModule .butcherBoardEditorPanel .livestockYieldGrid {
+  margin-top: 0.7rem !important;
+}
+
+@media (max-width: 1200px) {
+  .butcherBoardModule .butcherBoardEditorPanel .butcherBoardEditorGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .butcherBoardModule .butcherBoardEditorPanel .butcherBoardEditorGrid > :nth-child(1),
+  .butcherBoardModule .butcherBoardEditorPanel .butcherBoardEditorGrid > :nth-child(2),
+  .butcherBoardModule .butcherBoardEditorPanel .butcherBoardEditorGrid > :nth-child(5),
+  .butcherBoardModule .butcherBoardEditorPanel .butcherBoardEditorGrid > :nth-child(13) {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 760px) {
+  .butcherBoardModule .butcherBoardEditorPanel .butcherBoardEditorGrid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .butcherBoardModule .butcherBoardEditorPanel .butcherBoardEditorGrid > * {
+    grid-column: 1 / -1 !important;
+  }
+}
