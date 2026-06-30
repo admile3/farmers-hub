@@ -5637,3 +5637,147 @@ tr:last-child td {
     grid-column: 1 / -1 !important;
   }
 }
+/* Inventory shared-component layout refinements */
+.inventorySharedInsightGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.inventorySharedInsightGrid > * {
+  min-width: 0;
+}
+
+.inventorySharedInsightGrid .workspacePanel,
+.inventorySharedInsightGrid .recordList,
+.inventorySharedInsightGrid .emptyState {
+  height: 100%;
+}
+
+.inventoryDirectoryTableShell {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.inventoryDirectoryTableHeader,
+.inventoryDirectoryTableRow {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.6fr) minmax(120px, 0.9fr) minmax(90px, 0.7fr) minmax(90px, 0.7fr) minmax(110px, 0.8fr) minmax(130px, 0.9fr) minmax(120px, 0.9fr) minmax(130px, 0.9fr) minmax(95px, 0.7fr) 64px;
+  gap: 0.75rem;
+  align-items: center;
+  min-width: 1120px;
+}
+
+.inventoryDirectoryTableHeader {
+  padding: 0.75rem 0.9rem;
+  border-radius: 14px;
+  background: rgba(45, 70, 48, 0.045);
+  color: var(--mutedText, #5f6b5f);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.inventoryDirectoryTableRows {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.55rem;
+}
+
+.inventoryDirectoryTableRow {
+  width: 100%;
+  padding: 0.9rem;
+  border: 1px solid rgba(45, 70, 48, 0.14);
+  border-radius: 16px;
+  background: var(--panelBackground, #fffdf8);
+  box-shadow: 0 8px 22px rgba(27, 41, 27, 0.04);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.inventoryDirectoryTableRow:hover,
+.inventoryDirectoryTableRow:focus-visible,
+.inventoryDirectoryTableRow.isSelected {
+  border-color: rgba(45, 94, 53, 0.36);
+  box-shadow: 0 12px 26px rgba(27, 41, 27, 0.08);
+  outline: none;
+}
+
+.inventoryDirectoryTableRow > div {
+  min-width: 0;
+  color: var(--bodyText, #273227);
+  font-size: 0.88rem;
+  line-height: 1.25;
+}
+
+.inventoryDirectoryTableRow strong {
+  display: block;
+  font-weight: 800;
+}
+
+.inventoryDirectoryTableRow span {
+  display: block;
+  color: var(--mutedText, #667066);
+  font-size: 0.78rem;
+  margin-top: 0.15rem;
+}
+
+.inventoryDirectoryItemCell strong {
+  font-size: 0.95rem;
+}
+
+.inventoryDirectoryBestByCell span {
+  color: var(--warningText, #b16518);
+}
+
+.inventoryDirectoryActionsCell {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 1120px) {
+  .inventorySharedInsightGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .inventoryDirectoryTableShell {
+    overflow-x: visible;
+  }
+
+  .inventoryDirectoryTableHeader {
+    display: none;
+  }
+
+  .inventoryDirectoryTableRows {
+    gap: 0.75rem;
+  }
+
+  .inventoryDirectoryTableRow {
+    display: grid;
+    grid-template-columns: 1fr;
+    min-width: 0;
+    gap: 0.65rem;
+    padding: 0.95rem;
+  }
+
+  .inventoryDirectoryTableRow > div:not(.inventoryDirectoryItemCell):not(.inventoryDirectoryActionsCell)::before {
+    content: attr(data-label);
+    display: block;
+    color: var(--mutedText, #667066);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.1rem;
+    text-transform: uppercase;
+  }
+
+  .inventoryDirectoryActionsCell {
+    justify-content: flex-start;
+  }
+}
