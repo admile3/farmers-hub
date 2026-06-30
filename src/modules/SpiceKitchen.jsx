@@ -21,9 +21,19 @@ import {
 } from "lucide-react";
 import { useAuth } from "../AuthContext.jsx";
 import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
-import StatCard from "../components/StatCard.jsx";
+import ActionMenu from "../components/ActionMenu.jsx";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import EmptyState from "../components/EmptyState.jsx";
+import FilterBar from "../components/FilterBar.jsx";
+import FormField from "../components/FormField.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
+import ModuleHero from "../components/ModuleHero.jsx";
+import RecordList from "../components/RecordList.jsx";
 import SpiceKitchenGuideContent from "../components/SpiceKitchenGuideContent.jsx";
+import StatCard from "../components/StatCard.jsx";
+import StatusPill from "../components/StatusPill.jsx";
+import Toast from "../components/Toast.jsx";
+import WorkspacePanel from "../components/WorkspacePanel.jsx";
 import { addQuantityToMatchedInventoryItem } from "../services/inventoryService.js";
 import {
   createSpiceIngredient,
@@ -998,65 +1008,57 @@ export default function SpiceKitchen() {
   if (!user) {
     return (
       <div className="modulePage spicePage compactSpicePage">
-        <section className="farmModuleHero spiceKitchenHero">
-          <div className="farmModuleHeroText">
-            <p className="eyebrow">Spice Kitchen</p>
-            <h2>Sign in to build and save spice blends.</h2>
-            <p>
-              Your pantry, recipes, batch calculations, and production notes will be
-              saved to your Farmers Hub account.
-            </p>
-          </div>
-
-          <div className="farmModuleHeroActions">
-            <button
-              className="primaryButton compactPrimary farmHeroAction"
-              type="button"
-              onClick={loginWithGoogle}
-            >
-              Sign in with Google
-            </button>
-          </div>
-        </section>
+        <ModuleHero
+          eyebrow="Spice Kitchen"
+          accent="spice"
+          icon={Beaker}
+          title="Sign in to build and save spice blends."
+          description="Your pantry, recipes, batch calculations, and production notes will be saved to your Farmers Hub account."
+          actions={[
+            {
+              label: "Sign in with Google",
+              onClick: loginWithGoogle
+            }
+          ]}
+        />
       </div>
     );
   }
 
   return (
     <div className="modulePage spicePage compactSpicePage">
-      <section className="farmModuleHero spiceKitchenHero moduleHeroWithActions">
-        <div className="farmModuleHeroText">
-          <p className="eyebrow">Spice Kitchen</p>
-          <h2>Build, scale, and organize seasoning recipes.</h2>
-          <p>
-            Manage your ingredient pantry, create recipes by parts, quick-add
-            ingredients while building a recipe, and calculate exact batch weights.
-          </p>
-        </div>
-
-        <div className="farmModuleHeroActions">
-          <button
-            className="secondaryButton compactButton moduleGuideButton"
-            type="button"
-            onClick={() => setShowGuide(true)}
-          >
-            <CircleHelp size={15} />
-            Guide
-          </button>
-        </div>
-      </section>
+      <ModuleHero
+        eyebrow="Spice Kitchen"
+        accent="spice"
+        icon={Beaker}
+        title="Build, scale, and organize seasoning recipes."
+        description="Manage your ingredient pantry, create recipes by parts, quick-add ingredients while building a recipe, and calculate exact batch weights."
+        actions={[
+          {
+            label: "Guide",
+            icon: CircleHelp,
+            variant: "secondary",
+            onClick: () => setShowGuide(true)
+          }
+        ]}
+      />
 
       {statusMessage ? (
-        <div className={`floatingStatus ${statusType}`}>
-          <AlertCircle size={18} />
-          <span>{statusMessage}</span>
-          <button onClick={() => setStatusMessage("")}>
-            <X size={16} />
-          </button>
-        </div>
+        <Toast
+          type={statusType}
+          title={statusType === "error" ? "Spice Kitchen needs attention" : "Spice Kitchen"}
+          message={statusMessage}
+          onClose={() => setStatusMessage("")}
+        />
       ) : null}
 
-      {loading ? <div className="floatingStatus info">Loading Spice Kitchen...</div> : null}
+      {loading ? (
+        <Toast
+          type="info"
+          title="Loading Spice Kitchen"
+          message="Loading ingredients and recipes..."
+        />
+      ) : null}
 
       <section className="hubStatGrid spiceStatGrid">
         <StatCard
@@ -1112,22 +1114,20 @@ export default function SpiceKitchen() {
       </section>
 
       <section className="spiceKitchenFlowGrid compactWorkspace">
-        <div className="workspacePanel compactPanel scrollAnchor" ref={pantryRef}>
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Pantry</p>
-              <h3>Ingredient Pantry</h3>
-            </div>
-
-            <div className="searchBox compactSearch">
-              <Search size={17} />
-              <input
-                value={ingredientSearch}
-                onChange={(event) => setIngredientSearch(event.target.value)}
-                placeholder="Search ingredients..."
+        <div className="scrollAnchor" ref={pantryRef}>
+          <WorkspacePanel
+            eyebrow="Pantry"
+            title="Ingredient Pantry"
+            description="Save ingredient costs, suppliers, categories, and notes."
+            className="spiceKitchenPanel spicePantryPanel"
+            toolbar={
+              <FilterBar
+                searchValue={ingredientSearch}
+                onSearchChange={setIngredientSearch}
+                searchPlaceholder="Search ingredients..."
               />
-            </div>
-          </div>
+            }
+          >
 
           <form className="formGrid compactFormGrid" onSubmit={saveIngredient}>
             <label>
@@ -1329,27 +1329,27 @@ export default function SpiceKitchen() {
               </div>
             )}
           </div>
+          </WorkspacePanel>
         </div>
 
-        <div className="workspacePanel compactPanel scrollAnchor" ref={builderRef}>
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Builder</p>
-              <h3>Recipe Builder</h3>
-            </div>
-
-            <button
-              className="secondaryButton compactButton"
-              onClick={() => {
-                markSpiceDirty();
-                setQuickAddOpen((current) => !current);
-              }}
-              type="button"
-            >
-              <Plus size={15} />
-              Quick Add Ingredient
-            </button>
-          </div>
+        <div className="scrollAnchor" ref={builderRef}>
+          <WorkspacePanel
+            eyebrow="Builder"
+            title="Recipe Builder"
+            description="Build seasoning formulas by parts using your saved pantry ingredients."
+            className="spiceKitchenPanel spiceBuilderPanel"
+            actions={[
+              {
+                label: "Quick Add Ingredient",
+                icon: Plus,
+                variant: "secondary",
+                onClick: () => {
+                  markSpiceDirty();
+                  setQuickAddOpen((current) => !current);
+                }
+              }
+            ]}
+          >
 
           {quickAddOpen ? (
             <form className="quickAddPanel compactQuickAdd" onSubmit={quickAddIngredient}>
@@ -1656,25 +1656,24 @@ export default function SpiceKitchen() {
               </button>
             </div>
           </form>
+          </WorkspacePanel>
         </div>
 
-        <div className="workspacePanel compactPanel scrollAnchor" ref={calculatorRef}>
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Batch Calculator</p>
-              <h3>Scale a Saved Recipe</h3>
-            </div>
-
-            <button
-              className="primaryButton compactPrimary"
-              type="button"
-              onClick={openInventoryModal}
-              disabled={!batchRows.length}
-            >
-              <PackageCheck size={15} />
-              Add to Inventory
-            </button>
-          </div>
+        <div className="scrollAnchor" ref={calculatorRef}>
+          <WorkspacePanel
+            eyebrow="Batch Calculator"
+            title="Scale a Saved Recipe"
+            description="Calculate exact ingredient weights, finished ounces, overage, and inventory allocation."
+            className="spiceKitchenPanel spiceCalculatorPanel"
+            actions={[
+              {
+                label: "Add to Inventory",
+                icon: PackageCheck,
+                disabled: !batchRows.length,
+                onClick: openInventoryModal
+              }
+            ]}
+          >
 
           <div className="calculatorControls compactCalculatorControls">
             <label>
@@ -1795,46 +1794,45 @@ export default function SpiceKitchen() {
               Select a saved recipe and enter a target amount to generate batch weights.
             </div>
           )}
+          </WorkspacePanel>
         </div>
 
-        <div
-          className="workspacePanel compactPanel scrollAnchor spiceLibraryPanel"
-          ref={libraryRef}
-        >
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Saved Recipes</p>
-              <h3>Recipe Library</h3>
-            </div>
+        <div className="scrollAnchor" ref={libraryRef}>
+          <WorkspacePanel
+            eyebrow="Saved Recipes"
+            title="Recipe Library"
+            description="Review saved recipes, package sizes, formula costs, and ingredient parts."
+            className="spiceKitchenPanel spiceLibraryPanel"
+            toolbar={
+              <div className="recipeLibraryHeaderTools">
+                <div className="libraryCostControl">
+                  <label>
+                    Cost For
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={libraryCostAmount}
+                      onChange={(event) => setLibraryCostAmount(event.target.value)}
+                      placeholder="1"
+                    />
+                  </label>
 
-            <div className="recipeLibraryHeaderTools">
-              <div className="libraryCostControl">
-                <label>
-                  Cost For
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={libraryCostAmount}
-                    onChange={(event) => setLibraryCostAmount(event.target.value)}
-                    placeholder="1"
-                  />
-                </label>
-
-                <label>
-                  Unit
-                  <select
-                    value={libraryCostUnit}
-                    onChange={(event) => setLibraryCostUnit(event.target.value)}
-                  >
-                    <option value="oz">oz</option>
-                    <option value="g">g</option>
-                    <option value="lb">lb</option>
-                  </select>
-                </label>
+                  <label>
+                    Unit
+                    <select
+                      value={libraryCostUnit}
+                      onChange={(event) => setLibraryCostUnit(event.target.value)}
+                    >
+                      <option value="oz">oz</option>
+                      <option value="g">g</option>
+                      <option value="lb">lb</option>
+                    </select>
+                  </label>
+                </div>
               </div>
-            </div>
-          </div>
+            }
+          >
 
           <div className="recipeLibrary compactSavedList spiceRecipeLibraryTall">
             {recipes.length ? (
@@ -2007,6 +2005,7 @@ export default function SpiceKitchen() {
               </div>
             )}
           </div>
+          </WorkspacePanel>
         </div>
       </section>
 
