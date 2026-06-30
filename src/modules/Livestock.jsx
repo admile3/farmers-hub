@@ -1124,8 +1124,9 @@ export default function ButcherBoard() {
           <RecordList
             records={readySources}
             getRecordId={(source) => `${source.sourceType}:${source.id}`}
-            selectedRecordId=""
-            onRecordClick={toggleReadySource}
+            multiSelect
+selectedRecordIds={selectedSourceIds}
+onSelectionChange={setSelectedSourceIds}
             getTitle={getSourceName}
             getSubtitle={(source) =>
               `${source.species || "Animal"} • ${source.count || 1} ${
