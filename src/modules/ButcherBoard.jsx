@@ -20,7 +20,7 @@ import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import FilterBar from "../components/FilterBar.jsx";
 import FormField from "../components/FormField.jsx";
-import LivestockGuideContent from "../components/LivestockGuideContent.jsx";
+import ButcherBoardGuideContent from "../components/ButcherBoardGuideContent.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import ModuleHero from "../components/ModuleHero.jsx";
 import RecordList from "../components/RecordList.jsx";
@@ -1645,7 +1645,7 @@ export default function ButcherBoard() {
         title="How to Use Butcher Board"
         onClose={() => setShowGuide(false)}
       >
-        <LivestockGuideContent />
+        <ButcherBoardGuideContent />
       </ModuleGuideModal>
     </div>
   );
