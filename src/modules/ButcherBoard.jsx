@@ -1023,6 +1023,7 @@ export default function ButcherBoard() {
       remainingCost,
       allocatedQuantity,
       averageCostPerUnit: getAverageCostPerUnit(batchForm),
+      overallAverageCostPerUnit: totalQuantity ? totalCost / totalQuantity : 0,
       hangingYield: getHangingYield(batchForm),
       packagedYield: getPackagedYield(batchForm)
     };
@@ -1516,12 +1517,12 @@ export default function ButcherBoard() {
           />
           <StatCard
             icon={Scale}
-            label="Avg Allocated Cost"
-            value={money(batchTotals.averageCostPerUnit)}
+            label="Overall Avg Cost"
+            value={money(batchTotals.overallAverageCostPerUnit)}
             sub={
-              batchTotals.allocatedQuantity
-                ? `across ${round(batchTotals.allocatedQuantity, 2)} units`
-                : "no average products yet"
+              batchTotals.totalQuantity
+                ? `across ${round(batchTotals.totalQuantity, 2)} units`
+                : "no products yet"
             }
             accent="inventory"
           />
