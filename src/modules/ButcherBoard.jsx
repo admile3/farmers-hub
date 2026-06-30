@@ -1011,12 +1011,18 @@ export default function ButcherBoard() {
   const batchTotals = useMemo(() => {
     const totalCost = getTotalProcessingCost(batchForm);
     const totalQuantity = getTotalCutQuantity(batchForm);
+    const manualAllocatedCost = getManualAllocatedCost(batchForm);
+    const remainingCost = Math.max(totalCost - manualAllocatedCost, 0);
+    const allocatedQuantity = getAllocatedCutQuantity(batchForm);
 
     return {
       sourceCost: getSourceCost(batchForm),
       totalCost,
       totalQuantity,
-      averageCostPerUnit: totalQuantity ? totalCost / totalQuantity : 0,
+      manualAllocatedCost,
+      remainingCost,
+      allocatedQuantity,
+      averageCostPerUnit: getAverageCostPerUnit(batchForm),
       hangingYield: getHangingYield(batchForm),
       packagedYield: getPackagedYield(batchForm)
     };
@@ -1481,31 +1487,64 @@ export default function ButcherBoard() {
           }
         ]}
       >
+        <section className="hubStatGrid butcherBoardAllocationGrid">
+          <StatCard
+            icon={DollarSign}
+            label="Total Cost"
+            value={money(batchTotals.totalCost)}
+            sub="source + processing"
+            accent="pricing"
+          />
+          <StatCard
+            icon={DollarSign}
+            label="Manual Allocated"
+            value={money(batchTotals.manualAllocatedCost)}
+            sub="fixed product costs"
+            accent="livestock"
+          />
+          <StatCard
+            icon={DollarSign}
+            label="Remaining Cost"
+            value={money(batchTotals.remainingCost)}
+            sub={
+              batchTotals.allocatedQuantity
+                ? "spread across average products"
+                : "still needs allocation"
+            }
+            accent="orders"
+          />
+          <StatCard
+            icon={Scale}
+            label="Avg Allocated Cost"
+            value={money(batchTotals.averageCostPerUnit)}
+            sub={
+              batchTotals.allocatedQuantity
+                ? `across ${round(batchTotals.allocatedQuantity, 2)} units`
+                : "no average products yet"
+            }
+            accent="inventory"
+          />
+        </section>
+
         {(batchForm.cuts || []).length ? (
-          <div className="livestockEditableList">
+          <div className="butcherBoardProductList">
             {batchForm.cuts.map((cut, index) => {
               const unitCost = getProductUnitCost(batchForm, cut);
               const allocatedCost = getProductAllocatedCost(batchForm, cut);
+              const costMode = cut.costMode || "allocated";
 
               return (
-                <div className="livestockEditableCard" key={cut.id || index}>
-                  <div className="livestockCardHeader">
-                    <strong>{cut.name || `Product ${index + 1}`}</strong>
-                    <button type="button" onClick={() => removeCutEntry(index)}>
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-
-                  <div className="formGrid compactFormGrid">
-                    <FormField label="Product Name">
+                <div className="butcherBoardProductItem" key={cut.id || index}>
+                  <div className="butcherBoardProductRow">
+                    <FormField label="Product">
                       <input
                         value={cut.name}
                         onChange={(event) => updateCutEntry(index, "name", event.target.value)}
-                        placeholder="Ground Beef"
+                        placeholder={`Product ${index + 1}`}
                       />
                     </FormField>
 
-                    <FormField label="Quantity">
+                    <FormField label="Qty">
                       <input
                         type="number"
                         min="0"
@@ -1517,7 +1556,7 @@ export default function ButcherBoard() {
                         onBlur={(event) =>
                           updateCutEntry(index, "quantity", cleanNumber(event.target.value, 2))
                         }
-                        placeholder="120"
+                        placeholder="0"
                       />
                     </FormField>
 
@@ -1534,13 +1573,13 @@ export default function ButcherBoard() {
 
                     <FormField label="Cost Mode">
                       <select
-                        value={cut.costMode || "allocated"}
+                        value={costMode}
                         onChange={(event) =>
                           updateCutEntry(index, "costMode", event.target.value)
                         }
                       >
-                        <option value="allocated">Average allocated</option>
-                        <option value="manual">Manual per unit</option>
+                        <option value="allocated">Average</option>
+                        <option value="manual">Manual</option>
                       </select>
                     </FormField>
 
@@ -1550,7 +1589,7 @@ export default function ButcherBoard() {
                         min="0"
                         step="0.01"
                         value={cut.manualCostPerUnit}
-                        disabled={(cut.costMode || "allocated") !== "manual"}
+                        disabled={costMode !== "manual"}
                         onChange={(event) =>
                           updateCutEntry(index, "manualCostPerUnit", event.target.value)
                         }
@@ -1565,7 +1604,7 @@ export default function ButcherBoard() {
                       />
                     </FormField>
 
-                    <FormField label="Retail Price">
+                    <FormField label="Retail">
                       <input
                         type="number"
                         min="0"
@@ -1581,7 +1620,7 @@ export default function ButcherBoard() {
                       />
                     </FormField>
 
-                    <FormField label="Wholesale Price">
+                    <FormField label="Wholesale">
                       <input
                         type="number"
                         min="0"
@@ -1601,13 +1640,24 @@ export default function ButcherBoard() {
                       />
                     </FormField>
 
-                    <div className="livestockCalculatedField">
+                    <div className="butcherBoardEstimatedCost">
                       <span>Estimated Cost</span>
                       <strong>{money(unitCost)}</strong>
                       <small>{money(allocatedCost)} total</small>
                     </div>
 
-                    <FormField label="Notes" fullWidth>
+                    <button
+                      className="butcherBoardDeleteProductButton"
+                      type="button"
+                      aria-label={`Delete ${cut.name || `Product ${index + 1}`}`}
+                      onClick={() => removeCutEntry(index)}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+
+                  <div className="butcherBoardProductNotesRow">
+                    <FormField label="Notes">
                       <textarea
                         value={cut.notes}
                         onChange={(event) =>
