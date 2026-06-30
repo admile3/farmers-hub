@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Beef,
-  Cow,
   CalendarDays,
   CircleHelp,
   DollarSign,
@@ -9,6 +8,7 @@ import {
   History,
   Layers,
   MapPin,
+  PawPrint,
   Plus,
   RefreshCw,
   Trash2
@@ -938,7 +938,7 @@ export default function HerdTracker() {
       <ModuleHero
         eyebrow="Herd Management"
         accent="herd"
-        icon={Cow}
+        icon={PawPrint}
         title="Track animals, groups, costs, locations, health events, and processing readiness."
         description="Use individual animal records for cattle and breeding stock, or group lots for poultry, feeder pigs, lambs, rabbits, and other batch-style livestock."
         actions={[
@@ -963,7 +963,7 @@ export default function HerdTracker() {
 
       <section className="hubStatGrid herdStatGrid">
         <StatCard
-          icon={Cow}
+          icon={PawPrint}
           label="Animals"
           value={herdStats.totalAnimals}
           sub={`${herdStats.activeAnimals} active`}
