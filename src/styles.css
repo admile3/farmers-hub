@@ -6033,3 +6033,241 @@ tr:last-child td {
     justify-content: center;
   }
 }
+/* ==========================
+   Products & Pricing shared-component layout
+   Append to src/styles.css
+========================== */
+
+.pricingPage {
+  --module-color: var(--pricing);
+  --module-soft: #f6ebd4;
+}
+
+.pricingPage .pricingStatGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.pricingPage .pricingDirectoryPanel .farmhubRecordList {
+  gap: 0.6rem;
+}
+
+.pricingPage .pricingDirectoryPanel .farmhubRecordItem,
+.pricingPage .pricingDirectoryPanel .farmhubRecordCard {
+  min-height: 74px;
+}
+
+.pricingPage .pricingRecordStatusStack {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.pricingDirectoryVariantSelect {
+  width: auto;
+  min-width: 132px;
+  min-height: 32px;
+  padding: 6px 32px 6px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.pricingPage .spiceWorkspace.compactWorkspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(360px, 0.88fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.pricingPage .compactFormGrid {
+  align-items: end;
+}
+
+.pricingPage .linkedProductNotice {
+  margin-bottom: 0.85rem;
+}
+
+.productImagePanel {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 1rem;
+  align-items: stretch;
+  margin: 0 0 1rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fbfaf6;
+}
+
+.productImagePreview {
+  width: 140px;
+  min-height: 116px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #ffffff;
+  display: grid;
+  place-items: center;
+}
+
+.productImagePreview img {
+  width: 100%;
+  height: 100%;
+  min-height: 116px;
+  object-fit: cover;
+  display: block;
+}
+
+.productImageEmptyState {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  padding: 0.8rem;
+  color: var(--muted);
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.productImageEmptyState svg {
+  color: var(--pricing);
+}
+
+.productImageActions {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.importExportText {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.hiddenFileInput {
+  display: none !important;
+}
+
+.dangerTextButton {
+  color: var(--danger) !important;
+}
+
+.pricingPage .grid.four {
+  margin-top: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.pricingPage .grid.four .workspacePanel h3 {
+  margin: 0.35rem 0 0.2rem;
+  font-size: 1.45rem;
+}
+
+.productImageZoomOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(23, 35, 21, 0.62);
+  backdrop-filter: blur(8px);
+}
+
+.productImageZoomModal {
+  position: relative;
+  width: min(760px, 100%);
+  max-height: calc(100vh - 48px);
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.24);
+}
+
+.productImageZoomModal img {
+  max-height: calc(100vh - 170px);
+  width: 100%;
+  object-fit: contain;
+  border-radius: 16px;
+  background: #fbfaf6;
+}
+
+.productImageZoomModal strong {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.productImageZoomModal .modalCloseButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+}
+
+@media (max-width: 1250px) {
+  .pricingPage .spiceWorkspace.compactWorkspace {
+    grid-template-columns: 1fr;
+  }
+
+  .pricingPage .grid.four {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .pricingPage .pricingStatGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .productImageActions {
+    display: grid;
+    justify-content: stretch;
+  }
+
+  .productImageActions .formActions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 700px) {
+  .pricingPage .pricingStatGrid,
+  .pricingPage .grid.four {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .productImagePanel {
+    grid-template-columns: 1fr;
+  }
+
+  .productImagePreview {
+    width: 100%;
+    min-height: 180px;
+  }
+
+  .productImagePreview img {
+    min-height: 180px;
+  }
+
+  .pricingPage .pricingRecordStatusStack {
+    justify-content: flex-start;
+  }
+
+  .pricingDirectoryVariantSelect {
+    width: 100%;
+  }
+}
+
+@media (max-width: 430px) {
+  .pricingPage .pricingStatGrid,
+  .pricingPage .grid.four {
+    grid-template-columns: 1fr !important;
+  }
+}
