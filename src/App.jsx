@@ -134,7 +134,7 @@ const modules = [
   },
   {
     key: "livestock",
-    title: "Livestock",
+    title: "Butcher Board",
     description:
       "Track animal batches, feed costs, processing yields, finished cuts, and meat inventory.",
     path: "/livestock",
