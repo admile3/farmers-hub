@@ -937,7 +937,7 @@ export default function HerdTracker() {
       <ModuleHero
         eyebrow="Herd Management"
         accent="herd"
-        icon={Beef}
+        icon={Cow}
         title="Track animals, groups, costs, locations, health events, and processing readiness."
         description="Use individual animal records for cattle and breeding stock, or group lots for poultry, feeder pigs, lambs, rabbits, and other batch-style livestock."
         actions={[
@@ -962,7 +962,7 @@ export default function HerdTracker() {
 
       <section className="hubStatGrid herdStatGrid">
         <StatCard
-          icon={Beef}
+          icon={Cow}
           label="Animals"
           value={herdStats.totalAnimals}
           sub={`${herdStats.activeAnimals} active`}
