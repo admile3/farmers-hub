@@ -5152,3 +5152,149 @@ tr:last-child td {
     width: 100%;
   }
 }
+/* ==========================
+   RecordList Multi-Select + Layout
+========================== */
+
+.farmhubRecordList {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.farmhubRecordItem {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: #ffffff;
+}
+
+.farmhubRecordList.multiSelect .farmhubRecordItem {
+  grid-template-columns: auto 1fr;
+}
+
+.farmhubRecordItem.clickable {
+  cursor: pointer;
+}
+
+.farmhubRecordItem.clickable:hover {
+  border-color: rgba(47, 93, 44, 0.34);
+  background: #f8faf6;
+}
+
+.farmhubRecordItem.selected {
+  border-left: 4px solid var(--farm-green);
+  background: #f8faf6;
+}
+
+.farmhubRecordMain {
+  min-width: 0;
+}
+
+.farmhubRecordTitleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.farmhubRecordTitleBlock {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.farmhubRecordTitleBlock strong {
+  color: var(--text);
+  font-size: 0.92rem;
+  font-weight: 900;
+}
+
+.farmhubRecordTitleBlock span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.farmhubRecordHeaderActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.farmhubRecordActions {
+  display: inline-flex;
+  align-items: center;
+}
+
+.farmhubRecordMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  margin-top: 0.45rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.farmhubRecordMeta b {
+  margin-right: 0.2rem;
+  color: var(--muted);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.farmhubRecordSelectCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.farmhubRecordCheckbox {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--border);
+  border-radius: 7px;
+  background: #ffffff;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.farmhubRecordCheckbox.checked {
+  border-color: var(--farm-green);
+  background: var(--farm-green);
+}
+
+.farmhubRecordListEmpty {
+  padding: 0.9rem;
+  border: 1px dashed var(--border);
+  border-radius: 15px;
+  color: var(--muted);
+  font-weight: 800;
+  background: #fbfaf6;
+}
+
+@media (max-width: 700px) {
+  .farmhubRecordTitleRow {
+    align-items: flex-start;
+  }
+
+  .farmhubRecordHeaderActions {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .farmhubRecordMeta {
+    display: grid;
+    gap: 0.35rem;
+  }
+}
