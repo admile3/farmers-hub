@@ -1378,7 +1378,7 @@ export default function App() {
         <Route path="/sales" element={<AccessGate><Sales /></AccessGate>} />
         <Route path="/inventory" element={<AccessGate><Inventory /></AccessGate>} />
         <Route path="/herd-tracker" element={<AccessGate><HerdTracker /></AccessGate>} />
-        <Route path="/butcherboard" element={<AccessGate><Livestock /></AccessGate>} />
+        <Route path="/butcherboard" element={<AccessGate><ButcherBoard /></AccessGate>} />
         <Route path="/thermal-printer" element={<AccessGate><ThermalPrinter /></AccessGate>} />
         <Route path="/design-system-preview" element={<AccessGate><DesignSystemPreview /></AccessGate>} />
         <Route path="*" element={<NotFound />} />
