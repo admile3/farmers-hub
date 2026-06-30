@@ -24,7 +24,6 @@ import LivestockGuideContent from "../components/LivestockGuideContent.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import ModuleHero from "../components/ModuleHero.jsx";
 import RecordList from "../components/RecordList.jsx";
-import SaveButton from "../components/SaveButton.jsx";
 import StatCard from "../components/StatCard.jsx";
 import StatusPill from "../components/StatusPill.jsx";
 import Toast from "../components/Toast.jsx";
@@ -1231,21 +1230,16 @@ export default function ButcherBoard() {
               setSaved(false);
               setSaveError(false);
             }
+          },
+          {
+            label: savingBatch ? "Saving..." : "Save Batch",
+            icon: PackageCheck,
+            onClick: saveBatch,
+            disabled: savingBatch,
+            className: dirty || (!batchForm.id && Boolean(batchForm.name)) ? "dirtySaveButton" : ""
           }
         ]}
       >
-        <div className="butcherBoardEditorSaveRow">
-          <SaveButton
-            dirty={dirty || (!batchForm.id && Boolean(batchForm.name))}
-            saving={savingBatch}
-            saved={saved}
-            error={saveError}
-            label="Save Batch"
-            dirtyLabel="Save Batch"
-            onClick={saveBatch}
-          />
-        </div>
-
         <div className="formGrid compactFormGrid">
           <FormField label="Batch Name" required>
             <input
