@@ -5781,3 +5781,255 @@ tr:last-child td {
     justify-content: flex-start;
   }
 }
+/* Inventory shared-component modal polish */
+.inventoryModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(28, 35, 25, 0.42);
+  backdrop-filter: blur(6px);
+}
+
+.inventoryModal,
+.inventorySharedModal {
+  width: min(1040px, 100%);
+  max-height: min(88vh, 920px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface, #fffdf8);
+  border: 1px solid rgba(45, 64, 39, 0.14);
+  border-radius: 24px;
+  box-shadow: 0 24px 80px rgba(24, 32, 22, 0.24);
+}
+
+.inventoryModalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid rgba(45, 64, 39, 0.12);
+  background: linear-gradient(180deg, rgba(248, 246, 238, 0.95), rgba(255, 253, 248, 0.95));
+}
+
+.inventoryModalHeader h3 {
+  margin: 4px 0 0;
+  font-size: clamp(1.2rem, 2vw, 1.55rem);
+  line-height: 1.15;
+}
+
+.inventoryModalHeader > button {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(45, 64, 39, 0.14);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--text, #1d261b);
+  cursor: pointer;
+}
+
+.inventoryModalHeader > button:hover {
+  background: rgba(244, 240, 228, 0.95);
+}
+
+.inventoryAddModePanel {
+  padding: 18px 24px 0;
+}
+
+.inventoryAddModeTabs {
+  display: inline-flex;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid rgba(45, 64, 39, 0.12);
+  border-radius: 999px;
+  background: rgba(244, 240, 228, 0.7);
+}
+
+.inventoryAddModeTabs button {
+  border: 0;
+  border-radius: 999px;
+  padding: 9px 15px;
+  background: transparent;
+  color: var(--muted-text, #5d6658);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.inventoryAddModeTabs button.active {
+  background: var(--inventory, #315f2f);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(49, 95, 47, 0.18);
+}
+
+.inventoryAddModeTabs button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.inventoryExistingPicker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.inventoryModalForm {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  padding: 22px 24px 24px;
+  overflow: auto;
+}
+
+.inventoryModalForm .fullSpan,
+.inventoryExistingPicker .fullSpan {
+  grid-column: 1 / -1;
+}
+
+.inventoryModalForm label,
+.inventoryExistingPicker label,
+.inventoryModalForm .formField,
+.inventoryExistingPicker .formField {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  color: var(--text, #1d261b);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+
+.inventoryModalForm input,
+.inventoryModalForm select,
+.inventoryModalForm textarea,
+.inventoryExistingPicker input,
+.inventoryExistingPicker select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid rgba(45, 64, 39, 0.16);
+  border-radius: 13px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--text, #1d261b);
+  font: inherit;
+  font-weight: 650;
+  outline: none;
+}
+
+.inventoryModalForm textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.inventoryModalForm input:focus,
+.inventoryModalForm select:focus,
+.inventoryModalForm textarea:focus,
+.inventoryExistingPicker input:focus,
+.inventoryExistingPicker select:focus {
+  border-color: rgba(49, 95, 47, 0.5);
+  box-shadow: 0 0 0 3px rgba(49, 95, 47, 0.12);
+}
+
+.inventoryModalForm .inventoryDetailGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(45, 64, 39, 0.12);
+  border-radius: 18px;
+  background: rgba(248, 246, 238, 0.72);
+}
+
+.inventoryModalForm .inventoryDetailGrid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.inventoryModalForm .inventoryDetailGrid span {
+  color: var(--muted-text, #697063);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.inventoryModalForm .inventoryDetailGrid strong {
+  color: var(--text, #1d261b);
+  font-size: 1rem;
+}
+
+.inventoryModalActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.inventoryModalActions .dangerButton {
+  margin-right: auto;
+}
+
+@media (max-width: 980px) {
+  .inventoryModalOverlay {
+    align-items: flex-end;
+    padding: 14px;
+  }
+
+  .inventoryModal,
+  .inventorySharedModal {
+    max-height: 92vh;
+    border-radius: 22px;
+  }
+
+  .inventoryModalForm {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .inventoryModalForm .inventoryDetailGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .inventoryModalOverlay {
+    padding: 8px;
+  }
+
+  .inventoryModalHeader,
+  .inventoryAddModePanel,
+  .inventoryModalForm {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .inventoryModalForm {
+    grid-template-columns: 1fr;
+    gap: 13px;
+  }
+
+  .inventoryModalActions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .inventoryModalActions .dangerButton {
+    margin-right: 0;
+  }
+
+  .inventoryModalActions button {
+    width: 100%;
+    justify-content: center;
+  }
+}
