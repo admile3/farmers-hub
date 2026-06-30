@@ -190,11 +190,30 @@ function getTotalCutQuantity(batch) {
   }, 0);
 }
 
-function getAverageCostPerUnit(batch) {
-  const quantity = getTotalCutQuantity(batch);
-  if (!quantity) return 0;
+function getManualAllocatedCost(batch) {
+  return (batch.cuts || []).reduce((sum, cut) => {
+    if ((cut.costMode || "allocated") !== "manual") return sum;
+    return sum + toNumber(cut.manualCostPerUnit) * getCutQuantity(cut);
+  }, 0);
+}
 
-  return getTotalProcessingCost(batch) / quantity;
+function getAllocatedCutQuantity(batch) {
+  return (batch.cuts || []).reduce((sum, cut) => {
+    if ((cut.costMode || "allocated") === "manual") return sum;
+    return sum + getCutQuantity(cut);
+  }, 0);
+}
+
+function getAverageCostPerUnit(batch) {
+  const remainingCost = Math.max(
+    getTotalProcessingCost(batch) - getManualAllocatedCost(batch),
+    0
+  );
+
+  const allocatedQuantity = getAllocatedCutQuantity(batch);
+  if (!allocatedQuantity) return 0;
+
+  return remainingCost / allocatedQuantity;
 }
 
 function getProductUnitCost(batch, cut) {
