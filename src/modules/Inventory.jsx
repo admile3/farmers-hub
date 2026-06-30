@@ -2,27 +2,36 @@ import { useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
   CalendarClock,
+  CircleHelp,
   DollarSign,
   Edit3,
-  Filter,
   PackageCheck,
   Plus,
   Save,
   Search,
   Trash2,
   TrendingDown,
-  CircleHelp,
   X
 } from "lucide-react";
 
-import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
+import ActionMenu from "../components/ActionMenu.jsx";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import EmptyState from "../components/EmptyState.jsx";
+import FilterBar from "../components/FilterBar.jsx";
+import FormField from "../components/FormField.jsx";
 import InventoryGuideContent from "../components/InventoryGuideContent.jsx";
+import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
+import ModuleHero from "../components/ModuleHero.jsx";
+import RecordList from "../components/RecordList.jsx";
+import StatCard from "../components/StatCard.jsx";
+import StatusPill from "../components/StatusPill.jsx";
+import Toast from "../components/Toast.jsx";
+import WorkspacePanel from "../components/WorkspacePanel.jsx";
 
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../AuthContext.jsx";
 import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
-import StatCard from "../components/StatCard.jsx";
 import {
   deleteInventoryItem,
   getInventoryItems,
@@ -467,6 +476,7 @@ function getRetailValue(item) {
   return parseInventoryNumber(item.quantityOnHand) * parseInventoryNumber(item.retailPrice);
 }
 
+
 function InventoryDetail({ label, value }) {
   if (value === undefined || value === null || value === "") return null;
 
@@ -478,13 +488,32 @@ function InventoryDetail({ label, value }) {
   );
 }
 
+function getStatusVariant(status) {
+  switch (status) {
+    case "In Stock":
+      return "success";
+    case "Low Stock":
+    case "Use/Sell Soon":
+      return "warning";
+    case "Out of Stock":
+    case "Expired":
+      return "danger";
+    case "Archived":
+      return "neutral";
+    default:
+      return "primary";
+  }
+}
+
 function ItemStatusPills({ item }) {
   return (
     <div className="inventoryStatusPillStack">
       {getItemStatusList(item).map((status) => (
-        <span className={`inventoryStatusPill ${getStatusClass(status)}`} key={status}>
-          {status}
-        </span>
+        <StatusPill
+          key={status}
+          label={status}
+          variant={getStatusVariant(status)}
+        />
       ))}
     </div>
   );
@@ -508,16 +537,24 @@ export default function Inventory() {
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
   const [locationFilter, setLocationFilter] = useState("All");
-  const [statusMessage, setStatusMessage] = useState("");
-  const [statusType, setStatusType] = useState("info");
+  const [toast, setToast] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingDirectoryProducts, setLoadingDirectoryProducts] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
 
+  function showToast(nextToast) {
+    setToast(nextToast);
+    window.setTimeout(() => setToast(null), 3000);
+  }
+
   function showStatus(message, type = "info") {
-    setStatusMessage(message);
-    setStatusType(type);
+    showToast({
+      title: type === "error" ? "Inventory needs attention" : "Inventory",
+      message,
+      variant: type === "error" ? "danger" : type
+    });
   }
 
   function markInventoryDirty() {
@@ -528,23 +565,11 @@ export default function Inventory() {
   }
 
   useEffect(() => {
-    if (!statusMessage) return undefined;
-
-    const timer = window.setTimeout(() => {
-      setStatusMessage("");
-    }, 3000);
-
-    return () => window.clearTimeout(timer);
-  }, [statusMessage]);
-
-  
-
-  useEffect(() => {
     const hidden = localStorage.getItem("hideModuleGuide_inventory") === "true";
     if (!hidden) setShowGuide(true);
   }, []);
 
-async function loadInventoryItems() {
+  async function loadInventoryItems() {
     if (!user) return;
 
     setLoading(true);
@@ -619,26 +644,10 @@ async function loadInventoryItems() {
 
   const inventorySummary = useMemo(() => {
     const activeItems = inventoryItems.filter((item) => !isArchived(item));
-
     const lowStockItems = activeItems.filter((item) => isLowStock(item));
     const outOfStockItems = activeItems.filter((item) => isOutOfStock(item));
     const useSellSoonItems = activeItems.filter((item) => isUseSellSoon(item));
     const expiredItems = activeItems.filter((item) => isExpired(item));
-
-    const totalValue = activeItems.reduce(
-      (sum, item) => sum + getInventoryValue(item),
-      0
-    );
-
-    const totalWholesaleValue = activeItems.reduce(
-      (sum, item) => sum + getWholesaleValue(item),
-      0
-    );
-
-    const totalRetailValue = activeItems.reduce(
-      (sum, item) => sum + getRetailValue(item),
-      0
-    );
 
     return {
       activeItems: activeItems.length,
@@ -646,9 +655,9 @@ async function loadInventoryItems() {
       outOfStockItems: outOfStockItems.length,
       useSellSoonItems: useSellSoonItems.length,
       expiredItems: expiredItems.length,
-      totalValue,
-      totalWholesaleValue,
-      totalRetailValue
+      totalValue: activeItems.reduce((sum, item) => sum + getInventoryValue(item), 0),
+      totalWholesaleValue: activeItems.reduce((sum, item) => sum + getWholesaleValue(item), 0),
+      totalRetailValue: activeItems.reduce((sum, item) => sum + getRetailValue(item), 0)
     };
   }, [inventoryItems]);
 
@@ -669,7 +678,6 @@ async function loadInventoryItems() {
         }
 
         if (locationFilter !== "All" && item.storageLocation !== locationFilter) return false;
-
         if (!search) return true;
 
         return (
@@ -695,9 +703,7 @@ async function loadInventoryItems() {
 
         const statusA = statusOrder(a);
         const statusB = statusOrder(b);
-
         if (statusA !== statusB) return statusA - statusB;
-
         return String(a.name || "").localeCompare(String(b.name || ""));
       });
   }, [inventoryItems, searchTerm, categoryFilter, statusFilter, locationFilter]);
@@ -708,16 +714,13 @@ async function loadInventoryItems() {
       .sort((a, b) => {
         if (isOutOfStock(a) && !isOutOfStock(b)) return -1;
         if (!isOutOfStock(a) && isOutOfStock(b)) return 1;
-
         const quantityA = parseInventoryNumber(a.quantityOnHand);
         const quantityB = parseInventoryNumber(b.quantityOnHand);
         const reorderA = parseInventoryNumber(a.reorderPoint);
         const reorderB = parseInventoryNumber(b.reorderPoint);
         const ratioA = reorderA > 0 ? quantityA / reorderA : 0;
         const ratioB = reorderB > 0 ? quantityB / reorderB : 0;
-
         if (ratioA !== ratioB) return ratioA - ratioB;
-
         return String(a.name || "").localeCompare(String(b.name || ""));
       })
       .slice(0, 6);
@@ -725,10 +728,7 @@ async function loadInventoryItems() {
 
   const useSellSoonItems = useMemo(() => {
     return inventoryItems
-      .map((item) => ({
-        ...item,
-        days: daysUntil(item.bestByDate)
-      }))
+      .map((item) => ({ ...item, days: daysUntil(item.bestByDate) }))
       .filter((item) => isUseSellSoon(item))
       .sort((a, b) => a.days - b.days)
       .slice(0, 6);
@@ -736,34 +736,23 @@ async function loadInventoryItems() {
 
   const expiredItems = useMemo(() => {
     return inventoryItems
-      .map((item) => ({
-        ...item,
-        days: daysUntil(item.bestByDate)
-      }))
+      .map((item) => ({ ...item, days: daysUntil(item.bestByDate) }))
       .filter((item) => isExpired(item))
       .sort((a, b) => a.days - b.days)
       .slice(0, 6);
   }, [inventoryItems]);
 
   const uniqueLocations = useMemo(() => {
-    return Array.from(
-      new Set(
-        inventoryItems
-          .map((item) => item.storageLocation)
-          .filter(Boolean)
-      )
-    ).sort();
+    return Array.from(new Set(inventoryItems.map((item) => item.storageLocation).filter(Boolean))).sort();
   }, [inventoryItems]);
 
   const allStorageLocationOptions = useMemo(() => {
     return Array.from(new Set([...storageLocations, ...uniqueLocations])).sort((a, b) => {
       const aBaseIndex = storageLocations.indexOf(a);
       const bBaseIndex = storageLocations.indexOf(b);
-
       if (aBaseIndex !== -1 && bBaseIndex !== -1) return aBaseIndex - bBaseIndex;
       if (aBaseIndex !== -1) return -1;
       if (bBaseIndex !== -1) return 1;
-
       return a.localeCompare(b);
     });
   }, [uniqueLocations]);
@@ -775,11 +764,9 @@ async function loadInventoryItems() {
       .filter((product) => {
         if (!product?.id) return false;
         if (!search) return true;
-
         const variantNames = Array.isArray(product.generatedVariants)
           ? product.generatedVariants.map((variant) => variant.name).join(" ")
           : "";
-
         return (
           product.name?.toLowerCase().includes(search) ||
           product.category?.toLowerCase().includes(search) ||
@@ -822,10 +809,7 @@ async function loadInventoryItems() {
     setSelectedExistingItemId("");
     setSelectedDirectoryVariantId("");
     setIsFormOpen(true);
-
-    if (user) {
-      loadDirectoryProducts();
-    }
+    if (user) loadDirectoryProducts();
   }
 
   function openEditItem(item) {
@@ -852,7 +836,6 @@ async function loadInventoryItems() {
       status: item.status || "In Stock",
       notes: item.notes || ""
     });
-
     setEditingItemId(item.id || null);
     setSelectedItem(item);
     setSelectedExistingItemId(item.productId || item.id || "");
@@ -862,12 +845,8 @@ async function loadInventoryItems() {
   }
 
   function getDirectoryVariant(product, variantId = "") {
-    const variants = Array.isArray(product?.generatedVariants)
-      ? product.generatedVariants
-      : [];
-
+    const variants = Array.isArray(product?.generatedVariants) ? product.generatedVariants : [];
     if (!variants.length) return null;
-
     return (
       variants.find((variant) => variant.id === variantId) ||
       variants.find((variant) => variant.id === product?.selectedVariantId) ||
@@ -877,14 +856,12 @@ async function loadInventoryItems() {
 
   function getExistingInventoryForDirectoryProduct(product, variant) {
     if (!product?.id) return null;
-
     return (
       inventoryItems.find((item) => {
         const productMatches = String(item.productId || "") === String(product.id || "");
         const variantMatches = variant?.id
           ? String(item.variantId || "") === String(variant.id || "")
           : true;
-
         return productMatches && variantMatches;
       }) || null
     );
@@ -909,14 +886,13 @@ async function loadInventoryItems() {
       variantName,
       quantityOnHand: "",
       unit: variantName || product.unitLabel || "each",
-      costPerUnit:
-  cleanCurrencyInput(
-    variant?.costPerUnit ||
-      product.costPerUnit ||
-      variant?.ingredientCost ||
-      product.batchIngredientCost ||
-      ""
-  ),
+      costPerUnit: cleanCurrencyInput(
+        variant?.costPerUnit ||
+          product.costPerUnit ||
+          variant?.ingredientCost ||
+          product.batchIngredientCost ||
+          ""
+      ),
       wholesalePrice: cleanCurrencyInput(variant?.wholesalePrice || product.wholesalePrice || ""),
       retailPrice: cleanCurrencyInput(variant?.retailPrice || product.retailPrice || ""),
       notes: product.notes || product.description || ""
@@ -925,7 +901,6 @@ async function loadInventoryItems() {
 
   function chooseDirectoryProduct(productId) {
     const product = directoryProducts.find((directoryProduct) => directoryProduct.id === productId);
-
     setSelectedExistingItemId(productId);
 
     if (!product) {
@@ -936,7 +911,6 @@ async function loadInventoryItems() {
 
     const variant = getDirectoryVariant(product);
     const existingInventoryItem = getExistingInventoryForDirectoryProduct(product, variant);
-
     setSelectedDirectoryVariantId(variant?.id || "");
 
     if (existingInventoryItem) {
@@ -955,11 +929,7 @@ async function loadInventoryItems() {
     if (!selectedDirectoryProduct) return;
 
     const variant = getDirectoryVariant(selectedDirectoryProduct, variantId);
-    const existingInventoryItem = getExistingInventoryForDirectoryProduct(
-      selectedDirectoryProduct,
-      variant
-    );
-
+    const existingInventoryItem = getExistingInventoryForDirectoryProduct(selectedDirectoryProduct, variant);
     setSelectedDirectoryVariantId(variant?.id || "");
 
     if (existingInventoryItem) {
@@ -976,10 +946,7 @@ async function loadInventoryItems() {
 
   function updateItemField(field, value) {
     markInventoryDirty();
-    setItemForm((current) => ({
-      ...current,
-      [field]: value
-    }));
+    setItemForm((current) => ({ ...current, [field]: value }));
   }
 
   async function saveItem(event) {
@@ -1011,9 +978,7 @@ async function loadInventoryItems() {
           ? ""
           : Math.round(parseInventoryNumber(itemForm.parLevel)),
       reorderPoint:
-        itemForm.reorderPoint === "" ||
-        itemForm.reorderPoint === null ||
-        itemForm.reorderPoint === undefined
+        itemForm.reorderPoint === "" || itemForm.reorderPoint === null || itemForm.reorderPoint === undefined
           ? ""
           : Math.round(parseInventoryNumber(itemForm.reorderPoint)),
       storageLocation: itemForm.storageLocation.trim(),
@@ -1033,8 +998,7 @@ async function loadInventoryItems() {
     setSaving(true);
 
     try {
-      const savedId = await saveInventoryItem(user.uid, cleanItem);
-
+      await saveInventoryItem(user.uid, cleanItem);
       setItemForm(blankInventoryItem);
       setEditingItemId(null);
       setSelectedItem(null);
@@ -1045,12 +1009,7 @@ async function loadInventoryItems() {
       setIsFormOpen(false);
       markSaved();
       showStatus(editingItemId ? "Inventory item updated." : "Inventory item saved.", "success");
-
       await loadInventoryItems();
-
-      if (savedId) {
-        setSelectedItem(null);
-      }
     } catch (error) {
       console.error(error);
       showStatus("Could not save inventory item.", "error");
@@ -1064,7 +1023,6 @@ async function loadInventoryItems() {
 
     const currentQuantity = Math.round(parseInventoryNumber(item.quantityOnHand));
     const nextQuantity = Math.max(0, currentQuantity + change);
-
     const updatedItem = {
       ...item,
       quantityOnHand: nextQuantity,
@@ -1074,29 +1032,27 @@ async function loadInventoryItems() {
 
     try {
       await saveInventoryItem(user.uid, updatedItem);
-await loadInventoryItems();
-markSaved();
-showStatus("Inventory quantity updated.", "success");
+      await loadInventoryItems();
+      markSaved();
+      showStatus("Inventory quantity updated.", "success");
     } catch (error) {
       console.error(error);
       showStatus("Could not adjust inventory quantity.", "error");
     }
   }
 
-  async function removeItem(itemId) {
-    if (!user || !itemId) return;
+  function requestRemoveItem(item) {
+    setDeleteTarget(item);
+  }
+
+  async function confirmRemoveItem() {
+    if (!user || !deleteTarget?.id) return;
 
     try {
-      await deleteInventoryItem(user.uid, itemId);
-
-      if (editingItemId === itemId) {
-        resetModalState();
-      }
-
-      if (selectedItem?.id === itemId) {
-        setSelectedItem(null);
-      }
-
+      await deleteInventoryItem(user.uid, deleteTarget.id);
+      if (editingItemId === deleteTarget.id) resetModalState();
+      if (selectedItem?.id === deleteTarget.id) setSelectedItem(null);
+      setDeleteTarget(null);
       markSaved();
       showStatus("Inventory item deleted.", "success");
       await loadInventoryItems();
@@ -1106,415 +1062,249 @@ showStatus("Inventory quantity updated.", "success");
     }
   }
 
+  function getItemActions(item) {
+    return [
+      {
+        label: "Edit",
+        icon: Edit3,
+        onClick: () => openEditItem(item)
+      },
+      {
+        divider: true
+      },
+      {
+        label: "Delete",
+        icon: Trash2,
+        destructive: true,
+        onClick: () => requestRemoveItem(item)
+      }
+    ];
+  }
+
+  function renderInsightItem(item, context) {
+    let detail = "";
+
+    if (context === "stock") {
+      detail = `${formatNumber(item.quantityOnHand)} ${item.unit || "each"}`;
+      if (item.reorderPoint !== "" && item.reorderPoint !== null) {
+        detail += ` • Reorder at ${formatNumber(item.reorderPoint)} ${item.unit || ""}`;
+      }
+      if (isExpired(item)) detail += " • Also expired";
+      if (isUseSellSoon(item)) detail += " • Also use/sell soon";
+    }
+
+    if (context === "soon") {
+      detail = `${formatDate(item.bestByDate)}${
+        item.days === 0
+          ? " • Today"
+          : item.days === 1
+            ? " • Tomorrow"
+            : ` • ${item.days} days`
+      }`;
+      if (isLowStock(item)) detail += " • Also low stock";
+    }
+
+    if (context === "expired") {
+      detail = `${formatDate(item.bestByDate)}${
+        Math.abs(item.days) === 1
+          ? " • Expired 1 day ago"
+          : ` • Expired ${Math.abs(item.days)} days ago`
+      }`;
+      if (isLowStock(item)) detail += " • Also low stock";
+    }
+
+    return (
+      <button
+        type="button"
+        className="inventoryMiniItem"
+        key={`${context}-${item.id}`}
+        onClick={() => openEditItem(item)}
+      >
+        <span className={`inventoryStatusDot ${getStatusClass(getStatusLabel(item))}`} />
+        <div>
+          <strong>{item.name}</strong>
+          <p>{detail}</p>
+        </div>
+      </button>
+    );
+  }
+
   if (!user) {
     return (
       <div className="modulePage inventoryModule">
-        <section className="farmModuleHero inventoryHero">
-          <div className="farmModuleHeroText">
-            <p className="eyebrow">Inventory</p>
-            <h2>Sign in to manage inventory.</h2>
-            <p>
-              Track product quantities, packaging, ingredients, storage locations,
-              reorder points, and expiring inventory from one shared module.
-            </p>
-          </div>
-
-          <div className="farmModuleHeroActions">
-            <button
-              className="primaryButton compactPrimary farmHeroAction"
-              type="button"
-              onClick={loginWithGoogle}
-            >
-              Sign in with Google
-            </button>
-          </div>
-        </section>
+        <ModuleHero
+          eyebrow="Inventory"
+          accent="inventory"
+          icon={PackageCheck}
+          title="Sign in to manage inventory."
+          description="Track product quantities, packaging, ingredients, storage locations, reorder points, and expiring inventory from one shared module."
+          actions={[
+            {
+              label: "Sign in with Google",
+              onClick: loginWithGoogle
+            }
+          ]}
+        />
       </div>
     );
   }
 
   return (
     <div className="modulePage inventoryModule">
-      {statusMessage ? (
-        <div className={`floatingStatus ${statusType}`}>
-          <AlertCircle size={18} />
-          <span>{statusMessage}</span>
-          <button type="button" onClick={() => setStatusMessage("")}>
-            <X size={16} />
-          </button>
-        </div>
+      {loading ? (
+        <Toast
+          open
+          variant="info"
+          title="Inventory"
+          message="Loading inventory..."
+          onClose={() => {}}
+        />
       ) : null}
 
-      {loading ? <div className="floatingStatus info">Loading inventory...</div> : null}
-
-      <section className="farmModuleHero inventoryHero">
-        <div className="farmModuleHeroText">
-          <p className="eyebrow">Inventory</p>
-          <h2>Track stock, storage, reorder points, and rotation.</h2>
-          <p>
-            Manage finished products, ingredients, packaging, seeds, market supplies,
-            and production inventory with clean counts and reorder visibility.
-          </p>
-        </div>
-
-        <div className="farmModuleHeroActions">
-          <button
-            className="primaryButton compactPrimary farmHeroAction"
-            type="button"
-            onClick={openNewItem}
-          >
-            <Plus size={16} />
-            Add Item
-          </button>
-
-          <button
-            className="secondaryButton compactButton farmHeroAction"
-            type="button"
-            onClick={() => setShowGuide(true)}
-          >
-            <CircleHelp size={16} />
-            Guide
-          </button>
-        </div>
-      </section>
+      <ModuleHero
+        eyebrow="Inventory"
+        accent="inventory"
+        icon={PackageCheck}
+        title="Track stock, storage, reorder points, and rotation."
+        description="Manage finished products, ingredients, packaging, seeds, market supplies, and production inventory with clean counts and reorder visibility."
+        actions={[
+          {
+            label: "Guide",
+            icon: CircleHelp,
+            variant: "secondary",
+            onClick: () => setShowGuide(true)
+          },
+          {
+            label: "Add Item",
+            icon: Plus,
+            onClick: openNewItem
+          }
+        ]}
+      />
 
       <section className="hubStatGrid inventoryStatGrid inventoryStatGridForced inventoryStatGridSeven">
-        <StatCard
-          icon={PackageCheck}
-          label="Active Items"
-          value={inventorySummary.activeItems}
-          sub="tracked inventory"
-          accent="inventory"
-        />
-
-        <StatCard
-          icon={TrendingDown}
-          label="Low Stock"
-          value={inventorySummary.lowStockItems}
-          sub="at reorder point"
-          accent="spice"
-        />
-
-        <StatCard
-          icon={CalendarClock}
-          label="Use/Sell Soon"
-          value={inventorySummary.useSellSoonItems}
-          sub="within 14 days"
-          accent="sourdough"
-        />
-
-        <StatCard
-          icon={AlertCircle}
-          label="Expired"
-          value={inventorySummary.expiredItems}
-          sub="past best by date"
-          accent="spice"
-        />
-
-        <StatCard
-          icon={DollarSign}
-          label="Inventory Value"
-          value={formatCurrency(inventorySummary.totalValue)}
-          sub="estimated cost"
-          accent="pricing"
-        />
-
-        <StatCard
-          icon={DollarSign}
-          label="Wholesale Value"
-          value={formatCurrency(inventorySummary.totalWholesaleValue)}
-          sub="potential wholesale"
-          accent="sourdough"
-        />
-
-        <StatCard
-          icon={DollarSign}
-          label="Retail Value"
-          value={formatCurrency(inventorySummary.totalRetailValue)}
-          sub="potential retail"
-          accent="market"
-        />
+        <StatCard icon={PackageCheck} label="Active Items" value={inventorySummary.activeItems} sub="tracked inventory" accent="inventory" />
+        <StatCard icon={TrendingDown} label="Low Stock" value={inventorySummary.lowStockItems} sub="at reorder point" accent="spice" />
+        <StatCard icon={CalendarClock} label="Use/Sell Soon" value={inventorySummary.useSellSoonItems} sub="within 14 days" accent="sourdough" />
+        <StatCard icon={AlertCircle} label="Expired" value={inventorySummary.expiredItems} sub="past best by date" accent="spice" />
+        <StatCard icon={DollarSign} label="Inventory Value" value={formatCurrency(inventorySummary.totalValue)} sub="estimated cost" accent="pricing" />
+        <StatCard icon={DollarSign} label="Wholesale Value" value={formatCurrency(inventorySummary.totalWholesaleValue)} sub="potential wholesale" accent="sourdough" />
+        <StatCard icon={DollarSign} label="Retail Value" value={formatCurrency(inventorySummary.totalRetailValue)} sub="potential retail" accent="market" />
       </section>
 
       <section className="inventoryInsightGrid inventoryInsightGridThree">
-        <div className="workspacePanel compactPanel inventoryInsightPanel">
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Needs Attention</p>
-              <h3>Low or Out of Stock</h3>
-            </div>
-          </div>
-
+        <WorkspacePanel eyebrow="Needs Attention" title="Low or Out of Stock" className="inventoryInsightPanel">
           <div className="inventoryMiniList">
             {lowStockItems.length ? (
-              lowStockItems.map((item) => (
-                <button
-                  type="button"
-                  className="inventoryMiniItem"
-                  key={`low-${item.id}`}
-                  onClick={() => openEditItem(item)}
-                >
-                  <span className={`inventoryStatusDot ${getStatusClass(getStatusLabel(item))}`} />
-                  <div>
-                    <strong>{item.name}</strong>
-                    <p>
-                      {formatNumber(item.quantityOnHand)} {item.unit}
-                      {item.reorderPoint !== "" && item.reorderPoint !== null
-                        ? ` • Reorder at ${formatNumber(item.reorderPoint)} ${item.unit || ""}`
-                        : ""}
-                      {isExpired(item) ? " • Also expired" : ""}
-                      {isUseSellSoon(item) ? " • Also use/sell soon" : ""}
-                    </p>
-                  </div>
-                </button>
-              ))
+              lowStockItems.map((item) => renderInsightItem(item, "stock"))
             ) : (
-              <div className="placeholderBox compactPlaceholder">
-                Nothing is currently below its reorder point.
-              </div>
+              <EmptyState icon={TrendingDown} title="Stock levels look good" message="Nothing is currently below its reorder point." />
             )}
           </div>
-        </div>
+        </WorkspacePanel>
 
-        <div className="workspacePanel compactPanel inventoryInsightPanel">
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Rotation</p>
-              <h3>Use / Sell Soon</h3>
-            </div>
-          </div>
-
+        <WorkspacePanel eyebrow="Rotation" title="Use / Sell Soon" className="inventoryInsightPanel">
           <div className="inventoryMiniList">
             {useSellSoonItems.length ? (
-              useSellSoonItems.map((item) => (
-                <button
-                  type="button"
-                  className="inventoryMiniItem"
-                  key={`use-soon-${item.id}`}
-                  onClick={() => openEditItem(item)}
-                >
-                  <span className={`inventoryStatusDot ${getStatusClass(getStatusLabel(item))}`} />
-                  <div>
-                    <strong>{item.name}</strong>
-                    <p>
-                      {formatDate(item.bestByDate)}
-                      {item.days === 0
-                        ? " • Today"
-                        : item.days === 1
-                          ? " • Tomorrow"
-                          : ` • ${item.days} days`}
-                      {isLowStock(item) ? " • Also low stock" : ""}
-                    </p>
-                  </div>
-                </button>
-              ))
+              useSellSoonItems.map((item) => renderInsightItem(item, "soon"))
             ) : (
-              <div className="placeholderBox compactPlaceholder">
-                No inventory needs to be used or sold within the next 14 days.
-              </div>
+              <EmptyState icon={CalendarClock} title="No urgent rotation" message="No inventory needs to be used or sold within the next 14 days." />
             )}
           </div>
-        </div>
+        </WorkspacePanel>
 
-        <div className="workspacePanel compactPanel inventoryInsightPanel">
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Past Best By</p>
-              <h3>Expired</h3>
-            </div>
-          </div>
-
+        <WorkspacePanel eyebrow="Past Best By" title="Expired" className="inventoryInsightPanel">
           <div className="inventoryMiniList">
             {expiredItems.length ? (
-              expiredItems.map((item) => (
-                <button
-                  type="button"
-                  className="inventoryMiniItem"
-                  key={`expired-${item.id}`}
-                  onClick={() => openEditItem(item)}
-                >
-                  <span className={`inventoryStatusDot ${getStatusClass(getStatusLabel(item))}`} />
-                  <div>
-                    <strong>{item.name}</strong>
-                    <p>
-                      {formatDate(item.bestByDate)}
-                      {Math.abs(item.days) === 1
-                        ? " • Expired 1 day ago"
-                        : ` • Expired ${Math.abs(item.days)} days ago`}
-                      {isLowStock(item) ? " • Also low stock" : ""}
-                    </p>
-                  </div>
+              expiredItems.map((item) => renderInsightItem(item, "expired"))
+            ) : (
+              <EmptyState icon={AlertCircle} title="Nothing expired" message="No inventory is past its best by date." />
+            )}
+          </div>
+        </WorkspacePanel>
+      </section>
+
+      <WorkspacePanel
+        eyebrow="Directory"
+        title="Inventory Items"
+        description={`${filteredItems.length} visible`}
+        actions={[
+          {
+            label: "Add Item",
+            icon: Plus,
+            onClick: openNewItem
+          }
+        ]}
+        toolbar={
+          <FilterBar
+            searchValue={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Search inventory..."
+            filters={[
+              {
+                label: "Category",
+                value: categoryFilter,
+                onChange: setCategoryFilter,
+                options: ["All", ...inventoryCategories]
+              },
+              {
+                label: "Status",
+                value: statusFilter,
+                onChange: setStatusFilter,
+                options: ["All", ...inventoryStatuses]
+              },
+              {
+                label: "Location",
+                value: locationFilter,
+                onChange: setLocationFilter,
+                options: ["All", ...uniqueLocations]
+              }
+            ]}
+          />
+        }
+        className="inventoryDirectoryPanel"
+      >
+        <RecordList
+          records={filteredItems}
+          selectedRecordId={editingItemId || ""}
+          onRecordClick={openEditItem}
+          emptyMessage="No inventory items match the current filters."
+          getTitle={(item) => item.name || "Unnamed Item"}
+          getSubtitle={(item) =>
+            [item.category || "Other", item.sourceModule || "Manual", item.storageLocation || "No location"]
+              .filter(Boolean)
+              .join(" • ")
+          }
+          getMeta={(item) => [
+            { label: "Qty", value: `${formatNumber(item.quantityOnHand)} ${item.unit || "each"}` },
+            {
+              label: "Reorder",
+              value:
+                item.reorderPoint !== "" && item.reorderPoint !== null
+                  ? `${formatNumber(item.reorderPoint)} ${item.unit || ""}`
+                  : "Not set"
+            },
+            { label: "Best By", value: item.bestByDate ? formatDate(item.bestByDate) : "Not listed" },
+            { label: "Cost", value: formatCurrency(getInventoryValue(item)) },
+            { label: "Wholesale", value: formatCurrency(getWholesaleValue(item)) },
+            { label: "Retail", value: formatCurrency(getRetailValue(item)) }
+          ]}
+          renderStatus={(item) => <ItemStatusPills item={item} />}
+          renderActions={(item) => (
+            <div className="inventoryRecordActions">
+              <div className="inventoryQuantityAdjustControl">
+                <button type="button" title="Subtract 1" onClick={(event) => { event.stopPropagation(); quickSaveQuantityChange(item, -1); }}>
+                  -1
                 </button>
-              ))
-            ) : (
-              <div className="placeholderBox compactPlaceholder">
-                No inventory is past its best by date.
+                <button type="button" title="Add 1" onClick={(event) => { event.stopPropagation(); quickSaveQuantityChange(item, 1); }}>
+                  +1
+                </button>
               </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section className="workspacePanel compactPanel inventoryDirectoryPanel">
-        <div className="workspaceHeader compactPanelHeader inventoryDirectoryHeader">
-          <div>
-            <p className="eyebrow">Directory</p>
-            <h3>Inventory Items</h3>
-          </div>
-
-          <div className="inventoryFilterSummary">
-            <Filter size={15} />
-            <span>{filteredItems.length} visible</span>
-          </div>
-        </div>
-
-        <div className="inventoryFilterGrid">
-          <div className="searchBox compactSearch inventorySearchBox">
-            <Search size={17} />
-            <input
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Search inventory..."
-            />
-          </div>
-
-          <label>
-            Category
-            <select
-              value={categoryFilter}
-              onChange={(event) => setCategoryFilter(event.target.value)}
-            >
-              <option value="All">All categories</option>
-              {inventoryCategories.map((category) => (
-                <option key={category}>{category}</option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Status
-            <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-            >
-              <option value="All">All statuses</option>
-              {inventoryStatuses.map((status) => (
-                <option key={status}>{status}</option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Location
-            <select
-              value={locationFilter}
-              onChange={(event) => setLocationFilter(event.target.value)}
-            >
-              <option value="All">All locations</option>
-              {uniqueLocations.map((location) => (
-                <option key={location}>{location}</option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        <div className="inventoryTableWrap">
-          <div className="inventoryTable">
-            <div className="inventoryTableHeader">
-              <span>Item</span>
-              <span>Category</span>
-              <span>Qty / Adjust</span>
-              <span>Reorder</span>
-              <span>Location</span>
-              <span>Best By</span>
-              <span>Cost</span>
-              <span>Wholesale</span>
-              <span>Retail</span>
-              <span>Status</span>
-              <span></span>
+              <ActionMenu items={getItemActions(item)} />
             </div>
-
-            {filteredItems.length ? (
-              filteredItems.map((item) => {
-                return (
-                  <div className="inventoryTableRow" key={item.id}>
-                    <span className="inventoryNameCell" data-label="Item">
-                      <button
-                        type="button"
-                        className="savedItemLink"
-                        onClick={() => openEditItem(item)}
-                      >
-                        {item.name}
-                      </button>
-                      <small>{item.sourceModule || "Manual"}</small>
-                    </span>
-
-                    <span data-label="Category">{item.category || "Other"}</span>
-
-                    <span className="inventoryQuantityCell inventoryQuantityAdjustCell" data-label="Quantity">
-  <div className="inventoryQuantityAdjustControl">
-    <button
-      type="button"
-      title="Subtract 1"
-      onClick={() => quickSaveQuantityChange(item, -1)}
-    >
-      -1
-    </button>
-
-    <strong>
-      {formatNumber(item.quantityOnHand)} {item.unit || "each"}
-    </strong>
-
-    <button
-      type="button"
-      title="Add 1"
-      onClick={() => quickSaveQuantityChange(item, 1)}
-    >
-      +1
-    </button>
-  </div>
-</span>
-
-                    <span data-label="Reorder">
-                      {item.reorderPoint !== "" && item.reorderPoint !== null
-                        ? `${formatNumber(item.reorderPoint)} ${item.unit || ""}`
-                        : "Not set"}
-                    </span>
-
-                    <span data-label="Location">{item.storageLocation || "Not listed"}</span>
-
-                    <span data-label="Best By">
-                      {item.bestByDate ? formatDate(item.bestByDate) : "Not listed"}
-                    </span>
-
-                    <span data-label="Cost">{formatCurrency(getInventoryValue(item))}</span>
-                    <span data-label="Wholesale">{formatCurrency(getWholesaleValue(item))}</span>
-                    <span data-label="Retail">{formatCurrency(getRetailValue(item))}</span>
-
-                    <span data-label="Status">
-                      <ItemStatusPills item={item} />
-                    </span>
-
-                    <span className="inventoryActions" data-label="Actions">
-                      <button type="button" onClick={() => openEditItem(item)}>
-                        <Edit3 size={14} />
-                      </button>
-
-                      <button type="button" onClick={() => removeItem(item.id)}>
-                        <Trash2 size={14} />
-                      </button>
-                    </span>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="placeholderBox compactPlaceholder">
-                No inventory items match the current filters.
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
+          )}
+        />
+      </WorkspacePanel>
 
       {isFormOpen ? (
         <div className="inventoryModalOverlay" role="dialog" aria-modal="true">
@@ -1522,13 +1312,8 @@ showStatus("Inventory quantity updated.", "success");
             <div className="inventoryModalHeader">
               <div>
                 <p className="eyebrow">{editingItemId ? "Edit Item" : "Add Inventory"}</p>
-                <h3>
-                  {editingItemId
-                    ? "Update Existing Inventory Item"
-                    : "Add Inventory Item"}
-                </h3>
+                <h3>{editingItemId ? "Update Existing Inventory Item" : "Add Inventory Item"}</h3>
               </div>
-
               <button type="button" onClick={resetModalState}>
                 <X size={20} />
               </button>
@@ -1567,40 +1352,27 @@ showStatus("Inventory quantity updated.", "success");
 
                 {addMode === "existing" ? (
                   <div className="inventoryExistingPicker">
-                    <label className="fullSpan">
-                      Select Product Directory Item
-                      <select
-                        value={selectedExistingItemId}
-                        onChange={(event) => chooseDirectoryProduct(event.target.value)}
-                      >
+                    <FormField label="Select Product Directory Item" fullWidth>
+                      <select value={selectedExistingItemId} onChange={(event) => chooseDirectoryProduct(event.target.value)}>
                         <option value="">
-                          {loadingDirectoryProducts
-                            ? "Loading product directory..."
-                            : "Choose a product"}
+                          {loadingDirectoryProducts ? "Loading product directory..." : "Choose a product"}
                         </option>
                         {directoryProductOptions.map((product) => (
                           <option value={product.id} key={product.id}>
-                            {product.name} {product.category ? `• ${product.category}` : ""}{" "}
-                            {product.sourceLabel ? `• ${product.sourceLabel}` : ""}
+                            {product.name} {product.category ? `• ${product.category}` : ""} {product.sourceLabel ? `• ${product.sourceLabel}` : ""}
                           </option>
                         ))}
                       </select>
-                    </label>
+                    </FormField>
 
                     {selectedDirectoryVariants.length ? (
-                      <label className="fullSpan">
-                        Variant / Package Size
-                        <select
-                          value={selectedDirectoryVariantId}
-                          onChange={(event) => chooseDirectoryVariant(event.target.value)}
-                        >
+                      <FormField label="Variant / Package Size" fullWidth>
+                        <select value={selectedDirectoryVariantId} onChange={(event) => chooseDirectoryVariant(event.target.value)}>
                           {selectedDirectoryVariants.map((variant) => (
-                            <option key={variant.id} value={variant.id}>
-                              {variant.name}
-                            </option>
+                            <option key={variant.id} value={variant.id}>{variant.name}</option>
                           ))}
                         </select>
-                      </label>
+                      </FormField>
                     ) : null}
 
                     <div className="searchBox compactSearch inventorySearchBox">
@@ -1613,9 +1385,11 @@ showStatus("Inventory quantity updated.", "success");
                     </div>
 
                     {!directoryProducts.length && !loadingDirectoryProducts ? (
-                      <div className="placeholderBox compactPlaceholder fullSpan">
-                        No Product Directory items were found. Choose New Product to add an inventory-only item, or add products in Products & Pricing.
-                      </div>
+                      <EmptyState
+                        icon={PackageCheck}
+                        title="No Product Directory items found"
+                        message="Choose New Product to add an inventory-only item, or add products in Products & Pricing."
+                      />
                     ) : null}
                   </div>
                 ) : null}
@@ -1623,261 +1397,93 @@ showStatus("Inventory quantity updated.", "success");
             ) : null}
 
             {(editingItemId || addMode === "new" || itemForm.productId) ? (
-              <form className="inventoryModalForm" onSubmit={saveItem}>
-                <label className="fullSpan">
-                  Item Name *
-                  <input
-                    value={itemForm.name}
-                    onChange={(event) => updateItemField("name", event.target.value)}
-                    placeholder="e.g., Broccoli microgreens, 1 oz spice pouch, 8 oz deli cups"
-                  />
-                </label>
+              <form className="inventoryModalForm formGrid compactFormGrid" onSubmit={saveItem}>
+                <FormField label="Item Name *" fullWidth>
+                  <input value={itemForm.name} onChange={(event) => updateItemField("name", event.target.value)} placeholder="e.g., Broccoli microgreens, 1 oz spice pouch, 8 oz deli cups" />
+                </FormField>
 
-                <label>
-                  Category
-                  <select
-                    value={itemForm.category}
-                    onChange={(event) => updateItemField("category", event.target.value)}
-                  >
-                    {inventoryCategories.map((category) => (
-                      <option key={category}>{category}</option>
-                    ))}
+                <FormField label="Category">
+                  <select value={itemForm.category} onChange={(event) => updateItemField("category", event.target.value)}>
+                    {inventoryCategories.map((category) => <option key={category}>{category}</option>)}
                   </select>
-                </label>
+                </FormField>
 
-                <label>
-                  Source
-                  <select
-                    value={itemForm.sourceModule}
-                    onChange={(event) => updateItemField("sourceModule", event.target.value)}
-                  >
-                    {sourceModules.map((source) => (
-                      <option key={source}>{source}</option>
-                    ))}
+                <FormField label="Source">
+                  <select value={itemForm.sourceModule} onChange={(event) => updateItemField("sourceModule", event.target.value)}>
+                    {sourceModules.map((source) => <option key={source}>{source}</option>)}
                   </select>
-                </label>
+                </FormField>
 
-                <label>
-                  Quantity On Hand
-                  <input
-                    type="number"
-                    step="1"
-                    min="0"
-                    value={itemForm.quantityOnHand}
-                    onChange={(event) =>
-                      updateItemField("quantityOnHand", cleanWholeNumberInput(event.target.value))
-                    }
-                    onBlur={(event) =>
-                      updateItemField("quantityOnHand", cleanWholeNumberInput(event.target.value))
-                    }
-                    placeholder="e.g., 24"
-                  />
-                </label>
+                <FormField label="Quantity On Hand">
+                  <input type="number" step="1" min="0" value={itemForm.quantityOnHand} onChange={(event) => updateItemField("quantityOnHand", cleanWholeNumberInput(event.target.value))} onBlur={(event) => updateItemField("quantityOnHand", cleanWholeNumberInput(event.target.value))} placeholder="e.g., 24" />
+                </FormField>
 
-                <label>
-                  Unit
-                  <input
-                    value={itemForm.unit}
-                    onChange={(event) => updateItemField("unit", event.target.value)}
-                    placeholder="e.g., each, oz, lb, tray, bag"
-                  />
-                </label>
+                <FormField label="Unit">
+                  <input value={itemForm.unit} onChange={(event) => updateItemField("unit", event.target.value)} placeholder="e.g., each, oz, lb, tray, bag" />
+                </FormField>
 
-                <label>
-                  Par Level
-                  <input
-                    type="number"
-                    step="1"
-                    min="0"
-                    value={itemForm.parLevel}
-                    onChange={(event) =>
-                      updateItemField("parLevel", cleanWholeNumberInput(event.target.value))
-                    }
-                    onBlur={(event) =>
-                      updateItemField("parLevel", cleanWholeNumberInput(event.target.value))
-                    }
-                    placeholder="Ideal stock level"
-                  />
-                </label>
+                <FormField label="Par Level">
+                  <input type="number" step="1" min="0" value={itemForm.parLevel} onChange={(event) => updateItemField("parLevel", cleanWholeNumberInput(event.target.value))} onBlur={(event) => updateItemField("parLevel", cleanWholeNumberInput(event.target.value))} placeholder="Ideal stock level" />
+                </FormField>
 
-                <label>
-                  Reorder Point
-                  <input
-                    type="number"
-                    step="1"
-                    min="0"
-                    value={itemForm.reorderPoint}
-                    onChange={(event) =>
-                      updateItemField("reorderPoint", cleanWholeNumberInput(event.target.value))
-                    }
-                    onBlur={(event) =>
-                      updateItemField("reorderPoint", cleanWholeNumberInput(event.target.value))
-                    }
-                    placeholder="Warn when at or below"
-                  />
-                </label>
+                <FormField label="Reorder Point">
+                  <input type="number" step="1" min="0" value={itemForm.reorderPoint} onChange={(event) => updateItemField("reorderPoint", cleanWholeNumberInput(event.target.value))} onBlur={(event) => updateItemField("reorderPoint", cleanWholeNumberInput(event.target.value))} placeholder="Warn when at or below" />
+                </FormField>
 
-                <label>
-                  Storage Location
-                  <select
-                    value={itemForm.storageLocation || ""}
-                    onChange={(event) =>
-                      updateItemField("storageLocation", event.target.value)
-                    }
-                  >
+                <FormField label="Storage Location">
+                  <select value={itemForm.storageLocation || ""} onChange={(event) => updateItemField("storageLocation", event.target.value)}>
                     <option value="">Select location</option>
-                    {allStorageLocationOptions.map((location) => (
-                      <option value={location} key={location}>
-                        {location}
-                      </option>
-                    ))}
+                    {allStorageLocationOptions.map((location) => <option value={location} key={location}>{location}</option>)}
                   </select>
-                </label>
+                </FormField>
 
-                <label>
-                  Cost Per Unit
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={itemForm.costPerUnit}
-                    onChange={(event) => updateItemField("costPerUnit", event.target.value)}
-                    onBlur={(event) =>
-                      updateItemField("costPerUnit", cleanCurrencyInput(event.target.value))
-                    }
-                    placeholder="e.g., 0.14"
-                  />
-                </label>
+                <FormField label="Cost Per Unit">
+                  <input type="number" step="0.01" value={itemForm.costPerUnit} onChange={(event) => updateItemField("costPerUnit", event.target.value)} onBlur={(event) => updateItemField("costPerUnit", cleanCurrencyInput(event.target.value))} placeholder="e.g., 0.14" />
+                </FormField>
 
-                <label>
-                  Wholesale Price
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={itemForm.wholesalePrice}
-                    onChange={(event) => updateItemField("wholesalePrice", event.target.value)}
-                    onBlur={(event) =>
-                      updateItemField("wholesalePrice", cleanCurrencyInput(event.target.value))
-                    }
-                    placeholder="e.g., 7.50"
-                  />
-                </label>
+                <FormField label="Wholesale Price">
+                  <input type="number" step="0.01" value={itemForm.wholesalePrice} onChange={(event) => updateItemField("wholesalePrice", event.target.value)} onBlur={(event) => updateItemField("wholesalePrice", cleanCurrencyInput(event.target.value))} placeholder="e.g., 7.50" />
+                </FormField>
 
-                <label>
-                  Retail Price
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={itemForm.retailPrice}
-                    onChange={(event) => updateItemField("retailPrice", event.target.value)}
-                    onBlur={(event) =>
-                      updateItemField("retailPrice", cleanCurrencyInput(event.target.value))
-                    }
-                    placeholder="e.g., 12.00"
-                  />
-                </label>
+                <FormField label="Retail Price">
+                  <input type="number" step="0.01" value={itemForm.retailPrice} onChange={(event) => updateItemField("retailPrice", event.target.value)} onBlur={(event) => updateItemField("retailPrice", cleanCurrencyInput(event.target.value))} placeholder="e.g., 12.00" />
+                </FormField>
 
-                <label>
-                  Best By / Expiration
-                  <input
-                    type="date"
-                    value={itemForm.bestByDate}
-                    onChange={(event) => updateItemField("bestByDate", event.target.value)}
-                  />
-                </label>
+                <FormField label="Best By / Expiration">
+                  <input type="date" value={itemForm.bestByDate} onChange={(event) => updateItemField("bestByDate", event.target.value)} />
+                </FormField>
 
-                <label>
-                  Status
-                  <select
-                    value={itemForm.status}
-                    onChange={(event) => updateItemField("status", event.target.value)}
-                  >
-                    {inventoryStatuses.map((status) => (
-                      <option key={status}>{status}</option>
-                    ))}
+                <FormField label="Status">
+                  <select value={itemForm.status} onChange={(event) => updateItemField("status", event.target.value)}>
+                    {inventoryStatuses.map((status) => <option key={status}>{status}</option>)}
                   </select>
-                </label>
+                </FormField>
 
-                <label className="fullSpan">
-                  Notes
-                  <textarea
-                    value={itemForm.notes}
-                    onChange={(event) => updateItemField("notes", event.target.value)}
-                    placeholder="Storage instructions, vendor notes, batch notes, reorder notes..."
-                  />
-                </label>
+                <FormField label="Notes" fullWidth>
+                  <textarea value={itemForm.notes} onChange={(event) => updateItemField("notes", event.target.value)} placeholder="Storage instructions, vendor notes, batch notes, reorder notes..." />
+                </FormField>
 
                 {selectedItem ? (
                   <div className="inventoryDetailGrid fullSpan">
-                    <InventoryDetail
-                      label="Computed Status"
-                      value={getItemComputedStatus({
-                        ...selectedItem,
-                        ...itemForm
-                      })}
-                    />
-
-                    <InventoryDetail
-                      label="Inventory Value"
-                      value={formatCurrency(
-                        parseInventoryNumber(itemForm.quantityOnHand) *
-                          parseInventoryNumber(itemForm.costPerUnit)
-                      )}
-                    />
-
-                    <InventoryDetail
-                      label="Wholesale Value"
-                      value={formatCurrency(
-                        parseInventoryNumber(itemForm.quantityOnHand) *
-                          parseInventoryNumber(itemForm.wholesalePrice)
-                      )}
-                    />
-
-                    <InventoryDetail
-                      label="Retail Value"
-                      value={formatCurrency(
-                        parseInventoryNumber(itemForm.quantityOnHand) *
-                          parseInventoryNumber(itemForm.retailPrice)
-                      )}
-                    />
-
-                    <InventoryDetail
-                      label="Days Until Best By"
-                      value={
-                        daysUntil(itemForm.bestByDate) === null
-                          ? ""
-                          : daysUntil(itemForm.bestByDate)
-                      }
-                    />
+                    <InventoryDetail label="Computed Status" value={getItemComputedStatus({ ...selectedItem, ...itemForm })} />
+                    <InventoryDetail label="Inventory Value" value={formatCurrency(parseInventoryNumber(itemForm.quantityOnHand) * parseInventoryNumber(itemForm.costPerUnit))} />
+                    <InventoryDetail label="Wholesale Value" value={formatCurrency(parseInventoryNumber(itemForm.quantityOnHand) * parseInventoryNumber(itemForm.wholesalePrice))} />
+                    <InventoryDetail label="Retail Value" value={formatCurrency(parseInventoryNumber(itemForm.quantityOnHand) * parseInventoryNumber(itemForm.retailPrice))} />
+                    <InventoryDetail label="Days Until Best By" value={daysUntil(itemForm.bestByDate) === null ? "" : daysUntil(itemForm.bestByDate)} />
                   </div>
                 ) : null}
 
                 <div className="inventoryModalActions fullSpan">
                   {editingItemId ? (
-                    <button
-                      className="dangerButton"
-                      type="button"
-                      onClick={() => removeItem(editingItemId)}
-                    >
+                    <button className="dangerButton" type="button" onClick={() => requestRemoveItem({ ...itemForm, id: editingItemId })}>
                       <Trash2 size={15} />
                       Delete
                     </button>
                   ) : null}
 
-                  <button
-                    className="secondaryButton compactButton"
-                    type="button"
-                    onClick={resetModalState}
-                  >
-                    Cancel
-                  </button>
+                  <button className="secondaryButton compactButton" type="button" onClick={resetModalState}>Cancel</button>
 
-                  <button
-                    className={`primaryButton compactPrimary ${
-                      hasUnsavedChanges ? "dirtySaveButton" : ""
-                    }`}
-                    type="submit"
-                    disabled={saving}
-                  >
+                  <button className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`} type="submit" disabled={saving}>
                     <Save size={15} />
                     {saving ? "Saving..." : editingItemId ? "Save Changes" : "Save Item"}
                   </button>
@@ -1887,7 +1493,25 @@ showStatus("Inventory quantity updated.", "success");
           </div>
         </div>
       ) : null}
-    
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Delete Inventory Item?"
+        message={deleteTarget?.name ? `Delete ${deleteTarget.name}? This action cannot be undone.` : "This action cannot be undone."}
+        confirmLabel="Delete"
+        confirmVariant="danger"
+        cancelLabel="Cancel"
+        onConfirm={confirmRemoveItem}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      <Toast
+        open={Boolean(toast)}
+        variant={toast?.variant}
+        title={toast?.title}
+        message={toast?.message}
+        onClose={() => setToast(null)}
+      />
 
       <ModuleGuideModal
         isOpen={showGuide}
