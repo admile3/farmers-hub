@@ -19,6 +19,7 @@ import {
   LogOut,
   Menu,
   PackageCheck,
+  PawPrint,
   Printer,
   Settings,
   Sprout,
@@ -110,7 +111,7 @@ const modules = [
     description:
       "Track individual animals from birth or purchase through care, costs, sale, or processing transfer.",
     path: "/herd-tracker",
-    icon: Beef,
+    icon: PawPrint,
     accent: "herd"
   },
   {
