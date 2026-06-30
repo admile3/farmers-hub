@@ -5326,3 +5326,20 @@ tr:last-child td {
   font-weight: 900;
   line-height: 1;
 }
+/* ==========================
+   RecordList Checkbox Polish
+========================== */
+
+.farmhubRecordCheckbox.checked {
+  background: #dff5df;
+  border-color: var(--farm-green);
+  color: var(--farm-green);
+}
+
+.farmhubRecordCheckbox.checked::before {
+  content: "✓";
+  color: var(--farm-green);
+  font-size: 0.95rem;
+  font-weight: 900;
+  line-height: 1;
+}
