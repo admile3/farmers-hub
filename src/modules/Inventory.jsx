@@ -476,7 +476,6 @@ function getRetailValue(item) {
   return parseInventoryNumber(item.quantityOnHand) * parseInventoryNumber(item.retailPrice);
 }
 
-
 function InventoryDetail({ label, value }) {
   if (value === undefined || value === null || value === "") return null;
 
@@ -488,32 +487,13 @@ function InventoryDetail({ label, value }) {
   );
 }
 
-function getStatusVariant(status) {
-  switch (status) {
-    case "In Stock":
-      return "success";
-    case "Low Stock":
-    case "Use/Sell Soon":
-      return "warning";
-    case "Out of Stock":
-    case "Expired":
-      return "danger";
-    case "Archived":
-      return "neutral";
-    default:
-      return "primary";
-  }
-}
-
 function ItemStatusPills({ item }) {
   return (
     <div className="inventoryStatusPillStack">
       {getItemStatusList(item).map((status) => (
-        <StatusPill
-          key={status}
-          label={status}
-          variant={getStatusVariant(status)}
-        />
+        <span className={`inventoryStatusPill ${getStatusClass(status)}`} key={status}>
+          {status}
+        </span>
       ))}
     </div>
   );
@@ -537,23 +517,20 @@ export default function Inventory() {
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
   const [locationFilter, setLocationFilter] = useState("All");
-  const [toast, setToast] = useState(null);
-  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [statusType, setStatusType] = useState("info");
   const [loading, setLoading] = useState(false);
   const [loadingDirectoryProducts, setLoadingDirectoryProducts] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
-
-  function showToast(nextToast) {
-    setToast(nextToast);
-    window.setTimeout(() => setToast(null), 3000);
-  }
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [toast, setToast] = useState(null);
 
   function showStatus(message, type = "info") {
-    showToast({
-      title: type === "error" ? "Inventory needs attention" : "Inventory",
-      message,
-      variant: type === "error" ? "danger" : type
+    setToast({
+      variant: type === "error" ? "error" : type === "success" ? "success" : "info",
+      title: type === "error" ? "Something went wrong" : type === "success" ? "Inventory updated" : "Inventory",
+      message
     });
   }
 
@@ -565,11 +542,23 @@ export default function Inventory() {
   }
 
   useEffect(() => {
+    if (!statusMessage) return undefined;
+
+    const timer = window.setTimeout(() => {
+      setStatusMessage("");
+    }, 3000);
+
+    return () => window.clearTimeout(timer);
+  }, [statusMessage]);
+
+  
+
+  useEffect(() => {
     const hidden = localStorage.getItem("hideModuleGuide_inventory") === "true";
     if (!hidden) setShowGuide(true);
   }, []);
 
-  async function loadInventoryItems() {
+async function loadInventoryItems() {
     if (!user) return;
 
     setLoading(true);
@@ -644,10 +633,26 @@ export default function Inventory() {
 
   const inventorySummary = useMemo(() => {
     const activeItems = inventoryItems.filter((item) => !isArchived(item));
+
     const lowStockItems = activeItems.filter((item) => isLowStock(item));
     const outOfStockItems = activeItems.filter((item) => isOutOfStock(item));
     const useSellSoonItems = activeItems.filter((item) => isUseSellSoon(item));
     const expiredItems = activeItems.filter((item) => isExpired(item));
+
+    const totalValue = activeItems.reduce(
+      (sum, item) => sum + getInventoryValue(item),
+      0
+    );
+
+    const totalWholesaleValue = activeItems.reduce(
+      (sum, item) => sum + getWholesaleValue(item),
+      0
+    );
+
+    const totalRetailValue = activeItems.reduce(
+      (sum, item) => sum + getRetailValue(item),
+      0
+    );
 
     return {
       activeItems: activeItems.length,
@@ -655,9 +660,9 @@ export default function Inventory() {
       outOfStockItems: outOfStockItems.length,
       useSellSoonItems: useSellSoonItems.length,
       expiredItems: expiredItems.length,
-      totalValue: activeItems.reduce((sum, item) => sum + getInventoryValue(item), 0),
-      totalWholesaleValue: activeItems.reduce((sum, item) => sum + getWholesaleValue(item), 0),
-      totalRetailValue: activeItems.reduce((sum, item) => sum + getRetailValue(item), 0)
+      totalValue,
+      totalWholesaleValue,
+      totalRetailValue
     };
   }, [inventoryItems]);
 
@@ -678,6 +683,7 @@ export default function Inventory() {
         }
 
         if (locationFilter !== "All" && item.storageLocation !== locationFilter) return false;
+
         if (!search) return true;
 
         return (
@@ -703,7 +709,9 @@ export default function Inventory() {
 
         const statusA = statusOrder(a);
         const statusB = statusOrder(b);
+
         if (statusA !== statusB) return statusA - statusB;
+
         return String(a.name || "").localeCompare(String(b.name || ""));
       });
   }, [inventoryItems, searchTerm, categoryFilter, statusFilter, locationFilter]);
@@ -714,13 +722,16 @@ export default function Inventory() {
       .sort((a, b) => {
         if (isOutOfStock(a) && !isOutOfStock(b)) return -1;
         if (!isOutOfStock(a) && isOutOfStock(b)) return 1;
+
         const quantityA = parseInventoryNumber(a.quantityOnHand);
         const quantityB = parseInventoryNumber(b.quantityOnHand);
         const reorderA = parseInventoryNumber(a.reorderPoint);
         const reorderB = parseInventoryNumber(b.reorderPoint);
         const ratioA = reorderA > 0 ? quantityA / reorderA : 0;
         const ratioB = reorderB > 0 ? quantityB / reorderB : 0;
+
         if (ratioA !== ratioB) return ratioA - ratioB;
+
         return String(a.name || "").localeCompare(String(b.name || ""));
       })
       .slice(0, 6);
@@ -728,7 +739,10 @@ export default function Inventory() {
 
   const useSellSoonItems = useMemo(() => {
     return inventoryItems
-      .map((item) => ({ ...item, days: daysUntil(item.bestByDate) }))
+      .map((item) => ({
+        ...item,
+        days: daysUntil(item.bestByDate)
+      }))
       .filter((item) => isUseSellSoon(item))
       .sort((a, b) => a.days - b.days)
       .slice(0, 6);
@@ -736,23 +750,34 @@ export default function Inventory() {
 
   const expiredItems = useMemo(() => {
     return inventoryItems
-      .map((item) => ({ ...item, days: daysUntil(item.bestByDate) }))
+      .map((item) => ({
+        ...item,
+        days: daysUntil(item.bestByDate)
+      }))
       .filter((item) => isExpired(item))
       .sort((a, b) => a.days - b.days)
       .slice(0, 6);
   }, [inventoryItems]);
 
   const uniqueLocations = useMemo(() => {
-    return Array.from(new Set(inventoryItems.map((item) => item.storageLocation).filter(Boolean))).sort();
+    return Array.from(
+      new Set(
+        inventoryItems
+          .map((item) => item.storageLocation)
+          .filter(Boolean)
+      )
+    ).sort();
   }, [inventoryItems]);
 
   const allStorageLocationOptions = useMemo(() => {
     return Array.from(new Set([...storageLocations, ...uniqueLocations])).sort((a, b) => {
       const aBaseIndex = storageLocations.indexOf(a);
       const bBaseIndex = storageLocations.indexOf(b);
+
       if (aBaseIndex !== -1 && bBaseIndex !== -1) return aBaseIndex - bBaseIndex;
       if (aBaseIndex !== -1) return -1;
       if (bBaseIndex !== -1) return 1;
+
       return a.localeCompare(b);
     });
   }, [uniqueLocations]);
@@ -764,9 +789,11 @@ export default function Inventory() {
       .filter((product) => {
         if (!product?.id) return false;
         if (!search) return true;
+
         const variantNames = Array.isArray(product.generatedVariants)
           ? product.generatedVariants.map((variant) => variant.name).join(" ")
           : "";
+
         return (
           product.name?.toLowerCase().includes(search) ||
           product.category?.toLowerCase().includes(search) ||
@@ -809,7 +836,10 @@ export default function Inventory() {
     setSelectedExistingItemId("");
     setSelectedDirectoryVariantId("");
     setIsFormOpen(true);
-    if (user) loadDirectoryProducts();
+
+    if (user) {
+      loadDirectoryProducts();
+    }
   }
 
   function openEditItem(item) {
@@ -836,6 +866,7 @@ export default function Inventory() {
       status: item.status || "In Stock",
       notes: item.notes || ""
     });
+
     setEditingItemId(item.id || null);
     setSelectedItem(item);
     setSelectedExistingItemId(item.productId || item.id || "");
@@ -845,8 +876,12 @@ export default function Inventory() {
   }
 
   function getDirectoryVariant(product, variantId = "") {
-    const variants = Array.isArray(product?.generatedVariants) ? product.generatedVariants : [];
+    const variants = Array.isArray(product?.generatedVariants)
+      ? product.generatedVariants
+      : [];
+
     if (!variants.length) return null;
+
     return (
       variants.find((variant) => variant.id === variantId) ||
       variants.find((variant) => variant.id === product?.selectedVariantId) ||
@@ -856,12 +891,14 @@ export default function Inventory() {
 
   function getExistingInventoryForDirectoryProduct(product, variant) {
     if (!product?.id) return null;
+
     return (
       inventoryItems.find((item) => {
         const productMatches = String(item.productId || "") === String(product.id || "");
         const variantMatches = variant?.id
           ? String(item.variantId || "") === String(variant.id || "")
           : true;
+
         return productMatches && variantMatches;
       }) || null
     );
@@ -886,13 +923,14 @@ export default function Inventory() {
       variantName,
       quantityOnHand: "",
       unit: variantName || product.unitLabel || "each",
-      costPerUnit: cleanCurrencyInput(
-        variant?.costPerUnit ||
-          product.costPerUnit ||
-          variant?.ingredientCost ||
-          product.batchIngredientCost ||
-          ""
-      ),
+      costPerUnit:
+  cleanCurrencyInput(
+    variant?.costPerUnit ||
+      product.costPerUnit ||
+      variant?.ingredientCost ||
+      product.batchIngredientCost ||
+      ""
+  ),
       wholesalePrice: cleanCurrencyInput(variant?.wholesalePrice || product.wholesalePrice || ""),
       retailPrice: cleanCurrencyInput(variant?.retailPrice || product.retailPrice || ""),
       notes: product.notes || product.description || ""
@@ -901,6 +939,7 @@ export default function Inventory() {
 
   function chooseDirectoryProduct(productId) {
     const product = directoryProducts.find((directoryProduct) => directoryProduct.id === productId);
+
     setSelectedExistingItemId(productId);
 
     if (!product) {
@@ -911,6 +950,7 @@ export default function Inventory() {
 
     const variant = getDirectoryVariant(product);
     const existingInventoryItem = getExistingInventoryForDirectoryProduct(product, variant);
+
     setSelectedDirectoryVariantId(variant?.id || "");
 
     if (existingInventoryItem) {
@@ -929,7 +969,11 @@ export default function Inventory() {
     if (!selectedDirectoryProduct) return;
 
     const variant = getDirectoryVariant(selectedDirectoryProduct, variantId);
-    const existingInventoryItem = getExistingInventoryForDirectoryProduct(selectedDirectoryProduct, variant);
+    const existingInventoryItem = getExistingInventoryForDirectoryProduct(
+      selectedDirectoryProduct,
+      variant
+    );
+
     setSelectedDirectoryVariantId(variant?.id || "");
 
     if (existingInventoryItem) {
@@ -946,128 +990,58 @@ export default function Inventory() {
 
   function updateItemField(field, value) {
     markInventoryDirty();
-    setItemForm((current) => ({ ...current, [field]: value }));
+    setItemForm((current) => ({
+      ...current,
+      [field]: value
+    }));
   }
 
   async function saveItem(event) {
     event?.preventDefault?.();
 
-    if (!user) {
-      showStatus("Sign in to save inventory items.", "error");
-      return;
-    }
+  
 
-    const quantityOnHand = cleanNumber(itemForm.quantityOnHand);
-    const isZeroQuantity = parseInventoryNumber(quantityOnHand) <= 0;
+  function getStatusVariant(status) {
+    const value = String(status || "").toLowerCase();
 
-    const cleanItem = {
-      id: itemForm.id || editingItemId || "",
-      name: itemForm.name.trim(),
-      category: itemForm.category,
-      sourceModule: itemForm.sourceModule,
-      productId: itemForm.productId || "",
-      productName: itemForm.productName || "",
-      recipeId: itemForm.recipeId || "",
-      recipeName: itemForm.recipeName || "",
-      variantId: itemForm.variantId || "",
-      variantName: itemForm.variantName || "",
-      quantityOnHand: Math.round(parseInventoryNumber(quantityOnHand)),
-      unit: itemForm.unit.trim() || "each",
-      parLevel:
-        itemForm.parLevel === "" || itemForm.parLevel === null || itemForm.parLevel === undefined
-          ? ""
-          : Math.round(parseInventoryNumber(itemForm.parLevel)),
-      reorderPoint:
-        itemForm.reorderPoint === "" || itemForm.reorderPoint === null || itemForm.reorderPoint === undefined
-          ? ""
-          : Math.round(parseInventoryNumber(itemForm.reorderPoint)),
-      storageLocation: itemForm.storageLocation.trim(),
-      costPerUnit: cleanNumber(itemForm.costPerUnit),
-      wholesalePrice: cleanNumber(itemForm.wholesalePrice),
-      retailPrice: cleanNumber(itemForm.retailPrice),
-      bestByDate: isZeroQuantity ? "" : itemForm.bestByDate,
-      status: isZeroQuantity ? "Out of Stock" : itemForm.status,
-      notes: itemForm.notes.trim()
-    };
-
-    if (!cleanItem.name) {
-      showStatus("Inventory item name is required.", "error");
-      return;
-    }
-
-    setSaving(true);
-
-    try {
-      await saveInventoryItem(user.uid, cleanItem);
-      setItemForm(blankInventoryItem);
-      setEditingItemId(null);
-      setSelectedItem(null);
-      setSelectedExistingItemId("");
-      setSelectedDirectoryVariantId("");
-      setExistingItemSearch("");
-      setAddMode(directoryProducts.length ? "existing" : "new");
-      setIsFormOpen(false);
-      markSaved();
-      showStatus(editingItemId ? "Inventory item updated." : "Inventory item saved.", "success");
-      await loadInventoryItems();
-    } catch (error) {
-      console.error(error);
-      showStatus("Could not save inventory item.", "error");
-    } finally {
-      setSaving(false);
-    }
+    if (value.includes("expired") || value.includes("out of stock")) return "danger";
+    if (value.includes("low") || value.includes("soon")) return "warning";
+    if (value.includes("archived")) return "neutral";
+    return "success";
   }
 
-  async function quickSaveQuantityChange(item, change) {
-    if (!user || !item?.id) return;
+  function requestDeleteItem(item) {
+    if (!item?.id) return;
 
-    const currentQuantity = Math.round(parseInventoryNumber(item.quantityOnHand));
-    const nextQuantity = Math.max(0, currentQuantity + change);
-    const updatedItem = {
-      ...item,
-      quantityOnHand: nextQuantity,
-      bestByDate: nextQuantity <= 0 ? "" : item.bestByDate,
-      status: nextQuantity <= 0 ? "Out of Stock" : item.status
-    };
-
-    try {
-      await saveInventoryItem(user.uid, updatedItem);
-      await loadInventoryItems();
-      markSaved();
-      showStatus("Inventory quantity updated.", "success");
-    } catch (error) {
-      console.error(error);
-      showStatus("Could not adjust inventory quantity.", "error");
-    }
+    setDeleteTarget({
+      item,
+      message: `Delete ${item.name || "this inventory item"}? This cannot be undone.`
+    });
   }
 
-  function requestRemoveItem(item) {
-    setDeleteTarget(item);
+  async function confirmDeleteItem() {
+    if (!deleteTarget?.item?.id) return;
+
+    await removeItem(deleteTarget.item.id);
+    setDeleteTarget(null);
   }
 
-  async function confirmRemoveItem() {
-    if (!user || !deleteTarget?.id) return;
-
-    try {
-      await deleteInventoryItem(user.uid, deleteTarget.id);
-      if (editingItemId === deleteTarget.id) resetModalState();
-      if (selectedItem?.id === deleteTarget.id) setSelectedItem(null);
-      setDeleteTarget(null);
-      markSaved();
-      showStatus("Inventory item deleted.", "success");
-      await loadInventoryItems();
-    } catch (error) {
-      console.error(error);
-      showStatus("Could not delete inventory item.", "error");
-    }
-  }
-
-  function getItemActions(item) {
+  function getInventoryActions(item) {
     return [
       {
         label: "Edit",
         icon: Edit3,
         onClick: () => openEditItem(item)
+      },
+      {
+        label: "Add 1",
+        icon: Plus,
+        onClick: () => quickSaveQuantityChange(item, 1)
+      },
+      {
+        label: "Subtract 1",
+        icon: TrendingDown,
+        onClick: () => quickSaveQuantityChange(item, -1)
       },
       {
         divider: true
@@ -1076,58 +1050,25 @@ export default function Inventory() {
         label: "Delete",
         icon: Trash2,
         destructive: true,
-        onClick: () => requestRemoveItem(item)
+        onClick: () => requestDeleteItem(item)
       }
     ];
   }
 
-  function renderInsightItem(item, context) {
-    let detail = "";
-
-    if (context === "stock") {
-      detail = `${formatNumber(item.quantityOnHand)} ${item.unit || "each"}`;
-      if (item.reorderPoint !== "" && item.reorderPoint !== null) {
-        detail += ` • Reorder at ${formatNumber(item.reorderPoint)} ${item.unit || ""}`;
-      }
-      if (isExpired(item)) detail += " • Also expired";
-      if (isUseSellSoon(item)) detail += " • Also use/sell soon";
-    }
-
-    if (context === "soon") {
-      detail = `${formatDate(item.bestByDate)}${
-        item.days === 0
-          ? " • Today"
-          : item.days === 1
-            ? " • Tomorrow"
-            : ` • ${item.days} days`
-      }`;
-      if (isLowStock(item)) detail += " • Also low stock";
-    }
-
-    if (context === "expired") {
-      detail = `${formatDate(item.bestByDate)}${
-        Math.abs(item.days) === 1
-          ? " • Expired 1 day ago"
-          : ` • Expired ${Math.abs(item.days)} days ago`
-      }`;
-      if (isLowStock(item)) detail += " • Also low stock";
-    }
-
+  function renderInventoryStatus(item) {
     return (
-      <button
-        type="button"
-        className="inventoryMiniItem"
-        key={`${context}-${item.id}`}
-        onClick={() => openEditItem(item)}
-      >
-        <span className={`inventoryStatusDot ${getStatusClass(getStatusLabel(item))}`} />
-        <div>
-          <strong>{item.name}</strong>
-          <p>{detail}</p>
-        </div>
-      </button>
+      <div className="inventorySharedStatusStack">
+        {getItemStatusList(item).map((status) => (
+          <StatusPill
+            key={status}
+            label={status}
+            variant={getStatusVariant(status)}
+          />
+        ))}
+      </div>
     );
   }
+
 
   if (!user) {
     return (
@@ -1151,16 +1092,6 @@ export default function Inventory() {
 
   return (
     <div className="modulePage inventoryModule">
-      {loading ? (
-        <Toast
-          open
-          variant="info"
-          title="Inventory"
-          message="Loading inventory..."
-          onClose={() => {}}
-        />
-      ) : null}
-
       <ModuleHero
         eyebrow="Inventory"
         accent="inventory"
@@ -1182,7 +1113,7 @@ export default function Inventory() {
         ]}
       />
 
-      <section className="hubStatGrid inventoryStatGrid inventoryStatGridForced inventoryStatGridSeven">
+      <section className="hubStatGrid inventoryStatGrid inventoryStatGridSeven">
         <StatCard icon={PackageCheck} label="Active Items" value={inventorySummary.activeItems} sub="tracked inventory" accent="inventory" />
         <StatCard icon={TrendingDown} label="Low Stock" value={inventorySummary.lowStockItems} sub="at reorder point" accent="spice" />
         <StatCard icon={CalendarClock} label="Use/Sell Soon" value={inventorySummary.useSellSoonItems} sub="within 14 days" accent="sourdough" />
@@ -1193,41 +1124,68 @@ export default function Inventory() {
       </section>
 
       <section className="inventoryInsightGrid inventoryInsightGridThree">
-        <WorkspacePanel eyebrow="Needs Attention" title="Low or Out of Stock" className="inventoryInsightPanel">
-          <div className="inventoryMiniList">
-            {lowStockItems.length ? (
-              lowStockItems.map((item) => renderInsightItem(item, "stock"))
-            ) : (
-              <EmptyState icon={TrendingDown} title="Stock levels look good" message="Nothing is currently below its reorder point." />
-            )}
-          </div>
+        <WorkspacePanel eyebrow="Needs Attention" title="Low or Out of Stock">
+          {lowStockItems.length ? (
+            <RecordList
+              records={lowStockItems}
+              selectedRecordId={selectedItem?.id || ""}
+              onRecordClick={openEditItem}
+              getTitle={(item) => item.name || "Unnamed Item"}
+              getSubtitle={(item) => `${formatNumber(item.quantityOnHand)} ${item.unit || "each"}${item.reorderPoint !== "" && item.reorderPoint !== null ? ` • Reorder at ${formatNumber(item.reorderPoint)} ${item.unit || ""}` : ""}`}
+              getMeta={(item) => [
+                { label: "Category", value: item.category || "Other" },
+                { label: "Location", value: item.storageLocation || "Not listed" }
+              ]}
+              renderStatus={renderInventoryStatus}
+            />
+          ) : (
+            <EmptyState icon={TrendingDown} title="Nothing low right now" message="Nothing is currently below its reorder point." />
+          )}
         </WorkspacePanel>
 
-        <WorkspacePanel eyebrow="Rotation" title="Use / Sell Soon" className="inventoryInsightPanel">
-          <div className="inventoryMiniList">
-            {useSellSoonItems.length ? (
-              useSellSoonItems.map((item) => renderInsightItem(item, "soon"))
-            ) : (
-              <EmptyState icon={CalendarClock} title="No urgent rotation" message="No inventory needs to be used or sold within the next 14 days." />
-            )}
-          </div>
+        <WorkspacePanel eyebrow="Rotation" title="Use / Sell Soon">
+          {useSellSoonItems.length ? (
+            <RecordList
+              records={useSellSoonItems}
+              selectedRecordId={selectedItem?.id || ""}
+              onRecordClick={openEditItem}
+              getTitle={(item) => item.name || "Unnamed Item"}
+              getSubtitle={(item) => `${formatDate(item.bestByDate)}${item.days === 0 ? " • Today" : item.days === 1 ? " • Tomorrow" : ` • ${item.days} days`}`}
+              getMeta={(item) => [
+                { label: "Quantity", value: `${formatNumber(item.quantityOnHand)} ${item.unit || "each"}` },
+                { label: "Location", value: item.storageLocation || "Not listed" }
+              ]}
+              renderStatus={renderInventoryStatus}
+            />
+          ) : (
+            <EmptyState icon={CalendarClock} title="No use-soon inventory" message="No inventory needs to be used or sold within the next 14 days." />
+          )}
         </WorkspacePanel>
 
-        <WorkspacePanel eyebrow="Past Best By" title="Expired" className="inventoryInsightPanel">
-          <div className="inventoryMiniList">
-            {expiredItems.length ? (
-              expiredItems.map((item) => renderInsightItem(item, "expired"))
-            ) : (
-              <EmptyState icon={AlertCircle} title="Nothing expired" message="No inventory is past its best by date." />
-            )}
-          </div>
+        <WorkspacePanel eyebrow="Past Best By" title="Expired">
+          {expiredItems.length ? (
+            <RecordList
+              records={expiredItems}
+              selectedRecordId={selectedItem?.id || ""}
+              onRecordClick={openEditItem}
+              getTitle={(item) => item.name || "Unnamed Item"}
+              getSubtitle={(item) => `${formatDate(item.bestByDate)} • Expired ${Math.abs(item.days)} ${Math.abs(item.days) === 1 ? "day" : "days"} ago`}
+              getMeta={(item) => [
+                { label: "Quantity", value: `${formatNumber(item.quantityOnHand)} ${item.unit || "each"}` },
+                { label: "Location", value: item.storageLocation || "Not listed" }
+              ]}
+              renderStatus={renderInventoryStatus}
+            />
+          ) : (
+            <EmptyState icon={AlertCircle} title="No expired inventory" message="No inventory is past its best by date." />
+          )}
         </WorkspacePanel>
       </section>
 
       <WorkspacePanel
         eyebrow="Directory"
         title="Inventory Items"
-        description={`${filteredItems.length} visible`}
+        description={`${filteredItems.length} visible inventory ${filteredItems.length === 1 ? "item" : "items"}`}
         actions={[
           {
             label: "Add Item",
@@ -1262,59 +1220,40 @@ export default function Inventory() {
             ]}
           />
         }
-        className="inventoryDirectoryPanel"
       >
-        <RecordList
-          records={filteredItems}
-          selectedRecordId={editingItemId || ""}
-          onRecordClick={openEditItem}
-          emptyMessage="No inventory items match the current filters."
-          getTitle={(item) => item.name || "Unnamed Item"}
-          getSubtitle={(item) =>
-            [item.category || "Other", item.sourceModule || "Manual", item.storageLocation || "No location"]
-              .filter(Boolean)
-              .join(" • ")
-          }
-          getMeta={(item) => [
-            { label: "Qty", value: `${formatNumber(item.quantityOnHand)} ${item.unit || "each"}` },
-            {
-              label: "Reorder",
-              value:
-                item.reorderPoint !== "" && item.reorderPoint !== null
-                  ? `${formatNumber(item.reorderPoint)} ${item.unit || ""}`
-                  : "Not set"
-            },
-            { label: "Best By", value: item.bestByDate ? formatDate(item.bestByDate) : "Not listed" },
-            { label: "Cost", value: formatCurrency(getInventoryValue(item)) },
-            { label: "Wholesale", value: formatCurrency(getWholesaleValue(item)) },
-            { label: "Retail", value: formatCurrency(getRetailValue(item)) }
-          ]}
-          renderStatus={(item) => <ItemStatusPills item={item} />}
-          renderActions={(item) => (
-            <div className="inventoryRecordActions">
-              <div className="inventoryQuantityAdjustControl">
-                <button type="button" title="Subtract 1" onClick={(event) => { event.stopPropagation(); quickSaveQuantityChange(item, -1); }}>
-                  -1
-                </button>
-                <button type="button" title="Add 1" onClick={(event) => { event.stopPropagation(); quickSaveQuantityChange(item, 1); }}>
-                  +1
-                </button>
-              </div>
-              <ActionMenu items={getItemActions(item)} />
-            </div>
-          )}
-        />
+        {filteredItems.length ? (
+          <RecordList
+            records={filteredItems}
+            selectedRecordId={selectedItem?.id || ""}
+            onRecordClick={openEditItem}
+            emptyMessage="No inventory items match the current filters."
+            getTitle={(item) => item.name || "Unnamed Item"}
+            getSubtitle={(item) => [item.category || "Other", item.sourceModule || "Manual", item.storageLocation || "No location"].filter(Boolean).join(" • ")}
+            getMeta={(item) => [
+              { label: "Qty", value: `${formatNumber(item.quantityOnHand)} ${item.unit || "each"}` },
+              { label: "Reorder", value: item.reorderPoint !== "" && item.reorderPoint !== null ? `${formatNumber(item.reorderPoint)} ${item.unit || ""}` : "Not set" },
+              { label: "Best By", value: item.bestByDate ? formatDate(item.bestByDate) : "Not listed" },
+              { label: "Cost", value: formatCurrency(getInventoryValue(item)) },
+              { label: "Wholesale", value: formatCurrency(getWholesaleValue(item)) },
+              { label: "Retail", value: formatCurrency(getRetailValue(item)) }
+            ]}
+            renderStatus={renderInventoryStatus}
+            renderActions={(item) => <ActionMenu items={getInventoryActions(item)} />}
+          />
+        ) : (
+          <EmptyState icon={Search} title="No inventory found" message="No inventory items match the current filters." />
+        )}
       </WorkspacePanel>
 
       {isFormOpen ? (
         <div className="inventoryModalOverlay" role="dialog" aria-modal="true">
-          <div className="inventoryModal">
+          <div className="inventoryModal inventorySharedModal">
             <div className="inventoryModalHeader">
               <div>
                 <p className="eyebrow">{editingItemId ? "Edit Item" : "Add Inventory"}</p>
                 <h3>{editingItemId ? "Update Existing Inventory Item" : "Add Inventory Item"}</h3>
               </div>
-              <button type="button" onClick={resetModalState}>
+              <button type="button" onClick={resetModalState} aria-label="Close inventory form">
                 <X size={20} />
               </button>
             </div>
@@ -1335,7 +1274,6 @@ export default function Inventory() {
                   >
                     Existing Product
                   </button>
-
                   <button
                     className={addMode === "new" ? "active" : ""}
                     type="button"
@@ -1354,9 +1292,7 @@ export default function Inventory() {
                   <div className="inventoryExistingPicker">
                     <FormField label="Select Product Directory Item" fullWidth>
                       <select value={selectedExistingItemId} onChange={(event) => chooseDirectoryProduct(event.target.value)}>
-                        <option value="">
-                          {loadingDirectoryProducts ? "Loading product directory..." : "Choose a product"}
-                        </option>
+                        <option value="">{loadingDirectoryProducts ? "Loading product directory..." : "Choose a product"}</option>
                         {directoryProductOptions.map((product) => (
                           <option value={product.id} key={product.id}>
                             {product.name} {product.category ? `• ${product.category}` : ""} {product.sourceLabel ? `• ${product.sourceLabel}` : ""}
@@ -1377,19 +1313,11 @@ export default function Inventory() {
 
                     <div className="searchBox compactSearch inventorySearchBox">
                       <Search size={17} />
-                      <input
-                        value={existingItemSearch}
-                        onChange={(event) => setExistingItemSearch(event.target.value)}
-                        placeholder="Search product directory..."
-                      />
+                      <input value={existingItemSearch} onChange={(event) => setExistingItemSearch(event.target.value)} placeholder="Search product directory..." />
                     </div>
 
                     {!directoryProducts.length && !loadingDirectoryProducts ? (
-                      <EmptyState
-                        icon={PackageCheck}
-                        title="No Product Directory items found"
-                        message="Choose New Product to add an inventory-only item, or add products in Products & Pricing."
-                      />
+                      <EmptyState icon={PackageCheck} title="No directory products" message="Choose New Product to add an inventory-only item, or add products in Products & Pricing." />
                     ) : null}
                   </div>
                 ) : null}
@@ -1397,7 +1325,7 @@ export default function Inventory() {
             ) : null}
 
             {(editingItemId || addMode === "new" || itemForm.productId) ? (
-              <form className="inventoryModalForm formGrid compactFormGrid" onSubmit={saveItem}>
+              <form className="inventoryModalForm" onSubmit={saveItem}>
                 <FormField label="Item Name *" fullWidth>
                   <input value={itemForm.name} onChange={(event) => updateItemField("name", event.target.value)} placeholder="e.g., Broccoli microgreens, 1 oz spice pouch, 8 oz deli cups" />
                 </FormField>
@@ -1475,14 +1403,12 @@ export default function Inventory() {
 
                 <div className="inventoryModalActions fullSpan">
                   {editingItemId ? (
-                    <button className="dangerButton" type="button" onClick={() => requestRemoveItem({ ...itemForm, id: editingItemId })}>
+                    <button className="dangerButton" type="button" onClick={() => requestDeleteItem({ ...itemForm, id: editingItemId })}>
                       <Trash2 size={15} />
                       Delete
                     </button>
                   ) : null}
-
                   <button className="secondaryButton compactButton" type="button" onClick={resetModalState}>Cancel</button>
-
                   <button className={`primaryButton compactPrimary ${hasUnsavedChanges ? "dirtySaveButton" : ""}`} type="submit" disabled={saving}>
                     <Save size={15} />
                     {saving ? "Saving..." : editingItemId ? "Save Changes" : "Save Item"}
@@ -1497,19 +1423,19 @@ export default function Inventory() {
       <ConfirmDialog
         open={Boolean(deleteTarget)}
         title="Delete Inventory Item?"
-        message={deleteTarget?.name ? `Delete ${deleteTarget.name}? This action cannot be undone.` : "This action cannot be undone."}
+        message={deleteTarget?.message || "This action cannot be undone."}
         confirmLabel="Delete"
         confirmVariant="danger"
         cancelLabel="Cancel"
-        onConfirm={confirmRemoveItem}
+        onConfirm={confirmDeleteItem}
         onCancel={() => setDeleteTarget(null)}
       />
 
       <Toast
-        open={Boolean(toast)}
-        variant={toast?.variant}
-        title={toast?.title}
-        message={toast?.message}
+        open={Boolean(toast) || loading}
+        variant={loading ? "info" : toast?.variant}
+        title={loading ? "Loading inventory" : toast?.title}
+        message={loading ? "Loading inventory items..." : toast?.message}
         onClose={() => setToast(null)}
       />
 
