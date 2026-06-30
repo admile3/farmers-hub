@@ -2,23 +2,47 @@ import clsx from "clsx";
 
 export default function RecordList({
   records = [],
-  selectedRecordId = null,
-  getRecordId = (record) => record.id,
-  getTitle = (record) => record.title || record.name,
-  getSubtitle = (record) => record.subtitle || record.description,
-  getMeta = () => [],
-  renderStatus = null,
-  renderActions = null,
-  emptyMessage = "No records to display.",
+  getRecordId,
+  selectedRecordId = "",
+  selectedRecordIds = [],
+  multiSelect = false,
+  onSelectionChange,
   onRecordClick,
   onRecordDoubleClick,
+  getTitle,
+  getSubtitle,
+  getMeta,
+  renderStatus,
+  renderActions,
+  emptyMessage = "No records found.",
   className = ""
 }) {
-  if (!records.length) {
-    return <div className="farmhubRecordListEmpty">{emptyMessage}</div>;
+  function resolveRecordId(record, recordIndex) {
+    if (getRecordId) return getRecordId(record);
+    return record.id || record.key || recordIndex;
   }
 
-  function handleRecordClick(record) {
+  function isRecordSelected(recordId) {
+    if (multiSelect) {
+      return selectedRecordIds.map(String).includes(String(recordId));
+    }
+
+    return selectedRecordId && String(selectedRecordId) === String(recordId);
+  }
+
+  function toggleSelection(recordId, record) {
+    if (!multiSelect) {
+      onRecordClick?.(record);
+      return;
+    }
+
+    const normalizedId = String(recordId);
+    const currentIds = selectedRecordIds.map(String);
+    const nextIds = currentIds.includes(normalizedId)
+      ? currentIds.filter((id) => id !== normalizedId)
+      : [...currentIds, normalizedId];
+
+    onSelectionChange?.(nextIds, record);
     onRecordClick?.(record);
   }
 
@@ -31,78 +55,92 @@ export default function RecordList({
     onRecordClick?.(record);
   }
 
+  function getTitleContent(record) {
+    if (getTitle) return getTitle(record);
+    return record.name || record.title || "Untitled Record";
+  }
+
+  function getSubtitleContent(record) {
+    if (getSubtitle) return getSubtitle(record);
+    return record.subtitle || record.description || "";
+  }
+
+  function getMetaItems(record) {
+    if (!getMeta) return [];
+    return (getMeta(record) || []).filter((item) => item && item.value !== "" && item.value !== null && item.value !== undefined);
+  }
+
+  if (!records.length) {
+    return <div className="farmhubRecordListEmpty">{emptyMessage}</div>;
+  }
+
   return (
-    <div className={clsx("farmhubRecordList", className)}>
+    <div className={clsx("farmhubRecordList", multiSelect ? "multiSelect" : "", className)}>
       {records.map((record, recordIndex) => {
-        const recordId = getRecordId(record) || recordIndex;
-        const title = getTitle(record);
-        const subtitle = getSubtitle(record);
-        const meta = getMeta(record) || [];
-        const isClickable = Boolean(onRecordClick || onRecordDoubleClick);
-        const isSelected =
-          selectedRecordId && String(selectedRecordId) === String(recordId);
+        const recordId = resolveRecordId(record, recordIndex);
+        const selected = isRecordSelected(recordId);
+        const title = getTitleContent(record);
+        const subtitle = getSubtitleContent(record);
+        const metaItems = getMetaItems(record);
+        const clickable = Boolean(onRecordClick || onRecordDoubleClick || multiSelect);
 
         return (
           <article
-            key={recordId}
             className={clsx(
-              "farmhubRecordCard",
-              isClickable ? "clickable" : "",
-              isSelected ? "selected" : ""
+              "farmhubRecordItem",
+              clickable ? "clickable" : "",
+              selected ? "selected" : ""
             )}
+            key={recordId}
+            role={clickable ? "button" : undefined}
+            tabIndex={clickable ? 0 : undefined}
+            onClick={() => toggleSelection(recordId, record)}
             onDoubleClick={() => handleRecordDoubleClick(record)}
+            onKeyDown={(event) => {
+              if (!clickable) return;
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                toggleSelection(recordId, record);
+              }
+            }}
           >
-            <div className="farmhubRecordCardMain">
-              <button
-                type="button"
-                className="farmhubRecordCardTitle"
-                onClick={() => handleRecordClick(record)}
-              >
-                {title}
-              </button>
+            {multiSelect ? (
+              <div className="farmhubRecordSelectCell" aria-hidden="true">
+                <span className={clsx("farmhubRecordCheckbox", selected ? "checked" : "")}>{selected ? "✓" : ""}</span>
+              </div>
+            ) : null}
 
-              {subtitle ? (
-                <p className="farmhubRecordCardSubtitle">{subtitle}</p>
-              ) : null}
+            <div className="farmhubRecordMain">
+              <div className="farmhubRecordTitleRow">
+                <div className="farmhubRecordTitleBlock">
+                  <strong>{title}</strong>
+                  {subtitle ? <span>{subtitle}</span> : null}
+                </div>
 
-              {meta.length ? (
-                <div className="farmhubRecordCardMeta">
-                  {meta.map((item) => {
-                    const label = item?.label;
-                    const value = item?.value ?? item;
+                <div className="farmhubRecordHeaderActions">
+                  {renderStatus ? renderStatus(record) : null}
+                  {renderActions ? (
+                    <div
+                      className="farmhubRecordActions"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      {renderActions(record)}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
 
-                    if (!value) return null;
-
-                    return (
-                      <span className="farmhubRecordCardMetaItem" key={`${label || "meta"}-${value}`}>
-                        {label ? (
-                          <span className="farmhubRecordCardMetaLabel">
-                            {label}:
-                          </span>
-                        ) : null}
-                        <span>{value}</span>
-                      </span>
-                    );
-                  })}
+              {metaItems.length ? (
+                <div className="farmhubRecordMeta">
+                  {metaItems.map((item, itemIndex) => (
+                    <span key={`${recordId}-meta-${item.label || itemIndex}`}>
+                      {item.label ? <b>{item.label}:</b> : null}
+                      {item.value}
+                    </span>
+                  ))}
                 </div>
               ) : null}
             </div>
-
-            {(renderStatus || renderActions) ? (
-              <div className="farmhubRecordCardSide">
-                {renderStatus ? (
-                  <div className="farmhubRecordCardStatus">
-                    {renderStatus(record)}
-                  </div>
-                ) : null}
-
-                {renderActions ? (
-                  <div className="farmhubRecordCardActions">
-                    {renderActions(record)}
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
           </article>
         );
       })}
