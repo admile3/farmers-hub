@@ -320,7 +320,7 @@ function getButcherBoardCalendarEvents(batch) {
       type: "Production",
       date: batch.processingDate,
       location: batch.processor || "",
-      sourcePath: "/livestock",
+      sourcePath: "/butcherboard",
       accent: "livestock",
       notes: batch.notes || "",
       details: {
@@ -343,7 +343,7 @@ function getButcherBoardCalendarEvents(batch) {
       type: "Production",
       date: batch.pickupDate,
       location: batch.processor || "",
-      sourcePath: "/livestock",
+      sourcePath: "/butcherboard",
       accent: "livestock",
       notes: batch.notes || "",
       details: {
@@ -1244,6 +1244,7 @@ export default function ButcherBoard() {
         eyebrow="Editor"
         title={batchForm.id || selectedBatchId ? "Edit Processing Batch" : "Processing Batch"}
         description="Manage processor details, weights, costs, cuts, inventory, and pricing."
+        className="butcherBoardEditorPanel"
         actions={[
           {
             label: "Clear",
@@ -1265,7 +1266,7 @@ export default function ButcherBoard() {
           }
         ]}
       >
-        <div className="formGrid compactFormGrid">
+        <div className="formGrid compactFormGrid butcherBoardEditorGrid">
           <FormField label="Batch Name" required>
             <input
               value={batchForm.name}
