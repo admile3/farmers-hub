@@ -47,6 +47,15 @@ const modules = [
     accent: "sourdough"
   },
   {
+    key: "livestock",
+    title: "Butcher Board",
+    description:
+      "Track animal batches, feed costs, processing yields, finished cuts, and meat inventory.",
+    path: "/livestock",
+    icon: Beef,
+    accent: "livestock"
+  },
+  {
     key: "calendar",
     title: "Calendar",
     description:
@@ -99,15 +108,6 @@ const modules = [
     path: "/inventory",
     icon: Archive,
     accent: "inventory"
-  },
-  {
-    key: "livestock",
-    title: "Butcher Board",
-    description:
-      "Track animal batches, feed costs, processing yields, finished cuts, and meat inventory.",
-    path: "/livestock",
-    icon: Beef,
-    accent: "livestock"
   },
   {
     key: "lists",
