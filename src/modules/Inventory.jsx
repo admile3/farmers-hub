@@ -999,7 +999,127 @@ async function loadInventoryItems() {
   async function saveItem(event) {
     event?.preventDefault?.();
 
-  
+    if (!user) {
+      showStatus("Sign in to save inventory items.", "error");
+      return;
+    }
+
+    const quantityOnHand = cleanNumber(itemForm.quantityOnHand);
+    const isZeroQuantity = parseInventoryNumber(quantityOnHand) <= 0;
+
+    const cleanItem = {
+      id: itemForm.id || editingItemId || "",
+      name: itemForm.name.trim(),
+      category: itemForm.category,
+      sourceModule: itemForm.sourceModule,
+      productId: itemForm.productId || "",
+      productName: itemForm.productName || "",
+      recipeId: itemForm.recipeId || "",
+      recipeName: itemForm.recipeName || "",
+      variantId: itemForm.variantId || "",
+      variantName: itemForm.variantName || "",
+      quantityOnHand: Math.round(parseInventoryNumber(quantityOnHand)),
+      unit: itemForm.unit.trim() || "each",
+      parLevel:
+        itemForm.parLevel === "" || itemForm.parLevel === null || itemForm.parLevel === undefined
+          ? ""
+          : Math.round(parseInventoryNumber(itemForm.parLevel)),
+      reorderPoint:
+        itemForm.reorderPoint === "" ||
+        itemForm.reorderPoint === null ||
+        itemForm.reorderPoint === undefined
+          ? ""
+          : Math.round(parseInventoryNumber(itemForm.reorderPoint)),
+      storageLocation: itemForm.storageLocation.trim(),
+      costPerUnit: cleanNumber(itemForm.costPerUnit),
+      wholesalePrice: cleanNumber(itemForm.wholesalePrice),
+      retailPrice: cleanNumber(itemForm.retailPrice),
+      bestByDate: isZeroQuantity ? "" : itemForm.bestByDate,
+      status: isZeroQuantity ? "Out of Stock" : itemForm.status,
+      notes: itemForm.notes.trim()
+    };
+
+    if (!cleanItem.name) {
+      showStatus("Inventory item name is required.", "error");
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const savedId = await saveInventoryItem(user.uid, cleanItem);
+
+      setItemForm(blankInventoryItem);
+      setEditingItemId(null);
+      setSelectedItem(null);
+      setSelectedExistingItemId("");
+      setSelectedDirectoryVariantId("");
+      setExistingItemSearch("");
+      setAddMode(directoryProducts.length ? "existing" : "new");
+      setIsFormOpen(false);
+      markSaved();
+      showStatus(editingItemId ? "Inventory item updated." : "Inventory item saved.", "success");
+
+      await loadInventoryItems();
+
+      if (savedId) {
+        setSelectedItem(null);
+      }
+    } catch (error) {
+      console.error(error);
+      showStatus("Could not save inventory item.", "error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function quickSaveQuantityChange(item, change) {
+    if (!user || !item?.id) return;
+
+    const currentQuantity = Math.round(parseInventoryNumber(item.quantityOnHand));
+    const nextQuantity = Math.max(0, currentQuantity + change);
+
+    const updatedItem = {
+      ...item,
+      quantityOnHand: nextQuantity,
+      bestByDate: nextQuantity <= 0 ? "" : item.bestByDate,
+      status: nextQuantity <= 0 ? "Out of Stock" : item.status
+    };
+
+    try {
+      await saveInventoryItem(user.uid, updatedItem);
+await loadInventoryItems();
+markSaved();
+showStatus("Inventory quantity updated.", "success");
+    } catch (error) {
+      console.error(error);
+      showStatus("Could not adjust inventory quantity.", "error");
+    }
+  }
+
+  async function removeItem(itemId) {
+    if (!user || !itemId) return;
+
+    try {
+      await deleteInventoryItem(user.uid, itemId);
+
+      if (editingItemId === itemId) {
+        resetModalState();
+      }
+
+      if (selectedItem?.id === itemId) {
+        setSelectedItem(null);
+      }
+
+      markSaved();
+      showStatus("Inventory item deleted.", "success");
+      await loadInventoryItems();
+    } catch (error) {
+      console.error(error);
+      showStatus("Could not delete inventory item.", "error");
+    }
+  }
+
 
   function getStatusVariant(status) {
     const value = String(status || "").toLowerCase();
@@ -1069,6 +1189,29 @@ async function loadInventoryItems() {
     );
   }
 
+  function getLowStockSubtitle(item) {
+    const quantityText = `${formatNumber(item.quantityOnHand)} ${item.unit || "each"}`;
+    const reorderText = item.reorderPoint !== "" && item.reorderPoint !== null
+      ? ` • Reorder at ${formatNumber(item.reorderPoint)} ${item.unit || ""}`
+      : "";
+
+    return `${quantityText}${reorderText}`;
+  }
+
+  function getUseSoonSubtitle(item) {
+    let timing = ` • ${item.days} days`;
+
+    if (item.days === 0) timing = " • Today";
+    if (item.days === 1) timing = " • Tomorrow";
+
+    return `${formatDate(item.bestByDate)}${timing}`;
+  }
+
+  function getExpiredSubtitle(item) {
+    const days = Math.abs(item.days);
+    return `${formatDate(item.bestByDate)} • Expired ${days} ${days === 1 ? "day" : "days"} ago`;
+  }
+
 
   if (!user) {
     return (
@@ -1131,7 +1274,7 @@ async function loadInventoryItems() {
               selectedRecordId={selectedItem?.id || ""}
               onRecordClick={openEditItem}
               getTitle={(item) => item.name || "Unnamed Item"}
-              getSubtitle={(item) => `${formatNumber(item.quantityOnHand)} ${item.unit || "each"}${item.reorderPoint !== "" && item.reorderPoint !== null ? ` • Reorder at ${formatNumber(item.reorderPoint)} ${item.unit || ""}` : ""}`}
+              getSubtitle={getLowStockSubtitle}
               getMeta={(item) => [
                 { label: "Category", value: item.category || "Other" },
                 { label: "Location", value: item.storageLocation || "Not listed" }
@@ -1150,7 +1293,7 @@ async function loadInventoryItems() {
               selectedRecordId={selectedItem?.id || ""}
               onRecordClick={openEditItem}
               getTitle={(item) => item.name || "Unnamed Item"}
-              getSubtitle={(item) => `${formatDate(item.bestByDate)}${item.days === 0 ? " • Today" : item.days === 1 ? " • Tomorrow" : ` • ${item.days} days`}`}
+              getSubtitle={getUseSoonSubtitle}
               getMeta={(item) => [
                 { label: "Quantity", value: `${formatNumber(item.quantityOnHand)} ${item.unit || "each"}` },
                 { label: "Location", value: item.storageLocation || "Not listed" }
@@ -1169,7 +1312,7 @@ async function loadInventoryItems() {
               selectedRecordId={selectedItem?.id || ""}
               onRecordClick={openEditItem}
               getTitle={(item) => item.name || "Unnamed Item"}
-              getSubtitle={(item) => `${formatDate(item.bestByDate)} • Expired ${Math.abs(item.days)} ${Math.abs(item.days) === 1 ? "day" : "days"} ago`}
+              getSubtitle={getExpiredSubtitle}
               getMeta={(item) => [
                 { label: "Quantity", value: `${formatNumber(item.quantityOnHand)} ${item.unit || "each"}` },
                 { label: "Location", value: item.storageLocation || "Not listed" }
