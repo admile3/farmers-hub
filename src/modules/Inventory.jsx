@@ -1266,7 +1266,7 @@ showStatus("Inventory quantity updated.", "success");
         <StatCard icon={DollarSign} label="Retail Value" value={formatCurrency(inventorySummary.totalRetailValue)} sub="potential retail" accent="market" />
       </section>
 
-      <section className="inventoryInsightGrid inventoryInsightGridThree">
+      <section className="inventorySharedInsightGrid inventoryInsightGrid inventoryInsightGridThree">
         <WorkspacePanel eyebrow="Needs Attention" title="Low or Out of Stock">
           {lowStockItems.length ? (
             <RecordList
@@ -1365,24 +1365,97 @@ showStatus("Inventory quantity updated.", "success");
         }
       >
         {filteredItems.length ? (
-          <RecordList
-            records={filteredItems}
-            selectedRecordId={selectedItem?.id || ""}
-            onRecordClick={openEditItem}
-            emptyMessage="No inventory items match the current filters."
-            getTitle={(item) => item.name || "Unnamed Item"}
-            getSubtitle={(item) => [item.category || "Other", item.sourceModule || "Manual", item.storageLocation || "No location"].filter(Boolean).join(" • ")}
-            getMeta={(item) => [
-              { label: "Qty", value: `${formatNumber(item.quantityOnHand)} ${item.unit || "each"}` },
-              { label: "Reorder", value: item.reorderPoint !== "" && item.reorderPoint !== null ? `${formatNumber(item.reorderPoint)} ${item.unit || ""}` : "Not set" },
-              { label: "Best By", value: item.bestByDate ? formatDate(item.bestByDate) : "Not listed" },
-              { label: "Cost", value: formatCurrency(getInventoryValue(item)) },
-              { label: "Wholesale", value: formatCurrency(getWholesaleValue(item)) },
-              { label: "Retail", value: formatCurrency(getRetailValue(item)) }
-            ]}
-            renderStatus={renderInventoryStatus}
-            renderActions={(item) => <ActionMenu items={getInventoryActions(item)} />}
-          />
+          <div className="inventoryDirectoryTableShell">
+            <div className="inventoryDirectoryTableHeader" aria-hidden="true">
+              <span>Item</span>
+              <span>Category</span>
+              <span>On Hand</span>
+              <span>Par Level</span>
+              <span>Reorder Point</span>
+              <span>Location</span>
+              <span>Status</span>
+              <span>Best By</span>
+              <span>Unit Cost</span>
+              <span>Actions</span>
+            </div>
+
+            <div className="inventoryDirectoryTableRows">
+              {filteredItems.map((item) => (
+                <div
+                  className={`inventoryDirectoryTableRow ${selectedItem?.id === item.id ? "isSelected" : ""}`}
+                  key={item.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openEditItem(item)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      openEditItem(item);
+                    }
+                  }}
+                >
+                  <div className="inventoryDirectoryItemCell" data-label="Item">
+                    <strong>{item.name || "Unnamed Item"}</strong>
+                    <span>{item.sourceModule || "Manual"}</span>
+                  </div>
+
+                  <div data-label="Category">{item.category || "Other"}</div>
+
+                  <div data-label="On Hand">
+                    <strong>{formatNumber(item.quantityOnHand)}</strong>
+                    <span>{item.unit || "each"}</span>
+                  </div>
+
+                  <div data-label="Par Level">
+                    {item.parLevel !== "" && item.parLevel !== null && item.parLevel !== undefined ? (
+                      <>
+                        <strong>{formatNumber(item.parLevel)}</strong>
+                        <span>{item.unit || "each"}</span>
+                      </>
+                    ) : (
+                      <span>Not set</span>
+                    )}
+                  </div>
+
+                  <div data-label="Reorder Point">
+                    {item.reorderPoint !== "" && item.reorderPoint !== null && item.reorderPoint !== undefined ? (
+                      <>
+                        <strong>{formatNumber(item.reorderPoint)}</strong>
+                        <span>{item.unit || "each"}</span>
+                      </>
+                    ) : (
+                      <span>Not set</span>
+                    )}
+                  </div>
+
+                  <div data-label="Location">{item.storageLocation || "Not listed"}</div>
+
+                  <div data-label="Status">
+                    {renderInventoryStatus(item)}
+                  </div>
+
+                  <div className="inventoryDirectoryBestByCell" data-label="Best By">
+                    <strong>{item.bestByDate ? formatDate(item.bestByDate) : "Not listed"}</strong>
+                    {item.bestByDate && daysUntil(item.bestByDate) !== null ? (
+                      <span>
+                        {daysUntil(item.bestByDate) < 0
+                          ? `${Math.abs(daysUntil(item.bestByDate))} days expired`
+                          : daysUntil(item.bestByDate) === 0
+                            ? "Today"
+                            : `${daysUntil(item.bestByDate)} days left`}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <div data-label="Unit Cost">{formatCurrency(item.costPerUnit)}</div>
+
+                  <div className="inventoryDirectoryActionsCell" data-label="Actions" onClick={(event) => event.stopPropagation()}>
+                    <ActionMenu items={getInventoryActions(item)} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         ) : (
           <EmptyState icon={Search} title="No inventory found" message="No inventory items match the current filters." />
         )}
