@@ -3132,13 +3132,6 @@ export default function BakingPlanner() {
           description="Scale baking recipes by pre-baked dough weight, adjust for temperature, humidity, and altitude, then generate a practical production sheet for your bake day."
           actions={[
             {
-              label: cloudLoading ? "Syncing..." : hasUnsavedChanges ? "Save Changes" : "Save / Sync",
-              icon: Cloud,
-              variant: hasUnsavedChanges ? "primary" : "secondary",
-              onClick: savePlannerData,
-              disabled: cloudLoading
-            },
-            {
               label: "Settings",
               icon: Settings,
               variant: activeTab === "settings" ? "primary" : "secondary",
