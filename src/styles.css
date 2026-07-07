@@ -11655,178 +11655,262 @@ tr:last-child td {
   }
 }
 /* =====================================================
-   MARKET PREP PLANNER, SHARED COMPONENT POLISH
+   MARKET PREP PLANNER, SHARED COMPONENT STRUCTURAL FIX
+   Place after older Market Prep rules, or replace the older Market Prep append blocks with this section.
    ===================================================== */
+
+.marketPrepPage {
+  --market-prep-gap: 18px;
+  --market-prep-tight-gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--market-prep-gap);
+}
 
 .marketPrepPage .moduleHero,
 .marketPrepPage .farmModuleHero {
-  margin-bottom: 18px;
+  margin-bottom: 10px;
 }
 
-.marketPrepPage .toolGrid.compactToolGrid {
+.marketPrepQuickNav {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-  margin: 18px 0;
+  gap: 12px;
+  margin: 0 0 2px;
 }
 
-.marketPrepPage .toolCard.compactToolCard {
-  min-height: 118px;
-  border-radius: 18px;
-  border: 1px solid rgba(31, 45, 31, 0.12);
-  background: var(--panel-bg, #fff);
-  box-shadow: 0 10px 24px rgba(31, 45, 31, 0.06);
-  padding: 18px;
-  text-align: left;
-}
-
-.marketPrepTopGrid,
-.marketPrepForecastGrid {
+.marketPrepQuickNavCard {
+  min-height: 74px;
+  width: 100%;
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.75fr);
-  gap: 18px;
+  grid-template-columns: 28px minmax(0, 1fr) 26px;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border, rgba(40, 54, 37, 0.14));
+  border-left: 4px solid var(--farm-green, #2f5d34);
+  border-radius: 16px;
+  background: var(--panel, #fffefb);
+  box-shadow: 0 8px 22px rgba(32, 42, 31, 0.06);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.marketPrepQuickNavCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(32, 42, 31, 0.09);
+}
+
+.marketPrepQuickNavIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--farm-green, #2f5d34);
+}
+
+.marketPrepQuickNavText {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.marketPrepQuickNavText strong {
+  font-size: 0.98rem;
+  line-height: 1.1;
+}
+
+.marketPrepQuickNavText small {
+  color: var(--muted, #6f776b);
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
+.marketPrepQuickNavArrow {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(47, 93, 52, 0.18);
+  border-radius: 999px;
+  color: var(--farm-green, #2f5d34);
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1;
+  justify-self: end;
+}
+
+.marketPrepSectionGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.9fr) minmax(320px, 1fr);
+  gap: 16px;
   align-items: start;
-  margin-bottom: 18px;
+  margin: 0;
 }
 
 .marketPrepPage .workspacePanel,
 .marketPrepPage .compactPanel {
-  border-radius: 18px;
+  margin: 0;
 }
 
 .marketPrepPage .workspaceHeader,
 .marketPrepPage .compactPanelHeader {
-  gap: 14px;
-  align-items: flex-start;
+  margin-bottom: 12px;
 }
 
-.marketPrepPage .formGrid.compactFormGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.marketPrepPage .marketPrepAddProductForm {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.marketPrepPage .fullSpan {
-  grid-column: 1 / -1;
+.marketPrepPage .compactFormGrid {
+  gap: 12px 14px;
 }
 
 .marketWeatherPanel {
-  margin-top: 16px;
+  margin-top: 14px !important;
+  margin-bottom: 14px !important;
+  padding: 16px !important;
 }
 
 .marketWeatherHeader {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  align-items: center;
+  gap: 14px;
 }
 
-.marketWeatherGrid {
-  display: grid;
+.marketWeatherHeader p {
+  max-width: 62ch;
+  margin: 4px 0 0;
+  line-height: 1.35;
+}
+
+.marketPrepInlineStats {
+  display: grid !important;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 14px;
+  gap: 12px !important;
+  margin: 14px 0 12px !important;
 }
 
-.marketWeatherCard {
+.marketPrepPage .marketPrepInlineStats .statCard,
+.marketPrepPage .marketPrepInlineStats .hubStatCard {
+  min-height: 76px;
+}
+
+.marketPrepSavedPlanList {
   display: flex;
+  flex-direction: column;
   gap: 10px;
+  max-height: none;
+  overflow: visible;
+}
+
+.marketPrepSavedPlanRow {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  border: 1px solid rgba(31, 45, 31, 0.1);
-  border-radius: 14px;
-  padding: 12px;
-  background: rgba(255,255,255,0.64);
+  gap: 12px;
+  padding: 12px 14px !important;
+  border-radius: 14px !important;
 }
 
-.marketWeatherCard span,
-.marketWeatherCard small {
-  display: block;
-  color: var(--muted, #6b7168);
+.marketPrepSavedPlanRow h4,
+.marketPrepSavedPlanRow p {
+  margin: 0;
 }
 
-.marketWeatherCard strong {
-  display: block;
-  font-size: 1rem;
+.marketPrepSavedPlanRow p {
+  margin-top: 4px;
+  color: var(--muted, #6f776b);
+  font-size: 0.82rem;
 }
 
-.marketPrepCompactTable {
-  overflow-x: auto;
+.marketPrepSavedPlanName {
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--text, #172314) !important;
+  font-weight: 800;
+  text-align: left;
+  box-shadow: none !important;
 }
 
-.marketPrepCompactHeader,
-.marketPrepCompactRow {
-  display: grid;
-  grid-template-columns: 64px minmax(180px, 1.25fr) minmax(130px, .8fr) minmax(120px, .7fr) 90px minmax(150px, .8fr) minmax(110px, .7fr) minmax(120px, .7fr) minmax(180px, 1fr) 52px;
-  gap: 10px;
+.marketPrepPlanActions {
+  display: inline-flex !important;
   align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
-.marketPrepCompactHeader {
-  padding: 10px 12px;
-  font-size: .75rem;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  color: var(--muted, #6b7168);
+.marketPrepLoadButton,
+.marketPrepDeleteButton {
+  min-width: 0 !important;
+  height: 32px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 999px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  box-shadow: none !important;
 }
 
-.marketPrepCompactRow {
-  padding: 10px 12px;
-  border: 1px solid rgba(31,45,31,.1);
-  border-radius: 14px;
-  margin-bottom: 8px;
-  background: #fff;
+.marketPrepLoadButton {
+  padding: 0 13px !important;
+  border: 1px solid rgba(47, 93, 52, 0.18) !important;
+  background: #f7f3e9 !important;
+  color: var(--farm-green, #2f5d34) !important;
 }
 
-.marketPrepCompactRow input,
-.marketPrepCompactRow select,
-.marketPrepPage input,
-.marketPrepPage select {
-  min-height: 38px;
+.marketPrepLoadButton:hover {
+  background: #efe7d6 !important;
 }
 
-.amountUnitInline {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 72px;
-  gap: 6px;
+.marketPrepDeleteButton {
+  width: 32px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(196, 86, 74, 0.2) !important;
+  background: #fff7f5 !important;
+  color: #c4564a !important;
 }
 
-.marketPrepCalculated {
-  font-weight: 750;
+.marketPrepForecastGrid {
+  margin-top: 0;
 }
 
-.marketPrepCalculated small {
-  display: block;
-  font-weight: 600;
-  color: var(--muted, #6b7168);
+.marketPrepAddProductForm {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.marketPrepMobilePackCards {
-  display: none;
+.marketPrepAddProductForm .fullSpan {
+  grid-column: 1 / -1;
 }
 
-@media (max-width: 1100px) {
-  .marketPrepPage .toolGrid.compactToolGrid,
-  .marketPrepTopGrid,
-  .marketPrepForecastGrid {
-    grid-template-columns: 1fr;
+.marketPrepPrintPackList {
+  margin-top: 0 !important;
+}
+
+@media (max-width: 1200px) {
+  .marketPrepQuickNav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .marketPrepPage .marketPrepAddProductForm,
-  .marketWeatherGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .marketPrepSectionGrid {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 760px) {
-  .marketPrepPage .toolGrid.compactToolGrid,
-  .marketPrepPage .formGrid.compactFormGrid,
-  .marketPrepPage .marketPrepAddProductForm,
-  .marketWeatherGrid {
+  .marketPrepPage {
+    --market-prep-gap: 14px;
+  }
+
+  .marketPrepQuickNav {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .marketPrepQuickNavCard {
+    min-height: 64px;
+    padding: 12px 14px;
   }
 
   .marketWeatherHeader {
@@ -11834,356 +11918,19 @@ tr:last-child td {
     flex-direction: column;
   }
 
-  .marketPrepCompactTable {
-    display: none;
+  .marketPrepInlineStats {
+    grid-template-columns: 1fr !important;
   }
 
-  .marketPrepMobilePackCards {
-    display: grid;
-    gap: 12px;
-  }
-}
-/* =====================================================
-   MARKET PREP PLANNER, LAYOUT POLISH V2
-   Append after the previous Market Prep shared CSS.
-   ===================================================== */
-
-.marketPrepPage .farmModuleHero,
-.marketPrepPage .moduleHero {
-  margin-bottom: 18px;
-}
-
-.marketPrepPage .toolGrid,
-.marketPrepPage .compactToolGrid {
-  gap: 14px;
-  margin: 0 0 18px;
-}
-
-.marketPrepPage .toolCard,
-.marketPrepPage .compactToolCard {
-  min-height: 76px;
-  padding: 16px 18px;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  grid-template-areas:
-    "icon title arrow"
-    ". desc arrow";
-  align-items: center;
-  column-gap: 12px;
-  row-gap: 3px;
-}
-
-.marketPrepPage .toolCard svg,
-.marketPrepPage .compactToolCard svg {
-  grid-area: icon;
-}
-
-.marketPrepPage .toolCard h3,
-.marketPrepPage .compactToolCard h3 {
-  grid-area: title;
-  margin: 0;
-  line-height: 1.15;
-}
-
-.marketPrepPage .toolCard p,
-.marketPrepPage .compactToolCard p {
-  grid-area: desc;
-  margin: 0;
-  line-height: 1.35;
-}
-
-.marketPrepPage .toolCard::after,
-.marketPrepPage .compactToolCard::after {
-  content: "›";
-  grid-area: arrow;
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--border-color, rgba(31, 43, 31, 0.16));
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--farm-green, #2f5f35);
-  background: rgba(255, 255, 255, 0.7);
-  transform: translateY(-1px);
-}
-
-.marketPrepPage .marketPrepTopGrid,
-.marketPrepPage .marketPrepForecastGrid {
-  gap: 18px;
-  margin-bottom: 18px;
-}
-
-.marketPrepPage .workspacePanel,
-.marketPrepPage .compactPanel {
-  margin-bottom: 18px;
-}
-
-.marketPrepPage .marketWeatherPanel {
-  margin: 14px 0 18px;
-  padding: 16px;
-}
-
-.marketPrepPage .marketWeatherHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.marketPrepPage .marketWeatherHeader p {
-  margin: 4px 0 0;
-  max-width: 720px;
-}
-
-.marketPrepPage .marketWeatherButton {
-  flex: 0 0 auto;
-  white-space: nowrap;
-}
-
-.marketPrepPage .marketPrepStatsGrid {
-  margin-top: 18px;
-  gap: 14px;
-}
-
-.marketPrepPage .marketPrepStatsGrid .statCard,
-.marketPrepPage .marketPrepStatsGrid .hubStatCard {
-  min-height: 74px;
-}
-
-.marketPrepPage .savedList .savedItem,
-.marketPrepPage .compactSavedList .compactSavedItem {
-  align-items: center;
-  gap: 12px;
-}
-
-.marketPrepPage .savedItem .itemActions,
-.marketPrepPage .compactSavedItem .itemActions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-}
-
-.marketPrepPage .savedItem .itemActions button,
-.marketPrepPage .compactSavedItem .itemActions button {
-  min-width: 36px;
-  height: 34px;
-  padding: 0 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(31, 43, 31, 0.14);
-  background: #fffdf8;
-  color: #263626;
-  font-weight: 800;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  box-shadow: none;
-}
-
-.marketPrepPage .savedItem .itemActions button:first-child,
-.marketPrepPage .compactSavedItem .itemActions button:first-child {
-  min-width: 52px;
-}
-
-.marketPrepPage .savedItem .itemActions button:hover,
-.marketPrepPage .compactSavedItem .itemActions button:hover {
-  border-color: rgba(47, 95, 53, 0.3);
-  background: rgba(47, 95, 53, 0.06);
-}
-
-.marketPrepPage .savedItem .itemActions button:last-child,
-.marketPrepPage .compactSavedItem .itemActions button:last-child {
-  color: #b9473f;
-}
-
-.marketPrepPage .savedItemLink {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-weight: 900;
-  text-align: left;
-  cursor: pointer;
-}
-
-.marketPrepPage .marketPrepForecastGrid {
-  align-items: start;
-}
-
-.marketPrepPage .marketPrepPrintSummary .savedList,
-.marketPrepPage .marketPrepPrintSummary .compactSavedList {
-  margin-top: 10px;
-}
-
-@media (max-width: 900px) {
-  .marketPrepPage .toolCard,
-  .marketPrepPage .compactToolCard {
-    min-height: 70px;
-    padding: 14px 16px;
+  .marketPrepAddProductForm {
+    grid-template-columns: 1fr;
   }
 
-  .marketPrepPage .marketWeatherHeader {
-    align-items: flex-start;
-    flex-direction: column;
+  .marketPrepSavedPlanRow {
+    grid-template-columns: 1fr;
   }
 
-  .marketPrepPage .marketWeatherButton {
-    width: 100%;
-  }
-}
-/* =====================================================
-   MARKET PREP POLISH: tighter spacing + saved plan buttons
-   Append after prior Market Prep CSS
-   ===================================================== */
-
-.marketPrepPage .farmModuleHero,
-.marketPrepPage .moduleHero {
-  margin-bottom: 1.35rem !important;
-}
-
-.marketPrepPage .compactToolGrid,
-.marketPrepPage .marketPrepJumpGrid,
-.marketPrepPage .toolGrid {
-  margin-top: 0 !important;
-  margin-bottom: 1.15rem !important;
-  gap: 0.75rem !important;
-}
-
-.marketPrepPage .compactToolCard,
-.marketPrepPage .toolCard {
-  min-height: 82px !important;
-  padding: 1rem 1.15rem !important;
-  align-items: center !important;
-}
-
-.marketPrepPage .compactToolCard h3,
-.marketPrepPage .toolCard h3 {
-  margin: 0 !important;
-}
-
-.marketPrepPage .compactToolCard p,
-.marketPrepPage .toolCard p {
-  margin: 0.35rem 0 0 !important;
-  line-height: 1.25 !important;
-}
-
-.marketPrepPage .marketPrepTopGrid,
-.marketPrepPage .marketPrepForecastGrid,
-.marketPrepPage .compactWorkspace {
-  gap: 0.9rem !important;
-  margin-top: 0 !important;
-  margin-bottom: 1rem !important;
-}
-
-.marketPrepPage .workspacePanel,
-.marketPrepPage .compactPanel {
-  margin-top: 0 !important;
-}
-
-.marketPrepPage .marketWeatherPanel {
-  margin-top: 0.75rem !important;
-  margin-bottom: 0.95rem !important;
-  padding: 0.9rem 1rem !important;
-}
-
-.marketPrepPage .marketPrepStatsGrid {
-  margin-top: 0 !important;
-  margin-bottom: 0.85rem !important;
-  gap: 0.75rem !important;
-}
-
-.marketPrepPage .savedList,
-.marketPrepPage .compactSavedList {
-  gap: 0.55rem !important;
-}
-
-.marketPrepPage .savedItem,
-.marketPrepPage .compactSavedItem {
-  gap: 0.75rem !important;
-  padding: 0.8rem 0.9rem !important;
-}
-
-.marketPrepPage .savedItem h4,
-.marketPrepPage .compactSavedItem h4 {
-  margin: 0 0 0.18rem !important;
-}
-
-.marketPrepPage .savedItem p,
-.marketPrepPage .compactSavedItem p {
-  margin: 0 !important;
-  line-height: 1.25 !important;
-}
-
-.marketPrepPage .savedItem .itemActions,
-.marketPrepPage .compactSavedItem .itemActions {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-end !important;
-  gap: 0.45rem !important;
-  flex: 0 0 auto !important;
-}
-
-.marketPrepPage .savedItem .itemActions button,
-.marketPrepPage .compactSavedItem .itemActions button {
-  min-width: 0 !important;
-  height: 34px !important;
-  padding: 0 0.75rem !important;
-  border-radius: 999px !important;
-  border: 1px solid rgba(41, 56, 43, 0.18) !important;
-  background: #fffaf2 !important;
-  color: #263629 !important;
-  font-size: 0.86rem !important;
-  font-weight: 800 !important;
-  line-height: 1 !important;
-  box-shadow: 0 1px 3px rgba(31, 42, 33, 0.08) !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-.marketPrepPage .savedItem .itemActions button:hover,
-.marketPrepPage .compactSavedItem .itemActions button:hover {
-  background: #f4eadb !important;
-  transform: translateY(-1px) !important;
-}
-
-.marketPrepPage .savedItem .itemActions button:last-child,
-.marketPrepPage .compactSavedItem .itemActions button:last-child {
-  width: 34px !important;
-  padding: 0 !important;
-  color: #c85d56 !important;
-  background: #fff7f5 !important;
-  border-color: rgba(200, 93, 86, 0.22) !important;
-}
-
-.marketPrepPage .savedItem .itemActions button:last-child svg,
-.marketPrepPage .compactSavedItem .itemActions button:last-child svg {
-  width: 14px !important;
-  height: 14px !important;
-}
-
-.marketPrepPage .formGrid,
-.marketPrepPage .compactFormGrid {
-  gap: 0.75rem !important;
-}
-
-@media (max-width: 900px) {
-  .marketPrepPage .compactToolGrid,
-  .marketPrepPage .toolGrid,
-  .marketPrepPage .marketPrepTopGrid,
-  .marketPrepPage .marketPrepForecastGrid {
-    gap: 0.75rem !important;
-    margin-bottom: 0.85rem !important;
-  }
-
-  .marketPrepPage .compactToolCard,
-  .marketPrepPage .toolCard {
-    min-height: 72px !important;
+  .marketPrepPlanActions {
+    justify-content: flex-start;
   }
 }
