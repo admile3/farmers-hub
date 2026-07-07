@@ -12473,3 +12473,32 @@ tr:last-child td {
     grid-template-columns: 1fr;
   }
 }
+/* ==========================================================
+   Permit & Grant Tracker Hero Title Wrapping Fix
+   ========================================================== */
+
+.permit-grants-page .module-hero-title,
+.permit-grants-module .module-hero-title {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.permit-grants-page .module-hero-title h1,
+.permit-grants-module .module-hero-title h1 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.permit-grants-page .module-hero-content,
+.permit-grants-module .module-hero-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.permit-grants-page .module-hero-actions,
+.permit-grants-module .module-hero-actions {
+  flex-shrink: 0;
+}
