@@ -12066,3 +12066,64 @@ tr:last-child td {
     justify-content: flex-start;
   }
 }
+
+/* ==========================================================================
+   Permit & Grant Tracker - Shared Component Polish (v2)
+   Append to styles.css
+   ========================================================================== */
+
+.permitGrantModule .hubStatGrid{
+  margin-bottom:1rem;
+}
+
+.permitGrantModule .workspacePanel,
+.permitGrantModule .permitRecordsPanel{
+  margin-bottom:1rem;
+}
+
+.permitFilterBar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.75rem;
+  align-items:center;
+  margin:0 0 1rem;
+}
+
+.permitFilterBar label{
+  margin:0;
+}
+
+.permitRecordsHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:.75rem;
+}
+
+.permitTableRow,
+.permitRecordCard{
+  transition:background-color .15s ease;
+}
+
+.permitTableRow:hover,
+.permitRecordCard:hover{
+  background:var(--surface-hover, rgba(0,0,0,.03));
+}
+
+.permitActions,
+.permitCardActions{
+  gap:.5rem;
+}
+
+@media (max-width:768px){
+  .permitFilterBar{
+    flex-direction:column;
+    align-items:stretch;
+  }
+
+  .permitRecordsHeader{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:.5rem;
+  }
+}
