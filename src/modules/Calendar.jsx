@@ -17,6 +17,9 @@ import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "../AuthContext.jsx";
 import { db } from "../firebase";
 import CalendarGuideContent from "../components/CalendarGuideContent.jsx";
+import ModuleHero from "../components/ModuleHero.jsx";
+import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
+import WorkspacePanel from "../components/WorkspacePanel.jsx";
 import StatCard from "../components/StatCard.jsx";
 import {
   deleteCalendarEvent,
@@ -1045,33 +1048,26 @@ export default function Calendar() {
 
   if (!user) {
     return (
-      <div className="calendarModule">
-        <section className="farmModuleHero">
-          <div className="farmModuleHeroText">
-            <p className="eyebrow">Calendar</p>
-            <h2>Sign in to view your vendor calendar.</h2>
-            <p>
-              Calendar events are built from your market plans, permits, grants,
-              baking schedule, and manually added events.
-            </p>
-          </div>
-
-          <div className="farmModuleHeroActions">
-            <button
-              className="primaryButton compactPrimary farmHeroAction"
-              type="button"
-              onClick={loginWithGoogle}
-            >
-              Sign in with Google
-            </button>
-          </div>
-        </section>
+      <div className="modulePage calendarModule calendarSharedModule">
+        <ModuleHero
+          eyebrow="Calendar"
+          accent="calendar"
+          icon={CalendarDays}
+          title="Sign in to view your vendor calendar."
+          description="Calendar events are built from your market plans, permits, grants, baking schedule, and manually added events."
+          actions={[
+            {
+              label: "Sign in with Google",
+              onClick: loginWithGoogle
+            }
+          ]}
+        />
       </div>
     );
   }
 
   return (
-    <div className="calendarModule">
+    <div className="modulePage calendarModule calendarSharedModule">
       {statusMessage ? (
         <div className="floatingStatus success">
           <span>ⓘ</span>
@@ -1082,36 +1078,26 @@ export default function Calendar() {
         </div>
       ) : null}
 
-      <section className="farmModuleHero">
-        <div className="farmModuleHeroText">
-          <p className="eyebrow">Calendar</p>
-          <h2>See every dated vendor task in one place.</h2>
-          <p>
-            Market plans, permit deadlines, grant renewals, baking production dates,
-            synced module tasks, and manually added events appear together on your calendar.
-          </p>
-        </div>
-
-        <div className="farmModuleHeroActions">
-          <button
-            className="secondaryButton compactButton farmHeroAction"
-            type="button"
-            onClick={() => setIsGuideOpen(true)}
-          >
-            <HelpCircle size={18} />
-            Guide
-          </button>
-
-          <button
-            className="primaryButton compactPrimary farmHeroAction"
-            type="button"
-            onClick={() => openNewEvent()}
-          >
-            <Plus size={16} />
-            Add Event
-          </button>
-        </div>
-      </section>
+      <ModuleHero
+        eyebrow="Calendar"
+        accent="calendar"
+        icon={CalendarDays}
+        title="See every dated vendor task in one place."
+        description="Market plans, permit deadlines, grant renewals, baking production dates, synced module tasks, and manually added events appear together on your calendar."
+        actions={[
+          {
+            label: "Guide",
+            icon: HelpCircle,
+            variant: "secondary",
+            onClick: () => setIsGuideOpen(true)
+          },
+          {
+            label: "Add Event",
+            icon: Plus,
+            onClick: () => openNewEvent()
+          }
+        ]}
+      />
 
       <section className="hubStatGrid calendarStatGrid">
         <StatCard
@@ -1148,20 +1134,19 @@ export default function Calendar() {
       </section>
 
       <section className="calendarLayout">
-        <div className="calendarPanel calendarMainPanel">
-          <div className="calendarToolbar calendarToolbarV2">
-            <div className="calendarToolbarTitle">
-              <p className="eyebrow">
-                {calendarView === "day"
-                  ? "Day View"
-                  : calendarView === "week"
-                    ? "Week View"
-                    : "Month View"}
-              </p>
-              <h3>{calendarViewLabel}</h3>
-            </div>
-
-            <div className="calendarToolbarControls">
+        <WorkspacePanel
+          eyebrow={
+            calendarView === "day"
+              ? "Day View"
+              : calendarView === "week"
+                ? "Week View"
+                : "Month View"
+          }
+          title={calendarViewLabel}
+          className="calendarMainPanel"
+          toolbar={
+            <div className="calendarToolbar calendarToolbarV2">
+              <div className="calendarToolbarControls">
               <div className="calendarViewToggle" aria-label="Calendar view">
                 {["day", "week", "month"].map((view) => (
                   <button
@@ -1202,8 +1187,10 @@ export default function Calendar() {
                   <ChevronRight size={16} />
                 </button>
               </div>
+              </div>
             </div>
-          </div>
+          }
+        >
 
           {calendarView !== "day" ? (
             <div className="calendarWeekHeader">
@@ -1274,25 +1261,22 @@ export default function Calendar() {
               );
             })}
           </div>
-        </div>
+        </WorkspacePanel>
 
         <aside className="calendarSideStack">
-          <div className="calendarPanel">
-            <div className="calendarPanelHeader">
-              <div>
-                <p className="eyebrow">Selected Day</p>
-                <h3>{formatDisplayDate(selectedDate)}</h3>
-              </div>
-
-              <button
-                className="secondaryButton compactButton"
-                type="button"
-                onClick={() => openNewEvent(selectedDate)}
-              >
-                <Plus size={15} />
-                Add
-              </button>
-            </div>
+          <WorkspacePanel
+            eyebrow="Selected Day"
+            title={formatDisplayDate(selectedDate)}
+            className="calendarSidePanel"
+            actions={[
+              {
+                label: "Add",
+                icon: Plus,
+                variant: "secondary",
+                onClick: () => openNewEvent(selectedDate)
+              }
+            ]}
+          >
 
             <div className="calendarAgendaList">
               {selectedDateEvents.length ? (
@@ -1319,15 +1303,9 @@ export default function Calendar() {
                 <p className="dashboardEmpty">No events for this day.</p>
               )}
             </div>
-          </div>
+          </WorkspacePanel>
 
-          <div className="calendarPanel">
-            <div className="calendarPanelHeader">
-              <div>
-                <p className="eyebrow">Agenda</p>
-                <h3>Upcoming</h3>
-              </div>
-            </div>
+          <WorkspacePanel eyebrow="Agenda" title="Upcoming" className="calendarSidePanel">
 
             <div className="calendarAgendaList">
               {upcomingEvents.length ? (
@@ -1352,7 +1330,7 @@ export default function Calendar() {
                 <p className="dashboardEmpty">No upcoming events found.</p>
               )}
             </div>
-          </div>
+          </WorkspacePanel>
         </aside>
       </section>
 
@@ -1715,44 +1693,14 @@ export default function Calendar() {
         </div>
       ) : null}
 
-      {isGuideOpen ? (
-        <div className="moduleGuideOverlay" role="dialog" aria-modal="true">
-          <div className="moduleGuideModal">
-            <div className="moduleGuideHeader">
-              <div>
-                <p className="eyebrow">Module Guide</p>
-                <h2>Calendar Guide</h2>
-              </div>
-
-              <button
-                className="moduleGuideCloseButton"
-                type="button"
-                onClick={() => setIsGuideOpen(false)}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="moduleGuideBody">
-              <CalendarGuideContent />
-            </div>
-
-            <div className="moduleGuideFooter">
-              <span className="moduleGuideDismiss">
-                Use this guide anytime from the Guide button.
-              </span>
-
-              <button
-                className="primaryButton"
-                type="button"
-                onClick={() => setIsGuideOpen(false)}
-              >
-                Got it
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <ModuleGuideModal
+        isOpen={isGuideOpen}
+        moduleKey="calendar"
+        title="Calendar Guide"
+        onClose={() => setIsGuideOpen(false)}
+      >
+        <CalendarGuideContent />
+      </ModuleGuideModal>
     </div>
   );
 }
