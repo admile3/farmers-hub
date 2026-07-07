@@ -19,6 +19,7 @@ import { useAuth } from "../AuthContext.jsx";
 import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import PermitGrantGuideContent from "../components/PermitGrantGuideContent.jsx";
+import ModuleHero from "../components/ModuleHero.jsx";
 import StatCard from "../components/StatCard.jsx";
 import {
   deletePermitGrantItem,
@@ -489,22 +490,20 @@ export default function PermitGrantTracker() {
   if (!user) {
     return (
       <div className="modulePage permitGrantModule compactSpicePage">
-        <section className="farmModuleHero permitGrantHero">
-          <div className="farmModuleHeroText">
-            <p className="eyebrow">Permits & Grants</p>
-            <h2>Sign in to save permits, grants, licenses, insurance, and renewals.</h2>
-            <p>
-              Track required records, application links, documents, renewal dates,
-              deadlines, and reminders in one organized workspace.
-            </p>
-          </div>
-
-          <div className="farmModuleHeroActions">
-            <button className="primaryButton farmHeroAction" type="button" onClick={loginWithGoogle}>
-              Sign in with Google
-            </button>
-          </div>
-        </section>
+        <ModuleHero
+          eyebrow="Permits & Grants"
+          title="Sign in to save permits, grants, licenses, insurance, and renewals."
+          description="Track required records, application links, documents, renewal dates, deadlines, and reminders in one organized workspace."
+          accent="grant"
+          icon={ShieldCheck}
+          actions={[
+            {
+              label: "Sign in with Google",
+              onClick: loginWithGoogle,
+              variant: "primary"
+            }
+          ]}
+        />
       </div>
     );
   }
@@ -521,42 +520,34 @@ export default function PermitGrantTracker() {
         </div>
       ) : null}
 
-      <section className="farmModuleHero permitGrantHero">
-        <div className="farmModuleHeroText">
-          <p className="eyebrow">Permits & Grants</p>
-          <h2>Track permits, grants, licenses, insurance, and renewal deadlines.</h2>
-          <p>
-            Keep required records, application links, documents, renewal dates,
-            deadlines, and reminders in one place.
-          </p>
-        </div>
-
-        <div className="farmModuleHeroActions">
-          <button
-            className="secondaryButton farmHeroAction"
-            type="button"
-            onClick={loadSampleRecords}
-            disabled={saving}
-          >
-            <FileText size={15} />
-            Load Sample Records
-          </button>
-
-          <button
-            className="secondaryButton farmHeroAction"
-            type="button"
-            onClick={() => setShowGuide(true)}
-          >
-            <CircleHelp size={15} />
-            Guide
-          </button>
-
-          <button className="primaryButton farmHeroAction" type="button" onClick={openNewRecord}>
-            <Plus size={15} />
-            Add Record
-          </button>
-        </div>
-      </section>
+      <ModuleHero
+        eyebrow="Permits & Grants"
+        title="Track permits, grants, licenses, insurance, and renewal deadlines."
+        description="Keep required records, application links, documents, renewal dates, deadlines, and reminders in one place."
+        accent="grant"
+        icon={ShieldCheck}
+        actions={[
+          {
+            label: "Load Sample Records",
+            icon: FileText,
+            variant: "secondary",
+            onClick: loadSampleRecords,
+            disabled: saving
+          },
+          {
+            label: "Guide",
+            icon: CircleHelp,
+            variant: "secondary",
+            onClick: () => setShowGuide(true)
+          },
+          {
+            label: "Add Record",
+            icon: Plus,
+            variant: "primary",
+            onClick: openNewRecord
+          }
+        ]}
+      />
 
       <section className="hubStatGrid">
         <StatCard
