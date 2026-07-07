@@ -12127,3 +12127,261 @@ tr:last-child td {
     gap:.5rem;
   }
 }
+/* ============================================================================
+   Permit & Grant Tracker, layout repair v3
+   Append after prior Permit & Grant CSS
+   ============================================================================ */
+
+.permitGrantModule {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.permitGrantModule .permitGrantHero .moduleHeroTitle,
+.permitGrantModule .permitGrantHero h1,
+.permitGrantModule .permitGrantHero h2 {
+  max-width: 980px !important;
+  text-wrap: balance;
+}
+
+.permitGrantModule .permitGrantHero .moduleHeroContent,
+.permitGrantModule .permitGrantHero .farmModuleHeroText {
+  max-width: 1040px !important;
+}
+
+.permitGrantStatGrid.hubStatGrid {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 0.75rem !important;
+  margin: 0 !important;
+}
+
+.permitFilterPanel.workspacePanel {
+  margin: 0 !important;
+  padding: 1rem !important;
+}
+
+.permitFilterHeader {
+  margin-bottom: 0.75rem !important;
+}
+
+.permitFilterBar {
+  display: grid !important;
+  grid-template-columns: minmax(260px, 1.35fr) repeat(3, minmax(160px, 0.75fr)) !important;
+  gap: 0.75rem !important;
+  align-items: end !important;
+  margin: 0 !important;
+}
+
+.permitFilterBar .permitSearch {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--border, #dedbd2);
+  border-radius: 12px;
+  background: var(--surface, #fffdf8);
+}
+
+.permitFilterBar .permitSearch input {
+  width: 100%;
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  min-height: auto !important;
+  padding: 0 !important;
+}
+
+.permitFilterBar label {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.35rem !important;
+  margin: 0 !important;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--mutedText, #5f675c);
+  text-transform: uppercase;
+}
+
+.permitFilterBar label select {
+  min-height: 42px !important;
+  width: 100% !important;
+  border: 1px solid var(--border, #dedbd2) !important;
+  border-radius: 12px !important;
+  background: var(--surface, #fffdf8) !important;
+  padding: 0 0.75rem !important;
+  font-size: 0.92rem !important;
+  font-weight: 750 !important;
+  color: var(--text, #172116) !important;
+}
+
+.permitRecordsPanel.workspacePanel {
+  margin: 0 !important;
+  padding: 1rem !important;
+  overflow: hidden;
+}
+
+.permitRecordsHeader {
+  margin-bottom: 0.85rem !important;
+  align-items: flex-end !important;
+}
+
+.permitRecordsCount {
+  color: var(--mutedText, #667064);
+  font-weight: 800;
+  font-size: 0.82rem;
+}
+
+.permitTableDesktopWrap {
+  overflow-x: auto;
+  border: 1px solid var(--border, #e2ded5);
+  border-radius: 16px;
+  background: var(--surface, #fffdf8);
+}
+
+.permitTable {
+  min-width: 1080px;
+  width: 100%;
+}
+
+.permitTableHeader,
+.permitTableRow {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.5fr) 110px minmax(190px, 1.1fr) 125px 100px 105px 125px 125px minmax(180px, 1.1fr) 96px;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.permitTableHeader {
+  padding: 0.75rem 0.85rem;
+  background: rgba(47, 78, 64, 0.055);
+  border-bottom: 1px solid var(--border, #e2ded5);
+  color: var(--mutedText, #5f675c);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.permitTableRow {
+  padding: 0.78rem 0.85rem;
+  border-bottom: 1px solid var(--border, #ece8df);
+  background: var(--surface, #fffdf8);
+}
+
+.permitTableRow:last-child {
+  border-bottom: 0;
+}
+
+.permitTableRow:hover {
+  background: rgba(47, 78, 64, 0.035);
+}
+
+.permitNameButton {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--text, #172116);
+  font-weight: 850;
+  text-align: left;
+  cursor: pointer;
+}
+
+.permitActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.permitActions button,
+.permitActions a {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border, #dedbd2);
+  border-radius: 10px;
+  background: var(--surface, #fffdf8);
+  color: var(--text, #172116);
+}
+
+.permitTypePill,
+.permitStatusPill,
+.permitPriorityPill,
+.permitDeadlinePill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: 26px;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border, #dedbd2);
+  background: #fffaf0;
+  font-size: 0.72rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.permitStatusPill.approved,
+.permitStatusPill.complete {
+  background: #ddf8e7;
+  border-color: #bde8ce;
+  color: #24643a;
+}
+
+.permitDeadlinePill.danger,
+.permitMissingDoc {
+  color: #b74a3a;
+}
+
+.permitDeadlinePill.warning {
+  color: #9b6a17;
+}
+
+.permitDeadlinePill.good {
+  color: #2f6c40;
+}
+
+.permitMobileCardList {
+  display: none;
+}
+
+@media (max-width: 1200px) {
+  .permitGrantStatGrid.hubStatGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .permitFilterBar {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .permitFilterBar .permitSearch {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .permitGrantStatGrid.hubStatGrid,
+  .permitFilterBar {
+    grid-template-columns: 1fr !important;
+  }
+
+  .permitTableDesktopWrap {
+    display: none;
+  }
+
+  .permitMobileCardList {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .permitRecordsHeader {
+    align-items: flex-start !important;
+  }
+}
