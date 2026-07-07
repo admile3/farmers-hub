@@ -12037,3 +12037,153 @@ tr:last-child td {
     width: 100%;
   }
 }
+/* =====================================================
+   MARKET PREP POLISH: tighter spacing + saved plan buttons
+   Append after prior Market Prep CSS
+   ===================================================== */
+
+.marketPrepPage .farmModuleHero,
+.marketPrepPage .moduleHero {
+  margin-bottom: 1.35rem !important;
+}
+
+.marketPrepPage .compactToolGrid,
+.marketPrepPage .marketPrepJumpGrid,
+.marketPrepPage .toolGrid {
+  margin-top: 0 !important;
+  margin-bottom: 1.15rem !important;
+  gap: 0.75rem !important;
+}
+
+.marketPrepPage .compactToolCard,
+.marketPrepPage .toolCard {
+  min-height: 82px !important;
+  padding: 1rem 1.15rem !important;
+  align-items: center !important;
+}
+
+.marketPrepPage .compactToolCard h3,
+.marketPrepPage .toolCard h3 {
+  margin: 0 !important;
+}
+
+.marketPrepPage .compactToolCard p,
+.marketPrepPage .toolCard p {
+  margin: 0.35rem 0 0 !important;
+  line-height: 1.25 !important;
+}
+
+.marketPrepPage .marketPrepTopGrid,
+.marketPrepPage .marketPrepForecastGrid,
+.marketPrepPage .compactWorkspace {
+  gap: 0.9rem !important;
+  margin-top: 0 !important;
+  margin-bottom: 1rem !important;
+}
+
+.marketPrepPage .workspacePanel,
+.marketPrepPage .compactPanel {
+  margin-top: 0 !important;
+}
+
+.marketPrepPage .marketWeatherPanel {
+  margin-top: 0.75rem !important;
+  margin-bottom: 0.95rem !important;
+  padding: 0.9rem 1rem !important;
+}
+
+.marketPrepPage .marketPrepStatsGrid {
+  margin-top: 0 !important;
+  margin-bottom: 0.85rem !important;
+  gap: 0.75rem !important;
+}
+
+.marketPrepPage .savedList,
+.marketPrepPage .compactSavedList {
+  gap: 0.55rem !important;
+}
+
+.marketPrepPage .savedItem,
+.marketPrepPage .compactSavedItem {
+  gap: 0.75rem !important;
+  padding: 0.8rem 0.9rem !important;
+}
+
+.marketPrepPage .savedItem h4,
+.marketPrepPage .compactSavedItem h4 {
+  margin: 0 0 0.18rem !important;
+}
+
+.marketPrepPage .savedItem p,
+.marketPrepPage .compactSavedItem p {
+  margin: 0 !important;
+  line-height: 1.25 !important;
+}
+
+.marketPrepPage .savedItem .itemActions,
+.marketPrepPage .compactSavedItem .itemActions {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 0.45rem !important;
+  flex: 0 0 auto !important;
+}
+
+.marketPrepPage .savedItem .itemActions button,
+.marketPrepPage .compactSavedItem .itemActions button {
+  min-width: 0 !important;
+  height: 34px !important;
+  padding: 0 0.75rem !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(41, 56, 43, 0.18) !important;
+  background: #fffaf2 !important;
+  color: #263629 !important;
+  font-size: 0.86rem !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  box-shadow: 0 1px 3px rgba(31, 42, 33, 0.08) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.marketPrepPage .savedItem .itemActions button:hover,
+.marketPrepPage .compactSavedItem .itemActions button:hover {
+  background: #f4eadb !important;
+  transform: translateY(-1px) !important;
+}
+
+.marketPrepPage .savedItem .itemActions button:last-child,
+.marketPrepPage .compactSavedItem .itemActions button:last-child {
+  width: 34px !important;
+  padding: 0 !important;
+  color: #c85d56 !important;
+  background: #fff7f5 !important;
+  border-color: rgba(200, 93, 86, 0.22) !important;
+}
+
+.marketPrepPage .savedItem .itemActions button:last-child svg,
+.marketPrepPage .compactSavedItem .itemActions button:last-child svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+.marketPrepPage .formGrid,
+.marketPrepPage .compactFormGrid {
+  gap: 0.75rem !important;
+}
+
+@media (max-width: 900px) {
+  .marketPrepPage .compactToolGrid,
+  .marketPrepPage .toolGrid,
+  .marketPrepPage .marketPrepTopGrid,
+  .marketPrepPage .marketPrepForecastGrid {
+    gap: 0.75rem !important;
+    margin-bottom: 0.85rem !important;
+  }
+
+  .marketPrepPage .compactToolCard,
+  .marketPrepPage .toolCard {
+    min-height: 72px !important;
+  }
+}
