@@ -1,4 +1,4 @@
-/* Mobile/tablet optimization pass: original logic preserved, responsive class hooks added only. */
+/* Planting Scheduler shared component pass: original logic preserved, shared ModuleHero applied. */
 import { useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "../AuthContext.jsx";
+import ModuleHero from "../components/ModuleHero.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import PlantingSchedulerGuideContent from "../components/PlantingSchedulerGuideContent.jsx";
 import StatCard from "../components/StatCard.jsx";
@@ -710,22 +711,21 @@ export default function PlantingScheduler() {
         <PlantingSchedulerGuideContent />
       </ModuleGuideModal>
 
-      <section className="farmModuleHero plantingFarmHero">
-          <div className="farmModuleHeroText">
-            <p className="eyebrow">Planting Scheduler</p>
-            <h2>Sign in to schedule plantings.</h2>
-            <p>
-              Create crop templates, schedule planting batches, and track growing
-              tasks from seed to harvest.
-            </p>
-          </div>
-
-          <div className="farmModuleHeroActions">
-            <button className="primaryButton farmHeroAction farmHeroPrimary" type="button" onClick={loginWithGoogle}>
-              Sign in with Google
-            </button>
-          </div>
-        </section>
+      <ModuleHero
+          eyebrow="Planting Scheduler"
+          title="Sign in to schedule plantings."
+          description="Create crop templates, schedule planting batches, and track growing tasks from seed to harvest."
+          accent="planting"
+          icon={Sprout}
+          className="plantingSchedulerHero"
+          actions={[
+            {
+              label: "Sign in with Google",
+              onClick: loginWithGoogle,
+              variant: "primary"
+            }
+          ]}
+        />
       </div>
     );
   }
@@ -741,34 +741,34 @@ export default function PlantingScheduler() {
         </div>
       ) : null}
 
-      <section className="farmModuleHero plantingFarmHero">
-        <div className="farmModuleHeroText">
-          <p className="eyebrow">Planting Scheduler</p>
-          <h2>Plan crops, plantings, growing tasks, and harvest windows.</h2>
-          <p>
-            Build reusable crop templates, schedule batches by planting date or
-            target harvest date, and track upcoming crop tasks across trays, beds,
-            pots, fields, and greenhouse space.
-          </p>
-        </div>
-
-        <div className="farmModuleHeroActions plantingHeroActions">
-          <button className="secondaryButton compactButton farmHeroAction farmHeroSecondary" type="button" onClick={startNewTemplate}>
-            <Leaf size={16} />
-            New Template
-          </button>
-
-          <button className="primaryButton compactPrimary farmHeroAction farmHeroPrimary" type="button" onClick={startNewBatch}>
-            <Plus size={16} />
-            New Planting
-          </button>
-
-          <button className="secondaryButton compactButton farmHeroAction farmHeroSecondary" type="button" onClick={() => setShowGuide(true)}>
-            <CircleHelp size={16} />
-            Guide
-          </button>
-        </div>
-      </section>
+      <ModuleHero
+        eyebrow="Planting Scheduler"
+        title="Plan crops, plantings, growing tasks, and harvest windows."
+        description="Build reusable crop templates, schedule batches by planting date or target harvest date, and track upcoming crop tasks across trays, beds, pots, fields, and greenhouse space."
+        accent="planting"
+        icon={Sprout}
+        className="plantingSchedulerHero"
+        actions={[
+          {
+            label: "New Template",
+            icon: Leaf,
+            variant: "secondary",
+            onClick: startNewTemplate
+          },
+          {
+            label: "New Planting",
+            icon: Plus,
+            variant: "primary",
+            onClick: startNewBatch
+          },
+          {
+            label: "Guide",
+            icon: CircleHelp,
+            variant: "secondary",
+            onClick: () => setShowGuide(true)
+          }
+        ]}
+      />
 
       <section className="hubStatGrid plantingStatGrid plantingStatGridResponsive">
         <StatCard
