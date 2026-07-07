@@ -3466,7 +3466,7 @@ tr:last-child td {
   font-size: clamp(2.1rem, 3vw, 3.35rem) !important;
   line-height: 1.02 !important;
   letter-spacing: -0.035em !important;
-  text-wrap: balance;
+  text-wrap: normal;
 }
 
 .farmhubModuleHero p {
@@ -12471,5 +12471,248 @@ tr:last-child td {
   .permitGrantModule .permitGrantStatGrid,
   .permitGrantModule .permitFilterPanelCompact .permitFilterBar {
     grid-template-columns: 1fr;
+  }
+}
+
+
+/* ==========================
+   Shared ModuleHero Final Consolidation
+   Keeps the new ModuleHero component from inheriting older .moduleHero and .compactHero rules.
+========================== */
+
+.farmhubModuleHero,
+.farmhubModuleHero.moduleHero,
+.farmhubModuleHero.compactHero,
+.farmhubModuleHero.moduleHero.compactHero {
+  --module-color: var(--green);
+
+  position: relative !important;
+  overflow: hidden !important;
+
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 24px !important;
+
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 22px 26px !important;
+
+  background: #ffffff !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow) !important;
+}
+
+.farmhubModuleHero::before,
+.farmhubModuleHero.moduleHero::before,
+.farmhubModuleHero.compactHero::before,
+.farmhubModuleHero.moduleHero.compactHero::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 6px;
+  background: var(--module-color, var(--green));
+}
+
+.farmhubModuleHero > div:first-child,
+.farmhubModuleHero.moduleHero > div:first-child,
+.farmhubModuleHero.compactHero > div:first-child,
+.farmhubModuleHero.moduleHero.compactHero > div:first-child,
+.farmhubModuleHero .farmhubModuleHeroText {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.farmhubModuleHero .farmhubModuleHeroEyebrowRow {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-bottom: 4px !important;
+}
+
+.farmhubModuleHero .farmhubModuleHeroEyebrowIcon {
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 999px !important;
+  display: grid !important;
+  place-items: center !important;
+  color: var(--module-color, var(--green)) !important;
+  background: color-mix(in srgb, var(--module-color, var(--green)) 14%, #ffffff) !important;
+}
+
+.farmhubModuleHero .eyebrow {
+  margin: 0 !important;
+  color: var(--module-color, var(--green)) !important;
+}
+
+.farmhubModuleHero h2,
+.farmhubModuleHero.moduleHero h2,
+.farmhubModuleHero.compactHero h2,
+.farmhubModuleHero.moduleHero.compactHero h2 {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 4px 0 8px !important;
+
+  color: var(--text) !important;
+  font-family: Georgia, "Times New Roman", serif !important;
+  font-size: clamp(2.1rem, 3vw, 3.35rem) !important;
+  line-height: 1.02 !important;
+  letter-spacing: -0.035em !important;
+
+  text-wrap: normal !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  white-space: normal !important;
+}
+
+.farmhubModuleHero p,
+.farmhubModuleHero.moduleHero p,
+.farmhubModuleHero.compactHero p,
+.farmhubModuleHero.moduleHero.compactHero p {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+
+  color: var(--muted) !important;
+  font-size: 0.94rem !important;
+  line-height: 1.45 !important;
+}
+
+.farmhubModuleHeroActions,
+.farmhubModuleHero .farmhubModuleHeroActions,
+.farmhubModuleHero.moduleHero .farmhubModuleHeroActions,
+.farmhubModuleHero.compactHero .farmhubModuleHeroActions,
+.farmhubModuleHero.moduleHero.compactHero .farmhubModuleHeroActions {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  align-self: center !important;
+  gap: 9px !important;
+  flex: 0 0 auto !important;
+  flex-wrap: wrap !important;
+  margin: 0 !important;
+}
+
+.farmhubModuleHero .farmhubHeroButton,
+.farmhubModuleHero .primaryButton,
+.farmhubModuleHero .secondaryButton {
+  width: fit-content !important;
+  white-space: nowrap !important;
+  align-self: center !important;
+}
+
+/* Permit & Grant specific title breathing room */
+.permitGrantModule .farmhubModuleHero.permitGrantHero {
+  grid-template-columns: minmax(0, 1fr) auto !important;
+}
+
+.permitGrantModule .farmhubModuleHero.permitGrantHero .farmhubModuleHeroText {
+  max-width: none !important;
+}
+
+.permitGrantModule .farmhubModuleHero.permitGrantHero h2 {
+  max-width: 1320px !important;
+}
+
+/* Shared stat grid should support five-card modules without wrapping early */
+.permitGrantModule .permitGrantStatGrid {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+/* Compact Permit & Grant filter polish */
+.permitGrantModule .permitFilterPanel,
+.permitGrantModule .permitFilterPanelCompact {
+  padding: 16px 18px !important;
+}
+
+.permitGrantModule .permitFilterPanel .workspaceHeader,
+.permitGrantModule .permitFilterPanel .compactPanelHeader,
+.permitGrantModule .permitFilterPanelCompact .workspaceHeader,
+.permitGrantModule .permitFilterPanelCompact .compactPanelHeader {
+  margin-bottom: 10px !important;
+}
+
+.permitGrantModule .permitFilterBar,
+.permitGrantModule .permitFilterPanelCompact .permitFilterBar {
+  display: grid !important;
+  grid-template-columns: minmax(300px, 1.3fr) repeat(3, minmax(150px, 0.7fr)) !important;
+  gap: 12px !important;
+  align-items: end !important;
+}
+
+.permitGrantModule .permitSearch {
+  min-height: 40px !important;
+}
+
+@media (max-width: 1250px) {
+  .permitGrantModule .permitGrantStatGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .permitGrantModule .permitFilterBar,
+  .permitGrantModule .permitFilterPanelCompact .permitFilterBar {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .permitGrantModule .permitSearch {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .farmhubModuleHero,
+  .farmhubModuleHero.moduleHero,
+  .farmhubModuleHero.compactHero,
+  .farmhubModuleHero.moduleHero.compactHero {
+    grid-template-columns: 1fr !important;
+    align-items: start !important;
+    gap: 16px !important;
+  }
+
+  .farmhubModuleHeroActions,
+  .farmhubModuleHero .farmhubModuleHeroActions {
+    justify-content: flex-start !important;
+  }
+
+  .permitGrantModule .permitGrantStatGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .farmhubModuleHero,
+  .farmhubModuleHero.moduleHero,
+  .farmhubModuleHero.compactHero,
+  .farmhubModuleHero.moduleHero.compactHero {
+    padding: 16px !important;
+    border-radius: 15px !important;
+  }
+
+  .farmhubModuleHero h2,
+  .farmhubModuleHero.moduleHero h2,
+  .farmhubModuleHero.compactHero h2,
+  .farmhubModuleHero.moduleHero.compactHero h2 {
+    font-size: clamp(1.55rem, 7.2vw, 2.35rem) !important;
+  }
+
+  .farmhubModuleHero .farmhubHeroButton,
+  .farmhubModuleHero .primaryButton,
+  .farmhubModuleHero .secondaryButton {
+    width: 100% !important;
+  }
+
+  .permitGrantModule .permitGrantStatGrid,
+  .permitGrantModule .permitFilterBar,
+  .permitGrantModule .permitFilterPanelCompact .permitFilterBar {
+    grid-template-columns: 1fr !important;
   }
 }
