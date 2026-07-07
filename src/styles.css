@@ -12006,3 +12006,63 @@ tr:last-child td {
     justify-content: flex-start;
   }
 }
+/* =====================================================
+   MARKET PREP, SAVED PLAN ACTION BUTTON FIX
+   Appended after previous Market Prep CSS. This avoids the old itemActions
+   button rules that were forcing the Load button into a small circle.
+   ===================================================== */
+
+.marketPrepSavedPlanRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.marketPrepSavedPlanActions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.marketPrepSavedPlanActions .marketPrepSavedPlanLoadButton {
+  width: auto !important;
+  min-width: 64px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 16px !important;
+  border-radius: 999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+  font-size: 0.92rem !important;
+  font-weight: 800 !important;
+}
+
+.marketPrepSavedPlanActions .marketPrepSavedPlanDeleteButton {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+}
+
+@media (max-width: 700px) {
+  .marketPrepSavedPlanRow {
+    grid-template-columns: 1fr;
+  }
+
+  .marketPrepSavedPlanActions {
+    justify-content: flex-start;
+  }
+}
