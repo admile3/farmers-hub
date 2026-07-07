@@ -496,7 +496,7 @@ export default function PermitGrantTracker() {
           description="Track required records, application links, documents, renewal dates, deadlines, and reminders in one organized workspace."
           accent="grant"
           icon={ShieldCheck}
-          className="permitGrantHero"
+          className="permitGrantHero permitGrantHeroWide"
           actions={[
             {
               label: "Sign in with Google",
@@ -593,7 +593,7 @@ export default function PermitGrantTracker() {
         />
       </section>
 
-      <section className="workspacePanel compactPanel permitFilterPanel">
+      <section className="workspacePanel compactPanel permitFilterPanel permitFilterPanelCompact">
         <div className="workspaceHeader compactPanelHeader permitFilterHeader">
           <div>
             <p className="eyebrow">Filters</p>
