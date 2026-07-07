@@ -809,22 +809,20 @@ export default function MarketPrepPlanner() {
         if (event.target.closest(".moduleGuideOverlay")) return;
         markMarketPrepDirty();
       }}>
-        <section className="farmModuleHero marketPrepHero">
-          <div className="farmModuleHeroText">
-            <p className="eyebrow">Market Prep Planner</p>
-            <h2>Sign in to save market prep plans.</h2>
-            <p>
-              Build generalized product forecasts and pack lists locally, then sign in
-              to save market plans to your Farmers Hub account.
-            </p>
-          </div>
-
-          <div className="farmModuleHeroActions">
-            <button className="primaryButton compactPrimary farmHeroAction" onClick={loginWithGoogle}>
-              Sign in with Google
-            </button>
-          </div>
-        </section>
+        <ModuleHero
+          eyebrow="Market Prep Planner"
+          title="Sign in to save market prep plans."
+          description="Build generalized product forecasts and pack lists locally, then sign in to save market plans to your Farmers Hub account."
+          accent="market"
+          icon={PackageCheck}
+          actions={[
+            {
+              label: "Sign in with Google",
+              onClick: loginWithGoogle,
+              variant: "primary"
+            }
+          ]}
+        />
       </div>
     );
   }
@@ -834,67 +832,48 @@ export default function MarketPrepPlanner() {
         if (event.target.closest(".moduleGuideOverlay")) return;
         markMarketPrepDirty();
       }}>
-      <section className="farmModuleHero marketPrepHero marketPrepNoPrint">
-        <div className="farmModuleHeroText">
-          <p className="eyebrow">Market Prep Planner</p>
-          <h2>Plan packing, prep quantities, and inventory before market day.</h2>
-          <p>
-            Build a market plan by location and date, define your own unit labels,
-            estimate product quantities, add buffers, save plans, and print a working
-            prep sheet.
-          </p>
-        </div>
-
-        <div className="farmModuleHeroActions marketPrepHeroActions">
-  <button
-    className="primaryButton compactPrimary farmHeroAction"
-    type="button"
-    onClick={startNewPlan}
-  >
-    <Plus size={15} />
-    New Plan
-  </button>
-
-  <button
-    className="secondaryButton compactButton farmHeroAction"
-    type="button"
-    onClick={loadSampleProducts}
-  >
-    <Sprout size={15} />
-    Load Samples
-  </button>
-
-  <button
-    className="secondaryButton compactButton farmHeroAction"
-    type="button"
-    onClick={() => setShowGuide(true)}
-  >
-    <CircleHelp size={15} />
-    Guide
-  </button>
-
-  <button
-    className="secondaryButton compactButton farmHeroAction"
-    type="button"
-    onClick={printPlan}
-  >
-    <Printer size={15} />
-    Print
-  </button>
-
-  <button
-    className={`secondaryButton compactButton farmHeroAction ${
-      hasUnsavedChanges ? "dirtySaveButton" : ""
-    }`}
-    type="button"
-    onClick={savePlan}
-    disabled={saving}
-  >
-    <Save size={15} />
-    {saving ? "Saving..." : hasUnsavedChanges ? "Save Changes" : "Save"}
-  </button>
-</div>
-      </section>
+      <div className="marketPrepNoPrint">
+        <ModuleHero
+          eyebrow="Market Prep Planner"
+          title="Plan packing, prep quantities, and inventory before market day."
+          description="Build a market plan by location and date, define your own unit labels, estimate product quantities, add buffers, save plans, and print a working prep sheet."
+          accent="market"
+          icon={PackageCheck}
+          actions={[
+            {
+              label: "New Plan",
+              icon: Plus,
+              variant: "primary",
+              onClick: startNewPlan
+            },
+            {
+              label: "Load Samples",
+              icon: Sprout,
+              variant: "secondary",
+              onClick: loadSampleProducts
+            },
+            {
+              label: "Guide",
+              icon: CircleHelp,
+              variant: "secondary",
+              onClick: () => setShowGuide(true)
+            },
+            {
+              label: "Print",
+              icon: Printer,
+              variant: "secondary",
+              onClick: printPlan
+            },
+            {
+              label: saving ? "Saving..." : hasUnsavedChanges ? "Save Changes" : "Save",
+              icon: Save,
+              variant: hasUnsavedChanges ? "primary" : "secondary",
+              onClick: savePlan,
+              disabled: saving
+            }
+          ]}
+        />
+      </div>
 
       {statusMessage ? (
         <div className="floatingStatus success marketPrepNoPrint">
