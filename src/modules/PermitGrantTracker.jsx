@@ -489,13 +489,14 @@ export default function PermitGrantTracker() {
 
   if (!user) {
     return (
-      <div className="modulePage permitGrantModule compactSpicePage">
+      <div className="modulePage permitGrantModule">
         <ModuleHero
           eyebrow="Permits & Grants"
           title="Sign in to save permits, grants, licenses, insurance, and renewals."
           description="Track required records, application links, documents, renewal dates, deadlines, and reminders in one organized workspace."
           accent="grant"
           icon={ShieldCheck}
+          className="permitGrantHero"
           actions={[
             {
               label: "Sign in with Google",
@@ -509,7 +510,7 @@ export default function PermitGrantTracker() {
   }
 
   return (
-    <div className="modulePage permitGrantModule compactSpicePage">
+    <div className="modulePage permitGrantModule">
       {statusMessage ? (
         <div className="floatingStatus success">
           <span>ⓘ</span>
@@ -526,6 +527,7 @@ export default function PermitGrantTracker() {
         description="Keep required records, application links, documents, renewal dates, deadlines, and reminders in one place."
         accent="grant"
         icon={ShieldCheck}
+        className="permitGrantHero"
         actions={[
           {
             label: "Load Sample Records",
@@ -549,7 +551,7 @@ export default function PermitGrantTracker() {
         ]}
       />
 
-      <section className="hubStatGrid">
+      <section className="hubStatGrid permitGrantStatGrid">
         <StatCard
           icon={ShieldCheck}
           label="Active"
@@ -591,57 +593,69 @@ export default function PermitGrantTracker() {
         />
       </section>
 
-      <section className="permitFilterBar">
-        <div className="permitSearch">
-          <Search size={18} />
-          <input
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Search by name, agency, or notes..."
-          />
+      <section className="workspacePanel compactPanel permitFilterPanel">
+        <div className="workspaceHeader compactPanelHeader permitFilterHeader">
+          <div>
+            <p className="eyebrow">Filters</p>
+            <h3>Find Records</h3>
+          </div>
+          <Filter size={18} />
         </div>
 
-        <label>
-          <Filter size={16} />
-          <select
-            value={typeFilter}
-            onChange={(event) => setTypeFilter(event.target.value)}
-          >
-            <option>All Types</option>
-            {itemTypes.map((type) => (
-              <option key={type}>{type}</option>
-            ))}
-          </select>
-        </label>
+        <div className="permitFilterBar">
+          <div className="permitSearch">
+            <Search size={18} />
+            <input
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search by name, agency, or notes..."
+            />
+          </div>
 
-        <label>
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-          >
-            <option>All Statuses</option>
-            {statusOptions.map((status) => (
-              <option key={status}>{status}</option>
-            ))}
-          </select>
-        </label>
+          <label>
+            <span>Type</span>
+            <select
+              value={typeFilter}
+              onChange={(event) => setTypeFilter(event.target.value)}
+            >
+              <option>All Types</option>
+              {itemTypes.map((type) => (
+                <option key={type}>{type}</option>
+              ))}
+            </select>
+          </label>
 
-        <label>
-          <select
-            value={recordFilter}
-            onChange={(event) => setRecordFilter(event.target.value)}
-          >
-            <option>All Records</option>
-            <option>Expiring Soon</option>
-            <option>Expired</option>
-            <option>Missing Docs</option>
-            <option>Grants</option>
-          </select>
-        </label>
+          <label>
+            <span>Status</span>
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+            >
+              <option>All Statuses</option>
+              {statusOptions.map((status) => (
+                <option key={status}>{status}</option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            <span>Record View</span>
+            <select
+              value={recordFilter}
+              onChange={(event) => setRecordFilter(event.target.value)}
+            >
+              <option>All Records</option>
+              <option>Expiring Soon</option>
+              <option>Expired</option>
+              <option>Missing Docs</option>
+              <option>Grants</option>
+            </select>
+          </label>
+        </div>
       </section>
 
-      <section className="permitRecordsPanel">
-        <div className="permitRecordsHeader">
+      <section className="workspacePanel compactPanel permitRecordsPanel">
+        <div className="workspaceHeader compactPanelHeader permitRecordsHeader">
           <div>
             <p className="eyebrow">Current Entries</p>
             <h3>Records</h3>
