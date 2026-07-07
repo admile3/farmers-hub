@@ -22,6 +22,7 @@ import {
 import { useAuth } from "../AuthContext.jsx";
 import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
+import ModuleHero from "../components/ModuleHero.jsx";
 import FlowerStudioGuideContent from "../components/FlowerStudioGuideContent.jsx";
 import StatCard from "../components/StatCard.jsx";
 import { addQuantityToMatchedInventoryItem } from "../services/inventoryService.js";
@@ -1151,25 +1152,21 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
   if (!user) {
     return (
       <div className="flowerStudioModule modulePage">
-        <section className="farmModuleHero flowerStudioHero">
-          <div className="farmModuleHeroText">
-            <p className="eyebrow">Flower Studio</p>
-            <h2>Build flower arrangements from stem planning to inventory.</h2>
-            <p>
-              Sign in to manage flower pantries, container costs, arrangements,
-              zone suggestions, production logs, and finished inventory.
-            </p>
-          </div>
-
-          <div className="farmModuleHeroActions">
-            <button
-              className="primaryButton compactPrimary farmHeroAction"
-              onClick={loginWithGoogle}
-            >
-              Sign in with Google
-            </button>
-          </div>
-        </section>
+        <ModuleHero
+          eyebrow="Flower Studio"
+          accent="flowers"
+          icon={Flower2}
+          title="Build flower arrangements from stem planning to inventory."
+          description="Sign in to manage flower pantries, container costs, arrangements, zone suggestions, production logs, and finished inventory."
+          className="flowerStudioHero"
+          actions={[
+            {
+              label: "Sign in with Google",
+              variant: "primary",
+              onClick: loginWithGoogle
+            }
+          ]}
+        />
       </div>
     );
   }
@@ -1186,28 +1183,22 @@ Square composition. No hands, no people, no extra props, no watermarks.`);
         </div>
       ) : null}
 
-      <section className="farmModuleHero flowerStudioHero">
-        <div className="farmModuleHeroText">
-          <p className="eyebrow">Flower Studio</p>
-          <h2>Plan stems, containers, arrangements, production, and inventory.</h2>
-          <p>
-            Import flowers by USDA zone, upload custom flower photos, build bouquet
-            recipes, save arrangement images, assign container costs, log production,
-            and send finished arrangements to Inventory.
-          </p>
-        </div>
-
-        <div className="farmModuleHeroActions">
-          <button
-            className="secondaryButton compactButton farmHeroAction"
-            type="button"
-            onClick={() => setShowGuide(true)}
-          >
-            <HelpCircle size={18} />
-            Guide
-          </button>
-        </div>
-      </section>
+      <ModuleHero
+        eyebrow="Flower Studio"
+        accent="flowers"
+        icon={Flower2}
+        title="Plan stems, containers, arrangements, production, and inventory."
+        description="Import flowers by USDA zone, upload custom flower photos, build bouquet recipes, save arrangement images, assign container costs, log production, and send finished arrangements to Inventory."
+        className="flowerStudioHero"
+        actions={[
+          {
+            label: "Guide",
+            icon: HelpCircle,
+            variant: "secondary",
+            onClick: () => setShowGuide(true)
+          }
+        ]}
+      />
 
       <section className="hubStatGrid flowerStudioStatGrid">
         <StatCard
