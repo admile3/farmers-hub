@@ -11934,3 +11934,75 @@ tr:last-child td {
     justify-content: flex-start;
   }
 }
+/* =====================================================
+   MARKET PREP PLANNER, SAVED PLAN LOAD BUTTON FIX
+   Append after the existing Market Prep CSS sections.
+   ===================================================== */
+
+.marketPrepPage .savedList .savedItem .itemActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.marketPrepPage .savedList .savedItem .itemActions button:not(.iconButton):first-child,
+.marketPrepPage .savedList .savedItem .itemActions button[type="button"]:first-child {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid rgba(47, 91, 56, 0.22);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #2f5b38;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(31, 42, 31, 0.08);
+}
+
+.marketPrepPage .savedList .savedItem .itemActions button:not(.iconButton):first-child:hover,
+.marketPrepPage .savedList .savedItem .itemActions button[type="button"]:first-child:hover {
+  background: rgba(47, 91, 56, 0.08);
+  border-color: rgba(47, 91, 56, 0.35);
+  transform: translateY(-1px);
+}
+
+.marketPrepPage .savedList .savedItem .itemActions button:not(:first-child) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  padding: 0;
+  border-radius: 999px;
+}
+
+.marketPrepPage .savedList .savedItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.marketPrepPage .savedList .savedItem h4,
+.marketPrepPage .savedList .savedItem p {
+  margin-right: 0;
+}
+
+@media (max-width: 720px) {
+  .marketPrepPage .savedList .savedItem {
+    grid-template-columns: 1fr;
+  }
+
+  .marketPrepPage .savedList .savedItem .itemActions {
+    justify-content: flex-start;
+  }
+}
