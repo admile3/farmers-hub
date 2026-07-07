@@ -16,6 +16,7 @@ import {
 import { useAuth } from "../AuthContext.jsx";
 import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import ListsGuideContent from "../components/ListsGuideContent.jsx";
+import ModuleHero from "../components/ModuleHero.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import StatCard from "../components/StatCard.jsx";
 import {
@@ -346,30 +347,30 @@ export default function Lists() {
 
   if (!user) {
     return (
-      <div className="listsModule modulePage compactSpicePage">
-        <section className="farmModuleHero listsHero">
-          <div className="farmModuleHeroText">
-            <p className="eyebrow">Lists</p>
-            <h2>Create reusable checklists for your vendor workflows.</h2>
-            <p>
-              Sign in to save market prep, production, shopping, permits, delivery,
-              and idea lists to your Farmers Hub account.
-            </p>
-          </div>
-
-          <div className="farmModuleHeroActions">
-            <button className="primaryButton farmHeroAction" onClick={loginWithGoogle}>
-              Sign in with Google
-            </button>
-          </div>
-        </section>
+      <div className="listsModule modulePage compactSpicePage listsSharedModule">
+        <ModuleHero
+          eyebrow="Lists"
+          title="Create reusable checklists for your vendor workflows."
+          description="Sign in to save market prep, production, shopping, permits, delivery, and idea lists to your Farmers Hub account."
+          icon={ClipboardList}
+          accent="lists"
+          className="listsHero"
+          actions={[
+            {
+              label: "Sign in with Google",
+              icon: CheckSquare,
+              variant: "primary",
+              onClick: loginWithGoogle
+            }
+          ]}
+        />
       </div>
     );
   }
 
   if (selectedList) {
     return (
-      <div className="listsModule modulePage">
+      <div className="listsModule modulePage listsSharedModule">
         {statusMessage ? (
           <div className="floatingStatus success">
             <span>ⓘ</span>
@@ -491,7 +492,7 @@ export default function Lists() {
   }
 
   return (
-    <div className="listsModule modulePage">
+    <div className="listsModule modulePage listsSharedModule">
       {statusMessage ? (
         <div className="floatingStatus success">
           <span>ⓘ</span>
@@ -503,36 +504,28 @@ export default function Lists() {
         </div>
       ) : null}
 
-      <section className="farmModuleHero listsHero">
-        <div className="farmModuleHeroText">
-          <p className="eyebrow">Lists</p>
-          <h2>Create reusable checklists for your vendor workflows.</h2>
-          <p>
-            Organize market prep, production, shopping, permits, delivery, and ideas
-            into reusable workflow lists.
-          </p>
-        </div>
-
-        <div className="farmModuleHeroActions">
-          <button
-            className="secondaryButton compactButton farmHeroAction"
-            type="button"
-            onClick={() => setIsGuideOpen(true)}
-          >
-            <HelpCircle size={18} />
-            Guide
-          </button>
-
-          <button
-            className="primaryButton compactPrimary farmHeroAction"
-            type="button"
-            onClick={() => setIsNewListOpen(true)}
-          >
-            <ListPlus size={18} />
-            New List
-          </button>
-        </div>
-      </section>
+      <ModuleHero
+        eyebrow="Lists"
+        title="Create reusable checklists for your vendor workflows."
+        description="Organize market prep, production, shopping, permits, delivery, and ideas into reusable workflow lists."
+        icon={ClipboardList}
+        accent="lists"
+        className="listsHero"
+        actions={[
+          {
+            label: "Guide",
+            icon: HelpCircle,
+            variant: "secondary",
+            onClick: () => setIsGuideOpen(true)
+          },
+          {
+            label: "New List",
+            icon: ListPlus,
+            variant: "primary",
+            onClick: () => setIsNewListOpen(true)
+          }
+        ]}
+      />
 
       <section className="permitFilterBar listsFilterBar">
         <div className="permitSearch">
