@@ -20,6 +20,7 @@ import { useAuth } from "../AuthContext.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import CustomersGuideContent from "../components/CustomersGuideContent.jsx";
 import StatCard from "../components/StatCard.jsx";
+import ModuleHero from "../components/ModuleHero.jsx";
 import {
   deleteCustomer,
   getCustomers,
@@ -298,36 +299,27 @@ export default function Customers() {
         </div>
       ) : null}
 
-      <section className="farmModuleHero customersModuleHero">
-        <div className="farmModuleHeroText">
-          <p className="eyebrow">Customer CRM</p>
-          <h2>Customers</h2>
-          <p>
-            Keep track of repeat buyers, leads, wholesale accounts, event clients,
-            custom order customers, and follow-up reminders in one place.
-          </p>
-        </div>
-
-        <div className="farmModuleHeroActions customersHeroActions">
-          <button
-            className="primaryButton compactPrimary farmHeroAction"
-            type="button"
-            onClick={openNewCustomer}
-          >
-            <Plus size={18} />
-            Add Customer
-          </button>
-
-          <button
-            className="secondaryButton compactButton farmHeroAction"
-            type="button"
-            onClick={() => setShowGuide(true)}
-          >
-            <CircleHelp size={16} />
-            Guide
-          </button>
-        </div>
-      </section>
+      <ModuleHero
+        eyebrow="Customer CRM"
+        accent="customers"
+        icon={Users}
+        title="Customers"
+        description="Keep track of repeat buyers, leads, wholesale accounts, event clients, custom order customers, and follow-up reminders in one place."
+        actions={[
+          {
+            label: "Add Customer",
+            icon: Plus,
+            variant: "primary",
+            onClick: openNewCustomer
+          },
+          {
+            label: "Guide",
+            icon: CircleHelp,
+            variant: "secondary",
+            onClick: () => setShowGuide(true)
+          }
+        ]}
+      />
 
       <section className="hubStatGrid customersStatGrid">
         <StatCard
@@ -360,7 +352,7 @@ export default function Customers() {
         />
       </section>
 
-      <section className="workspacePanel compactPanel customersFilterPanel">
+      <section className="workspacePanel compactPanel customersFilterPanel customersSharedFilterPanel">
         <div className="searchBox compactSearch customersSearchBox">
           <Search size={17} />
           <input
@@ -395,7 +387,7 @@ export default function Customers() {
         </label>
       </section>
 
-      <section className="workspacePanel customersTablePanel">
+      <section className="workspacePanel customersTablePanel customersSharedDirectoryPanel">
         <div className="workspaceHeader compactPanelHeader">
           <div>
             <p className="eyebrow">Directory</p>
@@ -406,7 +398,7 @@ export default function Customers() {
           </button>
         </div>
 
-        <div className="customersTable">
+        <div className="customersTable customersSharedTable">
           <div className="customersTableHeader" style={{ gridTemplateColumns: CUSTOMER_TABLE_COLUMNS }}>
             <span>Name</span>
             <span>Type</span>
