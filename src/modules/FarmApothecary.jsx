@@ -890,6 +890,8 @@ export default function FarmApothecary() {
           eyebrow="Farm Apothecary"
           title="Sign in to manage apothecary batches."
           description="Track soaps, candles, balms, lotions, infused oils, materials, production events, finished products, and inventory from your Market Vendor Toolkit account."
+          icon={Leaf}
+          accent="apothecary"
           className="apothecaryHero"
           actions={[
             {
@@ -920,8 +922,16 @@ export default function FarmApothecary() {
         eyebrow="Farm Apothecary"
         title="Track soap, candle, balm, lotion, and infused product batches."
         description="Create or edit one working batch at a time, then manage materials, production events, finished products, pricing, and inventory from one central workspace."
+        icon={Leaf}
+        accent="apothecary"
         className="apothecaryHero"
         actions={[
+          {
+            label: "New Batch",
+            icon: Plus,
+            variant: "primary",
+            onClick: startNewBatch
+          },
           {
             label: "Guide",
             icon: CircleHelp,
@@ -965,7 +975,7 @@ export default function FarmApothecary() {
         />
       </section>
 
-      <section className="toolGrid compactToolGrid apothecaryModeGrid">
+      <section className="toolGrid compactToolGrid apothecaryModeGrid apothecaryQuickStartGrid">
         {sectionCards.map((card) => {
           const Icon = card.icon;
 
