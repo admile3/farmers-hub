@@ -806,7 +806,7 @@ export default function MarketPrepPlanner() {
 
   if (!user) {
     return (
-      <div className="modulePage marketPrepPage compactSpicePage" onChangeCapture={(event) => {
+      <div className="modulePage marketPrepPage" onChangeCapture={(event) => {
         if (event.target.closest(".moduleGuideOverlay")) return;
         markMarketPrepDirty();
       }}>
@@ -829,7 +829,7 @@ export default function MarketPrepPlanner() {
   }
 
   return (
-    <div className="modulePage marketPrepPage compactSpicePage" onChangeCapture={(event) => {
+    <div className="modulePage marketPrepPage" onChangeCapture={(event) => {
         if (event.target.closest(".moduleGuideOverlay")) return;
         markMarketPrepDirty();
       }}>
@@ -886,26 +886,29 @@ export default function MarketPrepPlanner() {
         </div>
       ) : null}
 
-      <section className="toolGrid compactToolGrid marketPrepNoPrint">
+      <section className="marketPrepQuickNav marketPrepNoPrint" aria-label="Market prep sections">
         {sectionCards.map((card) => {
           const Icon = card.icon;
 
           return (
             <button
-              className="toolCard compactToolCard clickableToolCard"
+              className="marketPrepQuickNavCard"
               key={card.title}
               type="button"
               onClick={() => scrollToSection(card.ref)}
             >
-              <Icon size={22} />
-              <h3>{card.title}</h3>
-              <p>{card.description}</p>
+              <span className="marketPrepQuickNavIcon"><Icon size={18} /></span>
+              <span className="marketPrepQuickNavText">
+                <strong>{card.title}</strong>
+                <small>{card.description}</small>
+              </span>
+              <span className="marketPrepQuickNavArrow" aria-hidden="true">›</span>
             </button>
           );
         })}
       </section>
 
-      <section className="marketPrepTopGrid compactWorkspace">
+      <section className="marketPrepTopGrid marketPrepSectionGrid">
         <div className="workspacePanel compactPanel scrollAnchor marketPrepPrintDetails" ref={setupRef}>
           <div className="workspaceHeader compactPanelHeader">
             <div>
@@ -992,7 +995,7 @@ export default function MarketPrepPlanner() {
             <WeatherPreview forecast={weatherForecast} />
           </div>
 
-          <div className="hubStatGrid marketPrepStatsGrid marketPrepNoPrint">
+          <div className="hubStatGrid marketPrepStatsGrid marketPrepNoPrint marketPrepInlineStats">
             <StatCard icon={PackageCheck} label="Products" value={totals.productCount} sub="Line items in this plan" accent="market" />
             <StatCard icon={ClipboardList} label="Planned Units" value={totals.plannedUnits} sub="Total units before buffers" accent="pricing" />
             <StatCard icon={Sprout} label="Buffered Items" value={totals.lineItemsWithBuffer} sub="Products with extra prep added" accent="sourdough" />
@@ -1068,15 +1071,15 @@ export default function MarketPrepPlanner() {
             </div>
           </div>
 
-          <div className="savedList compactSavedList">
+          <div className="savedList compactSavedList marketPrepSavedPlanList">
             {loadingPlans ? (
               <div className="placeholderBox compactPlaceholder">Loading saved plans...</div>
             ) : savedPlans.length ? (
               savedPlans.map((plan) => (
-                <div className="savedItem compactSavedItem" key={plan.id}>
+                <div className="savedItem compactSavedItem marketPrepSavedPlanRow" key={plan.id}>
                   <div>
                     <h4>
-                      <button type="button" className="savedItemLink" onClick={() => hydratePlan(plan)}>
+                      <button type="button" className="savedItemLink marketPrepSavedPlanName" onClick={() => hydratePlan(plan)}>
                         {plan.marketName || "Market Plan"}
                       </button>
                     </h4>
@@ -1085,11 +1088,11 @@ export default function MarketPrepPlanner() {
                     </p>
                   </div>
 
-                  <div className="itemActions">
-                    <button type="button" onClick={() => hydratePlan(plan)}>
+                  <div className="itemActions marketPrepPlanActions">
+                    <button className="marketPrepLoadButton" type="button" onClick={() => hydratePlan(plan)}>
                       Load
                     </button>
-                    <button type="button" onClick={() => removeSavedPlan(plan.id)}>
+                    <button className="marketPrepDeleteButton" type="button" onClick={() => removeSavedPlan(plan.id)} aria-label={`Delete ${plan.marketName || "Market Plan"}`}>
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -1102,7 +1105,7 @@ export default function MarketPrepPlanner() {
         </div>
       </section>
 
-      <section className="marketPrepForecastGrid compactWorkspace">
+      <section className="marketPrepForecastGrid marketPrepSectionGrid">
         <div className="workspacePanel compactPanel scrollAnchor marketPrepNoPrint" ref={forecastRef}>
           <div className="workspaceHeader compactPanelHeader">
             <div>
