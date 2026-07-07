@@ -10992,3 +10992,202 @@ tr:last-child td {
     justify-content: center;
   }
 }
+/* =========================================================
+   Flower Studio layout polish, upload rows + saved item alignment
+   Append to: src/styles.css
+   ========================================================= */
+
+.flowerStudioModule .flowerUploadField {
+  display: block;
+  padding: 16px 18px;
+  border: 1px solid var(--border, rgba(22, 27, 34, 0.12));
+  border-radius: 16px;
+  background: var(--panel-soft, #fbfaf6);
+}
+
+.flowerStudioModule .flowerUploadHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+}
+
+.flowerStudioModule .flowerUploadHeader > div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.flowerStudioModule .flowerUploadHeader span {
+  display: block;
+  color: var(--text, #121820);
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.flowerStudioModule .flowerUploadHeader small {
+  display: block;
+  color: var(--muted, #64748b);
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.flowerStudioModule .flowerUploadButton {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  min-width: 138px;
+  justify-content: center;
+}
+
+.flowerStudioModule .flowerUploadButton input {
+  display: none;
+}
+
+.flowerStudioModule .flowerUploadPreview {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border, rgba(22, 27, 34, 0.1));
+}
+
+.flowerStudioModule .flowerUploadedThumbButton,
+.flowerStudioModule .flowerPantryImageButton,
+.flowerStudioModule .arrangementLibraryImageButton {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--border, rgba(22, 27, 34, 0.12));
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.flowerStudioModule .flowerUploadedThumbButton,
+.flowerStudioModule .flowerUploadedThumbButton img {
+  width: 72px;
+  height: 72px;
+}
+
+.flowerStudioModule .flowerPantryImageButton,
+.flowerStudioModule .flowerPantryImage,
+.flowerStudioModule .flowerPantryImageFallback,
+.flowerStudioModule .arrangementLibraryImageButton,
+.flowerStudioModule .arrangementLibraryImageButton img,
+.flowerStudioModule .arrangementLibraryImageFallback {
+  width: 58px;
+  height: 58px;
+}
+
+.flowerStudioModule .flowerUploadedThumbButton img,
+.flowerStudioModule .flowerPantryImage,
+.flowerStudioModule .arrangementLibraryImageButton img {
+  display: block;
+  object-fit: cover;
+}
+
+.flowerStudioModule .flowerPantryImageFallback,
+.flowerStudioModule .arrangementLibraryImageFallback,
+.flowerStudioModule .containerListIcon {
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  border: 1px solid var(--border, rgba(22, 27, 34, 0.12));
+  background: var(--panel-soft, #fbfaf6);
+  color: var(--muted, #64748b);
+  flex: 0 0 auto;
+}
+
+.flowerStudioModule .flowerPantryList .savedItem,
+.flowerStudioModule .containerPantryList .savedItem,
+.flowerStudioModule .arrangementLibraryList .savedItem,
+.flowerStudioModule .compactSavedItem.arrangementLibraryItem {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+}
+
+.flowerStudioModule .flowerPantryList .savedItem > div:not(.itemActions):not(.flowerPantryImageFallback),
+.flowerStudioModule .containerPantryList .savedItem > div:not(.itemActions):not(.containerListIcon),
+.flowerStudioModule .arrangementLibraryList .savedItem > div:not(.itemActions):not(.arrangementLibraryImageFallback) {
+  min-width: 0;
+}
+
+.flowerStudioModule .flowerPantryList h4,
+.flowerStudioModule .containerPantryList h4,
+.flowerStudioModule .arrangementLibraryList h4 {
+  margin: 0 0 4px;
+  line-height: 1.15;
+}
+
+.flowerStudioModule .flowerPantryList p,
+.flowerStudioModule .containerPantryList p,
+.flowerStudioModule .arrangementLibraryList p {
+  margin: 0;
+  line-height: 1.35;
+  color: var(--muted, #64748b);
+}
+
+.flowerStudioModule .flowerPantryList .itemActions,
+.flowerStudioModule .containerPantryList .itemActions,
+.flowerStudioModule .arrangementLibraryList .itemActions {
+  align-self: center;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.flowerStudioModule .toggleField {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 12px 14px;
+  border: 1px solid var(--border, rgba(22, 27, 34, 0.12));
+  border-radius: 12px;
+  background: #fff;
+  font-weight: 900;
+}
+
+.flowerStudioModule .toggleField input {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  accent-color: var(--flowers, #b96f91);
+}
+
+@media (max-width: 760px) {
+  .flowerStudioModule .flowerUploadHeader,
+  .flowerStudioModule .flowerUploadPreview {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .flowerStudioModule .flowerUploadButton {
+    width: 100%;
+  }
+
+  .flowerStudioModule .flowerPantryList .savedItem,
+  .flowerStudioModule .containerPantryList .savedItem,
+  .flowerStudioModule .arrangementLibraryList .savedItem,
+  .flowerStudioModule .compactSavedItem.arrangementLibraryItem {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .flowerStudioModule .flowerPantryList .itemActions,
+  .flowerStudioModule .containerPantryList .itemActions,
+  .flowerStudioModule .arrangementLibraryList .itemActions {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    justify-content: flex-end;
+  }
+}
