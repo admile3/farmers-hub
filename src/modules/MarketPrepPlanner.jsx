@@ -1088,11 +1088,20 @@ export default function MarketPrepPlanner() {
                     </p>
                   </div>
 
-                  <div className="itemActions marketPrepPlanActions">
-                    <button className="marketPrepLoadButton" type="button" onClick={() => hydratePlan(plan)}>
+                  <div className="marketPrepSavedPlanActions">
+                    <button
+                      className="secondaryButton compactButton marketPrepSavedPlanLoadButton"
+                      type="button"
+                      onClick={() => hydratePlan(plan)}
+                    >
                       Load
                     </button>
-                    <button className="marketPrepDeleteButton" type="button" onClick={() => removeSavedPlan(plan.id)} aria-label={`Delete ${plan.marketName || "Market Plan"}`}>
+                    <button
+                      className="iconButton danger marketPrepSavedPlanDeleteButton"
+                      type="button"
+                      onClick={() => removeSavedPlan(plan.id)}
+                      aria-label={`Delete ${plan.marketName || "Market Plan"}`}
+                    >
                       <Trash2 size={14} />
                     </button>
                   </div>
