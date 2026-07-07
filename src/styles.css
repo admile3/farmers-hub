@@ -10002,3 +10002,442 @@ tr:last-child td {
     justify-content: center;
   }
 }
+
+/* =====================================================
+   FARM APOTHECARY SHARED COMPONENT POLISH
+   Append to src/styles.css
+   ===================================================== */
+
+.apothecaryModule {
+  --apothecary-accent: #8a6f3d;
+  --apothecary-accent-dark: #6f572e;
+  --apothecary-soft: #fbf7ed;
+  --apothecary-border: rgba(98, 76, 39, 0.18);
+}
+
+.apothecaryHero {
+  margin-bottom: 18px;
+}
+
+.apothecaryStatGrid,
+.apothecaryWorkingSummary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.apothecaryQuickStartGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.apothecaryModeCard {
+  min-height: 128px;
+  text-align: left;
+  align-items: flex-start;
+  border: 1px solid var(--border, rgba(15, 23, 42, 0.12));
+  background: var(--panel, #fff);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: var(--shadow, 0 12px 30px rgba(15, 23, 42, 0.06));
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.apothecaryModeCard:hover {
+  transform: translateY(-1px);
+  border-color: var(--apothecary-border);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.08);
+}
+
+.apothecaryModeCard svg {
+  color: var(--apothecary-accent);
+}
+
+.apothecaryModeCard h3 {
+  margin: 10px 0 6px;
+}
+
+.apothecaryModeCard p {
+  margin: 0;
+  color: var(--muted, #64748b);
+  line-height: 1.45;
+}
+
+.apothecaryEditorPanel {
+  display: grid;
+  gap: 18px;
+}
+
+.apothecaryEditorActions,
+.apothecaryHeaderActions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.apothecarySelectPanel {
+  display: grid;
+  gap: 14px;
+}
+
+.apothecarySavedList {
+  display: grid;
+  gap: 10px;
+}
+
+.apothecarySavedItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid var(--border, rgba(15, 23, 42, 0.12));
+  border-radius: 16px;
+  background: #fff;
+  padding: 14px;
+}
+
+.apothecarySavedItem h4 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.apothecarySavedItem p {
+  margin: 0;
+  color: var(--muted, #64748b);
+  font-size: 0.88rem;
+}
+
+.apothecarySavedItem .itemActions {
+  display: flex;
+  gap: 8px;
+}
+
+.apothecarySavedItem .itemActions button,
+.apothecaryModule .iconButton {
+  width: 36px;
+  height: 36px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--border, rgba(15, 23, 42, 0.12));
+  background: #fff;
+  color: var(--text, #111827);
+  cursor: pointer;
+}
+
+.apothecaryModule .iconButton.danger,
+.apothecarySavedItem .itemActions button:last-child {
+  color: #b42318;
+}
+
+.apothecaryWorkingSummary {
+  margin-top: 6px;
+}
+
+.apothecaryFlowGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+}
+
+.apothecarySubPanel {
+  min-width: 0;
+}
+
+.apothecarySubPanel .workspaceHeader,
+.apothecaryBatchLog .workspaceHeader {
+  gap: 14px;
+}
+
+.apothecaryModule .formGrid,
+.apothecaryModule .compactFormGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.apothecaryModule .formGrid label,
+.apothecaryModule .compactFormGrid label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  color: var(--muted, #64748b);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.apothecaryModule input,
+.apothecaryModule select,
+.apothecaryModule textarea {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--border, rgba(15, 23, 42, 0.12));
+  border-radius: 12px;
+  background: #fff;
+  color: var(--text, #111827);
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.apothecaryModule textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.apothecaryModule input:focus,
+.apothecaryModule select:focus,
+.apothecaryModule textarea:focus {
+  outline: none;
+  border-color: rgba(138, 111, 61, 0.55);
+  box-shadow: 0 0 0 3px rgba(138, 111, 61, 0.14);
+}
+
+.apothecaryModule .fullSpan {
+  grid-column: 1 / -1;
+}
+
+.apothecaryCalculatedField {
+  min-height: 42px;
+  border: 1px solid var(--apothecary-border);
+  border-radius: 14px;
+  background: var(--apothecary-soft);
+  padding: 10px 12px;
+  display: grid;
+  gap: 4px;
+}
+
+.apothecaryCalculatedField span {
+  color: var(--muted, #64748b);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.apothecaryCalculatedField strong {
+  color: var(--text, #111827);
+  font-size: 1rem;
+}
+
+.apothecaryTableWrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border, rgba(15, 23, 42, 0.12));
+  border-radius: 16px;
+  background: #fff;
+}
+
+.apothecaryEditableTable {
+  min-width: 980px;
+}
+
+.apothecaryIngredientTable .apothecaryTableHeader,
+.apothecaryIngredientTable .apothecaryTableRow {
+  display: grid;
+  grid-template-columns: 135px 190px minmax(180px, 1fr) 105px 90px 110px 150px 48px;
+  gap: 8px;
+  align-items: center;
+}
+
+.apothecaryEventTable .apothecaryTableHeader,
+.apothecaryEventTable .apothecaryTableRow {
+  display: grid;
+  grid-template-columns: 135px 190px 110px 100px minmax(240px, 1fr) 48px;
+  gap: 8px;
+  align-items: center;
+}
+
+.apothecaryProductTable .apothecaryTableHeader,
+.apothecaryProductTable .apothecaryTableRow {
+  display: grid;
+  grid-template-columns: minmax(190px, 1fr) 90px 105px 150px 120px 110px 110px 120px 48px;
+  gap: 8px;
+  align-items: center;
+}
+
+.apothecaryTableHeader {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 11px 12px;
+  background: var(--apothecary-soft);
+  color: var(--muted, #64748b);
+  border-bottom: 1px solid var(--border, rgba(15, 23, 42, 0.12));
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.apothecaryTableRow {
+  padding: 10px 12px;
+  border-top: 1px solid rgba(15, 23, 42, 0.07);
+}
+
+.apothecaryTableRow:first-of-type {
+  border-top: 0;
+}
+
+.apothecaryTableRow input,
+.apothecaryTableRow select {
+  min-height: 38px;
+  padding: 8px 10px;
+  font-size: 0.86rem;
+}
+
+.apothecaryTableCost {
+  border: 1px solid var(--border, rgba(15, 23, 42, 0.12));
+  border-radius: 12px;
+  background: #fff;
+  padding: 8px 10px;
+  display: grid;
+  gap: 2px;
+}
+
+.apothecaryTableCost strong {
+  color: var(--text, #111827);
+}
+
+.apothecaryTableCost span {
+  color: var(--muted, #64748b);
+  font-size: 0.76rem;
+}
+
+.apothecaryBatchLog {
+  margin-top: 18px;
+}
+
+.apothecaryLogGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.apothecaryLogGrid > div {
+  border: 1px solid var(--border, rgba(15, 23, 42, 0.12));
+  border-radius: 16px;
+  background: #fff;
+  padding: 14px;
+  min-width: 0;
+}
+
+.apothecaryLogGrid h4 {
+  margin: 0 0 10px;
+}
+
+.apothecaryLogGrid p {
+  margin: 0;
+  color: var(--muted, #64748b);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.apothecaryLogGrid p + p {
+  margin-top: 8px;
+}
+
+.apothecaryModule .placeholderBox,
+.apothecaryModule .compactPlaceholder {
+  border: 1px dashed var(--border, rgba(15, 23, 42, 0.16));
+  border-radius: 16px;
+  background: var(--apothecary-soft);
+  color: var(--muted, #64748b);
+  padding: 18px;
+  line-height: 1.45;
+}
+
+.apothecaryModule .searchBox,
+.apothecaryModule .compactSearch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--border, rgba(15, 23, 42, 0.12));
+  border-radius: 14px;
+  background: #fff;
+  padding: 0 12px;
+}
+
+.apothecaryModule .searchBox input,
+.apothecaryModule .compactSearch input {
+  border: 0;
+  box-shadow: none;
+  padding-inline: 0;
+}
+
+.apothecaryModule .searchBox input:focus,
+.apothecaryModule .compactSearch input:focus {
+  box-shadow: none;
+}
+
+.apothecaryModule .backToTopButton {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--apothecary-accent);
+  color: #fff;
+  padding: 12px 16px;
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.22);
+  cursor: pointer;
+  font-weight: 900;
+}
+
+@media (max-width: 1180px) {
+  .apothecaryStatGrid,
+  .apothecaryWorkingSummary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .apothecaryModule .formGrid,
+  .apothecaryModule .compactFormGrid,
+  .apothecaryLogGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .apothecaryStatGrid,
+  .apothecaryWorkingSummary,
+  .apothecaryQuickStartGrid,
+  .apothecaryModule .formGrid,
+  .apothecaryModule .compactFormGrid,
+  .apothecaryLogGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .apothecaryEditorActions,
+  .apothecaryHeaderActions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .apothecaryEditorActions button,
+  .apothecaryHeaderActions button {
+    flex: 1 1 100%;
+  }
+
+  .apothecarySavedItem {
+    grid-template-columns: 1fr;
+  }
+
+  .apothecarySavedItem .itemActions {
+    justify-content: flex-end;
+  }
+
+  .apothecaryModule .backToTopButton {
+    right: 14px;
+    bottom: 14px;
+  }
+}
