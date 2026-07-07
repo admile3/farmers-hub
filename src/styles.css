@@ -12385,3 +12385,91 @@ tr:last-child td {
     align-items: flex-start !important;
   }
 }
+/* ========================================================================
+   Permit & Grant Tracker, hero and filter layout repair v4
+   Append after the existing Permit & Grant CSS
+   ======================================================================== */
+
+.permitGrantModule .permitGrantHeroWide {
+  align-items: center;
+}
+
+.permitGrantModule .permitGrantHeroWide .farmModuleHeroText,
+.permitGrantModule .permitGrantHeroWide .moduleHeroText,
+.permitGrantModule .permitGrantHeroWide [class*="HeroText"] {
+  flex: 1 1 auto;
+  max-width: 1220px;
+  min-width: 0;
+}
+
+.permitGrantModule .permitGrantHeroWide h1,
+.permitGrantModule .permitGrantHeroWide h2,
+.permitGrantModule .permitGrantHeroWide [class*="Title"] {
+  max-width: 1180px;
+  text-wrap: balance;
+}
+
+.permitGrantModule .permitGrantHeroWide .farmModuleHeroActions,
+.permitGrantModule .permitGrantHeroWide .moduleHeroActions,
+.permitGrantModule .permitGrantHeroWide [class*="HeroActions"] {
+  flex: 0 0 auto;
+}
+
+.permitGrantModule .permitGrantStatGrid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.permitGrantModule .permitFilterPanelCompact {
+  padding: 16px 18px;
+}
+
+.permitGrantModule .permitFilterPanelCompact .permitFilterHeader {
+  margin-bottom: 10px;
+  padding-bottom: 0;
+  min-height: auto;
+}
+
+.permitGrantModule .permitFilterPanelCompact .permitFilterHeader h3 {
+  margin: 0;
+}
+
+.permitGrantModule .permitFilterPanelCompact .permitFilterBar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) repeat(3, minmax(150px, 190px));
+  gap: 12px;
+  align-items: end;
+  margin: 0;
+}
+
+.permitGrantModule .permitFilterPanelCompact .permitSearch,
+.permitGrantModule .permitFilterPanelCompact label {
+  min-height: 42px;
+}
+
+.permitGrantModule .permitFilterPanelCompact label span {
+  margin-bottom: 4px;
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
+.permitGrantModule .permitFilterPanelCompact input,
+.permitGrantModule .permitFilterPanelCompact select {
+  height: 42px;
+}
+
+@media (max-width: 1180px) {
+  .permitGrantModule .permitGrantStatGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .permitGrantModule .permitFilterPanelCompact .permitFilterBar {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .permitGrantModule .permitGrantStatGrid,
+  .permitGrantModule .permitFilterPanelCompact .permitFilterBar {
+    grid-template-columns: 1fr;
+  }
+}
