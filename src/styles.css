@@ -9796,3 +9796,209 @@ tr:last-child td {
     justify-content: center;
   }
 }
+/* ==========================
+   Customers shared-component polish
+   Append to src/styles.css
+========================== */
+
+.customersModule {
+  --module-color: var(--customers);
+}
+
+.customersSharedFilterPanel {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(190px, 0.34fr) minmax(180px, 0.3fr);
+  gap: 0.8rem;
+  align-items: end;
+}
+
+.customersSharedFilterPanel .customersSearchBox {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.customersSharedDirectoryPanel {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.customersSharedTable {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.customersSharedTable .customersTableHeader,
+.customersSharedTable .customersTableRow {
+  min-width: 1120px;
+}
+
+.customersSharedTable .customersTableHeader {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-bottom: 1px solid var(--border);
+}
+
+.customersSharedTable .customersTableRow {
+  transition:
+    background 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.customersSharedTable .customersTableRow:hover {
+  background: #fbfaf6;
+  box-shadow: inset 4px 0 0 var(--customers);
+}
+
+.customerNameButton {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.customerNameButton strong {
+  color: var(--text);
+  font-size: 0.94rem;
+  line-height: 1.15;
+}
+
+.customerNameButton small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+.customerMuted {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.84rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.customerTypeCell {
+  min-width: 0;
+}
+
+.customerEmptyState {
+  margin: 0;
+  padding: 1rem;
+  color: var(--muted);
+  font-weight: 800;
+  text-align: center;
+}
+
+.customersModalActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.customersModalActions .dangerButton {
+  margin-right: auto;
+}
+
+@media (max-width: 1050px) {
+  .customersSharedFilterPanel {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .customersSharedFilterPanel .customersSearchBox {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .customersSharedFilterPanel {
+    grid-template-columns: 1fr;
+  }
+
+  .customersSharedTable {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  .customersSharedTable .customersTableHeader {
+    display: none;
+  }
+
+  .customersSharedTable .customersTableRow {
+    display: grid;
+    grid-template-columns: 1fr !important;
+    min-width: 0;
+    gap: 0.55rem;
+    margin-bottom: 0.7rem;
+    padding: 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: #ffffff;
+  }
+
+  .customersSharedTable .customersTableRow > span,
+  .customersSharedTable .customersTableRow > div {
+    min-width: 0;
+  }
+
+  .customerMuted {
+    white-space: normal;
+  }
+
+  .customerTypeCell::before,
+  .customerMuted::before,
+  .customerFollowUp::before,
+  .customerActions::before {
+    display: block;
+    margin-bottom: 0.2rem;
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-weight: 950;
+    letter-spacing: 0.07em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .customerTypeCell::before {
+    content: "Type";
+  }
+
+  .customersTableRow > .customerMuted:nth-of-type(3)::before {
+    content: "Interests";
+  }
+
+  .customersTableRow > .customerMuted:nth-of-type(5)::before {
+    content: "Contact";
+  }
+
+  .customerFollowUp::before {
+    content: "Follow-up";
+  }
+
+  .customerActions::before {
+    content: "Actions";
+  }
+
+  .customerActions {
+    justify-content: flex-start;
+  }
+
+  .customersModalActions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .customersModalActions .dangerButton {
+    margin-right: 0;
+  }
+
+  .customersModalActions button {
+    width: 100%;
+    justify-content: center;
+  }
+}
