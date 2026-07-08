@@ -11,7 +11,8 @@ import {
   PawPrint,
   Plus,
   RefreshCw,
-  Trash2
+  Trash2,
+  X
 } from "lucide-react";
 
 import ActionMenu from "../components/ActionMenu.jsx";
@@ -349,6 +350,7 @@ export default function HerdTracker() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [speciesFilter, setSpeciesFilter] = useState("All");
   const [showGuide, setShowGuide] = useState(false);
+  const [showInputCostModal, setShowInputCostModal] = useState(false);
   const [toast, setToast] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
@@ -594,7 +596,7 @@ export default function HerdTracker() {
   }
 
   function startNewInputCost() {
-    setActiveView("costs");
+    setShowInputCostModal(true);
     setSelectedInputCostId("");
     setInputCostForm({
       ...blankInputCost,
@@ -637,7 +639,7 @@ export default function HerdTracker() {
   }
 
   function editInputCost(inputCost) {
-    setActiveView("costs");
+    setShowInputCostModal(true);
     setSelectedInputCostId(inputCost.id);
     setInputCostForm({
       ...blankInputCost,
@@ -648,6 +650,10 @@ export default function HerdTracker() {
     });
     resetAllocationForm();
     resetInputCostSaveState();
+  }
+
+  function closeInputCostModal() {
+    setShowInputCostModal(false);
   }
 
   function updateAnimalParentField(parentIdField, parentNameField, parentId) {
@@ -3018,6 +3024,363 @@ export default function HerdTracker() {
       </section>
 
       )}
+
+      {showInputCostModal ? (
+        <div
+          className="moduleModalOverlay"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeInputCostModal();
+          }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1000,
+            background: "rgba(15, 23, 15, 0.42)",
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "center",
+            padding: "clamp(16px, 4vw, 36px)",
+            overflow: "auto"
+          }}
+        >
+          <div
+            className="moduleModalCard"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Input cost pool editor"
+            style={{
+              width: "min(1180px, 100%)",
+              background: "var(--surface, #fff)",
+              borderRadius: "24px",
+              boxShadow: "0 24px 80px rgba(0, 0, 0, 0.24)",
+              padding: "clamp(14px, 2vw, 22px)",
+              border: "1px solid var(--border, rgba(0, 0, 0, 0.08))"
+            }}
+          >
+            <div
+              className="moduleModalHeader"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "16px",
+                marginBottom: "14px"
+              }}
+            >
+              <div>
+                <p className="panelEyebrow">Input Cost Pool</p>
+                <h2 style={{ margin: 0 }}>
+                  {selectedInputCostId ? "Edit Shared Input Cost" : "Add Shared Input Cost"}
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="secondaryButton compactButton"
+                onClick={closeInputCostModal}
+                aria-label="Close input cost pool editor"
+              >
+                <X size={16} />
+                Close
+              </button>
+            </div>
+
+        <section className="herdWorkspaceGrid compactWorkspace">
+          <WorkspacePanel
+            eyebrow="Input Cost Pool"
+            title={selectedInputCostId ? "Edit Input Cost" : "Add Input Cost"}
+            className="herdAnimalPanel"
+            actions={[
+              {
+                label: "Clear",
+                variant: "secondary",
+                onClick: startNewInputCost
+              }
+            ]}
+          >
+            <form className="formGrid compactFormGrid" onSubmit={saveInputCost}>
+              <FormField label="Cost Name">
+                <input
+                  value={inputCostForm.name}
+                  onChange={(event) => updateInputCostField("name", event.target.value)}
+                  placeholder="e.g., June broiler feed order"
+                />
+              </FormField>
+
+              <FormField label="Category">
+                <select
+                  value={inputCostForm.category}
+                  onChange={(event) => updateInputCostField("category", event.target.value)}
+                >
+                  {HERD_INPUT_COST_CATEGORIES.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+
+              <FormField label="Vendor">
+                <input
+                  value={inputCostForm.vendor}
+                  onChange={(event) => updateInputCostField("vendor", event.target.value)}
+                  placeholder="Supplier or vendor"
+                />
+              </FormField>
+
+              <FormField label="Purchase Date">
+                <input
+                  type="date"
+                  value={inputCostForm.purchaseDate}
+                  onChange={(event) => updateInputCostField("purchaseDate", event.target.value)}
+                />
+              </FormField>
+
+              <FormField label="Total Cost">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={inputCostForm.totalCost}
+                  onChange={(event) => updateInputCostField("totalCost", event.target.value)}
+                  onBlur={(event) =>
+                    updateInputCostField("totalCost", cleanCurrency(event.target.value))
+                  }
+                  placeholder="0.00"
+                />
+              </FormField>
+
+              <FormField label="Quantity Purchased">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={inputCostForm.quantity}
+                  onChange={(event) => updateInputCostField("quantity", event.target.value)}
+                  onBlur={(event) =>
+                    updateInputCostField("quantity", cleanNumber(event.target.value, 2))
+                  }
+                  placeholder="e.g., 2000"
+                />
+              </FormField>
+
+              <FormField label="Unit">
+                <select
+                  value={inputCostForm.unit}
+                  onChange={(event) => updateInputCostField("unit", event.target.value)}
+                >
+                  {HERD_INPUT_COST_UNITS.map((unit) => (
+                    <option key={unit} value={unit}>
+                      {unit}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+
+              <div className="livestockCalculatedField">
+                <span>Unit Cost</span>
+                <strong>
+                  {calculateInputCostUnitCost(inputCostForm)
+                    ? `${money(calculateInputCostUnitCost(inputCostForm))} / ${inputCostForm.unit}`
+                    : money(0)}
+                </strong>
+              </div>
+
+              <div className="livestockCalculatedField">
+                <span>Allocated</span>
+                <strong>{money(calculateInputCostAllocatedAmount(inputCostForm))}</strong>
+              </div>
+
+              <div className="livestockCalculatedField">
+                <span>Remaining</span>
+                <strong>{money(calculateInputCostRemainingAmount(inputCostForm))}</strong>
+              </div>
+
+              <FormField label="Notes" fullWidth>
+                <textarea
+                  value={inputCostForm.notes}
+                  onChange={(event) => updateInputCostField("notes", event.target.value)}
+                  placeholder="Feed formula, invoice notes, delivery details, or allocation plan..."
+                />
+              </FormField>
+
+              <div className="fullSpan herdEditorActions">
+                <button
+                  className="secondaryButton compactButton"
+                  type="button"
+                  onClick={startNewInputCost}
+                >
+                  Clear
+                </button>
+
+                <SaveButton
+                  dirty={inputCostDirty}
+                  saving={inputCostSaving}
+                  saved={inputCostSaved}
+                  error={inputCostSaveError}
+                  label="Save Cost Pool"
+                  dirtyLabel="Save Cost Pool"
+                  onClick={saveInputCost}
+                />
+              </div>
+            </form>
+          </WorkspacePanel>
+
+          <WorkspacePanel
+            eyebrow="Allocations"
+            title={
+              selectedInputCost
+                ? selectedInputCost.name || "Selected Input Cost"
+                : "Select an Input Cost"
+            }
+            className="herdTimelinePanel"
+          >
+            {selectedInputCost ? (
+              <>
+                <form className="formGrid compactFormGrid herdEventForm" onSubmit={saveInputAllocation}>
+                  <FormField label="Target Type">
+                    <select
+                      value={allocationForm.targetType}
+                      onChange={(event) => {
+                        updateAllocationField("targetType", event.target.value);
+                        updateAllocationField("targetId", "");
+                      }}
+                    >
+                      <option value={HERD_ALLOCATION_TARGET_TYPES.GROUP}>Group / Lot</option>
+                      <option value={HERD_ALLOCATION_TARGET_TYPES.ANIMAL}>Animal</option>
+                    </select>
+                  </FormField>
+
+                  <FormField label="Allocate To">
+                    <select
+                      value={allocationForm.targetId}
+                      onChange={(event) => updateAllocationField("targetId", event.target.value)}
+                    >
+                      <option value="">Select target</option>
+                      {allocationTargetOptions
+                        .filter((target) => target.type === allocationForm.targetType)
+                        .map((target) => (
+                          <option key={`${target.type}-${target.id}`} value={target.id}>
+                            {target.label}
+                          </option>
+                        ))}
+                    </select>
+                  </FormField>
+
+                  <FormField label={`Quantity Used${inputCostForm.unit ? ` (${inputCostForm.unit})` : ""}`}>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={allocationForm.quantityUsed}
+                      onChange={(event) => updateAllocationField("quantityUsed", event.target.value)}
+                      onBlur={(event) =>
+                        updateAllocationField("quantityUsed", cleanNumber(event.target.value, 2))
+                      }
+                      placeholder="Optional"
+                    />
+                  </FormField>
+
+                  <FormField label="Dollar Amount">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={allocationForm.amount}
+                      onChange={(event) => updateAllocationField("amount", event.target.value)}
+                      onBlur={(event) =>
+                        updateAllocationField("amount", cleanCurrency(event.target.value))
+                      }
+                      placeholder="0.00"
+                    />
+                  </FormField>
+
+                  <FormField label="Allocation Date">
+                    <input
+                      type="date"
+                      value={allocationForm.allocationDate}
+                      onChange={(event) => updateAllocationField("allocationDate", event.target.value)}
+                    />
+                  </FormField>
+
+                  <FormField label="Notes" fullWidth>
+                    <textarea
+                      value={allocationForm.notes}
+                      onChange={(event) => updateAllocationField("notes", event.target.value)}
+                      placeholder="Which batch received it, ration notes, or usage details..."
+                    />
+                  </FormField>
+
+                  <div className="fullSpan herdEventActions">
+                    <button className="primaryButton compactPrimary" type="submit">
+                      <Plus size={15} />
+                      Add Allocation
+                    </button>
+                  </div>
+                </form>
+
+                <div className="herdTimelineList">
+                  {selectedInputCost.allocations?.length ? (
+                    <RecordList
+                      records={selectedInputCost.allocations}
+                      getRecordId={(allocation) => allocation.id}
+                      getTitle={(allocation) => getAllocationTargetLabel(allocation)}
+                      getSubtitle={(allocation) =>
+                        [
+                          allocation.allocationDate ? formatDate(allocation.allocationDate) : "No date",
+                          allocation.quantityUsed ? `${allocation.quantityUsed} ${selectedInputCost.unit}` : ""
+                        ]
+                          .filter(Boolean)
+                          .join(" • ")
+                      }
+                      getMeta={(allocation) => [
+                        { label: "Amount", value: money(allocation.amount) },
+                        { label: "Type", value: allocation.targetType === HERD_ALLOCATION_TARGET_TYPES.ANIMAL ? "Animal" : "Group / Lot" },
+                        { label: "Note", value: allocation.notes || "" }
+                      ]}
+                      renderStatus={(allocation) => (
+                        <StatusPill label={money(allocation.amount)} variant="info" />
+                      )}
+                      renderActions={(allocation) => (
+                        <div className="itemActions">
+                          <button
+                            type="button"
+                            aria-label="Delete allocation"
+                            onClick={() =>
+                              requestDeleteAllocation(
+                                allocation.id,
+                                getAllocationTargetLabel(allocation)
+                              )
+                            }
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      )}
+                    />
+                  ) : (
+                    <EmptyState
+                      icon={DollarSign}
+                      title="No allocations yet"
+                      message="Allocate this shared input cost to one or more groups, lots, or individual animals."
+                    />
+                  )}
+                </div>
+              </>
+            ) : (
+              <EmptyState
+                icon={DollarSign}
+                title="Select an input cost"
+                message="Select or save a cost pool before adding allocations."
+              />
+            )}
+          </WorkspacePanel>
+        </section>
+
+          </div>
+        </div>
+      ) : null}
+
       <ConfirmDialog
         open={Boolean(deleteTarget)}
         title={
