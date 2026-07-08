@@ -15225,3 +15225,18 @@ tr:last-child td {
 .dashboardCustomStatGrid .dashboardAddStatCard {
   min-height: 84px;
 }
+.herdTrackerModule .herdStatGrid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+@media (max-width: 1200px) {
+  .herdTrackerModule .herdStatGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .herdTrackerModule .herdStatGrid {
+    grid-template-columns: 1fr;
+  }
+}
