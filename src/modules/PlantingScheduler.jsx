@@ -16,9 +16,15 @@ import {
 
 import { useAuth } from "../AuthContext.jsx";
 import ModuleHero from "../components/ModuleHero.jsx";
+import ActionMenu from "../components/ActionMenu.jsx";
+import EmptyState from "../components/EmptyState.jsx";
+import FilterBar from "../components/FilterBar.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import PlantingSchedulerGuideContent from "../components/PlantingSchedulerGuideContent.jsx";
+import RecordList from "../components/RecordList.jsx";
 import StatCard from "../components/StatCard.jsx";
+import StatusPill from "../components/StatusPill.jsx";
+import WorkspacePanel from "../components/WorkspacePanel.jsx";
 import {
   deletePlantingBatch,
   deletePlantingTemplate,
@@ -697,6 +703,69 @@ export default function PlantingScheduler() {
     };
   }, [templates, batches, allUpcomingTasks]);
 
+
+  function getPlantingStatusVariant(status) {
+    const normalized = slugStatus(status);
+
+    if (["ready", "harvested"].includes(normalized)) return "success";
+    if (["failed"].includes(normalized)) return "danger";
+    if (["planted", "germinated", "moved-to-light", "transplanted"].includes(normalized)) return "warning";
+    return "neutral";
+  }
+
+  function getTaskVariant(taskDate) {
+    const status = taskStatus(taskDate);
+
+    if (status === "danger") return "danger";
+    if (status === "warning") return "warning";
+    return "neutral";
+  }
+
+  function renderBatchStatus(batch) {
+    return (
+      <StatusPill
+        label={batch.status || "Planned"}
+        variant={getPlantingStatusVariant(batch.status)}
+      />
+    );
+  }
+
+  function renderTaskStatus(task) {
+    return <StatusPill label={formatDueText(task.date)} variant={getTaskVariant(task.date)} />;
+  }
+
+  function getBatchActions(batch) {
+    return [
+      {
+        label: "Load Batch",
+        icon: Sprout,
+        onClick: () => loadBatch(batch)
+      },
+      {
+        label: "Delete",
+        icon: Trash2,
+        destructive: true,
+        onClick: () => handleDeleteBatch(batch)
+      }
+    ];
+  }
+
+  function getTemplateActions(template) {
+    return [
+      {
+        label: "Load Template",
+        icon: Leaf,
+        onClick: () => loadTemplate(template)
+      },
+      {
+        label: "Delete",
+        icon: Trash2,
+        destructive: true,
+        onClick: () => handleDeleteTemplate(template)
+      }
+    ];
+  }
+
   const guideModal = (
     <ModuleGuideModal
       isOpen={showGuide}
@@ -710,7 +779,7 @@ export default function PlantingScheduler() {
 
   if (!user) {
     return (
-      <div className="plantingModule modulePage plantingSchedulerModule">
+      <div className="plantingModule modulePage plantingSchedulerModule plantingSchedulerShared">
         <ModuleHero
           eyebrow="Planting Scheduler"
           title="Sign in to schedule plantings."
@@ -732,11 +801,11 @@ export default function PlantingScheduler() {
   }
 
   return (
-    <div className="plantingModule modulePage plantingSchedulerModule">
+    <div className="plantingModule modulePage plantingSchedulerModule plantingSchedulerShared">
       {statusMessage ? (
         <div className="floatingStatus" role="status">
           <span>{statusMessage}</span>
-          <button type="button" onClick={() => setStatusMessage("")}>
+          <button type="button" onClick={() => setStatusMessage("") }>
             <X size={16} />
           </button>
         </div>
@@ -750,16 +819,16 @@ export default function PlantingScheduler() {
         icon={Sprout}
         actions={[
           {
-            label: "New Template",
-            icon: Leaf,
-            variant: "secondary",
-            onClick: startNewTemplate
-          },
-          {
             label: "New Planting",
             icon: Plus,
             variant: "primary",
             onClick: startNewBatch
+          },
+          {
+            label: "New Template",
+            icon: Leaf,
+            variant: "secondary",
+            onClick: startNewTemplate
           },
           {
             label: "Guide",
@@ -771,209 +840,136 @@ export default function PlantingScheduler() {
       />
 
       <section className="hubStatGrid plantingStatGrid plantingSchedulerStatGrid">
-        <StatCard
-          icon={Leaf}
-          label="Templates"
-          value={loading ? "..." : stats.templates}
-          sub="saved crop profiles"
-          accent="planting"
-        />
-        <StatCard
-          icon={Sprout}
-          label="Active"
-          value={loading ? "..." : stats.active}
-          sub="open planting batches"
-          accent="market"
-        />
-        <StatCard
-          icon={CalendarDays}
-          label="Due Today"
-          value={loading ? "..." : stats.dueToday}
-          sub="planting tasks"
-          accent="sourdough"
-        />
-        <StatCard
-          icon={CheckCircle2}
-          label="Ready"
-          value={loading ? "..." : stats.ready}
-          sub="ready to harvest or sell"
-          accent="pricing"
-        />
-        <StatCard
-          icon={ClipboardList}
-          label="Overdue"
-          value={loading ? "..." : stats.overdue}
-          sub="past-due tasks"
-          accent="grant"
-        />
+        <StatCard icon={Leaf} label="Templates" value={loading ? "..." : stats.templates} sub="saved crop profiles" accent="planting" />
+        <StatCard icon={Sprout} label="Active" value={loading ? "..." : stats.active} sub="open planting batches" accent="market" />
+        <StatCard icon={CalendarDays} label="Due Today" value={loading ? "..." : stats.dueToday} sub="planting tasks" accent="sourdough" />
+        <StatCard icon={CheckCircle2} label="Ready" value={loading ? "..." : stats.ready} sub="ready to harvest or sell" accent="pricing" />
+        <StatCard icon={ClipboardList} label="Overdue" value={loading ? "..." : stats.overdue} sub="past-due tasks" accent="grant" />
       </section>
 
-      <section className="workspacePanel compactPanel plantingTasksPanel">
-        <div className="workspaceHeader compactPanelHeader plantingTasksHeader">
-          <div>
-            <p className="eyebrow">Tasks</p>
-            <h3>Upcoming Planting Tasks</h3>
-          </div>
-
-          <div className="plantingHeaderActions">
-            <label>
-              <span>Task</span>
-              <select
-                value={taskFilter}
-                onChange={(event) => setTaskFilter(event.target.value)}
-              >
-                {TASK_FILTERS.map((task) => (
-                  <option key={task}>{task}</option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              <span>Date Range</span>
-              <select
-                value={taskDateRange}
-                onChange={(event) => setTaskDateRange(event.target.value)}
-              >
-                {TASK_DATE_RANGES.map((range) => (
-                  <option key={range}>{range}</option>
-                ))}
-              </select>
-            </label>
-
-            <button className="secondaryButton compactButton" type="button" onClick={loadData}>
-              <RefreshCw size={15} />
-              Refresh
-            </button>
-          </div>
-        </div>
-
-        {upcomingTasks.length ? (
-          <div className="plantingTaskGrid">
-            {upcomingTasks.map((task) => (
-              <button
-                className={`plantingTaskCard ${taskStatus(task.date)}`}
-                type="button"
-                key={`${task.batchId}-${task.type}-${task.date}`}
-                onClick={() => {
-                  const match = batches.find((batch) => batch.id === task.batchId);
-                  if (match) loadBatch(match);
-                }}
-              >
-                <strong>{task.type}</strong>
-                <span>{task.label}</span>
-                <small>
-                  {formatDate(task.date)} • {formatDueText(task.date)}
-                </small>
-              </button>
-            ))}
-          </div>
-        ) : (
-          <p className="dashboardEmpty">
-            {loading ? "Loading tasks..." : "No planting tasks match the selected filters."}
-          </p>
-        )}
-      </section>
-
-      <section className="plantingSchedulerWorkspaceGrid">
-        <div className="workspacePanel compactPanel plantingDirectoryPanel">
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Schedule</p>
-              <h3>Planting Batches</h3>
-            </div>
-
-            <button className="secondaryButton compactButton" type="button" onClick={loadData}>
-              <RefreshCw size={15} />
-              Refresh
-            </button>
-          </div>
-
-          <div className="plantingFilterPanel">
-            <div className="searchBox compactSearch">
-              <Search size={17} />
-              <input
-                type="search"
-                value={queryText}
-                onChange={(event) => setQueryText(event.target.value)}
-                placeholder="Search crop, variety, location, notes, or status"
+      <section className="plantingSchedulerMainGrid">
+        <div className="plantingSchedulerLeftStack">
+          <WorkspacePanel
+            eyebrow="Schedule"
+            title="Planting Batches"
+            description={`${filteredBatches.length} visible planting ${filteredBatches.length === 1 ? "batch" : "batches"}`}
+            actions={[
+              {
+                label: "Refresh",
+                icon: RefreshCw,
+                variant: "secondary",
+                onClick: loadData
+              }
+            ]}
+            toolbar={
+              <FilterBar
+                searchValue={queryText}
+                onSearchChange={setQueryText}
+                searchPlaceholder="Search crop, variety, location, notes, or status"
+                filters={[
+                  {
+                    label: "Category",
+                    value: categoryFilter,
+                    onChange: setCategoryFilter,
+                    options: ["All categories", ...CROP_CATEGORIES]
+                  },
+                  {
+                    label: "Status",
+                    value: statusFilter,
+                    onChange: setStatusFilter,
+                    options: ["Active batches", "All batches", ...BATCH_STATUSES]
+                  }
+                ]}
               />
-            </div>
-
-            <label>
-              Category
-              <select
-                value={categoryFilter}
-                onChange={(event) => setCategoryFilter(event.target.value)}
-              >
-                <option>All categories</option>
-                {CROP_CATEGORIES.map((category) => (
-                  <option key={category}>{category}</option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Status
-              <select
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
-              >
-                <option>Active batches</option>
-                <option>All batches</option>
-                {BATCH_STATUSES.map((status) => (
-                  <option key={status}>{status}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <div className="plantingBatchList">
+            }
+          >
             {filteredBatches.length ? (
-              filteredBatches.map((batch) => (
-                <div className="plantingBatchRow" key={batch.id}>
-                  <button type="button" onClick={() => loadBatch(batch)}>
-                    <strong>{batchLabel(batch)}</strong>
-                    <span>
-                      {batch.quantity || 0} {batch.quantityUnit || "units"} •{" "}
-                      {batch.location || "No location"}
-                    </span>
-                    <small>
-                      Plant {formatDate(batch.plantingDate)} • Harvest{" "}
-                      {formatDate(batch.targetHarvestDate)}
-                    </small>
-                  </button>
-
-                  <span className={`plantingStatusPill ${slugStatus(batch.status)}`}>
-                    {batch.status || "Planned"}
-                  </span>
-
-                  <button
-                    className="iconButton danger"
-                    type="button"
-                    onClick={() => handleDeleteBatch(batch)}
-                    aria-label="Delete planting batch"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </div>
-              ))
+              <RecordList
+                records={filteredBatches}
+                selectedRecordId={batchForm.id || ""}
+                onRecordClick={loadBatch}
+                getTitle={(batch) => batchLabel(batch)}
+                getSubtitle={(batch) => `${batch.quantity || 0} ${batch.quantityUnit || "units"} • ${batch.location || "No location"}`}
+                getMeta={(batch) => [
+                  { label: "Plant", value: formatDate(batch.plantingDate) },
+                  { label: "Harvest", value: formatDate(batch.targetHarvestDate) },
+                  { label: "Method", value: batch.growingMethod || "Not listed" }
+                ]}
+                renderStatus={renderBatchStatus}
+                renderActions={(batch) => <ActionMenu items={getBatchActions(batch)} />}
+              />
             ) : (
-              <p className="dashboardEmpty">
-                {loading ? "Loading batches..." : "No planting batches match your filters."}
-              </p>
+              <EmptyState
+                icon={Sprout}
+                title={loading ? "Loading batches" : "No planting batches found"}
+                message={loading ? "Planting batches are loading." : "Add a new planting batch or adjust the filters."}
+                actionLabel="New Planting"
+                onAction={startNewBatch}
+              />
             )}
-          </div>
+          </WorkspacePanel>
+
+          <WorkspacePanel
+            eyebrow="Templates"
+            title="Crop Template Library"
+            description="Reusable timing profiles for crops you plant often."
+            actions={[
+              {
+                label: "New Template",
+                icon: Plus,
+                variant: "secondary",
+                onClick: startNewTemplate
+              }
+            ]}
+          >
+            {templates.length ? (
+              <RecordList
+                records={templates}
+                selectedRecordId={templateForm.id || ""}
+                onRecordClick={loadTemplate}
+                getTitle={(template) => template.cropName || "Untitled Crop"}
+                getSubtitle={(template) => [template.variety, template.category].filter(Boolean).join(" • ") || "No variety listed"}
+                getMeta={(template) => [
+                  { label: "Method", value: template.growingMethod || "Not listed" },
+                  { label: "Harvest", value: `${template.daysToHarvest || 0} days` },
+                  { label: "Default Unit", value: template.defaultQuantityUnit || "units" }
+                ]}
+                renderActions={(template) => <ActionMenu items={getTemplateActions(template)} />}
+              />
+            ) : (
+              <EmptyState
+                icon={Leaf}
+                title="No crop templates yet"
+                message="Save a template to speed up future planting schedules."
+                actionLabel="New Template"
+                onAction={startNewTemplate}
+              />
+            )}
+          </WorkspacePanel>
         </div>
 
-        <div className="plantingSchedulerSideStack">
-          <div className="workspacePanel compactPanel plantingBuilderPanel">
-            <div className="workspaceHeader compactPanelHeader">
-              <div>
-                <p className="eyebrow">Builder</p>
-                <h3>{activePanel === "template" ? "Crop Template" : "Planting Batch"}</h3>
-              </div>
-
-              <div className="plantingPanelToggle">
+        <div className="plantingSchedulerRightStack">
+          <WorkspacePanel
+            eyebrow="Builder"
+            title={activePanel === "template" ? "Crop Template" : "Planting Batch"}
+            description={activePanel === "template" ? "Save reusable crop timing, default units, and location notes." : "Create or update a scheduled planting batch, then sync task dates to the calendar."}
+            actions={[
+              {
+                label: activePanel === "template" ? "New Template" : "New Batch",
+                icon: Plus,
+                variant: "secondary",
+                onClick: activePanel === "template" ? startNewTemplate : startNewBatch
+              },
+              {
+                label: activePanel === "template" ? savingTemplate ? "Saving..." : "Save Template" : savingBatch ? "Saving..." : "Save Batch",
+                icon: Save,
+                variant: "primary",
+                onClick: activePanel === "template" ? handleSaveTemplate : handleSaveBatch,
+                disabled: activePanel === "template" ? savingTemplate : savingBatch
+              }
+            ]}
+            toolbar={
+              <div className="plantingPanelToggle plantingSchedulerModeToggle">
                 <button
                   type="button"
                   className={activePanel === "batch" ? "selected" : ""}
@@ -989,188 +985,93 @@ export default function PlantingScheduler() {
                   Template
                 </button>
               </div>
-            </div>
-
+            }
+          >
             {activePanel === "template" ? (
               <div className="plantingEditorStack">
-                <div className="formGrid compactFormGrid plantingFormGrid">
+                <div className="formGrid compactFormGrid plantingFormGrid plantingTemplateFormGrid">
                   <label>
                     Crop Name
-                    <input
-                      value={templateForm.cropName}
-                      onChange={(event) => updateTemplateField("cropName", event.target.value)}
-                      placeholder="Basil, Sunflower, Zinnia, Tomato"
-                    />
+                    <input value={templateForm.cropName} onChange={(event) => updateTemplateField("cropName", event.target.value)} placeholder="Basil, Sunflower, Zinnia, Tomato" />
                   </label>
 
                   <label>
                     Variety
-                    <input
-                      value={templateForm.variety}
-                      onChange={(event) => updateTemplateField("variety", event.target.value)}
-                      placeholder="Genovese, Rambo, Queen Lime"
-                    />
+                    <input value={templateForm.variety} onChange={(event) => updateTemplateField("variety", event.target.value)} placeholder="Genovese, Rambo, Queen Lime" />
                   </label>
 
                   <label>
                     Category
-                    <select
-                      value={templateForm.category}
-                      onChange={(event) => updateTemplateField("category", event.target.value)}
-                    >
-                      {CROP_CATEGORIES.map((category) => (
-                        <option key={category}>{category}</option>
-                      ))}
+                    <select value={templateForm.category} onChange={(event) => updateTemplateField("category", event.target.value)}>
+                      {CROP_CATEGORIES.map((category) => <option key={category}>{category}</option>)}
                     </select>
                   </label>
 
                   <label>
                     Growing Method
-                    <select
-                      value={templateForm.growingMethod}
-                      onChange={(event) =>
-                        updateTemplateField("growingMethod", event.target.value)
-                      }
-                    >
-                      {GROWING_METHODS.map((method) => (
-                        <option key={method}>{method}</option>
-                      ))}
+                    <select value={templateForm.growingMethod} onChange={(event) => updateTemplateField("growingMethod", event.target.value)}>
+                      {GROWING_METHODS.map((method) => <option key={method}>{method}</option>)}
                     </select>
                   </label>
 
                   <label>
                     Germination Days
-                    <input
-                      type="number"
-                      value={templateForm.germinationDays}
-                      onChange={(event) =>
-                        updateTemplateField("germinationDays", event.target.value)
-                      }
-                    />
+                    <input type="number" value={templateForm.germinationDays} onChange={(event) => updateTemplateField("germinationDays", event.target.value)} />
                   </label>
 
                   <label>
                     Blackout Days
-                    <input
-                      type="number"
-                      value={templateForm.blackoutDays}
-                      onChange={(event) =>
-                        updateTemplateField("blackoutDays", event.target.value)
-                      }
-                    />
+                    <input type="number" value={templateForm.blackoutDays} onChange={(event) => updateTemplateField("blackoutDays", event.target.value)} />
                   </label>
 
                   <label>
                     Days to Harvest
-                    <input
-                      type="number"
-                      value={templateForm.daysToHarvest}
-                      onChange={(event) =>
-                        updateTemplateField("daysToHarvest", event.target.value)
-                      }
-                    />
+                    <input type="number" value={templateForm.daysToHarvest} onChange={(event) => updateTemplateField("daysToHarvest", event.target.value)} />
                   </label>
 
                   <label>
                     Transplant Days
-                    <input
-                      type="number"
-                      value={templateForm.transplantDays}
-                      onChange={(event) =>
-                        updateTemplateField("transplantDays", event.target.value)
-                      }
-                      placeholder="Optional"
-                    />
+                    <input type="number" value={templateForm.transplantDays} onChange={(event) => updateTemplateField("transplantDays", event.target.value)} placeholder="Optional" />
                   </label>
 
                   <label>
                     Harvest Window Days
-                    <input
-                      type="number"
-                      value={templateForm.harvestWindowDays}
-                      onChange={(event) =>
-                        updateTemplateField("harvestWindowDays", event.target.value)
-                      }
-                    />
+                    <input type="number" value={templateForm.harvestWindowDays} onChange={(event) => updateTemplateField("harvestWindowDays", event.target.value)} />
                   </label>
 
                   <label>
                     Succession Interval Days
-                    <input
-                      type="number"
-                      value={templateForm.successionIntervalDays}
-                      onChange={(event) =>
-                        updateTemplateField("successionIntervalDays", event.target.value)
-                      }
-                    />
+                    <input type="number" value={templateForm.successionIntervalDays} onChange={(event) => updateTemplateField("successionIntervalDays", event.target.value)} />
                   </label>
 
                   <label>
                     Default Quantity Unit
-                    <select
-                      value={templateForm.defaultQuantityUnit}
-                      onChange={(event) =>
-                        updateTemplateField("defaultQuantityUnit", event.target.value)
-                      }
-                    >
-                      {QUANTITY_UNITS.map((unit) => (
-                        <option key={unit}>{unit}</option>
-                      ))}
+                    <select value={templateForm.defaultQuantityUnit} onChange={(event) => updateTemplateField("defaultQuantityUnit", event.target.value)}>
+                      {QUANTITY_UNITS.map((unit) => <option key={unit}>{unit}</option>)}
                     </select>
                   </label>
 
                   <label>
                     Default Location
-                    <input
-                      value={templateForm.defaultLocation}
-                      onChange={(event) =>
-                        updateTemplateField("defaultLocation", event.target.value)
-                      }
-                      placeholder="Rack 1, greenhouse, bed A"
-                    />
+                    <input value={templateForm.defaultLocation} onChange={(event) => updateTemplateField("defaultLocation", event.target.value)} placeholder="Rack 1, greenhouse, bed A" />
                   </label>
 
                   <label className="fullSpan">
                     Template Notes
-                    <textarea
-                      value={templateForm.notes}
-                      onChange={(event) => updateTemplateField("notes", event.target.value)}
-                      placeholder="Seeding notes, crop timing, spacing, care notes, harvest notes"
-                    />
+                    <textarea value={templateForm.notes} onChange={(event) => updateTemplateField("notes", event.target.value)} placeholder="Seeding notes, crop timing, spacing, care notes, harvest notes" />
                   </label>
-                </div>
-
-                <div className="formActions compactActions plantingEditorActions">
-                  <button className="secondaryButton compactButton" type="button" onClick={startNewTemplate}>
-                    <Plus size={15} />
-                    New Template
-                  </button>
-
-                  <button
-                    className="primaryButton compactPrimary"
-                    type="button"
-                    onClick={handleSaveTemplate}
-                    disabled={savingTemplate}
-                  >
-                    <Save size={15} />
-                    {savingTemplate ? "Saving..." : "Save Template"}
-                  </button>
                 </div>
               </div>
             ) : (
               <div className="plantingEditorStack">
-                <div className="formGrid compactFormGrid plantingFormGrid">
-                  <label>
+                <div className="formGrid compactFormGrid plantingFormGrid plantingBatchFormGrid">
+                  <label className="plantingWideField">
                     Use Template
-                    <select
-                      value={batchForm.templateId}
-                      onChange={(event) => applyTemplate(event.target.value)}
-                    >
+                    <select value={batchForm.templateId} onChange={(event) => applyTemplate(event.target.value)}>
                       <option value="">No template, manual crop</option>
                       {templates.map((template) => (
                         <option key={template.id} value={template.id}>
-                          {template.cropName}
-                          {template.variety ? `, ${template.variety}` : ""}
+                          {template.cropName}{template.variety ? `, ${template.variety}` : ""}
                         </option>
                       ))}
                     </select>
@@ -1178,156 +1079,84 @@ export default function PlantingScheduler() {
 
                   <label>
                     Status
-                    <select
-                      value={batchForm.status}
-                      onChange={(event) => updateBatchField("status", event.target.value)}
-                    >
-                      {BATCH_STATUSES.map((status) => (
-                        <option key={status}>{status}</option>
-                      ))}
+                    <select value={batchForm.status} onChange={(event) => updateBatchField("status", event.target.value)}>
+                      {BATCH_STATUSES.map((status) => <option key={status}>{status}</option>)}
                     </select>
                   </label>
 
                   <label>
                     Crop Name
-                    <input
-                      value={batchForm.cropName}
-                      onChange={(event) => updateBatchField("cropName", event.target.value)}
-                      placeholder="Crop"
-                    />
+                    <input value={batchForm.cropName} onChange={(event) => updateBatchField("cropName", event.target.value)} placeholder="Crop" />
                   </label>
 
                   <label>
                     Variety
-                    <input
-                      value={batchForm.variety}
-                      onChange={(event) => updateBatchField("variety", event.target.value)}
-                      placeholder="Optional"
-                    />
+                    <input value={batchForm.variety} onChange={(event) => updateBatchField("variety", event.target.value)} placeholder="Optional" />
                   </label>
 
                   <label>
                     Category
-                    <select
-                      value={batchForm.category}
-                      onChange={(event) => updateBatchField("category", event.target.value)}
-                    >
-                      {CROP_CATEGORIES.map((category) => (
-                        <option key={category}>{category}</option>
-                      ))}
+                    <select value={batchForm.category} onChange={(event) => updateBatchField("category", event.target.value)}>
+                      {CROP_CATEGORIES.map((category) => <option key={category}>{category}</option>)}
                     </select>
                   </label>
 
                   <label>
                     Growing Method
-                    <select
-                      value={batchForm.growingMethod}
-                      onChange={(event) => updateBatchField("growingMethod", event.target.value)}
-                    >
-                      {GROWING_METHODS.map((method) => (
-                        <option key={method}>{method}</option>
-                      ))}
+                    <select value={batchForm.growingMethod} onChange={(event) => updateBatchField("growingMethod", event.target.value)}>
+                      {GROWING_METHODS.map((method) => <option key={method}>{method}</option>)}
                     </select>
                   </label>
 
                   <label>
                     Planting Date
-                    <input
-                      type="date"
-                      value={batchForm.plantingDate}
-                      onChange={(event) =>
-                        updateBatchDateMode("plantingDate", event.target.value)
-                      }
-                    />
+                    <input type="date" value={batchForm.plantingDate} onChange={(event) => updateBatchDateMode("plantingDate", event.target.value)} />
                   </label>
 
                   <label>
                     Target Harvest Date
-                    <input
-                      type="date"
-                      value={batchForm.targetHarvestDate}
-                      onChange={(event) =>
-                        updateBatchDateMode("targetHarvestDate", event.target.value)
-                      }
-                    />
+                    <input type="date" value={batchForm.targetHarvestDate} onChange={(event) => updateBatchDateMode("targetHarvestDate", event.target.value)} />
                   </label>
 
                   <label>
                     Germination Date
-                    <input
-                      type="date"
-                      value={batchForm.germinationDate}
-                      onChange={(event) =>
-                        updateBatchField("germinationDate", event.target.value)
-                      }
-                    />
+                    <input type="date" value={batchForm.germinationDate} onChange={(event) => updateBatchField("germinationDate", event.target.value)} />
                   </label>
 
                   <label>
                     Move to Light Date
-                    <input
-                      type="date"
-                      value={batchForm.moveToLightDate}
-                      onChange={(event) =>
-                        updateBatchField("moveToLightDate", event.target.value)
-                      }
-                    />
+                    <input type="date" value={batchForm.moveToLightDate} onChange={(event) => updateBatchField("moveToLightDate", event.target.value)} />
                   </label>
 
                   <label>
                     Transplant Date
-                    <input
-                      type="date"
-                      value={batchForm.transplantDate}
-                      onChange={(event) =>
-                        updateBatchField("transplantDate", event.target.value)
-                      }
-                    />
+                    <input type="date" value={batchForm.transplantDate} onChange={(event) => updateBatchField("transplantDate", event.target.value)} />
                   </label>
 
                   <label>
                     Quantity
-                    <input
-                      type="number"
-                      value={batchForm.quantity}
-                      onChange={(event) => updateBatchField("quantity", event.target.value)}
-                    />
+                    <input type="number" value={batchForm.quantity} onChange={(event) => updateBatchField("quantity", event.target.value)} />
                   </label>
 
                   <label>
                     Quantity Unit
-                    <select
-                      value={batchForm.quantityUnit}
-                      onChange={(event) =>
-                        updateBatchField("quantityUnit", event.target.value)
-                      }
-                    >
-                      {QUANTITY_UNITS.map((unit) => (
-                        <option key={unit}>{unit}</option>
-                      ))}
+                    <select value={batchForm.quantityUnit} onChange={(event) => updateBatchField("quantityUnit", event.target.value)}>
+                      {QUANTITY_UNITS.map((unit) => <option key={unit}>{unit}</option>)}
                     </select>
                   </label>
 
                   <label>
                     Location
-                    <input
-                      value={batchForm.location}
-                      onChange={(event) => updateBatchField("location", event.target.value)}
-                      placeholder="Rack, bed, field, greenhouse, shelf"
-                    />
+                    <input value={batchForm.location} onChange={(event) => updateBatchField("location", event.target.value)} placeholder="Rack, bed, field, greenhouse, shelf" />
                   </label>
 
                   <label className="fullSpan">
                     Batch Notes
-                    <textarea
-                      value={batchForm.notes}
-                      onChange={(event) => updateBatchField("notes", event.target.value)}
-                      placeholder="Batch notes, market target, crop condition, amendments, problems, harvest notes"
-                    />
+                    <textarea value={batchForm.notes} onChange={(event) => updateBatchField("notes", event.target.value)} placeholder="Batch notes, market target, crop condition, amendments, problems, harvest notes" />
                   </label>
                 </div>
 
-                <div className="plantingDatePreview">
+                <div className="plantingDatePreview plantingDatePreviewCards">
                   <div>
                     <span>Plant</span>
                     <strong>{formatDate(batchForm.plantingDate)}</strong>
@@ -1341,63 +1170,64 @@ export default function PlantingScheduler() {
                     <strong>{formatDate(batchForm.targetHarvestDate)}</strong>
                   </div>
                 </div>
-
-                <div className="formActions compactActions plantingEditorActions">
-                  <button className="secondaryButton compactButton" type="button" onClick={startNewBatch}>
-                    <Plus size={15} />
-                    New Batch
-                  </button>
-
-                  <button
-                    className="primaryButton compactPrimary"
-                    type="button"
-                    onClick={handleSaveBatch}
-                    disabled={savingBatch}
-                  >
-                    <Save size={15} />
-                    {savingBatch ? "Saving..." : "Save Batch"}
-                  </button>
-                </div>
               </div>
             )}
-          </div>
+          </WorkspacePanel>
 
-          <div className="workspacePanel compactPanel plantingTemplatePanel">
-            <div className="workspaceHeader compactPanelHeader">
-              <div>
-                <p className="eyebrow">Templates</p>
-                <h3>Crop Template Library</h3>
+          <WorkspacePanel
+            eyebrow="Tasks"
+            title="Upcoming Planting Tasks"
+            description="Filtered tasks generated from active planting batches."
+            actions={[
+              {
+                label: "Refresh",
+                icon: RefreshCw,
+                variant: "secondary",
+                onClick: loadData
+              }
+            ]}
+            toolbar={
+              <div className="plantingTaskToolbar">
+                <label>
+                  <span>Task</span>
+                  <select value={taskFilter} onChange={(event) => setTaskFilter(event.target.value)}>
+                    {TASK_FILTERS.map((task) => <option key={task}>{task}</option>)}
+                  </select>
+                </label>
+
+                <label>
+                  <span>Date Range</span>
+                  <select value={taskDateRange} onChange={(event) => setTaskDateRange(event.target.value)}>
+                    {TASK_DATE_RANGES.map((range) => <option key={range}>{range}</option>)}
+                  </select>
+                </label>
               </div>
-            </div>
-
-            <div className="plantingTemplateList">
-              {templates.length ? (
-                templates.map((template) => (
-                  <div className="plantingTemplateRow" key={template.id}>
-                    <button type="button" onClick={() => loadTemplate(template)}>
-                      <strong>{template.cropName || "Untitled Crop"}</strong>
-                      <span>
-                        {template.variety || template.category} • {template.daysToHarvest || 0} days
-                      </span>
-                    </button>
-
-                    <button
-                      className="iconButton danger"
-                      type="button"
-                      onClick={() => handleDeleteTemplate(template)}
-                      aria-label="Delete crop template"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <p className="dashboardEmpty">
-                  No crop templates yet. Save one to speed up future plantings.
-                </p>
-              )}
-            </div>
-          </div>
+            }
+          >
+            {upcomingTasks.length ? (
+              <RecordList
+                records={upcomingTasks}
+                onRecordClick={(task) => {
+                  const match = batches.find((batch) => batch.id === task.batchId);
+                  if (match) loadBatch(match);
+                }}
+                getTitle={(task) => task.type}
+                getSubtitle={(task) => task.label}
+                getMeta={(task) => [
+                  { label: "Date", value: formatDate(task.date) },
+                  { label: "Crop", value: [task.cropName, task.variety].filter(Boolean).join(" • ") || "Not listed" },
+                  { label: "Location", value: task.location || "No location" }
+                ]}
+                renderStatus={renderTaskStatus}
+              />
+            ) : (
+              <EmptyState
+                icon={CalendarDays}
+                title={loading ? "Loading tasks" : "No matching tasks"}
+                message={loading ? "Planting tasks are loading." : "No planting tasks match the selected filters."}
+              />
+            )}
+          </WorkspacePanel>
         </div>
       </section>
 
