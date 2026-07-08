@@ -13120,3 +13120,370 @@ tr:last-child td {
     display: grid;
   }
 }
+
+/* ==========================================================================
+   Sales Module - Shared Component Polish
+   Append to src/styles.css after the Sales JSX replacement
+   ========================================================================== */
+
+.salesModule {
+  --module-color: var(--green);
+}
+
+.salesModule .hubStatGrid,
+.salesModule .salesStatGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0 0 16px;
+}
+
+.salesOverviewGrid,
+.salesWorkspaceGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(360px, .95fr);
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 16px;
+}
+
+.salesModule .workspacePanel {
+  margin-bottom: 0;
+}
+
+.salesChartHeader,
+.salesSquareHeader,
+.salesModule .workspaceHeader {
+  gap: 14px;
+}
+
+.salesChartControls,
+.salesSquareActions,
+.salesTotalBar,
+.salesLineItemsHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.salesChartControls {
+  justify-content: flex-end;
+}
+
+.salesChartRangeToggle,
+.salesModeToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .75);
+}
+
+.salesChartRangeToggle button,
+.salesModeToggle button {
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-weight: 800;
+  font-size: .86rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.salesChartRangeToggle button.active,
+.salesModeToggle button.active {
+  background: var(--green);
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(34, 84, 45, .18);
+}
+
+.salesChartWrapper {
+  margin-top: 10px;
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.salesLineChartSvg {
+  display: block;
+  width: 100%;
+  min-width: 720px;
+  height: auto;
+}
+
+.salesChartGridLine {
+  stroke: rgba(31, 41, 55, .09);
+  stroke-width: 1;
+}
+
+.salesChartAxisLabel,
+.salesChartDateLabel {
+  fill: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.salesChartLine {
+  stroke: var(--green);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.salesChartPoint {
+  fill: var(--green);
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.salesSquareConnection {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  background: rgba(250, 248, 241, .65);
+  margin-bottom: 12px;
+}
+
+.salesSquareConnectionDot {
+  flex: 0 0 11px;
+  width: 11px;
+  height: 11px;
+  margin-top: 5px;
+  border-radius: 999px;
+  background: #c94c3f;
+}
+
+.salesSquareConnection.connected .salesSquareConnectionDot {
+  background: var(--green);
+}
+
+.salesSquareConnection strong {
+  display: block;
+  font-weight: 900;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+
+.salesSquareConnection p {
+  margin: 0;
+  color: var(--muted);
+  font-size: .9rem;
+}
+
+.salesSquareDateGrid,
+.salesFormGrid {
+  display: grid;
+  gap: 12px;
+}
+
+.salesSquareDateGrid,
+.salesFormGrid.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.salesFormGrid.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.salesFormStack {
+  display: grid;
+  gap: 14px;
+}
+
+.salesLineItems {
+  display: grid;
+  gap: 10px;
+}
+
+.salesLineItem {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.35fr) minmax(150px, 1fr) 90px 100px 100px 100px auto;
+  gap: 10px;
+  align-items: end;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .72);
+}
+
+.salesLineTotal {
+  display: grid;
+  gap: 3px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(250, 248, 241, .78);
+}
+
+.salesLineTotal span,
+.salesTotalBar span,
+.salesListValue span {
+  color: var(--muted);
+  font-size: .72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.salesLineTotal strong,
+.salesTotalBar strong,
+.salesListValue strong {
+  color: var(--ink);
+  font-weight: 950;
+}
+
+.salesTotalBar {
+  justify-content: flex-end;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(250, 248, 241, .72);
+}
+
+.salesTotalBar > div {
+  min-width: 120px;
+}
+
+.salesFilterGrid {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 170px 170px;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 12px;
+}
+
+.salesList {
+  display: grid;
+  gap: 10px;
+}
+
+.salesListItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .76);
+  transition: background-color .15s ease, border-color .15s ease, transform .15s ease;
+}
+
+.salesListItem:hover {
+  background: #fff;
+  border-color: rgba(47, 91, 56, .24);
+  transform: translateY(-1px);
+}
+
+.salesListItem > button:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.salesListItem strong {
+  color: var(--ink);
+  font-weight: 950;
+}
+
+.salesListItem span,
+.salesListItem small {
+  color: var(--muted);
+  font-size: .88rem;
+}
+
+.salesListValue {
+  min-width: 110px;
+  text-align: right;
+}
+
+@media (max-width: 1180px) {
+  .salesOverviewGrid,
+  .salesWorkspaceGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .salesLineItem {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .salesLineItem .iconButton {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 900px) {
+  .salesModule .hubStatGrid,
+  .salesModule .salesStatGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .salesChartHeader,
+  .salesModule .workspaceHeader {
+    align-items: flex-start;
+  }
+
+  .salesChartControls {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .salesFilterGrid,
+  .salesSquareDateGrid,
+  .salesFormGrid.two,
+  .salesFormGrid.three {
+    grid-template-columns: 1fr;
+  }
+
+  .salesLineItem {
+    grid-template-columns: 1fr;
+  }
+
+  .salesTotalBar {
+    justify-content: stretch;
+  }
+
+  .salesTotalBar .primaryButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .salesListItem {
+    grid-template-columns: 1fr;
+  }
+
+  .salesListValue {
+    text-align: left;
+  }
+}
+
+@media (max-width: 640px) {
+  .salesModule .hubStatGrid,
+  .salesModule .salesStatGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .salesChartRangeToggle,
+  .salesModeToggle {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .salesChartRangeToggle button,
+  .salesModeToggle button {
+    flex: 1;
+    padding-inline: 8px;
+  }
+}
