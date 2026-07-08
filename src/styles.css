@@ -15174,3 +15174,54 @@ tr:last-child td {
     pointer-events: auto;
   }
 }
+
+/* ==========================================================================
+   Dashboard - Customizable Stat Cards Fix v3
+   Append after dashboard_customizable_statcards_css_append_v2.css
+   ========================================================================== */
+
+.dashboardStatPickerOption {
+  grid-template-columns: 42px minmax(0, 1fr) minmax(64px, auto) !important;
+  padding-right: 46px !important;
+}
+
+.dashboardStatPickerValue {
+  min-width: 54px;
+  padding-right: 0;
+  text-align: right;
+  justify-self: end;
+  font-size: 1rem;
+  line-height: 1.1;
+}
+
+.dashboardStatPickerCheck {
+  right: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%);
+}
+
+.dashboardStatPickerOption.selected .dashboardStatPickerValue {
+  padding-right: 0;
+}
+
+.dashboardStatPickerOption:disabled:not(.selected) {
+  opacity: .48;
+}
+
+.dashboardStatPickerOption:disabled:not(.selected)::after {
+  content: "Limit reached";
+  position: absolute;
+  right: 12px;
+  bottom: 7px;
+  color: var(--muted);
+  font-size: .68rem;
+  font-weight: 850;
+}
+
+.dashboardStatPickerCounter {
+  margin-bottom: 14px !important;
+}
+
+.dashboardCustomStatGrid .dashboardAddStatCard {
+  min-height: 84px;
+}
