@@ -220,19 +220,20 @@ function getDashboardStatStorageKey(userId) {
   return userId ? `dashboardStatCards_${userId}` : "dashboardStatCards_guest";
 }
 
-function normalizeDashboardStatKeys(savedKeys, availableKeys) {
+function normalizeDashboardStatKeys(savedKeys, availableKeys, fallbackToDefaults = true) {
   const unique = Array.isArray(savedKeys)
     ? savedKeys.filter((key, index, array) => (
         availableKeys.includes(key) && array.indexOf(key) === index
       ))
     : [];
 
-  const merged = [
-    ...unique,
-    ...DEFAULT_DASHBOARD_STAT_KEYS.filter((key) => availableKeys.includes(key))
-  ].filter((key, index, array) => array.indexOf(key) === index);
+  if (unique.length || !fallbackToDefaults) {
+    return unique.slice(0, DASHBOARD_STAT_LIMIT);
+  }
 
-  return merged.slice(0, DASHBOARD_STAT_LIMIT);
+  return DEFAULT_DASHBOARD_STAT_KEYS
+    .filter((key) => availableKeys.includes(key))
+    .slice(0, DASHBOARD_STAT_LIMIT);
 }
 
 
@@ -343,7 +344,21 @@ export default function Dashboard({
       "bakingRecipes",
       "lists",
       "permitRecords",
-      "recentActivity"
+      "recentActivity",
+      "bakingPlanner",
+      "butcherBoard",
+      "calendar",
+      "farmApothecary",
+      "flowerStudio",
+      "herdTracker",
+      "inventory",
+      "marketPrep",
+      "orders",
+      "plantingScheduler",
+      "preservedFoods",
+      "productsPricing",
+      "sales",
+      "thermalPrinter"
     ];
     const storageKey = getDashboardStatStorageKey(user?.uid || "guest");
 
@@ -637,6 +652,132 @@ export default function Dashboard({
         sub: "latest updates",
         accent: "orders",
         source: "Dashboard"
+      },
+      {
+        key: "bakingPlanner",
+        icon: Wheat,
+        label: "Baking Planner",
+        value: dashboardData.loading ? "..." : dashboardData.bakingRecipes.length,
+        sub: "saved recipes",
+        accent: "sourdough",
+        source: "Baking Planner"
+      },
+      {
+        key: "butcherBoard",
+        icon: Beef,
+        label: "Butcher Board",
+        value: "Ready",
+        sub: "processing workspace",
+        accent: "livestock",
+        source: "Butcher Board"
+      },
+      {
+        key: "calendar",
+        icon: CalendarDays,
+        label: "Calendar",
+        value: upcomingPermitsCount,
+        sub: "upcoming deadlines",
+        accent: "calendar",
+        source: "Calendar"
+      },
+      {
+        key: "farmApothecary",
+        icon: Leaf,
+        label: "Farm Apothecary",
+        value: "Ready",
+        sub: "batch workspace",
+        accent: "apothecary",
+        source: "Farm Apothecary"
+      },
+      {
+        key: "flowerStudio",
+        icon: Flower2,
+        label: "Flower Studio",
+        value: "Ready",
+        sub: "arrangement workspace",
+        accent: "flowers",
+        source: "Flower Studio"
+      },
+      {
+        key: "herdTracker",
+        icon: PawPrint,
+        label: "Herd Tracker",
+        value: "Ready",
+        sub: "animal records",
+        accent: "herd",
+        source: "Herd Tracker"
+      },
+      {
+        key: "inventory",
+        icon: Archive,
+        label: "Inventory",
+        value: "Ready",
+        sub: "stock tracking",
+        accent: "inventory",
+        source: "Inventory"
+      },
+      {
+        key: "marketPrep",
+        icon: ClipboardList,
+        label: "Market Prep",
+        value: "Ready",
+        sub: "packing plans",
+        accent: "market",
+        source: "Market Prep Planner"
+      },
+      {
+        key: "orders",
+        icon: PackageCheck,
+        label: "Orders",
+        value: "Ready",
+        sub: "order tracking",
+        accent: "orders",
+        source: "Orders"
+      },
+      {
+        key: "plantingScheduler",
+        icon: Sprout,
+        label: "Planting Scheduler",
+        value: "Ready",
+        sub: "crop planning",
+        accent: "planting",
+        source: "Planting Scheduler"
+      },
+      {
+        key: "preservedFoods",
+        icon: FlaskConical,
+        label: "Preserved Foods",
+        value: "Ready",
+        sub: "recipe + batch logs",
+        accent: "preserved",
+        source: "Preserved Foods"
+      },
+      {
+        key: "productsPricing",
+        icon: Calculator,
+        label: "Products & Pricing",
+        value: "Ready",
+        sub: "margin workspace",
+        accent: "pricing",
+        source: "Products & Pricing"
+      },
+      {
+        key: "sales",
+        icon: DollarSign,
+        label: "Sales",
+        value: "Ready",
+        sub: "revenue tracking",
+        accent: "sales",
+        source: "Sales"
+      },
+      {
+        key: "thermalPrinter",
+        icon: Printer,
+        label: "Thermal Printer",
+        value: "Ready",
+        sub: "label printing",
+        accent: "thermal",
+        source: "Thermal Printer"
       }
     ],
     [
@@ -660,22 +801,27 @@ export default function Dashboard({
     [dashboardStatOptions]
   );
 
-  const selectedDashboardStats = useMemo(() => {
-    const normalizedKeys = normalizeDashboardStatKeys(
+  const normalizedSelectedStatKeys = useMemo(
+    () => normalizeDashboardStatKeys(
       selectedStatKeys,
-      availableDashboardStatKeys
-    );
+      availableDashboardStatKeys,
+      false
+    ),
+    [selectedStatKeys, availableDashboardStatKeys]
+  );
 
-    return normalizedKeys
+  const selectedDashboardStats = useMemo(() => {
+    return normalizedSelectedStatKeys
       .map((key) => dashboardStatOptions.find((option) => option.key === key))
       .filter(Boolean);
-  }, [selectedStatKeys, availableDashboardStatKeys, dashboardStatOptions]);
+  }, [normalizedSelectedStatKeys, dashboardStatOptions]);
 
   function toggleDashboardStat(statKey) {
     setSelectedStatKeys((current) => {
       const normalized = normalizeDashboardStatKeys(
         current,
-        availableDashboardStatKeys
+        availableDashboardStatKeys,
+        false
       );
 
       if (normalized.includes(statKey)) {
@@ -694,7 +840,8 @@ export default function Dashboard({
     setSelectedStatKeys((current) => {
       const normalized = normalizeDashboardStatKeys(
         current,
-        availableDashboardStatKeys
+        availableDashboardStatKeys,
+        false
       );
       const currentIndex = normalized.indexOf(statKey);
 
@@ -764,7 +911,7 @@ export default function Dashboard({
 
             <div className="dashboardStatPickerGrid">
               {dashboardStatOptions.map((stat) => {
-                const isSelected = selectedStatKeys.includes(stat.key);
+                const isSelected = normalizedSelectedStatKeys.includes(stat.key);
                 const isDisabled =
                   !isSelected && selectedDashboardStats.length >= DASHBOARD_STAT_LIMIT;
                 const Icon = stat.icon;
