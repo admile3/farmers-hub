@@ -61,7 +61,9 @@ const blankAnimal = {
   purpose: "Meat",
   groupId: "",
   damId: "",
+  damName: "",
   sireId: "",
+  sireName: "",
   birthDate: "",
   purchaseDate: "",
   source: "Born on Farm",
@@ -153,6 +155,26 @@ function formatDate(value) {
 
 function getDisplayName(record) {
   return record.tagId || record.name || "Unnamed Record";
+}
+
+function getAnimalOptionLabel(animal) {
+  if (!animal) return "Unknown Animal";
+
+  const primary = animal.tagId || animal.name || "Unnamed Animal";
+  const secondary = [animal.name && animal.tagId ? animal.name : "", animal.breed]
+    .filter(Boolean)
+    .join(" • ");
+
+  return secondary ? `${primary} (${secondary})` : primary;
+}
+
+function getParentDisplayName(parentId, parentName, animals = []) {
+  if (parentId) {
+    const parent = animals.find((animal) => animal.id === parentId);
+    return parent ? getAnimalOptionLabel(parent) : parentName || "Linked animal not found";
+  }
+
+  return parentName || "Not recorded";
 }
 
 function getStatusVariant(status) {
@@ -249,6 +271,14 @@ export default function HerdTracker() {
     return groups.find((group) => group.id === selectedGroupId) || null;
   }, [groups, selectedGroupId]);
 
+  const parentAnimalOptions = useMemo(() => {
+    return animals
+      .filter((animal) => animal.id !== selectedAnimalId)
+      .sort((first, second) =>
+        getAnimalOptionLabel(first).localeCompare(getAnimalOptionLabel(second))
+      );
+  }, [animals, selectedAnimalId]);
+
   const herdStats = useMemo(() => {
     return calculateHerdStats(animals, groups);
   }, [animals, groups]);
@@ -273,7 +303,9 @@ export default function HerdTracker() {
         animal.status,
         animal.source,
         animal.purpose,
-        animal.location
+        animal.location,
+        getParentDisplayName(animal.damId, animal.damName, animals),
+        getParentDisplayName(animal.sireId, animal.sireName, animals)
       ]
         .join(" ")
         .toLowerCase();
@@ -381,6 +413,20 @@ export default function HerdTracker() {
     resetGroupSaveState();
   }
 
+  function updateAnimalParentField(parentIdField, parentNameField, parentId) {
+    const selectedParent = animals.find((animal) => animal.id === parentId);
+
+    setAnimalDirty(true);
+    setAnimalSaved(false);
+    setAnimalSaveError(false);
+
+    setAnimalForm((current) => ({
+      ...current,
+      [parentIdField]: parentId,
+      [parentNameField]: selectedParent ? getAnimalOptionLabel(selectedParent) : ""
+    }));
+  }
+
   function updateAnimalField(field, value) {
     setAnimalDirty(true);
     setAnimalSaved(false);
@@ -433,6 +479,8 @@ export default function HerdTracker() {
         tagId: animalForm.tagId.trim(),
         name: animalForm.name.trim(),
         breed: animalForm.breed.trim(),
+        damName: animalForm.damName.trim(),
+        sireName: animalForm.sireName.trim(),
         purchaseCost: cleanCurrency(animalForm.purchaseCost),
         estimatedValue: cleanCurrency(animalForm.estimatedValue),
         acquisitionWeight: cleanNumber(animalForm.acquisitionWeight, 2),
@@ -1131,6 +1179,8 @@ export default function HerdTracker() {
             getMeta={(animal) => [
               { label: "Cost Basis", value: money(calculateAnimalCostBasis(animal)) },
               { label: "Weight", value: animal.currentWeight ? `${animal.currentWeight} lb` : "" },
+              { label: "Dam", value: getParentDisplayName(animal.damId, animal.damName, animals) },
+              { label: "Sire", value: getParentDisplayName(animal.sireId, animal.sireName, animals) },
               { label: "Location", value: animal.location || "Not set" }
             ]}
             renderStatus={(animal) => (
@@ -1279,6 +1329,54 @@ export default function HerdTracker() {
                     </option>
                   ))}
                 </select>
+              </FormField>
+
+              <FormField label="Dam / Mother">
+                <select
+                  value={animalForm.damId}
+                  onChange={(event) =>
+                    updateAnimalParentField("damId", "damName", event.target.value)
+                  }
+                >
+                  <option value="">Outside / untracked dam</option>
+                  {parentAnimalOptions.map((animal) => (
+                    <option key={animal.id} value={animal.id}>
+                      {getAnimalOptionLabel(animal)}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+
+              <FormField label="Dam Name / ID">
+                <input
+                  value={animalForm.damName}
+                  onChange={(event) => updateAnimalField("damName", event.target.value)}
+                  placeholder="Known dam, tag, or registration"
+                />
+              </FormField>
+
+              <FormField label="Sire / Father">
+                <select
+                  value={animalForm.sireId}
+                  onChange={(event) =>
+                    updateAnimalParentField("sireId", "sireName", event.target.value)
+                  }
+                >
+                  <option value="">Outside / untracked sire</option>
+                  {parentAnimalOptions.map((animal) => (
+                    <option key={animal.id} value={animal.id}>
+                      {getAnimalOptionLabel(animal)}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+
+              <FormField label="Sire Name / ID">
+                <input
+                  value={animalForm.sireName}
+                  onChange={(event) => updateAnimalField("sireName", event.target.value)}
+                  placeholder="Known sire, tag, or registration"
+                />
               </FormField>
 
               <FormField label="Source">
