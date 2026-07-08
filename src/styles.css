@@ -12669,3 +12669,215 @@ tr:last-child td {
     grid-template-columns: 1fr !important;
   }
 }
+/* ==========================
+   Planting Scheduler shared structure polish v3
+   Append to src/styles.css after prior Planting Scheduler styles.
+========================== */
+
+.plantingSchedulerShared {
+  --module-color: var(--planting);
+  display: grid;
+  gap: 16px;
+}
+
+.plantingSchedulerShared .farmhubModuleHero {
+  margin-bottom: 0;
+}
+
+.plantingSchedulerStatGrid {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.plantingSchedulerMainGrid {
+  display: grid;
+  grid-template-columns: minmax(360px, 0.72fr) minmax(0, 1.28fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.plantingSchedulerLeftStack,
+.plantingSchedulerRightStack,
+.plantingEditorStack {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.plantingSchedulerShared .farmhubWorkspacePanel,
+.plantingSchedulerShared .workspacePanel {
+  min-width: 0;
+}
+
+.plantingSchedulerShared .farmhubWorkspaceHeader {
+  align-items: start;
+}
+
+.plantingSchedulerShared .farmhubWorkspaceToolbar {
+  width: 100%;
+}
+
+.plantingSchedulerShared .farmhubFilterBar {
+  grid-template-columns: minmax(220px, 1fr) repeat(2, minmax(135px, 0.55fr));
+  gap: 10px;
+}
+
+.plantingSchedulerShared .farmhubFilterControl {
+  min-width: 0;
+}
+
+.plantingSchedulerShared .farmhubFilterSearch,
+.plantingSchedulerShared .farmhubFilterSearch input {
+  min-width: 0;
+}
+
+.plantingTaskToolbar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(135px, 180px));
+  gap: 10px;
+  align-items: end;
+  justify-content: end;
+}
+
+.plantingTaskToolbar label {
+  min-width: 0;
+}
+
+.plantingTaskToolbar select {
+  min-height: 36px;
+  padding: 7px 34px 7px 10px;
+  border-radius: 12px;
+}
+
+.plantingPanelToggle.plantingSchedulerModeToggle {
+  width: fit-content;
+  justify-self: end;
+  margin: 0;
+}
+
+.plantingSchedulerShared .plantingFormGrid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 11px 12px !important;
+  align-items: end;
+}
+
+.plantingSchedulerShared .plantingTemplateFormGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+.plantingSchedulerShared .plantingBatchFormGrid .plantingWideField {
+  grid-column: span 2;
+}
+
+.plantingSchedulerShared .plantingFormGrid .fullSpan,
+.plantingSchedulerShared .plantingFormGrid label.fullSpan {
+  grid-column: 1 / -1 !important;
+}
+
+.plantingSchedulerShared .plantingFormGrid textarea {
+  min-height: 74px;
+}
+
+.plantingDatePreview.plantingDatePreviewCards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 2px 0 0;
+}
+
+.plantingDatePreviewCards > div {
+  min-width: 0;
+  padding: 12px 13px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: #fbfaf6;
+}
+
+.plantingDatePreviewCards span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 950;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.plantingDatePreviewCards strong {
+  display: block;
+  color: var(--text);
+  font-size: 0.96rem;
+  line-height: 1.15;
+}
+
+.plantingSchedulerShared .farmhubRecordList {
+  gap: 8px;
+}
+
+.plantingSchedulerShared .farmhubRecordItem,
+.plantingSchedulerShared .farmhubRecordCard {
+  min-height: 68px;
+}
+
+.plantingSchedulerShared .farmhubEmptyState {
+  min-height: 132px;
+}
+
+.plantingSchedulerShared .farmhubWorkspaceActions .secondaryButton,
+.plantingSchedulerShared .farmhubWorkspaceActions .primaryButton {
+  min-height: 36px;
+}
+
+@media (max-width: 1350px) {
+  .plantingSchedulerMainGrid {
+    grid-template-columns: minmax(330px, 0.82fr) minmax(0, 1.18fr);
+  }
+
+  .plantingSchedulerShared .plantingFormGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 1100px) {
+  .plantingSchedulerStatGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .plantingSchedulerMainGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .plantingSchedulerShared .plantingFormGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .plantingTaskToolbar {
+    justify-content: stretch;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .plantingSchedulerStatGrid,
+  .plantingSchedulerShared .plantingFormGrid,
+  .plantingDatePreview.plantingDatePreviewCards,
+  .plantingTaskToolbar,
+  .plantingSchedulerShared .farmhubFilterBar {
+    grid-template-columns: 1fr !important;
+  }
+
+  .plantingSchedulerShared .plantingBatchFormGrid .plantingWideField {
+    grid-column: 1 / -1;
+  }
+
+  .plantingPanelToggle.plantingSchedulerModeToggle {
+    justify-self: stretch;
+    width: 100%;
+  }
+
+  .plantingPanelToggle.plantingSchedulerModeToggle button {
+    flex: 1 1 0;
+  }
+}
