@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "../AuthContext.jsx";
+import ModuleHero from "../components/ModuleHero.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import SalesGuideContent from "../components/SalesGuideContent.jsx";
 import StatCard from "../components/StatCard.jsx";
@@ -824,22 +825,20 @@ export default function Sales() {
           <SalesGuideContent />
         </ModuleGuideModal>
 
-        <section className="farmModuleHero salesHero">
-          <div className="farmModuleHeroText salesHeroText">
-            <p className="eyebrow">Sales</p>
-            <h2>Sign in to track sales.</h2>
-            <p>
-              Track product sales, daily totals, market revenue, and completed
-              order revenue.
-            </p>
-          </div>
-
-          <div className="farmModuleHeroActions salesHeroActions">
-            <button className="primaryButton farmHeroAction" type="button" onClick={loginWithGoogle}>
-              Sign in with Google
-            </button>
-          </div>
-        </section>
+        <ModuleHero
+          eyebrow="Sales"
+          title="Sign in to track sales."
+          description="Track product sales, daily totals, market revenue, and completed order revenue."
+          icon={DollarSign}
+          accent="sales"
+          className="salesHero"
+          actions={[
+            {
+              label: "Sign in with Google",
+              onClick: loginWithGoogle
+            }
+          ]}
+        />
       </div>
     );
   }
@@ -864,35 +863,35 @@ export default function Sales() {
         </div>
       ) : null}
 
-      <section className="farmModuleHero salesHero">
-        <div className="farmModuleHeroText salesHeroText">
-          <p className="eyebrow">Sales</p>
-          <h2>Track revenue across your farm business.</h2>
-          <p>
-            Log individual sales, record quick daily totals, review sales trends,
-            and keep completed order revenue connected.
-          </p>
-        </div>
+      <ModuleHero
+        eyebrow="Sales"
+        title="Track revenue across your farm business."
+        description="Log individual sales, record quick daily totals, review sales trends, and keep completed order revenue connected."
+        icon={DollarSign}
+        accent="sales"
+        className="salesHero"
+        actions={[
+          {
+            label: "Add Sale",
+            icon: Plus,
+            onClick: startNewProductSale
+          },
+          {
+            label: "Daily Total",
+            icon: CalendarDays,
+            variant: "secondary",
+            onClick: startNewDailyTotal
+          },
+          {
+            label: "Guide",
+            icon: CircleHelp,
+            variant: "secondary",
+            onClick: () => setShowGuide(true)
+          }
+        ]}
+      />
 
-        <div className="farmModuleHeroActions salesHeroActions">
-          <button className="primaryButton compactPrimary farmHeroAction" type="button" onClick={startNewProductSale}>
-            <Plus size={16} />
-            Add Sale
-          </button>
-
-          <button className="secondaryButton compactButton farmHeroAction" type="button" onClick={startNewDailyTotal}>
-            <CalendarDays size={16} />
-            Daily Total
-          </button>
-
-          <button className="secondaryButton compactButton farmHeroAction" type="button" onClick={() => setShowGuide(true)}>
-            <CircleHelp size={16} />
-            Guide
-          </button>
-        </div>
-      </section>
-
-      <section className="hubStatGrid salesStatGrid">
+      <section className="hubStatGrid salesStatGrid salesSharedStatGrid">
         <StatCard
           icon={Banknote}
           label="Net Sales"
@@ -923,7 +922,7 @@ export default function Sales() {
         />
       </section>
 
-      <section className="salesOverviewGrid">
+      <section className="salesOverviewGrid salesSharedOverviewGrid">
         <div className="workspacePanel compactPanel salesChartPanel">
           <div className="workspaceHeader compactPanelHeader salesChartHeader">
             <div>
@@ -1297,7 +1296,7 @@ export default function Sales() {
         </div>
       </section>
 
-      <section className="salesWorkspaceGrid">
+      <section className="salesWorkspaceGrid salesSharedWorkspaceGrid">
         <div className="workspacePanel compactPanel salesEntryPanel">
           <div className="workspaceHeader compactPanelHeader">
             <div>
@@ -1690,7 +1689,7 @@ export default function Sales() {
             </button>
           </div>
 
-          <div className="salesFilterGrid">
+          <div className="salesFilterGrid salesSharedFilterGrid">
             <div className="searchBox compactSearch customersSearchBox">
               <Search size={17} />
               <input
