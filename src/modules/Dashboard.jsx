@@ -22,6 +22,11 @@ import {
   Printer,
   Sprout,
   Users,
+  Check,
+  GripVertical,
+  Plus,
+  Settings2,
+  X,
   Wheat
 } from "lucide-react";
 import { doc, getDoc } from "firebase/firestore";
@@ -202,6 +207,36 @@ const modules = [
   }
 ];
 
+const DASHBOARD_STAT_LIMIT = 5;
+const DEFAULT_DASHBOARD_STAT_KEYS = [
+  "customers",
+  "trialDays",
+  "savedRecipes",
+  "upcomingPermits",
+  "openTasks"
+];
+
+function getDashboardStatStorageKey(userId) {
+  return userId ? `dashboardStatCards_${userId}` : "dashboardStatCards_guest";
+}
+
+function normalizeDashboardStatKeys(savedKeys, availableKeys) {
+  const unique = Array.isArray(savedKeys)
+    ? savedKeys.filter((key, index, array) => (
+        availableKeys.includes(key) && array.indexOf(key) === index
+      ))
+    : [];
+
+  const merged = [
+    ...unique,
+    ...DEFAULT_DASHBOARD_STAT_KEYS.filter((key) => availableKeys.includes(key))
+  ].filter((key, index, array) => array.indexOf(key) === index);
+
+  return merged.slice(0, DASHBOARD_STAT_LIMIT);
+}
+
+
+
 function toDate(value) {
   if (!value) return null;
   if (value.toDate) return value.toDate();
@@ -273,6 +308,8 @@ export default function Dashboard({
 
   const [showWelcomePricing, setShowWelcomePricing] = useState(true);
   const [showGuide, setShowGuide] = useState(false);
+  const [showStatPicker, setShowStatPicker] = useState(false);
+  const [selectedStatKeys, setSelectedStatKeys] = useState(DEFAULT_DASHBOARD_STAT_KEYS);
   const [dashboardData, setDashboardData] = useState({
     spiceRecipes: [],
     bakingRecipes: [],
@@ -294,6 +331,41 @@ export default function Dashboard({
       setShowGuide(true);
     }
   }, [user, shouldShowWelcomePricing]);
+
+  useEffect(() => {
+    const availableKeys = [
+      "customers",
+      "trialDays",
+      "savedRecipes",
+      "upcomingPermits",
+      "openTasks",
+      "spiceRecipes",
+      "bakingRecipes",
+      "lists",
+      "permitRecords",
+      "recentActivity"
+    ];
+    const storageKey = getDashboardStatStorageKey(user?.uid || "guest");
+
+    try {
+      const saved = window.localStorage.getItem(storageKey);
+      const parsed = saved ? JSON.parse(saved) : null;
+      setSelectedStatKeys(normalizeDashboardStatKeys(parsed, availableKeys));
+    } catch (error) {
+      console.warn("Could not load dashboard stat card preferences:", error);
+      setSelectedStatKeys(normalizeDashboardStatKeys(DEFAULT_DASHBOARD_STAT_KEYS, availableKeys));
+    }
+  }, [user?.uid]);
+
+  useEffect(() => {
+    const storageKey = getDashboardStatStorageKey(user?.uid || "guest");
+
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(selectedStatKeys));
+    } catch (error) {
+      console.warn("Could not save dashboard stat card preferences:", error);
+    }
+  }, [selectedStatKeys, user?.uid]);
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -473,6 +545,181 @@ export default function Dashboard({
     dashboardData.customers
   ]);
 
+
+  const dashboardStatOptions = useMemo(
+    () => [
+      {
+        key: "customers",
+        icon: Users,
+        label: "Customers",
+        value: dashboardData.loading ? "..." : dashboardData.customers.length,
+        sub: "saved contacts",
+        accent: "customers",
+        source: "Customers"
+      },
+      {
+        key: "trialDays",
+        icon: CalendarDays,
+        label: "Trial Days",
+        value: trialDaysDisplay,
+        sub: isTrial ? "days remaining" : "available to new users",
+        accent: "sourdough",
+        source: "Account"
+      },
+      {
+        key: "savedRecipes",
+        icon: BookOpen,
+        label: "Saved Recipes",
+        value: dashboardData.loading ? "..." : savedRecipeCount,
+        sub: "Spice Kitchen + Baking Planner",
+        accent: "market",
+        source: "Recipes"
+      },
+      {
+        key: "upcomingPermits",
+        icon: FileText,
+        label: "Upcoming Permits",
+        value: dashboardData.loading ? "..." : upcomingPermitsCount,
+        sub: "next 60 days",
+        accent: "grant",
+        source: "Permit & Grant Tracker"
+      },
+      {
+        key: "openTasks",
+        icon: Folder,
+        label: "Open Tasks",
+        value: dashboardData.loading ? "..." : openTaskCount,
+        sub: "unchecked list items",
+        accent: "lists",
+        source: "Lists"
+      },
+      {
+        key: "spiceRecipes",
+        icon: ChefHat,
+        label: "Spice Recipes",
+        value: dashboardData.loading ? "..." : dashboardData.spiceRecipes.length,
+        sub: "seasoning formulas",
+        accent: "spice",
+        source: "Spice Kitchen"
+      },
+      {
+        key: "bakingRecipes",
+        icon: Wheat,
+        label: "Baking Recipes",
+        value: dashboardData.loading ? "..." : dashboardData.bakingRecipes.length,
+        sub: "saved bake formulas",
+        accent: "sourdough",
+        source: "Baking Planner"
+      },
+      {
+        key: "lists",
+        icon: ListChecks,
+        label: "Saved Lists",
+        value: dashboardData.loading ? "..." : dashboardData.lists.length,
+        sub: "checklists",
+        accent: "lists",
+        source: "Lists"
+      },
+      {
+        key: "permitRecords",
+        icon: FileText,
+        label: "Permit Records",
+        value: dashboardData.loading ? "..." : dashboardData.permitItems.length,
+        sub: "tracked records",
+        accent: "grant",
+        source: "Permit & Grant Tracker"
+      },
+      {
+        key: "recentActivity",
+        icon: Activity,
+        label: "Recent Activity",
+        value: dashboardData.loading ? "..." : recentActivity.length,
+        sub: "latest updates",
+        accent: "orders",
+        source: "Dashboard"
+      }
+    ],
+    [
+      dashboardData.loading,
+      dashboardData.customers.length,
+      dashboardData.spiceRecipes.length,
+      dashboardData.bakingRecipes.length,
+      dashboardData.lists.length,
+      dashboardData.permitItems.length,
+      trialDaysDisplay,
+      isTrial,
+      savedRecipeCount,
+      upcomingPermitsCount,
+      openTaskCount,
+      recentActivity.length
+    ]
+  );
+
+  const availableDashboardStatKeys = useMemo(
+    () => dashboardStatOptions.map((option) => option.key),
+    [dashboardStatOptions]
+  );
+
+  const selectedDashboardStats = useMemo(() => {
+    const normalizedKeys = normalizeDashboardStatKeys(
+      selectedStatKeys,
+      availableDashboardStatKeys
+    );
+
+    return normalizedKeys
+      .map((key) => dashboardStatOptions.find((option) => option.key === key))
+      .filter(Boolean);
+  }, [selectedStatKeys, availableDashboardStatKeys, dashboardStatOptions]);
+
+  function toggleDashboardStat(statKey) {
+    setSelectedStatKeys((current) => {
+      const normalized = normalizeDashboardStatKeys(
+        current,
+        availableDashboardStatKeys
+      );
+
+      if (normalized.includes(statKey)) {
+        return normalized.filter((key) => key !== statKey);
+      }
+
+      if (normalized.length >= DASHBOARD_STAT_LIMIT) {
+        return normalized;
+      }
+
+      return [...normalized, statKey];
+    });
+  }
+
+  function moveDashboardStat(statKey, direction) {
+    setSelectedStatKeys((current) => {
+      const normalized = normalizeDashboardStatKeys(
+        current,
+        availableDashboardStatKeys
+      );
+      const currentIndex = normalized.indexOf(statKey);
+
+      if (currentIndex < 0) return normalized;
+
+      const nextIndex = direction === "left" ? currentIndex - 1 : currentIndex + 1;
+      if (nextIndex < 0 || nextIndex >= normalized.length) return normalized;
+
+      const updated = [...normalized];
+      const [moved] = updated.splice(currentIndex, 1);
+      updated.splice(nextIndex, 0, moved);
+
+      return updated;
+    });
+  }
+
+  function resetDashboardStats() {
+    setSelectedStatKeys(
+      normalizeDashboardStatKeys(
+        DEFAULT_DASHBOARD_STAT_KEYS,
+        availableDashboardStatKeys
+      )
+    );
+  }
+
   const shellContent = (
     <>
       {shouldShowWelcomePricing && WelcomePricingModal ? (
@@ -487,6 +734,95 @@ export default function Dashboard({
       >
         <DashboardGuideContent />
       </ModuleGuideModal>
+
+      {showStatPicker ? (
+        <div className="dashboardStatPickerOverlay" role="dialog" aria-modal="true">
+          <div className="workspacePanel compactPanel dashboardStatPickerModal">
+            <div className="workspaceHeader compactPanelHeader">
+              <div>
+                <p className="eyebrow">Dashboard Stats</p>
+                <h3>Choose up to 5 stat cards</h3>
+                <p className="dashboardStatPickerHint">
+                  Pick the cards that match the modules you actually use. Your choices are saved on this device.
+                </p>
+              </div>
+
+              <button
+                className="iconButton"
+                type="button"
+                onClick={() => setShowStatPicker(false)}
+                aria-label="Close stat picker"
+              >
+                <X size={17} />
+              </button>
+            </div>
+
+            <div className="dashboardStatPickerCounter">
+              <strong>{selectedDashboardStats.length}</strong>
+              <span>of {DASHBOARD_STAT_LIMIT} selected</span>
+            </div>
+
+            <div className="dashboardStatPickerGrid">
+              {dashboardStatOptions.map((stat) => {
+                const isSelected = selectedStatKeys.includes(stat.key);
+                const isDisabled =
+                  !isSelected && selectedDashboardStats.length >= DASHBOARD_STAT_LIMIT;
+                const Icon = stat.icon;
+
+                return (
+                  <button
+                    key={stat.key}
+                    type="button"
+                    className={`dashboardStatPickerOption ${stat.accent} ${
+                      isSelected ? "selected" : ""
+                    }`}
+                    onClick={() => toggleDashboardStat(stat.key)}
+                    disabled={isDisabled}
+                    aria-pressed={isSelected}
+                  >
+                    <span className={`dashboardStatPickerIcon ${stat.accent}`}>
+                      <Icon size={18} />
+                    </span>
+
+                    <span className="dashboardStatPickerText">
+                      <strong>{stat.label}</strong>
+                      <small>{stat.source}</small>
+                    </span>
+
+                    <span className="dashboardStatPickerValue">
+                      {stat.value}
+                    </span>
+
+                    {isSelected ? (
+                      <span className="dashboardStatPickerCheck">
+                        <Check size={15} />
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="dashboardStatPickerActions">
+              <button
+                className="secondaryButton compactButton"
+                type="button"
+                onClick={resetDashboardStats}
+              >
+                Reset Defaults
+              </button>
+
+              <button
+                className="primaryButton compactPrimary"
+                type="button"
+                onClick={() => setShowStatPicker(false)}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <section className="dashboardHeroRow">
         <ModuleHero
@@ -524,46 +860,69 @@ export default function Dashboard({
         </div>
       </section>
 
-      <section className="dashboardOverviewGrid dashboardOverviewGridOptimized">
-        <StatCard
-          icon={Users}
-          label="Customers"
-          value={dashboardData.loading ? "..." : dashboardData.customers.length}
-          sub="saved contacts"
-          accent="customers"
-        />
+      <section className="dashboardOverviewGrid dashboardOverviewGridOptimized dashboardCustomStatGrid">
+        {selectedDashboardStats.map((stat, index) => (
+          <div className="dashboardStatSlot" key={stat.key}>
+            <StatCard
+              icon={stat.icon}
+              label={stat.label}
+              value={stat.value}
+              sub={stat.sub}
+              accent={stat.accent}
+            />
 
-        <StatCard
-          icon={CalendarDays}
-          label="Trial Days"
-          value={trialDaysDisplay}
-          sub={isTrial ? "days remaining" : "available to new users"}
-          accent="sourdough"
-        />
+            <div className="dashboardStatSlotActions">
+              <button
+                type="button"
+                onClick={() => moveDashboardStat(stat.key, "left")}
+                disabled={index === 0}
+                aria-label={`Move ${stat.label} left`}
+                title="Move left"
+              >
+                ←
+              </button>
 
-        <StatCard
-          icon={BookOpen}
-          label="Saved Recipes"
-          value={dashboardData.loading ? "..." : savedRecipeCount}
-          sub="Spice Kitchen + Baking Planner"
-          accent="market"
-        />
+              <button
+                type="button"
+                onClick={() => moveDashboardStat(stat.key, "right")}
+                disabled={index === selectedDashboardStats.length - 1}
+                aria-label={`Move ${stat.label} right`}
+                title="Move right"
+              >
+                →
+              </button>
 
-        <StatCard
-          icon={FileText}
-          label="Upcoming Permits"
-          value={dashboardData.loading ? "..." : upcomingPermitsCount}
-          sub="next 60 days"
-          accent="grant"
-        />
+              <button
+                type="button"
+                onClick={() => toggleDashboardStat(stat.key)}
+                aria-label={`Remove ${stat.label}`}
+                title="Remove"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        ))}
 
-        <StatCard
-          icon={Folder}
-          label="Open Tasks"
-          value={dashboardData.loading ? "..." : openTaskCount}
-          sub="unchecked list items"
-          accent="lists"
-        />
+        {selectedDashboardStats.length < DASHBOARD_STAT_LIMIT ? (
+          <button
+            className="dashboardAddStatCard"
+            type="button"
+            onClick={() => setShowStatPicker(true)}
+          >
+            <Plus size={24} />
+            <span>Add Stat</span>
+          </button>
+        ) : null}
+
+        <button
+          className="dashboardCustomizeStatsButton"
+          type="button"
+          onClick={() => setShowStatPicker(true)}
+        >
+          <Settings2 size={15} />
+          Customize
+        </button>
       </section>
 
       <section className="dashboardPanel dashboardWorkspacesPanel">
