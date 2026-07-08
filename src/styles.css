@@ -14205,3 +14205,89 @@ tr:last-child td {
     min-height: 42px !important;
   }
 }
+
+/* ==========================================================================
+   Sidebar Header + Account Card Polish
+   Append after app_sidebar_compact_hide_toolbar_css_append_v1.css
+   ========================================================================== */
+
+.modernSidebar {
+  overflow: hidden;
+}
+
+.modernSidebar .desktopBrand,
+.modernSidebar .sidebarHeader,
+.modernSidebar .sidebarBrandWrap {
+  margin-left: calc(var(--sidebar-padding, 22px) * -1);
+  margin-right: calc(var(--sidebar-padding, 22px) * -1);
+  width: calc(100% + (var(--sidebar-padding, 22px) * 2));
+  border-radius: 0;
+}
+
+.modernSidebar .desktopBrand {
+  padding: 18px 20px 16px;
+  background: var(--green);
+  color: #fff;
+}
+
+.modernSidebar .desktopBrand .brandIcon {
+  background: rgba(255, 255, 255, .14);
+  border-color: rgba(255, 255, 255, .22);
+  color: #fff;
+}
+
+.modernSidebar .desktopBrand h1,
+.modernSidebar .desktopBrand p {
+  color: #fff;
+}
+
+.modernSidebar .desktopBrand p {
+  opacity: .78;
+}
+
+.sidebarHideButton,
+.sidebarCollapseButton,
+.modernSidebar .toolbarHideButton {
+  width: calc(100% - 28px);
+  margin: 10px 14px 0;
+}
+
+.desktopAccountCard {
+  padding: 16px;
+}
+
+.desktopAccountCard .userRow {
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.desktopAccountCard .accountStatusPill {
+  width: fit-content;
+  margin: 8px 0 14px;
+}
+
+.desktopAccountCard .primaryButton,
+.desktopAccountCard .secondaryButton {
+  width: 100%;
+  min-height: 38px;
+  justify-content: center;
+}
+
+.desktopAccountCard .primaryButton + .secondaryButton,
+.desktopAccountCard .secondaryButton + .secondaryButton,
+.desktopAccountCard .fullButton + .secondaryButton {
+  margin-top: 10px;
+}
+
+.desktopAccountCard button.secondaryButton:not(.fullButton) {
+  width: fit-content;
+  min-width: 132px;
+  align-self: flex-start;
+  padding-inline: 16px;
+}
+
+.desktopAccountCard {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
