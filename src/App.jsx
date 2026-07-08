@@ -1021,6 +1021,10 @@ function AppShell({ children }) {
 
   const location = useLocation();
   const [mobileModulesOpen, setMobileModulesOpen] = useState(false);
+  const [sidebarHidden, setSidebarHidden] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("marketVendorSidebarHidden") === "true";
+  });
 
   const densityClass =
     accountProfile?.settings?.dashboardDensity === "compact"
@@ -1033,8 +1037,16 @@ function AppShell({ children }) {
     setMobileModulesOpen(false);
   }, [location.pathname]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(
+      "marketVendorSidebarHidden",
+      sidebarHidden ? "true" : "false"
+    );
+  }, [sidebarHidden]);
+
   return (
-    <div className={`app ${densityClass}`}>
+    <div className={`app ${densityClass} ${sidebarHidden ? "sidebarHidden" : ""}`}>
       <aside className="sidebar modernSidebar">
         <div className="mobileTopBar">
           <GuardedLink to="/" className="brand mobileBrand">
@@ -1064,16 +1076,29 @@ function AppShell({ children }) {
           </div>
         </div>
 
-        <GuardedLink to="/" className="brand desktopBrand">
-          <div className="brandIcon">
-            <Sprout size={26} />
-          </div>
+        <div className="desktopBrandShell">
+          <GuardedLink to="/" className="brand desktopBrand">
+            <div className="brandIcon">
+              <Sprout size={25} />
+            </div>
 
-          <div>
-            <h1>Market Vendor Toolkit</h1>
-            <p>Vendor tools</p>
-          </div>
-        </GuardedLink>
+            <div className="desktopBrandText">
+              <h1>Market Vendor Toolkit</h1>
+              <p>Farmers Hub</p>
+            </div>
+          </GuardedLink>
+
+          <button
+            className="sidebarHideButton"
+            type="button"
+            onClick={() => setSidebarHidden(true)}
+            aria-label="Hide left toolbar"
+            title="Hide toolbar"
+          >
+            <EyeOff size={15} />
+            <span>Hide</span>
+          </button>
+        </div>
 
         <nav
           id="farmers-hub-mobile-nav"
@@ -1109,6 +1134,19 @@ function AppShell({ children }) {
 
         <AccountStatusCard />
       </aside>
+
+      {sidebarHidden ? (
+        <button
+          className="sidebarRevealButton"
+          type="button"
+          onClick={() => setSidebarHidden(false)}
+          aria-label="Show left toolbar"
+          title="Show toolbar"
+        >
+          <Eye size={16} />
+          <span>Menu</span>
+        </button>
+      ) : null}
 
       <main className="main modernMain">{children}</main>
     </div>
