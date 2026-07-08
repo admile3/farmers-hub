@@ -14744,3 +14744,176 @@ tr:last-child td {
     min-height: 78px;
   }
 }
+
+/* ==========================================================================
+   Dashboard - Deadlines / Activity Panels + Workspace Hover Accent
+   Append after dashboard_shared_layout_css_append_v1.css
+   ========================================================================== */
+
+.dashboardActionGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.dashboardActionPanel {
+  min-height: 190px;
+  display: flex;
+  flex-direction: column;
+  padding: 16px !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  box-shadow: var(--shadow);
+}
+
+.dashboardActionPanel .dashboardPanelHeader {
+  margin-bottom: 12px;
+}
+
+.dashboardActionPanel .dashboardPanelHeader .eyebrow {
+  margin: 0 0 3px;
+}
+
+.dashboardActionPanel .dashboardPanelHeader h2 {
+  font-size: 1.25rem;
+  line-height: 1.1;
+}
+
+.dashboardActionPanel .dashboardList {
+  display: grid;
+  gap: 9px;
+  flex: 1;
+}
+
+.dashboardActionPanel .dashboardEmpty {
+  min-height: 86px;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 18px;
+  border: 1px dashed var(--border);
+  border-radius: 15px;
+  background: rgba(250, 248, 241, .65);
+  color: var(--muted);
+  text-align: center;
+}
+
+.dashboardActionPanel .dashboardRow,
+.dashboardActionPanel .compactDashboardRow {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 11px;
+  align-items: center;
+  min-height: 56px;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, .78);
+}
+
+.dashboardActionPanel .dashboardRowIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+}
+
+.dashboardActionPanel .dashboardRowTextLink {
+  min-width: 0;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.dashboardActionPanel .dashboardRowTextLink h4 {
+  margin: 0 0 3px;
+  font-size: .96rem;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboardActionPanel .dashboardRowTextLink p {
+  margin: 0;
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.2;
+}
+
+.dashboardActionPanel .dashboardTime,
+.dashboardActionPanel .dashboardRightMeta {
+  color: var(--muted);
+  font-size: .82rem;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.dashboardActionPanel .dashboardRightMeta {
+  display: grid;
+  gap: 3px;
+  justify-items: end;
+}
+
+.dashboardActionPanel .dashboardDuePill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(177, 124, 36, .24);
+  background: rgba(244, 231, 199, .58);
+  color: #7a520f;
+  font-size: .75rem;
+  font-weight: 900;
+}
+
+.dashboardActionPanel .dashboardPanelFooter {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.dashboardWorkspaceCard::before {
+  content: "";
+  position: absolute;
+  inset: 12px auto 12px 0;
+  width: 0;
+  border-radius: 0 999px 999px 0;
+  background: var(--module-color, var(--green));
+  opacity: 0;
+  transition: width .16s ease, opacity .16s ease;
+}
+
+.dashboardWorkspaceCard:hover::before,
+.dashboardWorkspaceCard:focus-visible::before {
+  width: 5px;
+  opacity: 1;
+}
+
+.dashboardWorkspaceCard.sourdough { --module-color: #b3862b; }
+.dashboardWorkspaceCard.livestock { --module-color: #b75a52; }
+.dashboardWorkspaceCard.calendar { --module-color: #7ca25c; }
+.dashboardWorkspaceCard.customers { --module-color: #4f9b92; }
+.dashboardWorkspaceCard.apothecary { --module-color: #8aa35f; }
+.dashboardWorkspaceCard.flowers { --module-color: #9b6699; }
+.dashboardWorkspaceCard.herd { --module-color: #9a7348; }
+.dashboardWorkspaceCard.inventory { --module-color: #8b9483; }
+.dashboardWorkspaceCard.lists { --module-color: #76a95a; }
+.dashboardWorkspaceCard.market { --module-color: #b28a3a; }
+.dashboardWorkspaceCard.orders { --module-color: #8d6aa4; }
+.dashboardWorkspaceCard.grant { --module-color: #3f87a6; }
+.dashboardWorkspaceCard.planting { --module-color: #6fa85b; }
+.dashboardWorkspaceCard.preserved { --module-color: #5c9d94; }
+.dashboardWorkspaceCard.pricing { --module-color: #c29a36; }
+.dashboardWorkspaceCard.sales { --module-color: #6f9f5a; }
+.dashboardWorkspaceCard.spice { --module-color: #c66b2b; }
+.dashboardWorkspaceCard.thermal { --module-color: #6f7478; }
+
+@media (max-width: 980px) {
+  .dashboardActionGrid {
+    grid-template-columns: 1fr;
+  }
+}
