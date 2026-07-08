@@ -12881,3 +12881,101 @@ tr:last-child td {
     flex: 1 1 0;
   }
 }
+/* ==========================================================
+   PRESERVED FOODS MODULE
+   Shared Standardization
+   ========================================================== */
+
+.preservedFoodsPage {
+  gap: 20px;
+}
+
+.preservedFoodsPage .workspacePanel,
+.preservedFoodsPage .compactPanel {
+  margin-bottom: 20px;
+}
+
+.preservedFoodsPage .panelHeader,
+.preservedFoodsPage .compactPanelHeader {
+  margin-bottom: 14px;
+}
+
+.preservedFoodsPage .panelHeader h2,
+.preservedFoodsPage .compactPanelHeader h2 {
+  margin-bottom: 4px;
+}
+
+.preservedFoodsPage .compactFormGrid {
+  row-gap: 16px;
+  column-gap: 18px;
+}
+
+.preservedFoodsPage .toolGrid {
+  gap: 18px;
+}
+
+.preservedFoodsPage .hubStatGrid {
+  margin-top: 0;
+  margin-bottom: 18px;
+}
+
+.preservedFoodsPage .statCard {
+  min-height: 92px;
+}
+
+.preservedFoodsPage .compactSavedList {
+  margin-top: 12px;
+}
+
+.preservedFoodsPage .compactSavedCard {
+  padding: 14px 16px;
+}
+
+.preservedFoodsPage .compactSavedCard + .compactSavedCard {
+  margin-top: 10px;
+}
+
+.preservedFoodsPage .buttonRow,
+.preservedFoodsPage .panelActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.preservedFoodsPage textarea {
+  min-height: 110px;
+}
+
+.preservedFoodsPage .calculatorResults,
+.preservedFoodsPage .batchSummary {
+  margin-top: 18px;
+}
+
+.preservedFoodsPage .divider {
+  margin: 20px 0;
+}
+
+@media (max-width: 900px) {
+
+  .preservedFoodsPage .toolGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .preservedFoodsPage .compactFormGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .preservedFoodsPage .panelActions,
+  .preservedFoodsPage .buttonRow {
+    width: 100%;
+  }
+
+  .preservedFoodsPage .panelActions .primaryButton,
+  .preservedFoodsPage .panelActions .secondaryButton,
+  .preservedFoodsPage .buttonRow .primaryButton,
+  .preservedFoodsPage .buttonRow .secondaryButton {
+    width: 100%;
+    justify-content: center;
+  }
+}
