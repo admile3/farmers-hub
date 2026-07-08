@@ -955,10 +955,19 @@ function AccountStatusCard({ compact = false }) {
   }
 
   return (
-    <div className="authCard desktopAccountCard">
-      <p className="eyebrow">Account</p>
+    <div className="authCard desktopAccountCard sidebarAccountCard">
+      <div className="sidebarAccountHeader">
+        <p className="eyebrow">Account</p>
 
-      <div className="userRow">
+        <div className={`accountStatusPill ${accessStatus.status}`}>
+          {isAdmin ? "Admin access" : null}
+          {isTrial ? `${daysRemaining} trial days left` : null}
+          {accessStatus.status === "active" ? "Active subscription" : null}
+          {isExpired ? "Subscription required" : null}
+        </div>
+      </div>
+
+      <div className="userRow sidebarUserRow">
         {user.photoURL ? (
           <img src={user.photoURL} alt={displayName} />
         ) : (
@@ -973,13 +982,6 @@ function AccountStatusCard({ compact = false }) {
         </div>
       </div>
 
-      <div className={`accountStatusPill ${accessStatus.status}`}>
-        {isAdmin ? "Admin access" : null}
-        {isTrial ? `${daysRemaining} trial days left` : null}
-        {accessStatus.status === "active" ? "Active subscription" : null}
-        {isExpired ? "Subscription required" : null}
-      </div>
-
       {accountProfile?.onboardingComplete ? null : (
         <GuardedLink to="/onboarding" className="primaryButton fullButton">
           Finish Setup
@@ -992,15 +994,17 @@ function AccountStatusCard({ compact = false }) {
         </GuardedLink>
       ) : null}
 
-      <GuardedLink to="/account-settings" className="secondaryButton fullButton">
-        <Settings size={16} />
-        Account Settings
-      </GuardedLink>
+      <div className="sidebarAccountActions">
+        <GuardedLink to="/account-settings" className="secondaryButton sidebarAccountButton">
+          <Settings size={15} />
+          Settings
+        </GuardedLink>
 
-      <button className="secondaryButton" onClick={logout}>
-        <LogOut size={16} />
-        Sign out
-      </button>
+        <button className="secondaryButton sidebarAccountButton" type="button" onClick={logout}>
+          <LogOut size={15} />
+          Sign out
+        </button>
+      </div>
     </div>
   );
 }
@@ -1047,7 +1051,7 @@ function AppShell({ children }) {
 
   return (
     <div className={`app ${densityClass} ${sidebarHidden ? "sidebarHidden" : ""}`}>
-      <aside className="sidebar modernSidebar">
+      <aside className="sidebar modernSidebar appSidebar">
         <div className="mobileTopBar">
           <GuardedLink to="/" className="brand mobileBrand">
             <div className="brandIcon">
@@ -1076,20 +1080,20 @@ function AppShell({ children }) {
           </div>
         </div>
 
-        <div className="desktopBrandShell">
-          <GuardedLink to="/" className="brand desktopBrand">
-            <div className="brandIcon">
-              <Sprout size={25} />
+        <div className="desktopBrandShell appSidebarHeader">
+          <GuardedLink to="/" className="brand desktopBrand appSidebarBrand">
+            <div className="brandIcon appSidebarBrandIcon">
+              <Sprout size={24} />
             </div>
 
-            <div className="desktopBrandText">
+            <div className="desktopBrandText appSidebarBrandText">
               <h1>Market Vendor Toolkit</h1>
               <p>Farmers Hub</p>
             </div>
           </GuardedLink>
 
           <button
-            className="sidebarHideButton"
+            className="sidebarHideButton appSidebarHideButton"
             type="button"
             onClick={() => setSidebarHidden(true)}
             aria-label="Hide left toolbar"
@@ -1100,39 +1104,43 @@ function AppShell({ children }) {
           </button>
         </div>
 
-        <nav
-          id="farmers-hub-mobile-nav"
-          className={`nav modernNav ${mobileModulesOpen ? "mobileOpen" : ""}`}
-        >
-          <GuardedLink
-            to="/"
-            className={`navLink modernNavLink dashboardNav ${
-              location.pathname === "/" ? "active" : ""
-            }`}
+        <div className="appSidebarScroll">
+          <nav
+            id="farmers-hub-mobile-nav"
+            className={`nav modernNav ${mobileModulesOpen ? "mobileOpen" : ""}`}
           >
-            <Home size={18} />
-            <span>Dashboard</span>
-          </GuardedLink>
+            <GuardedLink
+              to="/"
+              className={`navLink modernNavLink dashboardNav ${
+                location.pathname === "/" ? "active" : ""
+              }`}
+            >
+              <Home size={18} />
+              <span>Dashboard</span>
+            </GuardedLink>
 
-          {modules.map((module) => {
-            const Icon = module.icon;
+            {modules.map((module) => {
+              const Icon = module.icon;
 
-            return (
-              <GuardedLink
-                key={module.path}
-                to={module.path}
-                className={`navLink modernNavLink moduleNav ${module.accent} ${
-                  location.pathname === module.path ? "active" : ""
-                }`}
-              >
-                <Icon size={18} />
-                <span>{module.title}</span>
-              </GuardedLink>
-            );
-          })}
-        </nav>
+              return (
+                <GuardedLink
+                  key={module.path}
+                  to={module.path}
+                  className={`navLink modernNavLink moduleNav ${module.accent} ${
+                    location.pathname === module.path ? "active" : ""
+                  }`}
+                >
+                  <Icon size={18} />
+                  <span>{module.title}</span>
+                </GuardedLink>
+              );
+            })}
+          </nav>
 
-        <AccountStatusCard />
+          <div className="appSidebarAccount">
+            <AccountStatusCard />
+          </div>
+        </div>
       </aside>
 
       {sidebarHidden ? (
