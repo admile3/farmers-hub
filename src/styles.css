@@ -13962,3 +13962,246 @@ tr:last-child td {
     margin: 0;
   }
 }
+
+/* ==========================================================================
+   App Shell Sidebar - Compact Navigation + Hide Toolbar
+   Append to src/styles.css
+   ========================================================================== */
+
+.desktopBrandShell {
+  display: grid;
+  gap: 8px;
+  padding: 14px 14px 10px;
+  background: linear-gradient(180deg, #245326 0%, #1d451f 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.desktopBrandShell .desktopBrand {
+  min-height: auto !important;
+  display: grid !important;
+  grid-template-columns: 42px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  color: #ffffff !important;
+  text-decoration: none !important;
+  background: transparent !important;
+}
+
+.desktopBrandShell .brandIcon {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  border-radius: 999px !important;
+  display: grid !important;
+  place-items: center !important;
+  background: rgba(255, 255, 255, 0.13) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+.desktopBrandText {
+  min-width: 0;
+}
+
+.desktopBrandText h1 {
+  margin: 0 !important;
+  color: #ffffff !important;
+  font-size: 1.18rem !important;
+  line-height: 1.05 !important;
+  letter-spacing: -0.015em !important;
+  overflow-wrap: normal !important;
+}
+
+.desktopBrandText p {
+  margin: 3px 0 0 !important;
+  color: rgba(255, 255, 255, 0.74) !important;
+  font-size: 0.75rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+}
+
+.sidebarHideButton {
+  width: 100%;
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.76rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: background-color 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+}
+
+.sidebarHideButton:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.modernSidebar .modernNav {
+  gap: 4px !important;
+  padding: 12px 12px 10px !important;
+}
+
+.modernSidebar .modernNavLink,
+.modernSidebar .navLink {
+  position: relative;
+  min-height: 38px !important;
+  padding: 7px 11px !important;
+  gap: 10px !important;
+  border-radius: 13px !important;
+  line-height: 1.1 !important;
+}
+
+.modernSidebar .modernNavLink svg,
+.modernSidebar .navLink svg {
+  width: 19px !important;
+  height: 19px !important;
+  flex: 0 0 19px !important;
+}
+
+.modernSidebar .modernNavLink span,
+.modernSidebar .navLink span {
+  font-size: 0.93rem !important;
+  line-height: 1.12 !important;
+  font-weight: 900 !important;
+}
+
+.modernSidebar .modernNavLink.active,
+.modernSidebar .navLink.active {
+  padding-left: 14px !important;
+  border-radius: 14px !important;
+}
+
+.modernSidebar .modernNavLink.active::before,
+.modernSidebar .navLink.active::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 9px;
+  bottom: 9px;
+  width: 3px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.85;
+}
+
+.modernSidebar .desktopAccountCard {
+  margin: 10px 12px 14px !important;
+  padding: 14px !important;
+  border-radius: 18px !important;
+}
+
+.modernSidebar .desktopAccountCard .eyebrow {
+  margin-bottom: 8px !important;
+}
+
+.modernSidebar .userRow {
+  gap: 10px !important;
+  margin-bottom: 10px !important;
+}
+
+.modernSidebar .userRow img,
+.modernSidebar .userInitial {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+}
+
+.modernSidebar .userRow strong {
+  font-size: 0.92rem !important;
+  line-height: 1.1 !important;
+}
+
+.modernSidebar .userRow p {
+  margin-top: 2px !important;
+  font-size: 0.76rem !important;
+}
+
+.modernSidebar .accountStatusPill {
+  margin: 8px 0 !important;
+  padding: 6px 10px !important;
+  font-size: 0.74rem !important;
+}
+
+.modernSidebar .desktopAccountCard .primaryButton,
+.modernSidebar .desktopAccountCard .secondaryButton {
+  min-height: 34px !important;
+  padding: 7px 10px !important;
+  font-size: 0.8rem !important;
+}
+
+.sidebarRevealButton {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 80;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 13px;
+  border: 1px solid rgba(36, 83, 38, 0.22);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #245326;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+  font-size: 0.86rem;
+  font-weight: 950;
+  cursor: pointer;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
+}
+
+.sidebarRevealButton:hover {
+  transform: translateY(-1px);
+  background: #f8fbf5;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.18);
+}
+
+@media (min-width: 901px) {
+  .app.sidebarHidden {
+    display: block !important;
+  }
+
+  .app.sidebarHidden .modernSidebar {
+    display: none !important;
+  }
+
+  .app.sidebarHidden .modernMain {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+
+  .app.sidebarHidden .modulePage {
+    max-width: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .desktopBrandShell,
+  .sidebarRevealButton {
+    display: none !important;
+  }
+
+  .modernSidebar .modernNav {
+    gap: 6px !important;
+    padding: 10px !important;
+  }
+
+  .modernSidebar .modernNavLink,
+  .modernSidebar .navLink {
+    min-height: 42px !important;
+  }
+}
