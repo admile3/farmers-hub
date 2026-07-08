@@ -1,5 +1,6 @@
 const HERD_ANIMALS_STORAGE_KEY = "farmersHub_herdAnimals";
 const HERD_GROUPS_STORAGE_KEY = "farmersHub_herdGroups";
+const HERD_INPUT_COSTS_STORAGE_KEY = "farmersHub_herdInputCosts";
 
 export const HERD_STATUS_OPTIONS = [
   "Active",
@@ -64,6 +65,39 @@ export const HERD_EVENT_TYPES = [
 export const HERD_PARENT_TYPES = {
   DAM: "dam",
   SIRE: "sire"
+};
+
+export const HERD_INPUT_COST_CATEGORIES = [
+  "Feed",
+  "Bedding",
+  "Mineral / Supplement",
+  "Veterinary",
+  "Medication",
+  "Processing",
+  "Transport",
+  "Labor",
+  "Equipment",
+  "Breeding",
+  "Other"
+];
+
+export const HERD_INPUT_COST_UNITS = [
+  "lb",
+  "ton",
+  "bag",
+  "bale",
+  "bushel",
+  "gallon",
+  "quart",
+  "dose",
+  "hour",
+  "each",
+  "other"
+];
+
+export const HERD_ALLOCATION_TARGET_TYPES = {
+  ANIMAL: "animal",
+  GROUP: "group"
 };
 
 const getNow = () => new Date().toISOString();
@@ -148,6 +182,45 @@ const normalizePedigree = (animal = {}) => ({
   notes: animal.pedigree?.notes || animal.geneticsNotes || ""
 });
 
+
+const normalizeInputAllocation = (allocation = {}) => ({
+  id: allocation.id || createId("allocation"),
+  targetType: allocation.targetType || HERD_ALLOCATION_TARGET_TYPES.GROUP,
+  targetId: allocation.targetId || "",
+  amount: toNumber(allocation.amount),
+  quantityUsed:
+    allocation.quantityUsed === "" ||
+    allocation.quantityUsed === null ||
+    allocation.quantityUsed === undefined
+      ? ""
+      : toNumber(allocation.quantityUsed),
+  allocationDate: allocation.allocationDate || new Date().toISOString().slice(0, 10),
+  notes: allocation.notes || "",
+  createdAt: allocation.createdAt || getNow()
+});
+
+const normalizeInputCost = (inputCost = {}) => ({
+  id: inputCost.id || createId("inputCost"),
+  name: inputCost.name || "",
+  category: inputCost.category || "Feed",
+  vendor: inputCost.vendor || "",
+  purchaseDate: inputCost.purchaseDate || new Date().toISOString().slice(0, 10),
+  totalCost: toNumber(inputCost.totalCost),
+  quantity:
+    inputCost.quantity === "" ||
+    inputCost.quantity === null ||
+    inputCost.quantity === undefined
+      ? ""
+      : toNumber(inputCost.quantity),
+  unit: inputCost.unit || "lb",
+  notes: inputCost.notes || "",
+  allocations: Array.isArray(inputCost.allocations)
+    ? inputCost.allocations.map(normalizeInputAllocation)
+    : [],
+  createdAt: inputCost.createdAt || getNow(),
+  updatedAt: inputCost.updatedAt || getNow()
+});
+
 const normalizeAnimal = (animal = {}) => {
   const pedigree = normalizePedigree(animal);
 
@@ -225,6 +298,72 @@ export const getHerdAnimals = () => {
 
 export const getHerdGroups = () => {
   return readStorage(HERD_GROUPS_STORAGE_KEY).map(normalizeGroup);
+};
+
+export const getHerdInputCosts = () => {
+  return readStorage(HERD_INPUT_COSTS_STORAGE_KEY).map(normalizeInputCost);
+};
+
+export const saveHerdInputCost = (inputCost) => {
+  const inputCosts = getHerdInputCosts();
+  const normalizedInputCost = normalizeInputCost({
+    ...inputCost,
+    updatedAt: getNow()
+  });
+
+  const existingIndex = inputCosts.findIndex((item) => item.id === normalizedInputCost.id);
+
+  if (existingIndex >= 0) {
+    inputCosts[existingIndex] = normalizedInputCost;
+  } else {
+    inputCosts.unshift(normalizedInputCost);
+  }
+
+  writeStorage(HERD_INPUT_COSTS_STORAGE_KEY, inputCosts);
+  return normalizedInputCost;
+};
+
+export const deleteHerdInputCost = (inputCostId) => {
+  const inputCosts = getHerdInputCosts().filter((inputCost) => inputCost.id !== inputCostId);
+  writeStorage(HERD_INPUT_COSTS_STORAGE_KEY, inputCosts);
+  return inputCosts;
+};
+
+export const addHerdInputAllocation = (inputCostId, allocation) => {
+  const inputCosts = getHerdInputCosts();
+  const newAllocation = normalizeInputAllocation(allocation);
+
+  const updatedInputCosts = inputCosts.map((inputCost) => {
+    if (inputCost.id !== inputCostId) return inputCost;
+
+    return {
+      ...inputCost,
+      allocations: [newAllocation, ...(inputCost.allocations || [])],
+      updatedAt: getNow()
+    };
+  });
+
+  writeStorage(HERD_INPUT_COSTS_STORAGE_KEY, updatedInputCosts);
+  return updatedInputCosts.find((inputCost) => inputCost.id === inputCostId);
+};
+
+export const removeHerdInputAllocation = (inputCostId, allocationId) => {
+  const inputCosts = getHerdInputCosts();
+
+  const updatedInputCosts = inputCosts.map((inputCost) => {
+    if (inputCost.id !== inputCostId) return inputCost;
+
+    return {
+      ...inputCost,
+      allocations: (inputCost.allocations || []).filter(
+        (allocation) => allocation.id !== allocationId
+      ),
+      updatedAt: getNow()
+    };
+  });
+
+  writeStorage(HERD_INPUT_COSTS_STORAGE_KEY, updatedInputCosts);
+  return updatedInputCosts.find((inputCost) => inputCost.id === inputCostId);
 };
 
 export const saveHerdAnimal = (animal) => {
@@ -395,27 +534,160 @@ export const removeHerdGroupEvent = (groupId, eventId) => {
   return updatedGroups.find((group) => group.id === groupId);
 };
 
-export const calculateAnimalCostBasis = (animal) => {
-  return toNumber(animal.purchaseCost) + toNumber(animal.accumulatedCosts);
+export const calculateInputCostAllocatedAmount = (inputCost) => {
+  return (inputCost?.allocations || []).reduce(
+    (sum, allocation) => sum + toNumber(allocation.amount),
+    0
+  );
 };
 
-export const calculateGroupCostBasis = (group) => {
-  return toNumber(group.purchaseCost) + toNumber(group.accumulatedCosts);
+export const calculateInputCostRemainingAmount = (inputCost) => {
+  return toNumber(inputCost?.totalCost) - calculateInputCostAllocatedAmount(inputCost);
 };
 
-export const calculateHerdStats = (animals = [], groups = []) => {
+export const calculateInputCostUnitCost = (inputCost) => {
+  const quantity = toNumber(inputCost?.quantity);
+  if (!quantity) return 0;
+
+  return toNumber(inputCost?.totalCost) / quantity;
+};
+
+export const getInputCostAllocationStatus = (inputCost) => {
+  const totalCost = toNumber(inputCost?.totalCost);
+  const allocatedAmount = calculateInputCostAllocatedAmount(inputCost);
+  const remainingAmount = totalCost - allocatedAmount;
+
+  if (!allocatedAmount) return "Unallocated";
+  if (remainingAmount < 0) return "Overallocated";
+  if (remainingAmount === 0) return "Fully Allocated";
+  return "Partially Allocated";
+};
+
+export const calculateAllocatedCostForTarget = (
+  targetType,
+  targetId,
+  inputCosts = getHerdInputCosts()
+) => {
+  if (!targetType || !targetId) return 0;
+
+  return inputCosts.reduce((sum, inputCost) => {
+    const allocatedToTarget = (inputCost.allocations || []).reduce((allocationSum, allocation) => {
+      if (allocation.targetType !== targetType || allocation.targetId !== targetId) {
+        return allocationSum;
+      }
+
+      return allocationSum + toNumber(allocation.amount);
+    }, 0);
+
+    return sum + allocatedToTarget;
+  }, 0);
+};
+
+export const getInputCostAllocationsForTarget = (
+  targetType,
+  targetId,
+  inputCosts = getHerdInputCosts()
+) => {
+  if (!targetType || !targetId) return [];
+
+  return inputCosts.flatMap((inputCost) =>
+    (inputCost.allocations || [])
+      .filter((allocation) => allocation.targetType === targetType && allocation.targetId === targetId)
+      .map((allocation) => ({
+        ...allocation,
+        inputCostId: inputCost.id,
+        inputCostName: inputCost.name,
+        inputCostCategory: inputCost.category,
+        inputCostUnit: inputCost.unit,
+        inputCostPurchaseDate: inputCost.purchaseDate
+      }))
+  );
+};
+
+export const calculateAnimalCostBasis = (animal, inputCosts = getHerdInputCosts()) => {
+  return (
+    toNumber(animal?.purchaseCost) +
+    toNumber(animal?.accumulatedCosts) +
+    calculateAllocatedCostForTarget(HERD_ALLOCATION_TARGET_TYPES.ANIMAL, animal?.id, inputCosts)
+  );
+};
+
+export const calculateGroupCostBasis = (group, inputCosts = getHerdInputCosts()) => {
+  return (
+    toNumber(group?.purchaseCost) +
+    toNumber(group?.accumulatedCosts) +
+    calculateAllocatedCostForTarget(HERD_ALLOCATION_TARGET_TYPES.GROUP, group?.id, inputCosts)
+  );
+};
+
+export const calculateGroupCostPerHead = (group, inputCosts = getHerdInputCosts()) => {
+  const count = toNumber(group?.currentCount) || toNumber(group?.startingCount);
+  if (!count) return 0;
+
+  return calculateGroupCostBasis(group, inputCosts) / count;
+};
+
+export const calculateAnimalCostPerPound = (animal, inputCosts = getHerdInputCosts()) => {
+  const weight = toNumber(animal?.currentWeight);
+  if (!weight) return 0;
+
+  return calculateAnimalCostBasis(animal, inputCosts) / weight;
+};
+
+export const calculateGroupCostPerPound = (group, inputCosts = getHerdInputCosts()) => {
+  const weightEventTotal = (group?.events || []).reduce((sum, event) => {
+    if (event.type !== "Weight Check" || !event.weight) return sum;
+    return sum + toNumber(event.weight);
+  }, 0);
+
+  if (!weightEventTotal) return 0;
+
+  return calculateGroupCostBasis(group, inputCosts) / weightEventTotal;
+};
+
+export const calculateAnimalProfit = (animal, inputCosts = getHerdInputCosts()) => {
+  return toNumber(animal?.estimatedValue) - calculateAnimalCostBasis(animal, inputCosts);
+};
+
+export const calculateGroupProfit = (group, inputCosts = getHerdInputCosts()) => {
+  return toNumber(group?.estimatedValue) - calculateGroupCostBasis(group, inputCosts);
+};
+
+export const calculateInputCostStats = (inputCosts = getHerdInputCosts()) => {
+  const totalInputCost = inputCosts.reduce(
+    (sum, inputCost) => sum + toNumber(inputCost.totalCost),
+    0
+  );
+  const allocatedInputCost = inputCosts.reduce(
+    (sum, inputCost) => sum + calculateInputCostAllocatedAmount(inputCost),
+    0
+  );
+
+  return {
+    totalInputCosts: inputCosts.length,
+    totalInputCost,
+    allocatedInputCost,
+    unallocatedInputCost: totalInputCost - allocatedInputCost,
+    overallocatedInputCosts: inputCosts.filter(
+      (inputCost) => calculateInputCostRemainingAmount(inputCost) < 0
+    ).length
+  };
+};
+
+export const calculateHerdStats = (animals = [], groups = [], inputCosts = getHerdInputCosts()) => {
   const activeAnimals = animals.filter((animal) => animal.status === "Active");
   const readyAnimals = animals.filter((animal) => animal.status === "Ready for Processing");
   const activeGroups = groups.filter((group) => group.status === "Active");
   const readyGroups = groups.filter((group) => group.status === "Ready for Processing");
+  const inputCostStats = calculateInputCostStats(inputCosts);
 
   const totalBookValue =
     animals.reduce((sum, animal) => sum + toNumber(animal.estimatedValue), 0) +
     groups.reduce((sum, group) => sum + toNumber(group.estimatedValue), 0);
 
   const totalCostBasis =
-    animals.reduce((sum, animal) => sum + calculateAnimalCostBasis(animal), 0) +
-    groups.reduce((sum, group) => sum + calculateGroupCostBasis(group), 0);
+    animals.reduce((sum, animal) => sum + calculateAnimalCostBasis(animal, inputCosts), 0) +
+    groups.reduce((sum, group) => sum + calculateGroupCostBasis(group, inputCosts), 0);
 
   return {
     totalAnimals: animals.length,
@@ -424,7 +696,8 @@ export const calculateHerdStats = (animals = [], groups = []) => {
     activeGroups: activeGroups.length,
     readyForProcessing: readyAnimals.length + readyGroups.length,
     totalBookValue,
-    totalCostBasis
+    totalCostBasis,
+    ...inputCostStats
   };
 };
 
