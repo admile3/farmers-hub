@@ -30,7 +30,10 @@ import Toast from "../components/Toast.jsx";
 import WorkspacePanel from "../components/WorkspacePanel.jsx";
 
 import {
+  HERD_ALLOCATION_TARGET_TYPES,
   HERD_EVENT_TYPES,
+  HERD_INPUT_COST_CATEGORIES,
+  HERD_INPUT_COST_UNITS,
   HERD_PARENT_TYPES,
   HERD_PURPOSE_OPTIONS,
   HERD_SOURCE_OPTIONS,
@@ -39,19 +42,31 @@ import {
   HERD_TAG_TYPE_OPTIONS,
   addHerdEvent,
   addHerdGroupEvent,
+  addHerdInputAllocation,
+  calculateAllocatedCostForTarget,
   calculateAnimalCostBasis,
   calculateGroupCostBasis,
+  calculateGroupCostPerHead,
   calculateHerdStats,
+  calculateInputCostAllocatedAmount,
+  calculateInputCostRemainingAmount,
+  calculateInputCostUnitCost,
   getAnimalDescendantIds,
   getAnimalOffspring,
   deleteHerdAnimal,
   deleteHerdGroup,
+  deleteHerdInputCost,
   getHerdAnimals,
   getHerdGroups,
+  getHerdInputCosts,
+  getInputCostAllocationStatus,
+  getInputCostAllocationsForTarget,
   removeHerdEvent,
   removeHerdGroupEvent,
+  removeHerdInputAllocation,
   saveHerdAnimal,
   saveHerdGroup,
+  saveHerdInputCost,
   wouldCreateCircularPedigree
 } from "../services/herdService";
 
@@ -133,11 +148,59 @@ const blankEvent = {
   salePrice: ""
 };
 
+const blankInputCost = {
+  name: "",
+  category: "Feed",
+  vendor: "",
+  purchaseDate: new Date().toISOString().slice(0, 10),
+  totalCost: "",
+  quantity: "",
+  unit: "lb",
+  notes: "",
+  allocations: []
+};
+
+const blankAllocation = {
+  targetType: HERD_ALLOCATION_TARGET_TYPES.GROUP,
+  targetId: "",
+  amount: "",
+  quantityUsed: "",
+  allocationDate: new Date().toISOString().slice(0, 10),
+  notes: ""
+};
+
 function money(value) {
   return Number(value || 0).toLocaleString("en-US", {
     style: "currency",
     currency: "USD"
   });
+}
+
+function percent(value) {
+  const parsed = Number(value || 0);
+  return Number.isFinite(parsed) ? `${parsed.toFixed(0)}%` : "0%";
+}
+
+function getAllocationPercent(inputCost) {
+  const totalCost = Number(inputCost?.totalCost || 0);
+  if (!totalCost) return 0;
+
+  return (calculateInputCostAllocatedAmount(inputCost) / totalCost) * 100;
+}
+
+function getAllocationStatusVariant(status) {
+  switch (status) {
+    case "Fully Allocated":
+      return "success";
+    case "Partially Allocated":
+      return "warning";
+    case "Overallocated":
+      return "danger";
+    case "Unallocated":
+      return "neutral";
+    default:
+      return "primary";
+  }
 }
 
 function cleanCurrency(value) {
@@ -270,14 +333,19 @@ function timelineSubtitle(event) {
 export default function HerdTracker() {
   const [animals, setAnimals] = useState([]);
   const [groups, setGroups] = useState([]);
+  const [inputCosts, setInputCosts] = useState([]);
   const [activeView, setActiveView] = useState("animals");
   const [selectedAnimalId, setSelectedAnimalId] = useState("");
   const [selectedGroupId, setSelectedGroupId] = useState("");
+  const [selectedInputCostId, setSelectedInputCostId] = useState("");
   const [animalForm, setAnimalForm] = useState(blankAnimal);
   const [groupForm, setGroupForm] = useState(blankGroup);
+  const [inputCostForm, setInputCostForm] = useState(blankInputCost);
+  const [allocationForm, setAllocationForm] = useState(blankAllocation);
   const [eventForm, setEventForm] = useState(blankEvent);
   const [animalSearch, setAnimalSearch] = useState("");
   const [groupSearch, setGroupSearch] = useState("");
+  const [inputCostSearch, setInputCostSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [speciesFilter, setSpeciesFilter] = useState("All");
   const [showGuide, setShowGuide] = useState(false);
@@ -294,6 +362,11 @@ export default function HerdTracker() {
   const [groupSaved, setGroupSaved] = useState(false);
   const [groupSaveError, setGroupSaveError] = useState(false);
 
+  const [inputCostDirty, setInputCostDirty] = useState(false);
+  const [inputCostSaving, setInputCostSaving] = useState(false);
+  const [inputCostSaved, setInputCostSaved] = useState(false);
+  const [inputCostSaveError, setInputCostSaveError] = useState(false);
+
   function showToast(nextToast) {
     setToast(nextToast);
 
@@ -305,6 +378,7 @@ export default function HerdTracker() {
   function loadData() {
     setAnimals(getHerdAnimals());
     setGroups(getHerdGroups());
+    setInputCosts(getHerdInputCosts());
   }
 
   useEffect(() => {
@@ -326,6 +400,10 @@ export default function HerdTracker() {
     return groups.find((group) => group.id === selectedGroupId) || null;
   }, [groups, selectedGroupId]);
 
+  const selectedInputCost = useMemo(() => {
+    return inputCosts.find((inputCost) => inputCost.id === selectedInputCostId) || null;
+  }, [inputCosts, selectedInputCostId]);
+
   const selectedAnimalOffspring = useMemo(() => {
     return selectedAnimalId ? getAnimalOffspring(selectedAnimalId, animals) : [];
   }, [animals, selectedAnimalId]);
@@ -344,8 +422,8 @@ export default function HerdTracker() {
   }, [animals, selectedAnimalId, blockedParentIds]);
 
   const herdStats = useMemo(() => {
-    return calculateHerdStats(animals, groups);
-  }, [animals, groups]);
+    return calculateHerdStats(animals, groups, inputCosts);
+  }, [animals, groups, inputCosts]);
 
   const readyRecords = useMemo(() => {
     return {
@@ -405,6 +483,61 @@ export default function HerdTracker() {
     });
   }, [groups, groupSearch, statusFilter, speciesFilter]);
 
+  const filteredInputCosts = useMemo(() => {
+    const search = inputCostSearch.trim().toLowerCase();
+
+    return inputCosts.filter((inputCost) => {
+      const searchableText = [
+        inputCost.name,
+        inputCost.category,
+        inputCost.vendor,
+        inputCost.unit,
+        inputCost.notes,
+        getInputCostAllocationStatus(inputCost)
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return !search || searchableText.includes(search);
+    });
+  }, [inputCosts, inputCostSearch]);
+
+  const allocationTargetOptions = useMemo(() => {
+    const groupOptions = groups.map((group) => ({
+      type: HERD_ALLOCATION_TARGET_TYPES.GROUP,
+      id: group.id,
+      label: `Group: ${group.name || "Unnamed Group"}${group.currentCount ? ` (${group.currentCount} head)` : ""}`
+    }));
+
+    const animalOptions = animals.map((animal) => ({
+      type: HERD_ALLOCATION_TARGET_TYPES.ANIMAL,
+      id: animal.id,
+      label: `Animal: ${getAnimalOptionLabel(animal)}`
+    }));
+
+    return [...groupOptions, ...animalOptions];
+  }, [animals, groups]);
+
+  const currentInputAllocations = useMemo(() => {
+    if (activeView === "animals" && selectedAnimalId) {
+      return getInputCostAllocationsForTarget(
+        HERD_ALLOCATION_TARGET_TYPES.ANIMAL,
+        selectedAnimalId,
+        inputCosts
+      );
+    }
+
+    if (activeView === "groups" && selectedGroupId) {
+      return getInputCostAllocationsForTarget(
+        HERD_ALLOCATION_TARGET_TYPES.GROUP,
+        selectedGroupId,
+        inputCosts
+      );
+    }
+
+    return [];
+  }, [activeView, selectedAnimalId, selectedGroupId, inputCosts]);
+
   function resetEventForm() {
     setEventForm({
       ...blankEvent,
@@ -426,6 +559,20 @@ export default function HerdTracker() {
     setGroupSaveError(false);
   }
 
+  function resetInputCostSaveState() {
+    setInputCostDirty(false);
+    setInputCostSaving(false);
+    setInputCostSaved(false);
+    setInputCostSaveError(false);
+  }
+
+  function resetAllocationForm() {
+    setAllocationForm({
+      ...blankAllocation,
+      allocationDate: new Date().toISOString().slice(0, 10)
+    });
+  }
+
   function startNewAnimal() {
     setActiveView("animals");
     setSelectedAnimalId("");
@@ -444,6 +591,19 @@ export default function HerdTracker() {
     setGroupDirty(true);
     setGroupSaved(false);
     setGroupSaveError(false);
+  }
+
+  function startNewInputCost() {
+    setActiveView("costs");
+    setSelectedInputCostId("");
+    setInputCostForm({
+      ...blankInputCost,
+      purchaseDate: new Date().toISOString().slice(0, 10)
+    });
+    resetAllocationForm();
+    setInputCostDirty(true);
+    setInputCostSaved(false);
+    setInputCostSaveError(false);
   }
 
   function editAnimal(animal) {
@@ -474,6 +634,20 @@ export default function HerdTracker() {
     });
     resetEventForm();
     resetGroupSaveState();
+  }
+
+  function editInputCost(inputCost) {
+    setActiveView("costs");
+    setSelectedInputCostId(inputCost.id);
+    setInputCostForm({
+      ...blankInputCost,
+      ...inputCost,
+      totalCost: inputCost.totalCost || "",
+      quantity: inputCost.quantity === 0 ? "" : inputCost.quantity,
+      allocations: inputCost.allocations || []
+    });
+    resetAllocationForm();
+    resetInputCostSaveState();
   }
 
   function updateAnimalParentField(parentIdField, parentNameField, parentId) {
@@ -510,6 +684,35 @@ export default function HerdTracker() {
       ...current,
       [field]: value
     }));
+  }
+
+  function updateInputCostField(field, value) {
+    setInputCostDirty(true);
+    setInputCostSaved(false);
+    setInputCostSaveError(false);
+
+    setInputCostForm((current) => ({
+      ...current,
+      [field]: value
+    }));
+  }
+
+  function updateAllocationField(field, value) {
+    setAllocationForm((current) => {
+      const next = {
+        ...current,
+        [field]: value
+      };
+
+      if (field === "quantityUsed") {
+        const unitCost = calculateInputCostUnitCost(inputCostForm);
+        if (unitCost && value !== "") {
+          next.amount = cleanCurrency(Number(value) * unitCost);
+        }
+      }
+
+      return next;
+    });
   }
 
   function updateEventField(field, value) {
@@ -671,6 +874,76 @@ export default function HerdTracker() {
     }
   }
 
+  function saveInputCost(event) {
+    event?.preventDefault?.();
+
+    if (!inputCostForm.name.trim()) {
+      setInputCostSaveError(true);
+      showToast({
+        variant: "error",
+        title: "Input cost needs a name",
+        message: "Add a name like June feed purchase before saving."
+      });
+      return;
+    }
+
+    if (!Number(inputCostForm.totalCost)) {
+      setInputCostSaveError(true);
+      showToast({
+        variant: "error",
+        title: "Input cost needs a total",
+        message: "Add the total cost before saving."
+      });
+      return;
+    }
+
+    setInputCostSaving(true);
+    setInputCostSaveError(false);
+
+    try {
+      const savedInputCost = saveHerdInputCost({
+        ...inputCostForm,
+        id: selectedInputCostId || inputCostForm.id,
+        name: inputCostForm.name.trim(),
+        vendor: inputCostForm.vendor.trim(),
+        totalCost: cleanCurrency(inputCostForm.totalCost),
+        quantity: cleanNumber(inputCostForm.quantity, 2),
+        notes: inputCostForm.notes.trim()
+      });
+
+      loadData();
+      setSelectedInputCostId(savedInputCost.id);
+      setInputCostForm({
+        ...savedInputCost,
+        totalCost: savedInputCost.totalCost || "",
+        quantity: savedInputCost.quantity === 0 ? "" : savedInputCost.quantity
+      });
+
+      setInputCostDirty(false);
+      setInputCostSaved(true);
+
+      showToast({
+        variant: "success",
+        title: "Input cost saved",
+        message: "Shared input cost pool saved successfully."
+      });
+
+      window.setTimeout(() => {
+        setInputCostSaved(false);
+      }, 1200);
+    } catch (error) {
+      console.error("Could not save input cost:", error);
+      setInputCostSaveError(true);
+      showToast({
+        variant: "error",
+        title: "Input cost could not be saved",
+        message: "Please check the record and try again."
+      });
+    } finally {
+      setInputCostSaving(false);
+    }
+  }
+
   function requestDeleteAnimal(animal) {
     setDeleteTarget({
       type: "animal",
@@ -686,6 +959,24 @@ export default function HerdTracker() {
       id: group.id,
       title: group.name || "this group",
       message: "Delete this group or lot? This action cannot be undone."
+    });
+  }
+
+  function requestDeleteInputCost(inputCost) {
+    setDeleteTarget({
+      type: "inputCost",
+      id: inputCost.id,
+      title: inputCost.name || "this input cost",
+      message: "Delete this input cost pool and its allocations? This action cannot be undone."
+    });
+  }
+
+  function requestDeleteAllocation(allocationId, allocationTitle) {
+    setDeleteTarget({
+      type: "inputAllocation",
+      id: allocationId,
+      title: allocationTitle || "this allocation",
+      message: "Delete this allocation from the input cost pool?"
     });
   }
 
@@ -728,6 +1019,40 @@ export default function HerdTracker() {
         variant: "success",
         title: "Group deleted",
         message: "Group or lot record deleted."
+      });
+    }
+
+    if (deleteTarget.type === "inputCost") {
+      deleteHerdInputCost(deleteTarget.id);
+      loadData();
+
+      if (selectedInputCostId === deleteTarget.id) {
+        startNewInputCost();
+      }
+
+      showToast({
+        variant: "success",
+        title: "Input cost deleted",
+        message: "Input cost pool deleted."
+      });
+    }
+
+    if (deleteTarget.type === "inputAllocation") {
+      const updatedInputCost = removeHerdInputAllocation(selectedInputCostId, deleteTarget.id);
+      loadData();
+
+      if (updatedInputCost) {
+        setInputCostForm({
+          ...updatedInputCost,
+          totalCost: updatedInputCost.totalCost || "",
+          quantity: updatedInputCost.quantity === 0 ? "" : updatedInputCost.quantity
+        });
+      }
+
+      showToast({
+        variant: "success",
+        title: "Allocation removed",
+        message: "Input cost allocation removed."
       });
     }
 
@@ -871,6 +1196,74 @@ export default function HerdTracker() {
       title: "Event added",
       message: "Group timeline event added."
     });
+  }
+
+  function saveInputAllocation(event) {
+    event?.preventDefault?.();
+
+    if (!selectedInputCostId) {
+      showToast({
+        variant: "error",
+        title: "Select an input cost first",
+        message: "Save or select an input cost pool before adding allocations."
+      });
+      return;
+    }
+
+    if (!allocationForm.targetId) {
+      showToast({
+        variant: "error",
+        title: "Choose an allocation target",
+        message: "Select a group, lot, or animal for this allocation."
+      });
+      return;
+    }
+
+    if (!Number(allocationForm.amount)) {
+      showToast({
+        variant: "error",
+        title: "Allocation needs an amount",
+        message: "Add a dollar amount or quantity used before saving."
+      });
+      return;
+    }
+
+    const updatedInputCost = addHerdInputAllocation(selectedInputCostId, {
+      ...allocationForm,
+      amount: cleanCurrency(allocationForm.amount),
+      quantityUsed: cleanNumber(allocationForm.quantityUsed, 2),
+      notes: allocationForm.notes.trim()
+    });
+
+    loadData();
+
+    if (updatedInputCost) {
+      setInputCostForm({
+        ...updatedInputCost,
+        totalCost: updatedInputCost.totalCost || "",
+        quantity: updatedInputCost.quantity === 0 ? "" : updatedInputCost.quantity
+      });
+    }
+
+    resetAllocationForm();
+
+    showToast({
+      variant: "success",
+      title: "Allocation added",
+      message: "Input cost allocated to the selected record."
+    });
+  }
+
+  function getAllocationTargetLabel(allocation) {
+    if (!allocation) return "Unknown target";
+
+    if (allocation.targetType === HERD_ALLOCATION_TARGET_TYPES.ANIMAL) {
+      const animal = animals.find((item) => item.id === allocation.targetId);
+      return animal ? getAnimalOptionLabel(animal) : "Animal not found";
+    }
+
+    const group = groups.find((item) => item.id === allocation.targetId);
+    return group ? group.name || "Unnamed Group" : "Group not found";
   }
 
   function markAnimalReady(animal) {
@@ -1067,6 +1460,25 @@ export default function HerdTracker() {
     ];
   }
 
+  function getInputCostActions(inputCost) {
+    return [
+      {
+        label: "Edit",
+        icon: Edit3,
+        onClick: () => editInputCost(inputCost)
+      },
+      {
+        divider: true
+      },
+      {
+        label: "Delete",
+        icon: Trash2,
+        destructive: true,
+        onClick: () => requestDeleteInputCost(inputCost)
+      }
+    ];
+  }
+
   const currentTimeline =
     activeView === "animals" ? selectedAnimal?.events || [] : selectedGroup?.events || [];
 
@@ -1094,6 +1506,11 @@ export default function HerdTracker() {
             label: "Add Group",
             icon: Layers,
             onClick: startNewGroup
+          },
+          {
+            label: "Add Cost Pool",
+            icon: DollarSign,
+            onClick: startNewInputCost
           }
         ]}
       />
@@ -1127,8 +1544,16 @@ export default function HerdTracker() {
           icon={DollarSign}
           label="Cost Basis"
           value={money(herdStats.totalCostBasis)}
-          sub="purchase + events"
+          sub="purchase + events + allocations"
           accent="pricing"
+        />
+
+        <StatCard
+          icon={DollarSign}
+          label="Unallocated Inputs"
+          value={money(herdStats.unallocatedInputCost)}
+          sub={`${herdStats.totalInputCosts || 0} cost pools`}
+          accent="inventory"
         />
       </section>
 
@@ -1198,12 +1623,28 @@ export default function HerdTracker() {
 
       <WorkspacePanel
         eyebrow="Directory"
-        title={activeView === "animals" ? "Individual Animals" : "Groups / Lots"}
+        title={
+          activeView === "animals"
+            ? "Individual Animals"
+            : activeView === "groups"
+              ? "Groups / Lots"
+              : "Input Cost Pools"
+        }
         actions={[
           {
-            label: activeView === "animals" ? "Add Animal" : "Add Group",
+            label:
+              activeView === "animals"
+                ? "Add Animal"
+                : activeView === "groups"
+                  ? "Add Group"
+                  : "Add Cost Pool",
             icon: Plus,
-            onClick: activeView === "animals" ? startNewAnimal : startNewGroup
+            onClick:
+              activeView === "animals"
+                ? startNewAnimal
+                : activeView === "groups"
+                  ? startNewGroup
+                  : startNewInputCost
           },
           {
             label: "Refresh",
@@ -1214,14 +1655,26 @@ export default function HerdTracker() {
         ]}
         toolbar={
           <FilterBar
-            searchValue={activeView === "animals" ? animalSearch : groupSearch}
+            searchValue={
+              activeView === "animals"
+                ? animalSearch
+                : activeView === "groups"
+                  ? groupSearch
+                  : inputCostSearch
+            }
             onSearchChange={(value) =>
-              activeView === "animals" ? setAnimalSearch(value) : setGroupSearch(value)
+              activeView === "animals"
+                ? setAnimalSearch(value)
+                : activeView === "groups"
+                  ? setGroupSearch(value)
+                  : setInputCostSearch(value)
             }
             searchPlaceholder={
               activeView === "animals"
                 ? "Search tag, name, breed..."
-                : "Search group, lot, location..."
+                : activeView === "groups"
+                  ? "Search group, lot, location..."
+                  : "Search feed, bedding, vendor, category..."
             }
             filters={[
               {
@@ -1230,21 +1683,26 @@ export default function HerdTracker() {
                 onChange: setActiveView,
                 options: [
                   { label: "Animals", value: "animals" },
-                  { label: "Groups / Lots", value: "groups" }
+                  { label: "Groups / Lots", value: "groups" },
+                  { label: "Input Costs", value: "costs" }
                 ]
               },
-              {
-                label: "Species",
-                value: speciesFilter,
-                onChange: setSpeciesFilter,
-                options: ["All", ...HERD_SPECIES_OPTIONS]
-              },
-              {
-                label: "Status",
-                value: statusFilter,
-                onChange: setStatusFilter,
-                options: ["All", ...HERD_STATUS_OPTIONS]
-              }
+              ...(activeView === "costs"
+                ? []
+                : [
+                    {
+                      label: "Species",
+                      value: speciesFilter,
+                      onChange: setSpeciesFilter,
+                      options: ["All", ...HERD_SPECIES_OPTIONS]
+                    },
+                    {
+                      label: "Status",
+                      value: statusFilter,
+                      onChange: setStatusFilter,
+                      options: ["All", ...HERD_STATUS_OPTIONS]
+                    }
+                  ])
             ]}
           />
         }
@@ -1266,7 +1724,17 @@ export default function HerdTracker() {
                 .join(" • ")
             }
             getMeta={(animal) => [
-              { label: "Cost Basis", value: money(calculateAnimalCostBasis(animal)) },
+              { label: "Cost Basis", value: money(calculateAnimalCostBasis(animal, inputCosts)) },
+              {
+                label: "Allocated Inputs",
+                value: money(
+                  calculateAllocatedCostForTarget(
+                    HERD_ALLOCATION_TARGET_TYPES.ANIMAL,
+                    animal.id,
+                    inputCosts
+                  )
+                )
+              },
               { label: "Weight", value: animal.currentWeight ? `${animal.currentWeight} lb` : "" },
               { label: "Dam", value: getParentDetailText(animal, HERD_PARENT_TYPES.DAM, animals) },
               { label: "Sire", value: getParentDetailText(animal, HERD_PARENT_TYPES.SIRE, animals) },
@@ -1283,7 +1751,7 @@ export default function HerdTracker() {
               <ActionMenu items={getAnimalActions(animal)} />
             )}
           />
-        ) : (
+        ) : activeView === "groups" ? (
           <RecordList
             records={filteredGroups}
             selectedRecordId={selectedGroupId}
@@ -1300,7 +1768,18 @@ export default function HerdTracker() {
                 .join(" • ")
             }
             getMeta={(group) => [
-              { label: "Cost Basis", value: money(calculateGroupCostBasis(group)) },
+              { label: "Cost Basis", value: money(calculateGroupCostBasis(group, inputCosts)) },
+              {
+                label: "Allocated Inputs",
+                value: money(
+                  calculateAllocatedCostForTarget(
+                    HERD_ALLOCATION_TARGET_TYPES.GROUP,
+                    group.id,
+                    inputCosts
+                  )
+                )
+              },
+              { label: "Cost / Head", value: calculateGroupCostPerHead(group, inputCosts) ? money(calculateGroupCostPerHead(group, inputCosts)) : "" },
               { label: "Location", value: group.location || "Not set" }
             ]}
             renderStatus={(group) => (
@@ -1313,9 +1792,339 @@ export default function HerdTracker() {
               <ActionMenu items={getGroupActions(group)} />
             )}
           />
+         ) : (
+          <RecordList
+            records={filteredInputCosts}
+            selectedRecordId={selectedInputCostId}
+            onRecordClick={editInputCost}
+            emptyMessage="No input cost pools found. Use Add Cost Pool to create shared feed, bedding, processing, or transport costs."
+            getTitle={(inputCost) => inputCost.name || "Unnamed Input Cost"}
+            getSubtitle={(inputCost) =>
+              [
+                inputCost.category,
+                inputCost.vendor,
+                inputCost.purchaseDate ? formatDate(inputCost.purchaseDate) : ""
+              ]
+                .filter(Boolean)
+                .join(" • ")
+            }
+            getMeta={(inputCost) => [
+              { label: "Total", value: money(inputCost.totalCost) },
+              { label: "Allocated", value: money(calculateInputCostAllocatedAmount(inputCost)) },
+              { label: "Remaining", value: money(calculateInputCostRemainingAmount(inputCost)) },
+              { label: "Progress", value: percent(getAllocationPercent(inputCost)) },
+              { label: "Unit Cost", value: calculateInputCostUnitCost(inputCost) ? `${money(calculateInputCostUnitCost(inputCost))} / ${inputCost.unit}` : "" }
+            ]}
+            renderStatus={(inputCost) => {
+              const status = getInputCostAllocationStatus(inputCost);
+
+              return (
+                <StatusPill
+                  label={status}
+                  variant={getAllocationStatusVariant(status)}
+                />
+              );
+            }}
+            renderActions={(inputCost) => (
+              <ActionMenu items={getInputCostActions(inputCost)} />
+            )}
+          />
         )}
       </WorkspacePanel>
 
+      {activeView === "costs" ? (
+        <section className="herdWorkspaceGrid compactWorkspace">
+          <WorkspacePanel
+            eyebrow="Input Cost Pool"
+            title={selectedInputCostId ? "Edit Input Cost" : "Add Input Cost"}
+            className="herdAnimalPanel"
+            actions={[
+              {
+                label: "Clear",
+                variant: "secondary",
+                onClick: startNewInputCost
+              }
+            ]}
+          >
+            <form className="formGrid compactFormGrid" onSubmit={saveInputCost}>
+              <FormField label="Cost Name">
+                <input
+                  value={inputCostForm.name}
+                  onChange={(event) => updateInputCostField("name", event.target.value)}
+                  placeholder="e.g., June broiler feed order"
+                />
+              </FormField>
+
+              <FormField label="Category">
+                <select
+                  value={inputCostForm.category}
+                  onChange={(event) => updateInputCostField("category", event.target.value)}
+                >
+                  {HERD_INPUT_COST_CATEGORIES.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+
+              <FormField label="Vendor">
+                <input
+                  value={inputCostForm.vendor}
+                  onChange={(event) => updateInputCostField("vendor", event.target.value)}
+                  placeholder="Supplier or vendor"
+                />
+              </FormField>
+
+              <FormField label="Purchase Date">
+                <input
+                  type="date"
+                  value={inputCostForm.purchaseDate}
+                  onChange={(event) => updateInputCostField("purchaseDate", event.target.value)}
+                />
+              </FormField>
+
+              <FormField label="Total Cost">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={inputCostForm.totalCost}
+                  onChange={(event) => updateInputCostField("totalCost", event.target.value)}
+                  onBlur={(event) =>
+                    updateInputCostField("totalCost", cleanCurrency(event.target.value))
+                  }
+                  placeholder="0.00"
+                />
+              </FormField>
+
+              <FormField label="Quantity Purchased">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={inputCostForm.quantity}
+                  onChange={(event) => updateInputCostField("quantity", event.target.value)}
+                  onBlur={(event) =>
+                    updateInputCostField("quantity", cleanNumber(event.target.value, 2))
+                  }
+                  placeholder="e.g., 2000"
+                />
+              </FormField>
+
+              <FormField label="Unit">
+                <select
+                  value={inputCostForm.unit}
+                  onChange={(event) => updateInputCostField("unit", event.target.value)}
+                >
+                  {HERD_INPUT_COST_UNITS.map((unit) => (
+                    <option key={unit} value={unit}>
+                      {unit}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+
+              <div className="livestockCalculatedField">
+                <span>Unit Cost</span>
+                <strong>
+                  {calculateInputCostUnitCost(inputCostForm)
+                    ? `${money(calculateInputCostUnitCost(inputCostForm))} / ${inputCostForm.unit}`
+                    : money(0)}
+                </strong>
+              </div>
+
+              <div className="livestockCalculatedField">
+                <span>Allocated</span>
+                <strong>{money(calculateInputCostAllocatedAmount(inputCostForm))}</strong>
+              </div>
+
+              <div className="livestockCalculatedField">
+                <span>Remaining</span>
+                <strong>{money(calculateInputCostRemainingAmount(inputCostForm))}</strong>
+              </div>
+
+              <FormField label="Notes" fullWidth>
+                <textarea
+                  value={inputCostForm.notes}
+                  onChange={(event) => updateInputCostField("notes", event.target.value)}
+                  placeholder="Feed formula, invoice notes, delivery details, or allocation plan..."
+                />
+              </FormField>
+
+              <div className="fullSpan herdEditorActions">
+                <button
+                  className="secondaryButton compactButton"
+                  type="button"
+                  onClick={startNewInputCost}
+                >
+                  Clear
+                </button>
+
+                <SaveButton
+                  dirty={inputCostDirty}
+                  saving={inputCostSaving}
+                  saved={inputCostSaved}
+                  error={inputCostSaveError}
+                  label="Save Cost Pool"
+                  dirtyLabel="Save Cost Pool"
+                  onClick={saveInputCost}
+                />
+              </div>
+            </form>
+          </WorkspacePanel>
+
+          <WorkspacePanel
+            eyebrow="Allocations"
+            title={
+              selectedInputCost
+                ? selectedInputCost.name || "Selected Input Cost"
+                : "Select an Input Cost"
+            }
+            className="herdTimelinePanel"
+          >
+            {selectedInputCost ? (
+              <>
+                <form className="formGrid compactFormGrid herdEventForm" onSubmit={saveInputAllocation}>
+                  <FormField label="Target Type">
+                    <select
+                      value={allocationForm.targetType}
+                      onChange={(event) => {
+                        updateAllocationField("targetType", event.target.value);
+                        updateAllocationField("targetId", "");
+                      }}
+                    >
+                      <option value={HERD_ALLOCATION_TARGET_TYPES.GROUP}>Group / Lot</option>
+                      <option value={HERD_ALLOCATION_TARGET_TYPES.ANIMAL}>Animal</option>
+                    </select>
+                  </FormField>
+
+                  <FormField label="Allocate To">
+                    <select
+                      value={allocationForm.targetId}
+                      onChange={(event) => updateAllocationField("targetId", event.target.value)}
+                    >
+                      <option value="">Select target</option>
+                      {allocationTargetOptions
+                        .filter((target) => target.type === allocationForm.targetType)
+                        .map((target) => (
+                          <option key={`${target.type}-${target.id}`} value={target.id}>
+                            {target.label}
+                          </option>
+                        ))}
+                    </select>
+                  </FormField>
+
+                  <FormField label={`Quantity Used${inputCostForm.unit ? ` (${inputCostForm.unit})` : ""}`}>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={allocationForm.quantityUsed}
+                      onChange={(event) => updateAllocationField("quantityUsed", event.target.value)}
+                      onBlur={(event) =>
+                        updateAllocationField("quantityUsed", cleanNumber(event.target.value, 2))
+                      }
+                      placeholder="Optional"
+                    />
+                  </FormField>
+
+                  <FormField label="Dollar Amount">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={allocationForm.amount}
+                      onChange={(event) => updateAllocationField("amount", event.target.value)}
+                      onBlur={(event) =>
+                        updateAllocationField("amount", cleanCurrency(event.target.value))
+                      }
+                      placeholder="0.00"
+                    />
+                  </FormField>
+
+                  <FormField label="Allocation Date">
+                    <input
+                      type="date"
+                      value={allocationForm.allocationDate}
+                      onChange={(event) => updateAllocationField("allocationDate", event.target.value)}
+                    />
+                  </FormField>
+
+                  <FormField label="Notes" fullWidth>
+                    <textarea
+                      value={allocationForm.notes}
+                      onChange={(event) => updateAllocationField("notes", event.target.value)}
+                      placeholder="Which batch received it, ration notes, or usage details..."
+                    />
+                  </FormField>
+
+                  <div className="fullSpan herdEventActions">
+                    <button className="primaryButton compactPrimary" type="submit">
+                      <Plus size={15} />
+                      Add Allocation
+                    </button>
+                  </div>
+                </form>
+
+                <div className="herdTimelineList">
+                  {selectedInputCost.allocations?.length ? (
+                    <RecordList
+                      records={selectedInputCost.allocations}
+                      getRecordId={(allocation) => allocation.id}
+                      getTitle={(allocation) => getAllocationTargetLabel(allocation)}
+                      getSubtitle={(allocation) =>
+                        [
+                          allocation.allocationDate ? formatDate(allocation.allocationDate) : "No date",
+                          allocation.quantityUsed ? `${allocation.quantityUsed} ${selectedInputCost.unit}` : ""
+                        ]
+                          .filter(Boolean)
+                          .join(" • ")
+                      }
+                      getMeta={(allocation) => [
+                        { label: "Amount", value: money(allocation.amount) },
+                        { label: "Type", value: allocation.targetType === HERD_ALLOCATION_TARGET_TYPES.ANIMAL ? "Animal" : "Group / Lot" },
+                        { label: "Note", value: allocation.notes || "" }
+                      ]}
+                      renderStatus={(allocation) => (
+                        <StatusPill label={money(allocation.amount)} variant="info" />
+                      )}
+                      renderActions={(allocation) => (
+                        <div className="itemActions">
+                          <button
+                            type="button"
+                            aria-label="Delete allocation"
+                            onClick={() =>
+                              requestDeleteAllocation(
+                                allocation.id,
+                                getAllocationTargetLabel(allocation)
+                              )
+                            }
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      )}
+                    />
+                  ) : (
+                    <EmptyState
+                      icon={DollarSign}
+                      title="No allocations yet"
+                      message="Allocate this shared input cost to one or more groups, lots, or individual animals."
+                    />
+                  )}
+                </div>
+              </>
+            ) : (
+              <EmptyState
+                icon={DollarSign}
+                title="Select an input cost"
+                message="Select or save a cost pool before adding allocations."
+              />
+            )}
+          </WorkspacePanel>
+        </section>
+      ) : (
       <section className="herdWorkspaceGrid compactWorkspace">
         {activeView === "animals" ? (
           <WorkspacePanel
@@ -1723,16 +2532,6 @@ export default function HerdTracker() {
                 <strong>{money(calculateAnimalCostBasis(animalForm))}</strong>
               </div>
 
-              <FormField label="Genetics Notes" fullWidth>
-                <textarea
-                  value={animalForm.geneticsNotes}
-                  onChange={(event) =>
-                    updateAnimalField("geneticsNotes", event.target.value)
-                  }
-                  placeholder="Pedigree details, genetic strengths, registration notes, breeding cautions, or bloodline comments..."
-                />
-              </FormField>
-
               <FormField label="Notes" fullWidth>
                 <textarea
                   value={animalForm.notes}
@@ -1929,16 +2728,6 @@ export default function HerdTracker() {
                 <strong>{money(calculateGroupCostBasis(groupForm))}</strong>
               </div>
 
-              <FormField label="Genetics Notes" fullWidth>
-                <textarea
-                  value={animalForm.geneticsNotes}
-                  onChange={(event) =>
-                    updateAnimalField("geneticsNotes", event.target.value)
-                  }
-                  placeholder="Pedigree details, genetic strengths, registration notes, breeding cautions, or bloodline comments..."
-                />
-              </FormField>
-
               <FormField label="Notes" fullWidth>
                 <textarea
                   value={groupForm.notes}
@@ -2095,6 +2884,39 @@ export default function HerdTracker() {
                 </div>
               </form>
 
+              {currentInputAllocations.length ? (
+                <div className="herdTimelineList">
+                  <div className="sectionHeader compactSectionHeader">
+                    <div>
+                      <p className="eyebrowText">Enterprise Inputs</p>
+                      <h4>Allocated Input Costs</h4>
+                    </div>
+                  </div>
+
+                  <RecordList
+                    records={currentInputAllocations}
+                    getRecordId={(allocation) => `${allocation.inputCostId}-${allocation.id}`}
+                    getTitle={(allocation) => allocation.inputCostName || "Input Cost"}
+                    getSubtitle={(allocation) =>
+                      [
+                        allocation.inputCostCategory,
+                        allocation.allocationDate ? formatDate(allocation.allocationDate) : "",
+                        allocation.quantityUsed ? `${allocation.quantityUsed} ${allocation.inputCostUnit}` : ""
+                      ]
+                        .filter(Boolean)
+                        .join(" • ")
+                    }
+                    getMeta={(allocation) => [
+                      { label: "Allocated", value: money(allocation.amount) },
+                      { label: "Note", value: allocation.notes || "" }
+                    ]}
+                    renderStatus={(allocation) => (
+                      <StatusPill label={money(allocation.amount)} variant="info" />
+                    )}
+                  />
+                </div>
+              ) : null}
+
               {activeView === "animals" && selectedAnimal ? (
                 <div className="herdTimelineList">
                   <div className="sectionHeader compactSectionHeader">
@@ -2195,6 +3017,7 @@ export default function HerdTracker() {
         </WorkspacePanel>
       </section>
 
+      )}
       <ConfirmDialog
         open={Boolean(deleteTarget)}
         title={
@@ -2202,7 +3025,11 @@ export default function HerdTracker() {
             ? "Delete Animal?"
             : deleteTarget?.type === "group"
               ? "Delete Group?"
-              : "Delete Event?"
+              : deleteTarget?.type === "inputCost"
+                ? "Delete Input Cost?"
+                : deleteTarget?.type === "inputAllocation"
+                  ? "Delete Allocation?"
+                  : "Delete Event?"
         }
         message={deleteTarget?.message || "This action cannot be undone."}
         confirmLabel="Delete"
