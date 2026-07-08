@@ -29,6 +29,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "../AuthContext.jsx";
 import { db } from "../firebase";
 import StatCard from "../components/StatCard.jsx";
+import ModuleHero from "../components/ModuleHero.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import DashboardGuideContent from "../components/DashboardGuideContent.jsx";
 import { getSpiceRecipes } from "../services/spiceKitchenService.js";
@@ -47,11 +48,11 @@ const modules = [
     accent: "sourdough"
   },
   {
-    key: "livestock",
+    key: "butcherboard",
     title: "Butcher Board",
     description:
       "Track animal batches, feed costs, processing yields, finished cuts, and meat inventory.",
-    path: "/livestock",
+    path: "/butcherboard",
     icon: Beef,
     accent: "livestock"
   },
@@ -487,31 +488,27 @@ export default function Dashboard({
         <DashboardGuideContent />
       </ModuleGuideModal>
 
-      <section className="modernHero dashboardHeroV2">
-        <div className="modernHeroMain dashboardHeroMainV2">
-          <p className="eyebrow">Market Vendor Toolkit</p>
+      <section className="dashboardHeroRow">
+        <ModuleHero
+          eyebrow="Market Vendor Toolkit"
+          title={user ? `Welcome back, ${displayName}` : "One toolkit for market vendors."}
+          description="Manage recipes, products, pricing, customers, deadlines, prep plans, inventory, production records, and business activity from one dashboard."
+          icon={Sprout}
+          accent="dashboardHero"
+          className="dashboardSharedHero"
+          actions={[
+            {
+              label: "Guide",
+              icon: CircleHelp,
+              variant: "secondary",
+              onClick: () => setShowGuide(true)
+            }
+          ]}
+        />
 
-          <h2>{user ? `Welcome back, ${displayName}` : "One toolkit for market vendors."}</h2>
-
-          <p className="heroText">
-            Manage recipes, products, pricing, customers, deadlines, prep plans,
-            inventory, production records, and business activity from one dashboard.
-          </p>
-
-          <div className="button-row dashboardMainHeroActions">
-            <button
-              className="secondaryButton compactButton"
-              type="button"
-              onClick={() => setShowGuide(true)}
-            >
-              <CircleHelp size={16} />
-              Guide
-            </button>
-          </div>
-        </div>
-
-        <div className="heroPanel modernAccessPanel dashboardDatePanel">
+        <div className="workspacePanel compactPanel dashboardAccountSummaryPanel">
           <div>
+            <p className="eyebrow">Account</p>
             <h3>{isTrial ? `${daysRemaining} trial days left` : "15-day free trial"}</h3>
             <p>
               {user
@@ -520,9 +517,9 @@ export default function Dashboard({
             </p>
           </div>
 
-          <GuardedLink to={user ? "/account-settings" : "/subscribe"} className="primaryButton">
+          <GuardedLink to={user ? "/account-settings" : "/subscribe"} className="primaryButton compactPrimary">
             {user ? "Manage Account" : "View Plans"}
-            <ArrowRight size={18} />
+            <ArrowRight size={16} />
           </GuardedLink>
         </div>
       </section>
