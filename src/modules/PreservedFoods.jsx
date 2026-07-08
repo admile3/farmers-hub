@@ -21,6 +21,7 @@ import { useAuth } from "../AuthContext.jsx";
 import { useUnsavedChanges } from "../UnsavedChangesContext.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import PreservedFoodsGuideContent from "../components/PreservedFoodsGuideContent.jsx";
+import ModuleHero from "../components/ModuleHero.jsx";
 import StatCard from "../components/StatCard.jsx";
 import { addQuantityToMatchedInventoryItem } from "../services/inventoryService.js";
 import { getSpiceIngredients } from "../services/spiceKitchenService.js";
@@ -852,26 +853,19 @@ export default function PreservedFoods() {
   if (!user) {
     return (
       <div className="preservedFoodsModule modulePage">
-        <section className="farmModuleHero preservedFoodsHero">
-          <div className="farmModuleHeroText">
-            <p className="eyebrow">Preserved Foods</p>
-            <h2>Build recipes, brines, batches, and inventory for preserved products.</h2>
-            <p>
-              Sign in to manage pickles, ferments, relishes, hot sauces, canned goods,
-              jams, jellies, and other value-added preserved foods.
-            </p>
-          </div>
-
-          <div className="farmModuleHeroActions">
-            <button
-              className="primaryButton compactPrimary farmHeroAction"
-              type="button"
-              onClick={loginWithGoogle}
-            >
-              Sign in with Google
-            </button>
-          </div>
-        </section>
+        <ModuleHero
+          eyebrow="Preserved Foods"
+          title="Build recipes, brines, batches, and inventory for preserved products."
+          description="Sign in to manage pickles, ferments, relishes, hot sauces, canned goods, jams, jellies, and other value-added preserved foods."
+          accent="preserved"
+          icon={FlaskConical}
+          actions={[
+            {
+              label: "Sign in with Google",
+              onClick: loginWithGoogle
+            }
+          ]}
+        />
       </div>
     );
   }
@@ -889,27 +883,21 @@ export default function PreservedFoods() {
         </div>
       ) : null}
 
-      <section className="farmModuleHero preservedFoodsHero">
-        <div className="farmModuleHeroText">
-          <p className="eyebrow">Preserved Foods</p>
-          <h2>Plan preserved products from recipe to finished inventory.</h2>
-          <p>
-            Build recipes, calculate brines, log production batches, track pH and
-            processing details, and add finished jars into inventory.
-          </p>
-        </div>
-
-        <div className="farmModuleHeroActions">
-          <button
-            className="secondaryButton compactButton farmHeroAction"
-            type="button"
-            onClick={() => setShowGuide(true)}
-          >
-            <HelpCircle size={18} />
-            Guide
-          </button>
-        </div>
-      </section>
+      <ModuleHero
+        eyebrow="Preserved Foods"
+        title="Plan preserved products from recipe to finished inventory."
+        description="Build recipes, calculate brines, log production batches, track pH and processing details, and add finished jars into inventory."
+        accent="preserved"
+        icon={FlaskConical}
+        actions={[
+          {
+            label: "Guide",
+            icon: HelpCircle,
+            variant: "secondary",
+            onClick: () => setShowGuide(true)
+          }
+        ]}
+      />
 
       <section className="hubStatGrid preservedFoodsStatGrid">
         <StatCard
