@@ -14534,3 +14534,213 @@ tr:last-child td {
     display: block !important;
   }
 }
+
+/* ==========================================================================
+   Dashboard - Shared Component Layout Polish
+   Append to src/styles.css after Dashboard.jsx replacement
+   ========================================================================== */
+
+.dashboardHeroRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 260px);
+  gap: 14px;
+  align-items: stretch;
+  margin-bottom: 14px;
+}
+
+.dashboardSharedHero.farmhubModuleHero {
+  min-height: 0 !important;
+  padding: 18px 22px !important;
+  gap: 18px !important;
+}
+
+.dashboardSharedHero .farmhubModuleHeroText {
+  max-width: none !important;
+}
+
+.dashboardSharedHero .farmhubModuleHeroText h2 {
+  max-width: none !important;
+  white-space: normal !important;
+}
+
+.dashboardSharedHero .farmhubModuleHeroText > p:not(.eyebrow) {
+  max-width: 980px !important;
+}
+
+.dashboardSharedHero .farmhubModuleHeroActions {
+  align-self: center;
+}
+
+.dashboardAccountSummaryPanel {
+  margin: 0 !important;
+  min-height: 0;
+  display: grid;
+  align-content: center;
+  gap: 10px;
+  padding: 18px !important;
+}
+
+.dashboardAccountSummaryPanel h3 {
+  margin: 2px 0 4px;
+  font-size: 1.08rem;
+  line-height: 1.15;
+}
+
+.dashboardAccountSummaryPanel p:not(.eyebrow) {
+  margin: 0;
+  color: var(--muted);
+  font-size: .88rem;
+  line-height: 1.35;
+}
+
+.dashboardAccountSummaryPanel .primaryButton {
+  width: fit-content;
+  min-height: 36px;
+  padding-inline: 14px;
+}
+
+.dashboardOverviewGrid,
+.dashboardOverviewGridOptimized {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 14px;
+}
+
+.dashboardOverviewGrid .statCard {
+  min-height: 84px;
+}
+
+.dashboardWorkspacesPanel {
+  margin-top: 0;
+}
+
+.dashboardPanelHeader {
+  margin-bottom: 10px;
+}
+
+.dashboardPanelHeader h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.dashboardWorkspaceGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 11px;
+}
+
+.dashboardWorkspaceCard {
+  position: relative;
+  min-height: 82px;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) 18px;
+  gap: 11px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 6px 16px rgba(31, 41, 55, .045);
+  color: var(--ink);
+  text-decoration: none;
+  overflow: hidden;
+  transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+
+.dashboardWorkspaceCard:hover {
+  transform: translateY(-1px);
+  border-color: rgba(47, 91, 56, .24);
+  box-shadow: var(--shadow);
+}
+
+.dashboardWorkspaceAccent {
+  display: none;
+}
+
+.dashboardWorkspaceIcon {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+}
+
+.dashboardWorkspaceIcon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.dashboardWorkspaceText {
+  min-width: 0;
+}
+
+.dashboardWorkspaceText h3 {
+  margin: 0 0 4px;
+  font-size: 1.02rem;
+  line-height: 1.12;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboardWorkspaceText p {
+  margin: 0;
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.dashboardWorkspaceArrow {
+  align-self: center;
+  justify-self: end;
+  display: inline-flex;
+  color: currentColor;
+  opacity: .75;
+}
+
+.dashboardActionGrid {
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.dashboardFooterBanner {
+  margin-top: 14px;
+}
+
+@media (max-width: 1320px) {
+  .dashboardWorkspaceGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1100px) {
+  .dashboardHeroRow {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardOverviewGrid,
+  .dashboardOverviewGridOptimized {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .dashboardWorkspaceGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .dashboardOverviewGrid,
+  .dashboardOverviewGridOptimized,
+  .dashboardWorkspaceGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardWorkspaceCard {
+    min-height: 78px;
+  }
+}
