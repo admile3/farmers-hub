@@ -12881,101 +12881,242 @@ tr:last-child td {
     flex: 1 1 0;
   }
 }
+
 /* ==========================================================
-   PRESERVED FOODS MODULE
-   Shared Standardization
+   Preserved Foods, shared layout polish v2
+   Append to src/styles.css
    ========================================================== */
 
+.preservedFoodsModule,
 .preservedFoodsPage {
-  gap: 20px;
+  --module-color: var(--preserved);
+  --module-soft: #e2f0ed;
 }
 
-.preservedFoodsPage .workspacePanel,
-.preservedFoodsPage .compactPanel {
-  margin-bottom: 20px;
+.preservedFoodsModule .hubStatGrid.preservedFoodsStatGrid,
+.preservedFoodsPage .hubStatGrid.preservedFoodsStatGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
 }
 
-.preservedFoodsPage .panelHeader,
-.preservedFoodsPage .compactPanelHeader {
-  margin-bottom: 14px;
+.preservedFoodsLayout {
+  display: grid;
+  grid-template-columns: minmax(360px, 0.72fr) minmax(0, 1.28fr);
+  gap: 16px;
+  align-items: start;
 }
 
-.preservedFoodsPage .panelHeader h2,
-.preservedFoodsPage .compactPanelHeader h2 {
-  margin-bottom: 4px;
+.preservedFoodsLeftStack,
+.preservedFoodsRightStack {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
 }
 
+.preservedFoodsModule .workspacePanel,
+.preservedFoodsPage .workspacePanel {
+  min-width: 0;
+}
+
+.preservedFoodsModule .compactFormGrid,
 .preservedFoodsPage .compactFormGrid {
-  row-gap: 16px;
-  column-gap: 18px;
+  gap: 12px 14px;
+  align-items: end;
 }
 
-.preservedFoodsPage .toolGrid {
-  gap: 18px;
+.preservedFoodsModule textarea,
+.preservedFoodsPage textarea {
+  min-height: 76px;
 }
 
-.preservedFoodsPage .hubStatGrid {
+.preservedFoodsModule .formActions.fullSpan,
+.preservedFoodsPage .formActions.fullSpan {
+  justify-content: flex-start;
+  margin-top: 2px;
+}
+
+.preservedSubPanel {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fbfaf6;
+}
+
+.preservedSubPanel .recipeLineHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0 0 2px;
+}
+
+.preservedSubPanel .recipeLineHeader h4 {
+  margin: 3px 0 0;
+  font-size: 1rem;
+  line-height: 1.15;
+}
+
+.preservedRecipeLineHeader,
+.preservedRecipeLine,
+.preservedPackageHeader,
+.preservedPackageLine {
+  display: grid;
+  gap: 8px;
+  align-items: center;
+}
+
+.preservedRecipeLineHeader,
+.preservedRecipeLine {
+  grid-template-columns: minmax(220px, 1.25fr) 96px 90px minmax(150px, 0.8fr) 42px;
+}
+
+.preservedPackageHeader,
+.preservedPackageLine {
+  grid-template-columns: minmax(160px, 1.1fr) 92px 96px 110px 96px 42px;
+}
+
+.preservedRecipeLineHeader,
+.preservedPackageHeader {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 950;
+  letter-spacing: 0.07em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.preservedRecipeLine,
+.preservedPackageLine {
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.preservedRecipeLine input,
+.preservedRecipeLine select,
+.preservedPackageLine input,
+.preservedPackageLine select {
+  min-height: 38px;
+}
+
+.preservedRecipeLine .iconButton,
+.preservedPackageLine .iconButton {
+  width: 38px;
+  height: 38px;
+}
+
+.preservedBrineTotals,
+.preservedRecipeCostPreview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
   margin-top: 0;
-  margin-bottom: 18px;
 }
 
-.preservedFoodsPage .statCard {
-  min-height: 92px;
+.preservedBrineTotals div,
+.preservedRecipeCostPreview div {
+  min-height: 70px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: #ffffff;
 }
 
-.preservedFoodsPage .compactSavedList {
+.preservedBrineTotals span,
+.preservedRecipeCostPreview span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 950;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.preservedBrineTotals h4,
+.preservedRecipeCostPreview h4 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.18rem;
+  line-height: 1;
+}
+
+.preservedIngredientList,
+.preservedBatchList,
+.preservedFoodsModule .recipeLibrary,
+.preservedFoodsPage .recipeLibrary {
   margin-top: 12px;
 }
 
-.preservedFoodsPage .compactSavedCard {
-  padding: 14px 16px;
-}
-
-.preservedFoodsPage .compactSavedCard + .compactSavedCard {
-  margin-top: 10px;
-}
-
-.preservedFoodsPage .buttonRow,
-.preservedFoodsPage .panelActions {
-  display: flex;
+.preservedFoodsModule .savedItem,
+.preservedFoodsPage .savedItem {
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
 }
 
-.preservedFoodsPage textarea {
-  min-height: 110px;
+.preservedFoodsModule .permitEmptyState,
+.preservedFoodsPage .permitEmptyState {
+  padding: 14px;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  background: #ffffff;
+  color: var(--muted);
+  font-size: 0.88rem;
 }
 
-.preservedFoodsPage .calculatorResults,
-.preservedFoodsPage .batchSummary {
-  margin-top: 18px;
+.preservedBatchLogPanel {
+  margin-top: 0;
 }
 
-.preservedFoodsPage .divider {
-  margin: 20px 0;
+@media (max-width: 1250px) {
+  .preservedFoodsLayout {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 900px) {
+  .preservedFoodsModule .hubStatGrid.preservedFoodsStatGrid,
+  .preservedFoodsPage .hubStatGrid.preservedFoodsStatGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
 
-  .preservedFoodsPage .toolGrid {
+  .preservedRecipeLineHeader,
+  .preservedPackageHeader {
+    display: none;
+  }
+
+  .preservedRecipeLine,
+  .preservedPackageLine {
     grid-template-columns: 1fr;
   }
 
-  .preservedFoodsPage .compactFormGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .preservedFoodsPage .panelActions,
-  .preservedFoodsPage .buttonRow {
+  .preservedRecipeLine .iconButton,
+  .preservedPackageLine .iconButton {
     width: 100%;
   }
 
-  .preservedFoodsPage .panelActions .primaryButton,
-  .preservedFoodsPage .panelActions .secondaryButton,
-  .preservedFoodsPage .buttonRow .primaryButton,
-  .preservedFoodsPage .buttonRow .secondaryButton {
+  .preservedBrineTotals,
+  .preservedRecipeCostPreview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .preservedFoodsModule .hubStatGrid.preservedFoodsStatGrid,
+  .preservedFoodsPage .hubStatGrid.preservedFoodsStatGrid,
+  .preservedBrineTotals,
+  .preservedRecipeCostPreview {
+    grid-template-columns: 1fr !important;
+  }
+
+  .preservedSubPanel .recipeLineHeader,
+  .preservedSubPanel .recipeLineHeader button {
     width: 100%;
-    justify-content: center;
+  }
+
+  .preservedSubPanel .recipeLineHeader {
+    display: grid;
   }
 }
