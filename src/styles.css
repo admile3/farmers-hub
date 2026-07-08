@@ -14291,3 +14291,246 @@ tr:last-child td {
   flex-direction: column;
   align-items: stretch;
 }
+
+/* ==========================================================================
+   Sidebar Structural Scroll Repair + Toolbar Polish
+   Append after previous sidebar CSS. This overrides the bad overflow/header rules.
+   ========================================================================== */
+
+.appSidebar.modernSidebar,
+.modernSidebar.appSidebar {
+  height: 100vh !important;
+  max-height: 100vh !important;
+  min-height: 0 !important;
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  background: #fffdf7;
+}
+
+.appSidebarHeader {
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 18px 18px 16px !important;
+  background: linear-gradient(135deg, #214f25 0%, #173d1d 100%);
+  border-radius: 0 !important;
+  color: #fff;
+}
+
+.appSidebarBrand,
+.modernSidebar .desktopBrand.appSidebarBrand {
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #fff !important;
+  display: grid !important;
+  grid-template-columns: 46px minmax(0, 1fr) !important;
+  gap: 12px !important;
+  align-items: center !important;
+  text-decoration: none !important;
+}
+
+.appSidebarBrandIcon,
+.modernSidebar .desktopBrand .appSidebarBrandIcon {
+  width: 46px !important;
+  height: 46px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, .13) !important;
+  border: 1px solid rgba(255, 255, 255, .22) !important;
+  color: #fff !important;
+}
+
+.appSidebarBrandText {
+  min-width: 0;
+}
+
+.appSidebarBrandText h1,
+.modernSidebar .desktopBrand .appSidebarBrandText h1 {
+  margin: 0 !important;
+  color: #fff !important;
+  font-size: 1.18rem !important;
+  line-height: 1.05 !important;
+  letter-spacing: -.02em !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
+}
+
+.appSidebarBrandText p,
+.modernSidebar .desktopBrand .appSidebarBrandText p {
+  margin: 4px 0 0 !important;
+  color: rgba(255, 255, 255, .78) !important;
+  font-size: .74rem !important;
+  font-weight: 900 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+}
+
+.appSidebarHideButton,
+.sidebarHideButton.appSidebarHideButton {
+  width: 100% !important;
+  min-height: 34px !important;
+  margin: 14px 0 0 !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, .24) !important;
+  background: rgba(255, 255, 255, .1) !important;
+  color: #fff !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  font-weight: 900 !important;
+}
+
+.appSidebarScroll {
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 14px 18px 18px !important;
+  scrollbar-gutter: stable;
+}
+
+.appSidebarScroll .modernNav {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.appSidebarScroll .modernNavLink {
+  min-height: 39px !important;
+  padding: 8px 11px !important;
+  border-radius: 13px !important;
+  gap: 11px !important;
+  line-height: 1.1 !important;
+}
+
+.appSidebarScroll .modernNavLink svg {
+  flex: 0 0 auto;
+}
+
+.appSidebarScroll .modernNavLink span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.appSidebarAccount {
+  margin-top: 18px;
+  padding-bottom: 8px;
+}
+
+.sidebarAccountCard.desktopAccountCard,
+.desktopAccountCard.sidebarAccountCard {
+  padding: 15px !important;
+  border-radius: 18px !important;
+}
+
+.sidebarAccountHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.sidebarAccountHeader .eyebrow {
+  margin: 0;
+}
+
+.sidebarAccountHeader .accountStatusPill {
+  margin: 0 !important;
+  width: fit-content !important;
+  white-space: nowrap;
+}
+
+.sidebarUserRow {
+  align-items: center !important;
+  gap: 10px !important;
+  margin-bottom: 12px !important;
+}
+
+.sidebarUserRow p {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebarAccountActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-top: 12px;
+}
+
+.sidebarAccountButton,
+.desktopAccountCard .sidebarAccountButton {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 36px !important;
+  margin: 0 !important;
+  padding-inline: 10px !important;
+  justify-content: center !important;
+  font-size: .86rem !important;
+}
+
+.sidebarHidden .appSidebar {
+  display: none !important;
+}
+
+.sidebarHidden .modernMain {
+  margin-left: 0 !important;
+  width: 100% !important;
+}
+
+.sidebarRevealButton {
+  position: fixed;
+  top: 18px;
+  left: 18px;
+  z-index: 80;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #fff;
+  box-shadow: var(--shadow);
+  color: var(--green);
+  font-weight: 900;
+}
+
+@media (max-width: 900px) {
+  .appSidebar.modernSidebar,
+  .modernSidebar.appSidebar {
+    height: auto !important;
+    max-height: none !important;
+    display: block !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  .appSidebarHeader {
+    display: none !important;
+  }
+
+  .appSidebarScroll {
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  .appSidebarAccount {
+    display: none !important;
+  }
+
+  .sidebarRevealButton {
+    display: none !important;
+  }
+
+  .sidebarHidden .appSidebar {
+    display: block !important;
+  }
+}
