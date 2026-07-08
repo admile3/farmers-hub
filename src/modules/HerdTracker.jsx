@@ -31,6 +31,7 @@ import WorkspacePanel from "../components/WorkspacePanel.jsx";
 
 import {
   HERD_EVENT_TYPES,
+  HERD_PARENT_TYPES,
   HERD_PURPOSE_OPTIONS,
   HERD_SOURCE_OPTIONS,
   HERD_SPECIES_OPTIONS,
@@ -41,6 +42,8 @@ import {
   calculateAnimalCostBasis,
   calculateGroupCostBasis,
   calculateHerdStats,
+  getAnimalDescendantIds,
+  getAnimalOffspring,
   deleteHerdAnimal,
   deleteHerdGroup,
   getHerdAnimals,
@@ -48,7 +51,8 @@ import {
   removeHerdEvent,
   removeHerdGroupEvent,
   saveHerdAnimal,
-  saveHerdGroup
+  saveHerdGroup,
+  wouldCreateCircularPedigree
 } from "../services/herdService";
 
 const blankAnimal = {
@@ -57,13 +61,26 @@ const blankAnimal = {
   name: "",
   species: "Cattle",
   breed: "",
+  registrationNumber: "",
+  tattooId: "",
+  breederName: "",
+  bloodline: "",
   sex: "",
   purpose: "Meat",
   groupId: "",
   damId: "",
   damName: "",
+  damRegistrationNumber: "",
+  damTattooId: "",
+  damBreed: "",
+  damNotes: "",
   sireId: "",
   sireName: "",
+  sireRegistrationNumber: "",
+  sireTattooId: "",
+  sireBreed: "",
+  sireNotes: "",
+  geneticsNotes: "",
   birthDate: "",
   purchaseDate: "",
   source: "Born on Farm",
@@ -177,6 +194,44 @@ function getParentDisplayName(parentId, parentName, animals = []) {
   return parentName || "Not recorded";
 }
 
+function getParentDetailText(animal, parentType, animals = []) {
+  const isDam = parentType === HERD_PARENT_TYPES.DAM;
+  const parentId = isDam ? animal.damId : animal.sireId;
+  const parentName = isDam ? animal.damName : animal.sireName;
+  const registrationNumber = isDam ? animal.damRegistrationNumber : animal.sireRegistrationNumber;
+  const tattooId = isDam ? animal.damTattooId : animal.sireTattooId;
+  const breed = isDam ? animal.damBreed : animal.sireBreed;
+
+  const primary = getParentDisplayName(parentId, parentName, animals);
+  const details = [breed, registrationNumber ? `Reg: ${registrationNumber}` : "", tattooId ? `Tattoo: ${tattooId}` : ""]
+    .filter(Boolean)
+    .join(" • ");
+
+  return details && primary !== "Not recorded" ? `${primary} (${details})` : primary;
+}
+
+function getAnimalPedigreeSearchText(animal, animals = []) {
+  return [
+    animal.registrationNumber,
+    animal.tattooId,
+    animal.breederName,
+    animal.bloodline,
+    animal.damName,
+    animal.damRegistrationNumber,
+    animal.damTattooId,
+    animal.damBreed,
+    animal.sireName,
+    animal.sireRegistrationNumber,
+    animal.sireTattooId,
+    animal.sireBreed,
+    animal.geneticsNotes,
+    getParentDisplayName(animal.damId, animal.damName, animals),
+    getParentDisplayName(animal.sireId, animal.sireName, animals)
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
 function getStatusVariant(status) {
   switch (status) {
     case "Active":
@@ -271,13 +326,22 @@ export default function HerdTracker() {
     return groups.find((group) => group.id === selectedGroupId) || null;
   }, [groups, selectedGroupId]);
 
+  const selectedAnimalOffspring = useMemo(() => {
+    return selectedAnimalId ? getAnimalOffspring(selectedAnimalId, animals) : [];
+  }, [animals, selectedAnimalId]);
+
+  const blockedParentIds = useMemo(() => {
+    return selectedAnimalId ? getAnimalDescendantIds(selectedAnimalId, animals) : [];
+  }, [animals, selectedAnimalId]);
+
   const parentAnimalOptions = useMemo(() => {
     return animals
       .filter((animal) => animal.id !== selectedAnimalId)
+      .filter((animal) => !blockedParentIds.includes(animal.id))
       .sort((first, second) =>
         getAnimalOptionLabel(first).localeCompare(getAnimalOptionLabel(second))
       );
-  }, [animals, selectedAnimalId]);
+  }, [animals, selectedAnimalId, blockedParentIds]);
 
   const herdStats = useMemo(() => {
     return calculateHerdStats(animals, groups);
@@ -304,8 +368,7 @@ export default function HerdTracker() {
         animal.source,
         animal.purpose,
         animal.location,
-        getParentDisplayName(animal.damId, animal.damName, animals),
-        getParentDisplayName(animal.sireId, animal.sireName, animals)
+        getAnimalPedigreeSearchText(animal, animals)
       ]
         .join(" ")
         .toLowerCase();
@@ -469,6 +532,19 @@ export default function HerdTracker() {
       return;
     }
 
+    if (
+      wouldCreateCircularPedigree(animals, selectedAnimalId || animalForm.id, animalForm.damId) ||
+      wouldCreateCircularPedigree(animals, selectedAnimalId || animalForm.id, animalForm.sireId)
+    ) {
+      setAnimalSaveError(true);
+      showToast({
+        variant: "error",
+        title: "Pedigree conflict",
+        message: "An animal cannot be assigned as its own parent or descendant."
+      });
+      return;
+    }
+
     setAnimalSaving(true);
     setAnimalSaveError(false);
 
@@ -479,8 +555,21 @@ export default function HerdTracker() {
         tagId: animalForm.tagId.trim(),
         name: animalForm.name.trim(),
         breed: animalForm.breed.trim(),
+        registrationNumber: animalForm.registrationNumber.trim(),
+        tattooId: animalForm.tattooId.trim(),
+        breederName: animalForm.breederName.trim(),
+        bloodline: animalForm.bloodline.trim(),
         damName: animalForm.damName.trim(),
+        damRegistrationNumber: animalForm.damRegistrationNumber.trim(),
+        damTattooId: animalForm.damTattooId.trim(),
+        damBreed: animalForm.damBreed.trim(),
+        damNotes: animalForm.damNotes.trim(),
         sireName: animalForm.sireName.trim(),
+        sireRegistrationNumber: animalForm.sireRegistrationNumber.trim(),
+        sireTattooId: animalForm.sireTattooId.trim(),
+        sireBreed: animalForm.sireBreed.trim(),
+        sireNotes: animalForm.sireNotes.trim(),
+        geneticsNotes: animalForm.geneticsNotes.trim(),
         purchaseCost: cleanCurrency(animalForm.purchaseCost),
         estimatedValue: cleanCurrency(animalForm.estimatedValue),
         acquisitionWeight: cleanNumber(animalForm.acquisitionWeight, 2),
@@ -1179,8 +1268,9 @@ export default function HerdTracker() {
             getMeta={(animal) => [
               { label: "Cost Basis", value: money(calculateAnimalCostBasis(animal)) },
               { label: "Weight", value: animal.currentWeight ? `${animal.currentWeight} lb` : "" },
-              { label: "Dam", value: getParentDisplayName(animal.damId, animal.damName, animals) },
-              { label: "Sire", value: getParentDisplayName(animal.sireId, animal.sireName, animals) },
+              { label: "Dam", value: getParentDetailText(animal, HERD_PARENT_TYPES.DAM, animals) },
+              { label: "Sire", value: getParentDetailText(animal, HERD_PARENT_TYPES.SIRE, animals) },
+              { label: "Offspring", value: getAnimalOffspring(animal.id, animals).length || "" },
               { label: "Location", value: animal.location || "Not set" }
             ]}
             renderStatus={(animal) => (
@@ -1291,6 +1381,40 @@ export default function HerdTracker() {
                 />
               </FormField>
 
+              <FormField label="Registration #">
+                <input
+                  value={animalForm.registrationNumber}
+                  onChange={(event) =>
+                    updateAnimalField("registrationNumber", event.target.value)
+                  }
+                  placeholder="Registry number"
+                />
+              </FormField>
+
+              <FormField label="Tattoo / Permanent ID">
+                <input
+                  value={animalForm.tattooId}
+                  onChange={(event) => updateAnimalField("tattooId", event.target.value)}
+                  placeholder="Tattoo, brand, or permanent ID"
+                />
+              </FormField>
+
+              <FormField label="Breeder">
+                <input
+                  value={animalForm.breederName}
+                  onChange={(event) => updateAnimalField("breederName", event.target.value)}
+                  placeholder="Farm, ranch, or breeder"
+                />
+              </FormField>
+
+              <FormField label="Bloodline / Line">
+                <input
+                  value={animalForm.bloodline}
+                  onChange={(event) => updateAnimalField("bloodline", event.target.value)}
+                  placeholder="Family, strain, or line"
+                />
+              </FormField>
+
               <FormField label="Sex">
                 <select
                   value={animalForm.sex}
@@ -1355,6 +1479,40 @@ export default function HerdTracker() {
                 />
               </FormField>
 
+              <FormField label="Dam Registration #">
+                <input
+                  value={animalForm.damRegistrationNumber}
+                  onChange={(event) =>
+                    updateAnimalField("damRegistrationNumber", event.target.value)
+                  }
+                  placeholder="Registry number"
+                />
+              </FormField>
+
+              <FormField label="Dam Breed">
+                <input
+                  value={animalForm.damBreed}
+                  onChange={(event) => updateAnimalField("damBreed", event.target.value)}
+                  placeholder="Breed or cross"
+                />
+              </FormField>
+
+              <FormField label="Dam Tattoo / ID">
+                <input
+                  value={animalForm.damTattooId}
+                  onChange={(event) => updateAnimalField("damTattooId", event.target.value)}
+                  placeholder="Tattoo, brand, or permanent ID"
+                />
+              </FormField>
+
+              <FormField label="Dam Notes">
+                <input
+                  value={animalForm.damNotes}
+                  onChange={(event) => updateAnimalField("damNotes", event.target.value)}
+                  placeholder="Outside dam notes"
+                />
+              </FormField>
+
               <FormField label="Sire / Father">
                 <select
                   value={animalForm.sireId}
@@ -1376,6 +1534,40 @@ export default function HerdTracker() {
                   value={animalForm.sireName}
                   onChange={(event) => updateAnimalField("sireName", event.target.value)}
                   placeholder="Known sire, tag, or registration"
+                />
+              </FormField>
+
+              <FormField label="Sire Registration #">
+                <input
+                  value={animalForm.sireRegistrationNumber}
+                  onChange={(event) =>
+                    updateAnimalField("sireRegistrationNumber", event.target.value)
+                  }
+                  placeholder="Registry number"
+                />
+              </FormField>
+
+              <FormField label="Sire Breed">
+                <input
+                  value={animalForm.sireBreed}
+                  onChange={(event) => updateAnimalField("sireBreed", event.target.value)}
+                  placeholder="Breed or cross"
+                />
+              </FormField>
+
+              <FormField label="Sire Tattoo / ID">
+                <input
+                  value={animalForm.sireTattooId}
+                  onChange={(event) => updateAnimalField("sireTattooId", event.target.value)}
+                  placeholder="Tattoo, brand, or permanent ID"
+                />
+              </FormField>
+
+              <FormField label="Sire Notes">
+                <input
+                  value={animalForm.sireNotes}
+                  onChange={(event) => updateAnimalField("sireNotes", event.target.value)}
+                  placeholder="Outside sire notes"
                 />
               </FormField>
 
@@ -1530,6 +1722,16 @@ export default function HerdTracker() {
                 <span>Current Cost Basis</span>
                 <strong>{money(calculateAnimalCostBasis(animalForm))}</strong>
               </div>
+
+              <FormField label="Genetics Notes" fullWidth>
+                <textarea
+                  value={animalForm.geneticsNotes}
+                  onChange={(event) =>
+                    updateAnimalField("geneticsNotes", event.target.value)
+                  }
+                  placeholder="Pedigree details, genetic strengths, registration notes, breeding cautions, or bloodline comments..."
+                />
+              </FormField>
 
               <FormField label="Notes" fullWidth>
                 <textarea
@@ -1727,6 +1929,16 @@ export default function HerdTracker() {
                 <strong>{money(calculateGroupCostBasis(groupForm))}</strong>
               </div>
 
+              <FormField label="Genetics Notes" fullWidth>
+                <textarea
+                  value={animalForm.geneticsNotes}
+                  onChange={(event) =>
+                    updateAnimalField("geneticsNotes", event.target.value)
+                  }
+                  placeholder="Pedigree details, genetic strengths, registration notes, breeding cautions, or bloodline comments..."
+                />
+              </FormField>
+
               <FormField label="Notes" fullWidth>
                 <textarea
                   value={groupForm.notes}
@@ -1882,6 +2094,41 @@ export default function HerdTracker() {
                   </button>
                 </div>
               </form>
+
+              {activeView === "animals" && selectedAnimal ? (
+                <div className="herdTimelineList">
+                  <div className="sectionHeader compactSectionHeader">
+                    <div>
+                      <p className="eyebrowText">Pedigree</p>
+                      <h4>Offspring</h4>
+                    </div>
+                  </div>
+
+                  {selectedAnimalOffspring.length ? (
+                    <RecordList
+                      records={selectedAnimalOffspring}
+                      selectedRecordId=""
+                      onRecordClick={editAnimal}
+                      emptyMessage="No offspring recorded."
+                      getTitle={(animal) => animal.tagId || animal.name || "Unnamed Animal"}
+                      getSubtitle={(animal) =>
+                        [animal.species, animal.breed, animal.birthDate ? `Born ${formatDate(animal.birthDate)}` : ""]
+                          .filter(Boolean)
+                          .join(" • ")
+                      }
+                      getMeta={(animal) => [
+                        { label: "Dam", value: getParentDisplayName(animal.damId, animal.damName, animals) },
+                        { label: "Sire", value: getParentDisplayName(animal.sireId, animal.sireName, animals) }
+                      ]}
+                    />
+                  ) : (
+                    <EmptyState
+                      title="No offspring recorded"
+                      message="When another animal lists this record as dam or sire, it will appear here automatically."
+                    />
+                  )}
+                </div>
+              ) : null}
 
               <div className="herdTimelineList">
                 {currentTimeline.length ? (
