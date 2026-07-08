@@ -14917,3 +14917,260 @@ tr:last-child td {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   Dashboard - Customizable Stat Cards
+   Append after dashboard_action_panels_and_hover_accent_css_append_v2.css
+   ========================================================================== */
+
+.dashboardCustomStatGrid {
+  position: relative;
+  align-items: stretch;
+}
+
+.dashboardStatSlot {
+  position: relative;
+  min-width: 0;
+}
+
+.dashboardStatSlot .statCard {
+  height: 100%;
+}
+
+.dashboardStatSlotActions {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .14s ease;
+}
+
+.dashboardStatSlot:hover .dashboardStatSlotActions,
+.dashboardStatSlot:focus-within .dashboardStatSlotActions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.dashboardStatSlotActions button {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 950;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(31, 41, 55, .08);
+}
+
+.dashboardStatSlotActions button:hover:not(:disabled) {
+  color: var(--green);
+  border-color: rgba(47, 91, 56, .35);
+}
+
+.dashboardStatSlotActions button:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
+
+.dashboardAddStatCard {
+  min-height: 84px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 5px;
+  border: 1px dashed rgba(47, 91, 56, .28);
+  border-radius: 16px;
+  background: rgba(250, 248, 241, .52);
+  color: var(--green);
+  font-weight: 950;
+  cursor: pointer;
+  transition: background-color .15s ease, border-color .15s ease, transform .15s ease;
+}
+
+.dashboardAddStatCard:hover {
+  transform: translateY(-1px);
+  background: rgba(238, 246, 231, .72);
+  border-color: rgba(47, 91, 56, .46);
+}
+
+.dashboardCustomizeStatsButton {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 900;
+  box-shadow: 0 5px 12px rgba(31, 41, 55, .06);
+}
+
+.dashboardCustomizeStatsButton:hover {
+  color: var(--green);
+  border-color: rgba(47, 91, 56, .28);
+}
+
+.dashboardStatPickerOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: rgba(20, 28, 22, .38);
+  backdrop-filter: blur(4px);
+}
+
+.dashboardStatPickerModal {
+  width: min(920px, 100%);
+  max-height: min(780px, calc(100vh - 44px));
+  overflow: auto;
+  margin: 0 !important;
+}
+
+.dashboardStatPickerHint {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: .9rem;
+  line-height: 1.35;
+}
+
+.dashboardStatPickerCounter {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  margin: 0 0 12px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(238, 246, 231, .72);
+  color: var(--green);
+  font-weight: 900;
+}
+
+.dashboardStatPickerCounter span {
+  color: var(--muted);
+  font-size: .82rem;
+}
+
+.dashboardStatPickerGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.dashboardStatPickerOption {
+  position: relative;
+  min-height: 70px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboardStatPickerOption:hover:not(:disabled) {
+  border-color: rgba(47, 91, 56, .28);
+  box-shadow: 0 8px 18px rgba(31, 41, 55, .06);
+}
+
+.dashboardStatPickerOption.selected {
+  border-color: rgba(47, 91, 56, .42);
+  background: rgba(238, 246, 231, .44);
+}
+
+.dashboardStatPickerOption:disabled {
+  opacity: .52;
+  cursor: not-allowed;
+}
+
+.dashboardStatPickerIcon {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  background: rgba(238, 246, 231, .82);
+  color: var(--green);
+}
+
+.dashboardStatPickerText {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.dashboardStatPickerText strong {
+  font-weight: 950;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboardStatPickerText small {
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 750;
+}
+
+.dashboardStatPickerValue {
+  color: var(--ink);
+  font-weight: 950;
+}
+
+.dashboardStatPickerCheck {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--green);
+  color: #fff;
+}
+
+.dashboardStatPickerActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+@media (max-width: 720px) {
+  .dashboardStatPickerGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardCustomizeStatsButton {
+    position: static;
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+
+  .dashboardStatSlotActions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
