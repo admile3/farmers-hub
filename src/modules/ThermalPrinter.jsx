@@ -14,8 +14,11 @@ import {
   Usb
 } from "lucide-react";
 
+import ModuleHero from "../components/ModuleHero.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 import ModuleGuideModal from "../components/ModuleGuideModal.jsx";
 import StatCard from "../components/StatCard.jsx";
+import WorkspacePanel from "../components/WorkspacePanel.jsx";
 import ThermalPrinterGuideContent from "../components/ThermalPrinterGuideContent.jsx";
 
 const DEFAULT_LABEL_WIDTH = "3";
@@ -165,21 +168,11 @@ async function buildTsplJob({
   return concatBytes(parts);
 }
 
-async function sendUsbJob({ device, jobBytes }) {
-  if (!device) throw new Error("No USB printer connected.");
-
-  if (!device.opened) {
-    await device.open();
-  }
-
-  if (device.configuration === null) {
-    await device.selectConfiguration(1);
-  }
-
-  const configuration = device.configuration;
+function getUsbBulkOutEndpoint(device) {
+  const configuration = device?.configuration;
   const candidates = [];
 
-  configuration.interfaces.forEach((iface) => {
+  configuration?.interfaces?.forEach((iface) => {
     iface.alternates.forEach((alternate) => {
       const endpoint = alternate.endpoints.find(
         (item) => item.direction === "out" && item.type === "bulk"
@@ -195,17 +188,46 @@ async function sendUsbJob({ device, jobBytes }) {
     });
   });
 
-  const target = candidates[0];
+  return candidates[0] || null;
+}
+
+async function prepareUsbPrinterDevice(device) {
+  if (!device) throw new Error("No USB printer connected.");
+
+  if (!device.opened) {
+    await device.open();
+  }
+
+  if (device.configuration === null) {
+    await device.selectConfiguration(1);
+  }
+
+  const target = getUsbBulkOutEndpoint(device);
 
   if (!target) {
-    throw new Error("Could not find a USB bulk OUT endpoint for this printer.");
+    throw new Error(
+      "This USB device did not expose a bulk OUT endpoint the browser can write to. Universal Print should still work."
+    );
   }
 
   try {
     await device.claimInterface(target.interfaceNumber);
   } catch (error) {
-    const message = String(error?.message || error || "");
-    if (!message.toLowerCase().includes("busy")) throw error;
+    const message = String(error?.message || error || "").toLowerCase();
+
+    if (message.includes("busy")) {
+      throw new Error(
+        "The printer interface is busy. Close other printer utilities, driver windows, and other browser tabs, then try again."
+      );
+    }
+
+    if (message.includes("access") || message.includes("permission") || message.includes("security")) {
+      throw new Error(
+        "Browser access was denied by the operating system. On many Windows thermal printers, the installed printer driver owns the USB interface, so Direct Print cannot claim it. Use Universal Print, or test Direct Print with a printer/interface that exposes WebUSB access."
+      );
+    }
+
+    throw error;
   }
 
   if (target.alternateSetting) {
@@ -215,10 +237,58 @@ async function sendUsbJob({ device, jobBytes }) {
     );
   }
 
-  const chunkSize = 16384;
-  for (let index = 0; index < jobBytes.length; index += chunkSize) {
-    const chunk = jobBytes.slice(index, index + chunkSize);
-    await device.transferOut(target.endpointNumber, chunk);
+  return target;
+}
+
+function getUsbConnectionErrorMessage(error) {
+  const message = String(error?.message || error || "");
+  const lower = message.toLowerCase();
+
+  if (lower.includes("no device selected") || lower.includes("cancel")) {
+    return "No USB printer was selected.";
+  }
+
+  if (lower.includes("access") || lower.includes("permission") || lower.includes("security")) {
+    return "USB access was denied. Try Chrome or Edge on HTTPS, close other printer apps, unplug and reconnect the printer, then use Universal Print if the OS printer driver is blocking Direct Print.";
+  }
+
+  return message || "USB printer connection failed.";
+}
+
+function getBluetoothConnectionErrorMessage(error) {
+  const message = String(error?.message || error || "");
+  const lower = message.toLowerCase();
+
+  if (lower.includes("cancel") || lower.includes("no device selected")) {
+    return "No Bluetooth printer was selected.";
+  }
+
+  if (lower.includes("bluetooth adapter not available")) {
+    return "Bluetooth is not available on this device or browser.";
+  }
+
+  if (lower.includes("gatt") || lower.includes("characteristic")) {
+    return "The printer connected, but the browser could not find a writable BLE service. Many thermal printers use classic Bluetooth, which browser apps cannot access. Use USB Direct Print or Universal Print.";
+  }
+
+  return message || "Bluetooth printer connection failed.";
+}
+
+async function sendUsbJob({ device, jobBytes }) {
+  const target = await prepareUsbPrinterDevice(device);
+
+  try {
+    const chunkSize = 16384;
+    for (let index = 0; index < jobBytes.length; index += chunkSize) {
+      const chunk = jobBytes.slice(index, index + chunkSize);
+      await device.transferOut(target.endpointNumber, chunk);
+    }
+  } finally {
+    try {
+      await device.releaseInterface(target.interfaceNumber);
+    } catch {
+      // Some browsers or drivers keep the interface claimed until page close.
+    }
   }
 }
 
@@ -268,6 +338,7 @@ export default function ThermalPrinter() {
   const webUsbSupported = typeof navigator !== "undefined" && "usb" in navigator;
   const webBluetoothSupported =
     typeof navigator !== "undefined" && "bluetooth" in navigator;
+  const directPrintSupported = directMethod === "usb" ? webUsbSupported : webBluetoothSupported;
 
   const sectionTightStyle = {
     marginTop: 0,
@@ -383,6 +454,39 @@ useEffect(() => {
     setShowGuide(true);
   }
 }, []);
+
+  useEffect(() => {
+    if (!webUsbSupported) return undefined;
+
+    const handleDisconnect = (event) => {
+      if (usbDevice && event.device === usbDevice) {
+        setUsbDevice(null);
+        showStatus("USB printer disconnected.", "error");
+      }
+    };
+
+    navigator.usb.addEventListener("disconnect", handleDisconnect);
+
+    return () => {
+      navigator.usb.removeEventListener("disconnect", handleDisconnect);
+    };
+  }, [usbDevice, webUsbSupported]);
+
+  useEffect(() => {
+    if (!bluetoothDevice) return undefined;
+
+    const handleDisconnect = () => {
+      setBluetoothCharacteristic(null);
+      showStatus("Bluetooth printer disconnected.", "error");
+    };
+
+    bluetoothDevice.addEventListener("gattserverdisconnected", handleDisconnect);
+
+    return () => {
+      bluetoothDevice.removeEventListener("gattserverdisconnected", handleDisconnect);
+    };
+  }, [bluetoothDevice]);
+
   function showStatus(message, type = "success") {
     setStatusMessage(message);
     setStatusType(type);
@@ -482,11 +586,50 @@ useEffect(() => {
 
     try {
       const device = await navigator.usb.requestDevice({ filters: [] });
+      const target = await prepareUsbPrinterDevice(device);
+
+      try {
+        await device.releaseInterface(target.interfaceNumber);
+      } catch {
+        // Safe to ignore. Some drivers do not release until the page closes.
+      }
+
       setUsbDevice(device);
-      showStatus(`USB printer selected: ${device.productName || "USB device"}.`);
+      showStatus(`USB printer ready: ${device.productName || "USB device"}.`);
     } catch (error) {
       console.error(error);
-      showStatus("USB printer connection was cancelled or blocked.", "error");
+      showStatus(getUsbConnectionErrorMessage(error), "error");
+    }
+  }
+
+  async function restoreUsbPrinter() {
+    if (!webUsbSupported) {
+      showStatus("WebUSB is not supported in this browser. Try Chrome or Edge.", "error");
+      return;
+    }
+
+    try {
+      const devices = await navigator.usb.getDevices();
+      const device = devices[0];
+
+      if (!device) {
+        showStatus("No previously approved USB printer was found. Use Connect USB Printer first.", "error");
+        return;
+      }
+
+      const target = await prepareUsbPrinterDevice(device);
+
+      try {
+        await device.releaseInterface(target.interfaceNumber);
+      } catch {
+        // Safe to ignore.
+      }
+
+      setUsbDevice(device);
+      showStatus(`USB printer restored: ${device.productName || "USB device"}.`);
+    } catch (error) {
+      console.error(error);
+      showStatus(getUsbConnectionErrorMessage(error), "error");
     }
   }
 
@@ -531,10 +674,7 @@ useEffect(() => {
       showStatus(`Bluetooth printer selected: ${device.name || "Bluetooth device"}.`);
     } catch (error) {
       console.error(error);
-      showStatus(
-        "Bluetooth connection failed. This printer may use classic Bluetooth, which browsers cannot access.",
-        "error"
-      );
+      showStatus(getBluetoothConnectionErrorMessage(error), "error");
     }
   }
 
@@ -592,7 +732,12 @@ useEffect(() => {
       showStatus(`Sent ${totalLabels} labels through ${directMethod === "usb" ? "WebUSB" : "Web Bluetooth"}.`);
     } catch (error) {
       console.error(error);
-      showStatus(error.message || "Could not send direct print job.", "error");
+      showStatus(
+        directMethod === "usb"
+          ? getUsbConnectionErrorMessage(error)
+          : getBluetoothConnectionErrorMessage(error),
+        "error"
+      );
     } finally {
       setPrinting(false);
     }
@@ -622,7 +767,7 @@ useEffect(() => {
       : bluetoothDevice?.name || "Not connected";
 
   return (
-    <div className="modulePage thermalPrinterModule" style={{ gap: 12 }}>
+    <div className="modulePage thermalPrinterModule">
       {statusMessage ? (
         <div className={`floatingStatus ${statusType}`}>
           <span>ⓘ</span>
@@ -633,37 +778,26 @@ useEffect(() => {
         </div>
       ) : null}
 
-      <section className="farmModuleHero thermalPrinterHero">
-        <div className="farmModuleHeroText">
-          <p className="eyebrow">Thermal Printer</p>
-          <h2>Batch print PNG labels with universal and direct print modes.</h2>
-          <p>
-            Upload multiple PNG labels, set quantities, reorder the batch, then
-            print through the browser or try direct TSPL printing with speed and
-            density controls on compatible printers.
-          </p>
-        </div>
-
-        <div className="farmModuleHeroActions">
-          <button
-            className="primaryButton compactPrimary farmHeroAction"
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Upload size={18} />
-            Upload PNGs
-          </button>
-
-          <button
-            className="secondaryButton compactButton farmHeroAction"
-            type="button"
-            onClick={() => setShowGuide(true)}
-          >
-            <CircleHelp size={16} />
-            Guide
-          </button>
-        </div>
-      </section>
+      <ModuleHero
+        eyebrow="Thermal Printer"
+        title="Batch print PNG labels with universal and direct print modes."
+        description="Upload multiple PNG labels, set quantities, reorder the batch, then print through the browser or try direct TSPL printing with speed and density controls on compatible printers."
+        accent="thermal"
+        icon={Printer}
+        actions={[
+          {
+            label: "Upload PNGs",
+            icon: Upload,
+            onClick: () => fileInputRef.current?.click()
+          },
+          {
+            label: "Guide",
+            icon: CircleHelp,
+            variant: "secondary",
+            onClick: () => setShowGuide(true)
+          }
+        ]}
+      />
 
       <section className="hubStatGrid thermalPrinterStatGrid" style={sectionTightStyle}>
         <StatCard
@@ -733,14 +867,11 @@ useEffect(() => {
         </button>
       </section>
 
-      <section className="thermalModePanel workspacePanel compactPanel" style={{ marginTop: 0, marginBottom: 14 }}>
-        <div className="workspaceHeader compactPanelHeader">
-          <div>
-            <p className="eyebrow">Print Mode</p>
-            <h3>Choose how Farmers Hub should print</h3>
-          </div>
-        </div>
-
+      <WorkspacePanel
+        eyebrow="Print Mode"
+        title="Choose how Farmers Hub should print"
+        className="thermalModePanel"
+      >
         <div className="thermalModeGrid">
           <button
             type="button"
@@ -764,7 +895,7 @@ useEffect(() => {
             <span>Sends TSPL commands with speed and density through WebUSB or Web Bluetooth when compatible.</span>
           </button>
         </div>
-      </section>
+      </WorkspacePanel>
 
       <input
         ref={fileInputRef}
@@ -776,44 +907,32 @@ useEffect(() => {
       />
 
       <section className="thermalPrinterLayout">
-        <div className="workspacePanel compactPanel">
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Batch</p>
-              <h3>Label Uploads</h3>
-            </div>
-
-            <div className="formActions compactActions">
-              <button
-                className="secondaryButton compactButton"
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Upload size={15} />
-                Upload PNGs
-              </button>
-
-              <button
-                className="secondaryButton compactButton"
-                type="button"
-                onClick={clearAllLabels}
-                disabled={!labels.length}
-              >
-                <Trash2 size={15} />
-                Clear All
-              </button>
-
-              <button
-                className="primaryButton compactPrimary"
-                type="button"
-                onClick={handlePrint}
-                disabled={!labels.length || printing}
-              >
-                <Printer size={15} />
-                {printing ? "Printing..." : "Print"}
-              </button>
-            </div>
-          </div>
+        <WorkspacePanel
+          eyebrow="Batch"
+          title="Label Uploads"
+          className="thermalBatchPanel"
+          actions={[
+            {
+              label: "Upload PNGs",
+              icon: Upload,
+              variant: "secondary",
+              onClick: () => fileInputRef.current?.click()
+            },
+            {
+              label: "Clear All",
+              icon: Trash2,
+              variant: "secondary",
+              onClick: clearAllLabels,
+              disabled: !labels.length
+            },
+            {
+              label: printing ? "Printing..." : "Print",
+              icon: Printer,
+              onClick: handlePrint,
+              disabled: !labels.length || printing
+            }
+          ]}
+        >
 
           <div
             className={`thermalDropzone ${dropActive ? "dragover" : ""}`}
@@ -913,22 +1032,30 @@ useEffect(() => {
                 </div>
               ))
             ) : (
-              <div className="permitEmptyState">
-                No PNG files uploaded yet. Upload the QR label PNGs you want to print.
-              </div>
+              <EmptyState
+                icon={FileImage}
+                title="No PNG labels uploaded"
+                message="Upload the QR label PNGs you want to print, or drag them into the upload area."
+                actionLabel="Upload PNGs"
+                onAction={() => fileInputRef.current?.click()}
+              />
             )}
           </div>
-        </div>
+        </WorkspacePanel>
 
-        <div className="workspacePanel compactPanel thermalSettingsPanel">
-          <div className="workspaceHeader compactPanelHeader">
-            <div>
-              <p className="eyebrow">Printer</p>
-              <h3>{printMode === "direct" ? "Direct Print Settings" : "Universal Print Settings"}</h3>
-            </div>
-
-            <Settings2 size={22} />
-          </div>
+        <WorkspacePanel
+          eyebrow="Printer"
+          title={printMode === "direct" ? "Direct Print Settings" : "Universal Print Settings"}
+          className="thermalSettingsPanel"
+          actions={[
+            {
+              label: directPrintSupported ? "Supported Browser" : "Browser Not Supported",
+              icon: Settings2,
+              variant: "secondary",
+              disabled: true
+            }
+          ]}
+        >
 
           {printMode === "direct" ? (
             <div className="thermalDirectConnectPanel">
@@ -972,6 +1099,17 @@ useEffect(() => {
                 {directMethod === "usb" ? <Usb size={16} /> : <Bluetooth size={16} />}
                 Connect {directMethod === "usb" ? "USB" : "Bluetooth"} Printer
               </button>
+
+              {directMethod === "usb" ? (
+                <button
+                  className="secondaryButton compactButton fullButton"
+                  type="button"
+                  onClick={restoreUsbPrinter}
+                >
+                  <Usb size={16} />
+                  Restore Approved USB Printer
+                </button>
+              ) : null}
             </div>
           ) : (
             <div className="placeholderBox compactPlaceholder thermalPrintNote">
@@ -982,6 +1120,11 @@ useEffect(() => {
               </span>
             </div>
           )}
+
+          <div className="placeholderBox compactPlaceholder thermalCompatibilityNote">
+            <strong>Direct Print compatibility:</strong>
+            <span>Browser direct printing works only when Chrome or Edge can claim the printer interface. If Windows, macOS, or the printer driver blocks access, Universal Print is the recommended plug-and-play path.</span>
+          </div>
 
           <div className="formGrid compactFormGrid">
             <label>
@@ -1094,7 +1237,7 @@ useEffect(() => {
             <Printer size={16} />
             {printing ? "Printing..." : `Print ${totalLabels || 0} Labels`}
           </button>
-        </div>
+        </WorkspacePanel>
       </section>
 
       <div className="thermalPrintRoot" aria-hidden="true">
