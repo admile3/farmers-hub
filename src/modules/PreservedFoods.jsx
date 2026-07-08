@@ -852,7 +852,7 @@ export default function PreservedFoods() {
 
   if (!user) {
     return (
-      <div className="preservedFoodsModule modulePage">
+      <div className="preservedFoodsModule preservedFoodsPage modulePage">
         <ModuleHero
           eyebrow="Preserved Foods"
           title="Build recipes, brines, batches, and inventory for preserved products."
@@ -871,7 +871,7 @@ export default function PreservedFoods() {
   }
 
   return (
-    <div className="preservedFoodsModule modulePage">
+    <div className="preservedFoodsModule preservedFoodsPage modulePage">
       {statusMessage ? (
         <div className={`floatingStatus ${statusType}`}>
           <span>ⓘ</span>
