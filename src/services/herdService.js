@@ -61,6 +61,11 @@ export const HERD_EVENT_TYPES = [
   "Loss"
 ];
 
+export const HERD_PARENT_TYPES = {
+  DAM: "dam",
+  SIRE: "sire"
+};
+
 const getNow = () => new Date().toISOString();
 
 const createId = (prefix = "herd") => {
@@ -109,20 +114,71 @@ const normalizeEvent = (event = {}) => ({
   createdAt: event.createdAt || getNow()
 });
 
-const normalizeAnimal = (animal = {}) => ({
+const normalizeExternalParent = (parent = {}) => ({
+  name: parent.name || "",
+  registrationNumber: parent.registrationNumber || "",
+  tattooId: parent.tattooId || "",
+  breed: parent.breed || "",
+  notes: parent.notes || ""
+});
+
+const normalizePedigree = (animal = {}) => ({
+  dam: {
+    animalId: animal.pedigree?.dam?.animalId || animal.damId || "",
+    external: normalizeExternalParent({
+      name: animal.pedigree?.dam?.external?.name || animal.damName || "",
+      registrationNumber:
+        animal.pedigree?.dam?.external?.registrationNumber || animal.damRegistrationNumber || "",
+      tattooId: animal.pedigree?.dam?.external?.tattooId || animal.damTattooId || "",
+      breed: animal.pedigree?.dam?.external?.breed || animal.damBreed || "",
+      notes: animal.pedigree?.dam?.external?.notes || animal.damNotes || ""
+    })
+  },
+  sire: {
+    animalId: animal.pedigree?.sire?.animalId || animal.sireId || "",
+    external: normalizeExternalParent({
+      name: animal.pedigree?.sire?.external?.name || animal.sireName || "",
+      registrationNumber:
+        animal.pedigree?.sire?.external?.registrationNumber || animal.sireRegistrationNumber || "",
+      tattooId: animal.pedigree?.sire?.external?.tattooId || animal.sireTattooId || "",
+      breed: animal.pedigree?.sire?.external?.breed || animal.sireBreed || "",
+      notes: animal.pedigree?.sire?.external?.notes || animal.sireNotes || ""
+    })
+  },
+  notes: animal.pedigree?.notes || animal.geneticsNotes || ""
+});
+
+const normalizeAnimal = (animal = {}) => {
+  const pedigree = normalizePedigree(animal);
+
+  return {
   id: animal.id || createId("animal"),
   tagId: animal.tagId || "",
   tagType: animal.tagType || "Ear Tag",
   name: animal.name || "",
   species: animal.species || "Cattle",
   breed: animal.breed || "",
+  registrationNumber: animal.registrationNumber || "",
+  tattooId: animal.tattooId || "",
+  breederName: animal.breederName || "",
+  bloodline: animal.bloodline || "",
   sex: animal.sex || "",
   purpose: animal.purpose || "Meat",
   groupId: animal.groupId || "",
-  damId: animal.damId || "",
-  damName: animal.damName || "",
-  sireId: animal.sireId || "",
-  sireName: animal.sireName || "",
+  damId: pedigree.dam.animalId,
+  damName: pedigree.dam.external.name,
+  damRegistrationNumber: pedigree.dam.external.registrationNumber,
+  damTattooId: pedigree.dam.external.tattooId,
+  damBreed: pedigree.dam.external.breed,
+  damNotes: pedigree.dam.external.notes,
+  sireId: pedigree.sire.animalId,
+  sireName: pedigree.sire.external.name,
+  sireRegistrationNumber: pedigree.sire.external.registrationNumber,
+  sireTattooId: pedigree.sire.external.tattooId,
+  sireBreed: pedigree.sire.external.breed,
+  sireNotes: pedigree.sire.external.notes,
+  geneticsNotes: pedigree.notes,
+  pedigree,
   birthDate: animal.birthDate || "",
   purchaseDate: animal.purchaseDate || "",
   source: animal.source || "Born on Farm",
@@ -140,7 +196,8 @@ const normalizeAnimal = (animal = {}) => ({
   events: Array.isArray(animal.events) ? animal.events.map(normalizeEvent) : [],
   createdAt: animal.createdAt || getNow(),
   updatedAt: animal.updatedAt || getNow()
-});
+};
+};
 
 const normalizeGroup = (group = {}) => ({
   id: group.id || createId("group"),
@@ -368,6 +425,62 @@ export const calculateHerdStats = (animals = [], groups = []) => {
     readyForProcessing: readyAnimals.length + readyGroups.length,
     totalBookValue,
     totalCostBasis
+  };
+};
+
+export const getParentAnimalId = (animal, parentType) => {
+  if (!animal) return "";
+  if (parentType === HERD_PARENT_TYPES.DAM) return animal.pedigree?.dam?.animalId || animal.damId || "";
+  if (parentType === HERD_PARENT_TYPES.SIRE) return animal.pedigree?.sire?.animalId || animal.sireId || "";
+  return "";
+};
+
+export const getAnimalOffspring = (animalId, animals = getHerdAnimals()) => {
+  if (!animalId) return [];
+
+  return animals.filter((animal) =>
+    getParentAnimalId(animal, HERD_PARENT_TYPES.DAM) === animalId ||
+    getParentAnimalId(animal, HERD_PARENT_TYPES.SIRE) === animalId
+  );
+};
+
+export const getAnimalDescendantIds = (animalId, animals = getHerdAnimals()) => {
+  const descendants = new Set();
+  const queue = [animalId];
+
+  while (queue.length) {
+    const currentId = queue.shift();
+    const children = getAnimalOffspring(currentId, animals);
+
+    children.forEach((child) => {
+      if (!descendants.has(child.id)) {
+        descendants.add(child.id);
+        queue.push(child.id);
+      }
+    });
+  }
+
+  return Array.from(descendants);
+};
+
+export const wouldCreateCircularPedigree = (animals = getHerdAnimals(), animalId, proposedParentId) => {
+  if (!animalId || !proposedParentId) return false;
+  if (animalId === proposedParentId) return true;
+
+  return getAnimalDescendantIds(animalId, animals).includes(proposedParentId);
+};
+
+export const getPedigreeTree = (animalId, animals = getHerdAnimals(), generations = 3) => {
+  const animal = animals.find((item) => item.id === animalId);
+  if (!animal || generations <= 0) return null;
+
+  const damId = getParentAnimalId(animal, HERD_PARENT_TYPES.DAM);
+  const sireId = getParentAnimalId(animal, HERD_PARENT_TYPES.SIRE);
+
+  return {
+    animal,
+    dam: damId ? getPedigreeTree(damId, animals, generations - 1) : null,
+    sire: sireId ? getPedigreeTree(sireId, animals, generations - 1) : null
   };
 };
 
