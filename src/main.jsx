@@ -5,6 +5,7 @@ import App from "./App.jsx";
 import { AuthProvider } from "./AuthContext.jsx";
 import { UnsavedChangesProvider } from "./UnsavedChangesContext.jsx";
 import "./styles.css";
+import "./dailyOperations.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
