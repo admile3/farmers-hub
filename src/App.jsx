@@ -5,6 +5,7 @@ import {
   Calculator,
   CalendarDays,
   ChefHat,
+  ClipboardCheck,
   ClipboardList,
   DollarSign,
   Eye,
@@ -43,6 +44,7 @@ import PermitGrantTracker from "./modules/PermitGrantTracker.jsx";
 import Lists from "./modules/Lists.jsx";
 import Calendar from "./modules/Calendar.jsx";
 import Customers from "./modules/Customers.jsx";
+import DailyOperations from "./modules/DailyOperations.jsx";
 import Orders from "./modules/Orders.jsx";
 import Sales from "./modules/Sales.jsx";
 import Inventory from "./modules/Inventory.jsx";
@@ -95,6 +97,15 @@ const modules = [
     path: "/customers",
     icon: Users,
     accent: "customers"
+  },
+  {
+    key: "daily-operations",
+    title: "Daily Operations",
+    description:
+      "Run recurring routines, verify work by barcode or manually, record readings, and see what still needs attention today.",
+    path: "/daily-operations",
+    icon: ClipboardCheck,
+    accent: "dailyOperations"
   },
   {
     key: "farm-apothecary",
@@ -1420,6 +1431,7 @@ export default function App() {
         <Route path="/lists" element={<AccessGate><Lists /></AccessGate>} />
         <Route path="/calendar" element={<AccessGate><Calendar /></AccessGate>} />
         <Route path="/customers" element={<AccessGate><Customers /></AccessGate>} />
+        <Route path="/daily-operations" element={<AccessGate><DailyOperations /></AccessGate>} />
         <Route path="/orders" element={<AccessGate><Orders /></AccessGate>} />
         <Route path="/sales" element={<AccessGate><Sales /></AccessGate>} />
         <Route path="/inventory" element={<AccessGate><Inventory /></AccessGate>} />
