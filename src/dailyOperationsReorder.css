@@ -1,0 +1,216 @@
+.dailyOpsWorkspaceShell {
+  display: grid;
+  gap: 14px;
+}
+
+.dailyOpsWorkspaceSwitcher {
+  display: inline-flex;
+  width: fit-content;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid var(--border, #dfe4df);
+  border-radius: 14px;
+  background: var(--panel, #fff);
+  box-shadow: 0 8px 24px rgba(24, 39, 31, 0.05);
+}
+
+.dailyOpsWorkspaceSwitcher button,
+.dailyOpsReorderModeTabs button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-muted, #667168);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dailyOpsWorkspaceSwitcher button {
+  min-height: 38px;
+  padding: 0 14px;
+}
+
+.dailyOpsWorkspaceSwitcher button.active,
+.dailyOpsReorderModeTabs button.active {
+  background: #eef5ef;
+  color: #244a31;
+}
+
+.dailyOpsReorderPage,
+.dailyOpsReorder {
+  display: grid;
+  gap: 16px;
+}
+
+.dailyOpsReorderModeTabs {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  padding-bottom: 2px;
+}
+
+.dailyOpsReorderModeTabs button {
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid var(--border, #dfe4df);
+  background: var(--panel, #fff);
+}
+
+.dailyOpsReorderModeTabs button > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #e4efe6;
+  color: #31543b;
+  font-size: 0.75rem;
+}
+
+.dailyOpsReorderList,
+.dailyOpsReorderHistory {
+  display: grid;
+  gap: 10px;
+}
+
+.dailyOpsReorderRow,
+.dailyOpsReorderHistoryRow {
+  display: grid;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border: 1px solid var(--border, #e1e5e1);
+  border-radius: 13px;
+  background: var(--panel, #fff);
+}
+
+.dailyOpsReorderRow {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.dailyOpsReorderHistoryRow {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+.dailyOpsReorderHistoryRow > div:first-child,
+.dailyOpsReorderMain {
+  min-width: 0;
+}
+
+.dailyOpsReorderHistoryRow strong,
+.dailyOpsReorderHistoryRow span {
+  display: block;
+}
+
+.dailyOpsReorderHistoryRow span {
+  margin-top: 3px;
+  color: var(--text-muted, #6c756d);
+  font-size: 0.83rem;
+}
+
+.dailyOpsReorderCheck {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.dailyOpsReorderCheck span {
+  width: 22px;
+  height: 22px;
+  border: 2px solid #aab5ac;
+  border-radius: 7px;
+  background: #fff;
+}
+
+.dailyOpsReorderCheck:hover span {
+  border-color: #417451;
+  background: #f0f7f2;
+}
+
+.dailyOpsReorderTitle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.dailyOpsReorderTitle strong {
+  font-size: 0.97rem;
+  color: var(--text, #26322a);
+}
+
+.dailyOpsReorderMeta {
+  display: flex;
+  gap: 6px 12px;
+  flex-wrap: wrap;
+  margin-top: 5px;
+  color: var(--text-muted, #69736b);
+  font-size: 0.82rem;
+}
+
+.dailyOpsReorderMain p {
+  margin: 7px 0 0;
+  color: var(--text-muted, #69736b);
+  font-size: 0.86rem;
+}
+
+.dailyOpsReorderActions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.dailyOpsReorder .dailyOpsManageRow code {
+  display: block;
+  width: fit-content;
+  margin-top: 5px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: #f4f6f4;
+  color: #566159;
+  font-size: 0.72rem;
+}
+
+@media (max-width: 760px) {
+  .dailyOpsWorkspaceSwitcher {
+    width: 100%;
+  }
+
+  .dailyOpsWorkspaceSwitcher button {
+    flex: 1;
+  }
+
+  .dailyOpsReorderRow,
+  .dailyOpsReorderHistoryRow {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .dailyOpsReorderActions,
+  .dailyOpsReorderHistoryRow > button {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+@media print {
+  .dailyOpsWorkspaceSwitcher,
+  .dailyOpsReorderModeTabs,
+  .dailyOpsReorderPage > .farmhubModuleHero,
+  .dailyOpsReorder > .farmhubWorkspacePanel,
+  .dailyOpsReorder > .farmhubToast,
+  .dailyOpsReorder > .confirmDialogOverlay,
+  .dailyOpsReorder > .dailyOpsModalOverlay {
+    display: none !important;
+  }
+}
