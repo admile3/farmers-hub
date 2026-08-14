@@ -9,6 +9,7 @@ import ModuleHero from "../components/ModuleHero.jsx";
 import DailyOperationsCore from "./DailyOperationsCore.jsx";
 import DailyOperationsReorder from "./DailyOperationsReorder.jsx";
 import "../dailyOperationsReorder.css";
+import "../dailyOperationsOverrides.css";
 
 export default function DailyOperations() {
   const [workspace, setWorkspace] = useState("operations");
