@@ -9,6 +9,7 @@ import {
   CalendarDays,
   ChefHat,
   CircleHelp,
+  ClipboardCheck,
   ClipboardList,
   DollarSign,
   FileText,
@@ -78,6 +79,15 @@ const modules = [
     path: "/customers",
     icon: Users,
     accent: "customers"
+  },
+  {
+    key: "daily-operations",
+    title: "Daily Operations",
+    description:
+      "Run recurring routines, verify work by barcode or manually, record readings, and see what still needs attention today.",
+    path: "/daily-operations",
+    icon: ClipboardCheck,
+    accent: "dailyOperations"
   },
   {
     key: "farm-apothecary",
@@ -235,8 +245,6 @@ function normalizeDashboardStatKeys(savedKeys, availableKeys, fallbackToDefaults
     .filter((key) => availableKeys.includes(key))
     .slice(0, DASHBOARD_STAT_LIMIT);
 }
-
-
 
 function toDate(value) {
   if (!value) return null;
@@ -559,7 +567,6 @@ export default function Dashboard({
     dashboardData.lists,
     dashboardData.customers
   ]);
-
 
   const dashboardStatOptions = useMemo(
     () => [
