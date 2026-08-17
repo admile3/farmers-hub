@@ -1,3 +1,94 @@
 .dailyOpsWorkspaceContent .dailyOperationsPage > .farmhubModuleHero {
   display: none !important;
 }
+
+.dailyOpsModal .dailyOpsManualAddPicker {
+  display: grid !important;
+  gap: 12px !important;
+}
+
+.dailyOpsModal .dailyOpsManualAddPicker > input {
+  display: block !important;
+  width: 100% !important;
+  min-height: 46px !important;
+  box-sizing: border-box !important;
+  padding: 11px 13px !important;
+  border: 1px solid var(--border, #d8ded9) !important;
+  border-radius: 11px !important;
+  background: var(--surface, #fff) !important;
+  color: inherit !important;
+  font: inherit !important;
+}
+
+.dailyOpsModal .dailyOpsManualAddList {
+  display: grid !important;
+  gap: 8px !important;
+  width: 100% !important;
+  max-height: 420px !important;
+  overflow-y: auto !important;
+  padding: 2px !important;
+}
+
+.dailyOpsModal .dailyOpsManualAddList > button {
+  appearance: none !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 14px !important;
+  width: 100% !important;
+  min-height: 62px !important;
+  margin: 0 !important;
+  padding: 12px 14px !important;
+  border: 1px solid var(--border, #dfe4df) !important;
+  border-radius: 12px !important;
+  background: var(--panel, #fff) !important;
+  color: var(--text, #26322a) !important;
+  font: inherit !important;
+  text-align: left !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+  transition: border-color 150ms ease, background 150ms ease, box-shadow 150ms ease !important;
+}
+
+.dailyOpsModal .dailyOpsManualAddList > button:hover,
+.dailyOpsModal .dailyOpsManualAddList > button:focus-visible {
+  border-color: #4d7859 !important;
+  background: #f4f8f4 !important;
+  box-shadow: 0 0 0 2px rgba(77, 120, 89, 0.1) !important;
+  outline: none !important;
+}
+
+.dailyOpsModal .dailyOpsManualAddList > button > span {
+  display: grid !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+}
+
+.dailyOpsModal .dailyOpsManualAddList > button strong {
+  display: block !important;
+  margin: 0 !important;
+  color: var(--text, #26322a) !important;
+  font-size: 0.96rem !important;
+  font-weight: 750 !important;
+  line-height: 1.25 !important;
+}
+
+.dailyOpsModal .dailyOpsManualAddList > button small {
+  display: block !important;
+  margin: 0 !important;
+  color: var(--text-muted, #69736b) !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+}
+
+.dailyOpsModal .dailyOpsManualAddList > button > svg {
+  width: 30px !important;
+  height: 30px !important;
+  padding: 7px !important;
+  box-sizing: border-box !important;
+  border-radius: 50% !important;
+  background: #e9f2eb !important;
+  color: #315c3d !important;
+  flex: 0 0 auto !important;
+}
