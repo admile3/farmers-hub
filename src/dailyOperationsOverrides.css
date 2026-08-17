@@ -2,6 +2,33 @@
   display: none !important;
 }
 
+.dailyOpsSortBar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+  margin: 0 0 12px;
+}
+
+.dailyOpsSortBar > span {
+  color: var(--text-muted, #69736b);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.dailyOpsSortBar select {
+  min-height: 38px;
+  padding: 7px 34px 7px 11px;
+  border: 1px solid var(--border, #d8ded9);
+  border-radius: 10px;
+  background: var(--panel, #fff);
+  color: var(--text, #26322a);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
 /* Match Operations station/tag rows to the horizontal Re-Order tag layout. */
 .dailyOperationsPage .dailyOpsStationGrid {
   display: grid !important;
@@ -138,6 +165,10 @@
 }
 
 @media (max-width: 720px) {
+  .dailyOpsSortBar {
+    justify-content: flex-start;
+  }
+
   .dailyOperationsPage .dailyOpsStationCard {
     grid-template-columns: auto minmax(0, 1fr) !important;
   }
