@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import clsx from "clsx";
 import { CheckCircle2, Info, TriangleAlert, XCircle } from "lucide-react";
 
@@ -14,8 +15,20 @@ export default function Toast({
   title = "",
   message = "",
   onClose,
-  className = ""
+  className = "",
+  autoDismiss = true,
+  duration = 2200
 }) {
+  useEffect(() => {
+    if (!open || !autoDismiss || !onClose) return undefined;
+
+    const timer = window.setTimeout(() => {
+      onClose();
+    }, duration);
+
+    return () => window.clearTimeout(timer);
+  }, [open, autoDismiss, duration, onClose, title, message, variant]);
+
   if (!open) return null;
 
   const Icon = TOAST_VARIANTS[variant] || CheckCircle2;
