@@ -62,6 +62,7 @@ function cleanStation(station = {}) {
   return {
     name: station.name || "",
     description: station.description || "",
+    category: station.category || "General",
     barcode: station.barcode || `FH-STATION-${randomToken()}`,
     active: station.active !== false,
     sortOrder: Number(station.sortOrder) || 0,
