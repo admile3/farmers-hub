@@ -92,3 +92,31 @@
   color: #315c3d !important;
   flex: 0 0 auto !important;
 }
+
+@media print {
+  .dailyOpsWorkspaceShell > .farmhubModuleHero,
+  .dailyOpsFocusSection,
+  .dailyOpsWorkspaceContent .dailyOperationsPage > :not(.dailyOpsPrintTag) {
+    display: none !important;
+  }
+
+  .dailyOpsWorkspaceShell,
+  .dailyOpsWorkspaceContent,
+  .dailyOperationsPage {
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .dailyOperationsPage .dailyOpsPrintTag {
+    display: grid !important;
+    position: fixed !important;
+    inset: 0 !important;
+    margin: auto !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
