@@ -87,12 +87,10 @@ function code39Bars(text) {
     "-": "nwnnnnwnw", ".": "wwnnnnwnn", " ": "nwwnnnwnn", "$": "nwnwnwnnn",
     "/": "nwnwnnnwn", "+": "nwnnnwnwn", "%": "nnnwnwnwn", "*": "nwnnwnwnn"
   };
-
   const safe = String(text || "").toUpperCase().replace(/[^0-9A-Z. $/+%-]/g, "-");
   const encoded = `*${safe}*`;
   const bars = [];
   let x = 0;
-
   [...encoded].forEach((char, charIndex) => {
     const pattern = patterns[char] || patterns["-"];
     [...pattern].forEach((widthType, index) => {
@@ -102,7 +100,6 @@ function code39Bars(text) {
     });
     if (charIndex < encoded.length - 1) x += 1;
   });
-
   return { bars, width: x };
 }
 
@@ -126,14 +123,13 @@ export default function DailyOperationsReorder() {
   const [mode, setMode] = useState("list");
   const [scanValue, setScanValue] = useState("");
   const [editor, setEditor] = useState(null);
+  const [manualAddOpen, setManualAddOpen] = useState(false);
+  const [manualSearch, setManualSearch] = useState("");
   const [printItem, setPrintItem] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [toast, setToast] = useState({ open: false, variant: "success", title: "", message: "" });
 
-  const needed = useMemo(
-    () => requests.filter((request) => request.status === "needed"),
-    [requests]
-  );
+  const needed = useMemo(() => requests.filter((request) => request.status === "needed"), [requests]);
 
   const recentlyOrdered = useMemo(
     () => requests
@@ -142,6 +138,19 @@ export default function DailyOperationsReorder() {
       .slice(0, 15),
     [requests]
   );
+
+  const manualAddItems = useMemo(() => {
+    const waitingIds = new Set(needed.map((request) => request.itemId));
+    const search = manualSearch.trim().toLowerCase();
+    return items
+      .filter((item) => item.active !== false && !waitingIds.has(item.id))
+      .filter((item) => {
+        if (!search) return true;
+        return [item.name, item.category, item.vendor]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(search));
+      });
+  }, [items, needed, manualSearch]);
 
   async function loadData() {
     if (!user?.uid) return;
@@ -160,10 +169,7 @@ export default function DailyOperationsReorder() {
     }
   }
 
-  useEffect(() => {
-    loadData();
-  }, [user?.uid]);
-
+  useEffect(() => { loadData(); }, [user?.uid]);
   useEffect(() => {
     if (mode === "scan") window.setTimeout(() => scanRef.current?.focus(), 50);
   }, [mode]);
@@ -180,30 +186,29 @@ export default function DailyOperationsReorder() {
       } else {
         showToast("success", "Added to re-order list", item.name);
       }
-      const requestData = await getReorderRequests(user.uid);
-      setRequests(requestData);
+      setRequests(await getReorderRequests(user.uid));
     } catch (error) {
       showToast("error", "Could not add item", error.message);
     }
+  }
+
+  async function handleManualAdd(item) {
+    await addToList(item, "manual");
+    setManualAddOpen(false);
+    setManualSearch("");
   }
 
   async function handleScan(event) {
     event.preventDefault();
     const code = scanValue.trim().toUpperCase();
     if (!code) return;
-
-    const item = items.find(
-      (record) => record.active !== false && String(record.barcode || "").toUpperCase() === code
-    );
-
+    const item = items.find((record) => record.active !== false && String(record.barcode || "").toUpperCase() === code);
     setScanValue("");
-
     if (!item) {
       showToast("warning", "Re-order tag not recognized", code);
       window.setTimeout(() => scanRef.current?.focus(), 50);
       return;
     }
-
     await addToList(item, "barcode");
     window.setTimeout(() => scanRef.current?.focus(), 50);
   }
@@ -242,15 +247,13 @@ export default function DailyOperationsReorder() {
 
   async function performDelete() {
     if (!confirmDelete) return;
+    const deleteType = confirmDelete.type;
     try {
-      if (confirmDelete.type === "item") {
-        await deleteReorderItem(user.uid, confirmDelete.item.id);
-      } else {
-        await deleteReorderRequest(user.uid, confirmDelete.item.id);
-      }
+      if (deleteType === "item") await deleteReorderItem(user.uid, confirmDelete.item.id);
+      else await deleteReorderRequest(user.uid, confirmDelete.item.id);
       setConfirmDelete(null);
       await loadData();
-      showToast("success", "Removed");
+      showToast("success", deleteType === "request" ? "Removed from re-order list" : "Removed");
     } catch (error) {
       showToast("error", "Could not remove item", error.message);
     }
@@ -264,16 +267,9 @@ export default function DailyOperationsReorder() {
   return (
     <div className="dailyOpsReorder">
       <div className="dailyOpsReorderModeTabs">
-        <button className={mode === "list" ? "active" : ""} type="button" onClick={() => setMode("list")}>
-          <ShoppingCart size={16} /> Re-Order List
-          {needed.length ? <span>{needed.length}</span> : null}
-        </button>
-        <button className={mode === "scan" ? "active" : ""} type="button" onClick={() => setMode("scan")}>
-          <Barcode size={16} /> Scan Item
-        </button>
-        <button className={mode === "tags" ? "active" : ""} type="button" onClick={() => setMode("tags")}>
-          <PackagePlus size={16} /> Manage Tags
-        </button>
+        <button className={mode === "list" ? "active" : ""} type="button" onClick={() => setMode("list")}><ShoppingCart size={16} /> Re-Order List{needed.length ? <span>{needed.length}</span> : null}</button>
+        <button className={mode === "scan" ? "active" : ""} type="button" onClick={() => setMode("scan")}><Barcode size={16} /> Scan Item</button>
+        <button className={mode === "tags" ? "active" : ""} type="button" onClick={() => setMode("tags")}><PackagePlus size={16} /> Manage Tags</button>
       </div>
 
       {mode === "list" ? (
@@ -282,27 +278,24 @@ export default function DailyOperationsReorder() {
             eyebrow="Supplies to purchase"
             title={`Needs Ordering${needed.length ? ` (${needed.length})` : ""}`}
             description="Items appear here when their physical tag is scanned or when you add them manually. Check an item off after the order has been placed."
+            actions={[{ label: "Add Manually", icon: Plus, onClick: () => setManualAddOpen(true) }]}
           >
             {loading ? <p className="dailyOpsEmpty">Loading re-order list...</p> : null}
             {!loading && !needed.length ? (
               <div className="dailyOpsEmpty">
                 <ShoppingCart size={30} />
                 <h3>Your re-order list is clear.</h3>
-                <p>Scan a consumable tag when something needs replenished.</p>
+                <p>Scan a consumable tag or add an item manually when something needs replenished.</p>
+                <button className="primaryButton compactPrimary" type="button" onClick={() => setManualAddOpen(true)}><Plus size={15} /> Add Manually</button>
               </div>
             ) : null}
 
             <div className="dailyOpsReorderList">
               {needed.map((request) => (
                 <div className="dailyOpsReorderRow" key={request.id}>
-                  <button className="dailyOpsReorderCheck" type="button" onClick={() => markOrdered(request)} title="Mark ordered">
-                    <span />
-                  </button>
+                  <button className="dailyOpsReorderCheck" type="button" onClick={() => markOrdered(request)} title="Mark ordered"><span /></button>
                   <div className="dailyOpsReorderMain">
-                    <div className="dailyOpsReorderTitle">
-                      <strong>{request.itemName}</strong>
-                      <StatusPill label="Needs ordering" variant="warning" size="small" />
-                    </div>
+                    <div className="dailyOpsReorderTitle"><strong>{request.itemName}</strong><StatusPill label="Needs ordering" variant="warning" size="small" /></div>
                     <div className="dailyOpsReorderMeta">
                       <span>{request.category || "General Supplies"}</span>
                       {request.vendor ? <span>{request.vendor}</span> : null}
@@ -312,14 +305,9 @@ export default function DailyOperationsReorder() {
                     {request.notes ? <p>{request.notes}</p> : null}
                   </div>
                   <div className="dailyOpsReorderActions">
-                    {request.purchaseUrl ? (
-                      <a href={request.purchaseUrl} target="_blank" rel="noreferrer" className="secondaryButton compactButton">
-                        <ExternalLink size={14} /> Buy
-                      </a>
-                    ) : null}
-                    <button className="primaryButton compactPrimary" type="button" onClick={() => markOrdered(request)}>
-                      <Check size={15} /> Ordered
-                    </button>
+                    {request.purchaseUrl ? <a href={request.purchaseUrl} target="_blank" rel="noreferrer" className="secondaryButton compactButton"><ExternalLink size={14} /> Buy</a> : null}
+                    <button className="primaryButton compactPrimary" type="button" onClick={() => markOrdered(request)}><Check size={15} /> Ordered</button>
+                    <button className="dailyOpsIconButton danger" type="button" title="Remove from re-order list" aria-label={`Remove ${request.itemName} from re-order list`} onClick={() => setConfirmDelete({ type: "request", item: request })}><Trash2 size={15} /></button>
                   </div>
                 </div>
               ))}
@@ -331,14 +319,9 @@ export default function DailyOperationsReorder() {
               <div className="dailyOpsReorderHistory">
                 {recentlyOrdered.map((request) => (
                   <div className="dailyOpsReorderHistoryRow" key={request.id}>
-                    <div>
-                      <strong>{request.itemName}</strong>
-                      <span>Ordered {formatDateTime(request.orderedAt)}</span>
-                    </div>
+                    <div><strong>{request.itemName}</strong><span>Ordered {formatDateTime(request.orderedAt)}</span></div>
                     <StatusPill label="Ordered" variant="success" size="small" />
-                    <button className="secondaryButton compactButton" type="button" onClick={() => reopen(request)}>
-                      <RotateCcw size={14} /> Reopen
-                    </button>
+                    <button className="secondaryButton compactButton" type="button" onClick={() => reopen(request)}><RotateCcw size={14} /> Reopen</button>
                   </div>
                 ))}
               </div>
@@ -352,14 +335,7 @@ export default function DailyOperationsReorder() {
           <form className="dailyOpsScanPanel" onSubmit={handleScan}>
             <div className="dailyOpsScanIcon"><ShoppingCart size={42} /></div>
             <label htmlFor="dailyOpsReorderScan">Ready to scan</label>
-            <input
-              id="dailyOpsReorderScan"
-              ref={scanRef}
-              value={scanValue}
-              onChange={(event) => setScanValue(event.target.value)}
-              autoComplete="off"
-              placeholder="Scan re-order tag or type code"
-            />
+            <input id="dailyOpsReorderScan" ref={scanRef} value={scanValue} onChange={(event) => setScanValue(event.target.value)} autoComplete="off" placeholder="Scan re-order tag or type code" />
             <button className="primaryButton" type="submit">Add to Re-Order List</button>
             <p>If the item is already waiting to be ordered, Farmers Hub will leave the existing request in place instead of creating a duplicate.</p>
           </form>
@@ -367,27 +343,14 @@ export default function DailyOperationsReorder() {
       ) : null}
 
       {mode === "tags" ? (
-        <WorkspacePanel
-          eyebrow="Reusable supply tags"
-          title="Manage Re-Order Tags"
-          description="Create one reusable record for each consumable or supply you want to flag by scanning."
-          actions={[{ label: "New Re-Order Tag", icon: Plus, onClick: () => setEditor({ ...blankItem, sortOrder: items.length }) }]}
-        >
+        <WorkspacePanel eyebrow="Reusable supply tags" title="Manage Re-Order Tags" description="Create one reusable record for each consumable or supply you want to flag by scanning." actions={[{ label: "New Re-Order Tag", icon: Plus, onClick: () => setEditor({ ...blankItem, sortOrder: items.length }) }]}>
           <div className="dailyOpsManageList">
             {items.map((item) => {
               const waiting = needed.some((request) => request.itemId === item.id);
               return (
                 <div className="dailyOpsManageRow" key={item.id}>
-                  <div>
-                    <strong>{item.name}</strong>
-                    <span>{item.category}{item.vendor ? ` · ${item.vendor}` : ""}</span>
-                    <code>{item.barcode}</code>
-                  </div>
-                  <StatusPill
-                    label={item.active === false ? "Inactive" : waiting ? "On list" : "Ready"}
-                    variant={item.active === false ? "neutral" : waiting ? "warning" : "success"}
-                    size="small"
-                  />
+                  <div><strong>{item.name}</strong><span>{item.category}{item.vendor ? ` · ${item.vendor}` : ""}</span><code>{item.barcode}</code></div>
+                  <StatusPill label={item.active === false ? "Inactive" : waiting ? "On list" : "Ready"} variant={item.active === false ? "neutral" : waiting ? "warning" : "success"} size="small" />
                   <div className="dailyOpsRowActions">
                     {!waiting && item.active !== false ? <button type="button" onClick={() => addToList(item, "manual")}><Plus size={15} />Add</button> : null}
                     <button type="button" onClick={() => setEditor({ ...blankItem, ...item })}><Edit3 size={15} />Edit</button>
@@ -402,13 +365,38 @@ export default function DailyOperationsReorder() {
         </WorkspacePanel>
       ) : null}
 
+      {manualAddOpen ? (
+        <div className="dailyOpsModalOverlay" role="dialog" aria-modal="true">
+          <div className="dailyOpsModal dailyOpsSmallModal">
+            <div className="dailyOpsModalHeader">
+              <div><p className="eyebrow">Re-order list</p><h3>Add an Item Manually</h3></div>
+              <button type="button" onClick={() => { setManualAddOpen(false); setManualSearch(""); }}><X size={18} /></button>
+            </div>
+            <div className="dailyOpsManualAddPicker">
+              <input autoFocus type="search" value={manualSearch} onChange={(event) => setManualSearch(event.target.value)} placeholder="Search saved re-order tags..." />
+              <div className="dailyOpsManualAddList">
+                {manualAddItems.map((item) => (
+                  <button key={item.id} type="button" onClick={() => handleManualAdd(item)}>
+                    <span><strong>{item.name}</strong><small>{item.category}{item.vendor ? ` · ${item.vendor}` : ""}</small></span>
+                    <Plus size={17} />
+                  </button>
+                ))}
+                {!manualAddItems.length ? (
+                  <div className="dailyOpsEmpty">
+                    <p>{items.length ? "No available saved tags match your search, or they are already on the list." : "Create a reusable re-order tag first, then you can add it here without scanning."}</p>
+                    <button className="secondaryButton compactButton" type="button" onClick={() => { setManualAddOpen(false); setManualSearch(""); setMode("tags"); }}>Manage Tags</button>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {editor ? (
         <div className="dailyOpsModalOverlay" role="dialog" aria-modal="true">
           <form className="dailyOpsModal" onSubmit={saveItem}>
-            <div className="dailyOpsModalHeader">
-              <div><p className="eyebrow">Re-order tag</p><h3>{editor.id ? "Edit Re-Order Tag" : "New Re-Order Tag"}</h3></div>
-              <button type="button" onClick={() => setEditor(null)}><X size={18} /></button>
-            </div>
+            <div className="dailyOpsModalHeader"><div><p className="eyebrow">Re-order tag</p><h3>{editor.id ? "Edit Re-Order Tag" : "New Re-Order Tag"}</h3></div><button type="button" onClick={() => setEditor(null)}><X size={18} /></button></div>
             <div className="dailyOpsFormGrid">
               <label className="wide">Item name<input required value={editor.name} onChange={(e) => setEditor({ ...editor, name: e.target.value })} placeholder="Paper towels" /></label>
               <label>Category<select value={editor.category} onChange={(e) => setEditor({ ...editor, category: e.target.value })}>{REORDER_CATEGORIES.map((category) => <option key={category}>{category}</option>)}</select></label>
@@ -417,32 +405,23 @@ export default function DailyOperationsReorder() {
               <label className="wide">Notes<textarea rows="2" value={editor.notes} onChange={(e) => setEditor({ ...editor, notes: e.target.value })} placeholder="Size, preferred brand, reorder quantity, SKU, etc." /></label>
               <label className="wide dailyOpsCheck"><input type="checkbox" checked={editor.active !== false} onChange={(e) => setEditor({ ...editor, active: e.target.checked })} />Active re-order tag</label>
             </div>
-            <div className="dailyOpsModalActions">
-              <button className="secondaryButton" type="button" onClick={() => setEditor(null)}>Cancel</button>
-              <button className="primaryButton" type="submit"><Save size={15} />Save Tag</button>
-            </div>
+            <div className="dailyOpsModalActions"><button className="secondaryButton" type="button" onClick={() => setEditor(null)}>Cancel</button><button className="primaryButton" type="submit"><Save size={15} />Save Tag</button></div>
           </form>
         </div>
       ) : null}
 
       {printItem ? (
-        <div className="dailyOpsPrintTag" aria-hidden="true">
-          <strong>{printItem.name}</strong>
-          <span>SCAN TO RE-ORDER</span>
-          <BarcodeGraphic value={printItem.barcode} />
-          <code>{printItem.barcode}</code>
-        </div>
+        <div className="dailyOpsPrintTag" aria-hidden="true"><strong>{printItem.name}</strong><span>SCAN TO RE-ORDER</span><BarcodeGraphic value={printItem.barcode} /><code>{printItem.barcode}</code></div>
       ) : null}
 
       <ConfirmDialog
         open={Boolean(confirmDelete)}
-        title="Remove this item?"
-        message={confirmDelete?.type === "item" ? "This removes the reusable re-order tag record." : "This removes this re-order request from history."}
+        title={confirmDelete?.type === "request" ? "Remove from re-order list?" : "Remove this item?"}
+        message={confirmDelete?.type === "request" ? "This removes the item from the current re-order list without marking it as ordered. The reusable tag will remain available for future use." : confirmDelete?.type === "item" ? "This removes the reusable re-order tag record." : "This removes this re-order request from history."}
         confirmLabel="Remove"
         onConfirm={performDelete}
         onCancel={() => setConfirmDelete(null)}
       />
-
       <Toast {...toast} onClose={() => setToast((current) => ({ ...current, open: false }))} />
     </div>
   );
