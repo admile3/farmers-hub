@@ -1,0 +1,29 @@
+.dailyOpsPrintTag .dailyOpsBarcodeSvg {
+  display: none !important;
+}
+
+.dailyOpsQrCode {
+  display: block;
+  width: 150px;
+  height: 150px;
+  background: #fff;
+  shape-rendering: crispEdges;
+}
+
+@media print {
+  .dailyOpsPrintTag {
+    grid-template-rows: auto auto 1fr auto;
+  }
+
+  .dailyOpsPrintTag .dailyOpsQrCode {
+    width: 1.12in !important;
+    height: 1.12in !important;
+    max-width: 1.12in;
+    max-height: 1.12in;
+    background: #fff;
+  }
+
+  .dailyOpsPrintTag code {
+    margin-top: 0.02in;
+  }
+}
