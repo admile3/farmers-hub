@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { QRCodeSVG } from "qrcode.react";
 import {
   CheckCircle2,
   ClipboardCheck,
@@ -10,6 +12,44 @@ import DailyOperationsCore from "./DailyOperationsCore.jsx";
 import DailyOperationsReorder from "./DailyOperationsReorder.jsx";
 import "../dailyOperationsReorder.css";
 import "../dailyOperationsOverrides.css";
+import "../dailyOperationsQr.css";
+
+function DailyOperationsQrPrintLayer() {
+  const [target, setTarget] = useState(null);
+  const [value, setValue] = useState("");
+
+  useEffect(() => {
+    function syncPrintTag() {
+      const printTag = document.querySelector(".dailyOpsPrintTag");
+      const code = printTag?.querySelector("code")?.textContent?.trim() || "";
+
+      setTarget(printTag || null);
+      setValue(code);
+    }
+
+    syncPrintTag();
+
+    const observer = new MutationObserver(syncPrintTag);
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    return () => observer.disconnect();
+  }, []);
+
+  if (!target || !value) return null;
+
+  return createPortal(
+    <QRCodeSVG
+      className="dailyOpsQrCode"
+      value={value}
+      size={220}
+      level="M"
+      marginSize={4}
+      boostLevel
+      title={`QR code ${value}`}
+    />,
+    target
+  );
+}
 
 export default function DailyOperations() {
   const [workspace, setWorkspace] = useState("operations");
@@ -89,6 +129,8 @@ export default function DailyOperations() {
           </div>
         )}
       </div>
+
+      <DailyOperationsQrPrintLayer />
     </div>
   );
 }
