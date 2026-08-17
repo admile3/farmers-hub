@@ -288,6 +288,58 @@
   font-size: 0.72rem;
 }
 
+.dailyOpsManualAddPicker {
+  display: grid;
+  gap: 12px;
+}
+
+.dailyOpsManualAddPicker > input {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--border, #d8ded9);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  color: inherit;
+  font: inherit;
+}
+
+.dailyOpsManualAddList {
+  display: grid;
+  gap: 8px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.dailyOpsManualAddList > button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 13px;
+  border: 1px solid var(--border, #e1e5e1);
+  border-radius: 11px;
+  background: var(--panel, #fff);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dailyOpsManualAddList > button:hover {
+  border-color: #4d7859;
+  background: #f4f8f4;
+}
+
+.dailyOpsManualAddList > button span {
+  display: grid;
+  gap: 3px;
+}
+
+.dailyOpsManualAddList > button small {
+  color: var(--text-muted, #69736b);
+  font-size: 0.8rem;
+}
+
 @media (max-width: 900px) {
   .dailyOpsWorkspaceSwitcher {
     grid-template-columns: 1fr;
