@@ -2,6 +2,46 @@
   display: none !important;
 }
 
+/* Match Operations station/tag rows to the horizontal Re-Order tag layout. */
+.dailyOperationsPage .dailyOpsStationGrid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 10px !important;
+}
+
+.dailyOperationsPage .dailyOpsStationCard {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 14px !important;
+  width: 100% !important;
+  min-height: 92px !important;
+  padding: 14px 16px !important;
+  box-sizing: border-box !important;
+}
+
+.dailyOperationsPage .dailyOpsStationCard .dailyOpsStationIcon {
+  align-self: center !important;
+}
+
+.dailyOperationsPage .dailyOpsStationCard .dailyOpsStationText {
+  min-width: 0 !important;
+}
+
+.dailyOperationsPage .dailyOpsStationCard .dailyOpsRowActions {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  justify-self: end !important;
+  flex-wrap: nowrap !important;
+}
+
+.dailyOperationsPage .dailyOpsStationCard .dailyOpsRowActions > button {
+  white-space: nowrap !important;
+}
+
 .dailyOpsModal .dailyOpsManualAddPicker {
   display: grid !important;
   gap: 12px !important;
@@ -91,6 +131,20 @@
   background: #e9f2eb !important;
   color: #315c3d !important;
   flex: 0 0 auto !important;
+}
+
+@media (max-width: 720px) {
+  .dailyOperationsPage .dailyOpsStationCard {
+    grid-template-columns: auto minmax(0, 1fr) !important;
+  }
+
+  .dailyOperationsPage .dailyOpsStationCard .dailyOpsRowActions {
+    grid-column: 1 / -1 !important;
+    justify-self: stretch !important;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+    padding-top: 4px !important;
+  }
 }
 
 @media print {
