@@ -125,6 +125,7 @@ export default function DailyOperationsReorder() {
   const [editor, setEditor] = useState(null);
   const [manualAddOpen, setManualAddOpen] = useState(false);
   const [manualSearch, setManualSearch] = useState("");
+  const [tagSort, setTagSort] = useState("alphabetical");
   const [printItem, setPrintItem] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [toast, setToast] = useState({ open: false, variant: "success", title: "", message: "" });
@@ -139,6 +140,16 @@ export default function DailyOperationsReorder() {
     [requests]
   );
 
+  const sortedItems = useMemo(() => {
+    return [...items].sort((a, b) => {
+      if (tagSort === "category") {
+        const categoryCompare = String(a.category || "General Supplies").localeCompare(String(b.category || "General Supplies"), undefined, { sensitivity: "base" });
+        if (categoryCompare !== 0) return categoryCompare;
+      }
+      return String(a.name || "").localeCompare(String(b.name || ""), undefined, { sensitivity: "base", numeric: true });
+    });
+  }, [items, tagSort]);
+
   const manualAddItems = useMemo(() => {
     const waitingIds = new Set(needed.map((request) => request.itemId));
     const search = manualSearch.trim().toLowerCase();
@@ -149,7 +160,8 @@ export default function DailyOperationsReorder() {
         return [item.name, item.category, item.vendor]
           .filter(Boolean)
           .some((value) => String(value).toLowerCase().includes(search));
-      });
+      })
+      .sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), undefined, { sensitivity: "base", numeric: true }));
   }, [items, needed, manualSearch]);
 
   async function loadData() {
@@ -344,8 +356,15 @@ export default function DailyOperationsReorder() {
 
       {mode === "tags" ? (
         <WorkspacePanel eyebrow="Reusable supply tags" title="Manage Re-Order Tags" description="Create one reusable record for each consumable or supply you want to flag by scanning." actions={[{ label: "New Re-Order Tag", icon: Plus, onClick: () => setEditor({ ...blankItem, sortOrder: items.length }) }]}>
+          <div className="dailyOpsSortBar">
+            <span>Sort by</span>
+            <select value={tagSort} onChange={(event) => setTagSort(event.target.value)} aria-label="Sort re-order tags">
+              <option value="alphabetical">Alphabetical A–Z</option>
+              <option value="category">Category</option>
+            </select>
+          </div>
           <div className="dailyOpsManageList">
-            {items.map((item) => {
+            {sortedItems.map((item) => {
               const waiting = needed.some((request) => request.itemId === item.id);
               return (
                 <div className="dailyOpsManageRow" key={item.id}>
